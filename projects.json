@@ -3,11 +3,19 @@
   "author": "dmaris70",
   "projects": [
     {
+      "slug": "002-particle-life",
+      "title": "Particle Life",
+      "year": 2026,
+      "tools": ["p5.js"],
+      "description": "Life-like clustering from a seeded species×species attraction matrix. Tune it live; R for a new universe.",
+      "thumb": ""
+    },
+    {
       "slug": "001-flow-field",
       "title": "Flow Field",
       "year": 2026,
       "tools": ["p5.js"],
-      "description": "Particles advected through a Perlin-noise vector field. Press R to reseed.",
+      "description": "Particles advected through a Perlin-noise vector field. Live params + reproducible seed.",
       "thumb": ""
     }
   ]
