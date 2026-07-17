@@ -3,6 +3,22 @@
   "author": "dmaris70",
   "projects": [
     {
+      "slug": "004-flow-ribbons",
+      "title": "Flow Ribbons",
+      "year": 2026,
+      "tools": ["p5.js"],
+      "description": "Non-overlapping curves grown through a noise flow field with a collision grid — after Tyler Hobbs' Fidenza essays.",
+      "thumb": ""
+    },
+    {
+      "slug": "003-watercolor",
+      "title": "Watercolor",
+      "year": 2026,
+      "tools": ["p5.js"],
+      "description": "Pigment blooms from stacked, Gaussian-deformed polygons — after Tyler Hobbs' watercolor-polygon method.",
+      "thumb": ""
+    },
+    {
       "slug": "002-particle-life",
       "title": "Particle Life",
       "year": 2026,
