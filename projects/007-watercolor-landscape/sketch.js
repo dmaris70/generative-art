@@ -34,11 +34,14 @@ function setup() {
   G = GenArt.create({
     title: 'Watercolor Landscape',
     params: {
-      hills:   { value: 3,   min: 2,   max: 5,   step: 1,   label: 'hills' },
-      trees:   { value: 7,   min: 0,   max: 16,  step: 1,   label: 'trees' },
-      bleed:   { value: 1.1, min: 0.5, max: 2.0, step: 0.1, label: 'bleed' },
-      pigment: { value: 12,  min: 4,   max: 24,  step: 1,   label: 'pigment' },
-      grain:   { value: 0.8, min: 0.0, max: 2.0, step: 0.1, label: 'grain' },
+      hills:   { value: 3,    min: 2,   max: 5,   step: 1,    label: 'hills' },
+      trees:   { value: 7,    min: 0,   max: 16,  step: 1,    label: 'trees' },
+      bleed:   { value: 1.1,  min: 0.4, max: 2.4, step: 0.1,  label: 'bleed' },
+      reach:   { value: 4,    min: 2,   max: 8,   step: 1,    label: 'bleed reach' },
+      layers:  { value: 3,    min: 1,   max: 6,   step: 1,    label: 'layers' },
+      pigment: { value: 12,   min: 4,   max: 24,  step: 1,    label: 'pigment' },
+      bloom:   { value: 0.35, min: 0.0, max: 1.0, step: 0.05, label: 'centre bloom' },
+      grain:   { value: 0.8,  min: 0.0, max: 2.0, step: 0.1,  label: 'grain' },
     },
     onReset: function () { redraw(); },
   });
@@ -76,6 +79,14 @@ function draw() {
   ctx.fillStyle = sky;
   ctx.fillRect(0, 0, width, horizon);
 
+  // shared watercolour controls (applied across sun, hills and trees)
+  const bleed = G.param('bleed');
+  const reach = G.param('reach');
+  const layers = G.param('layers');
+  const pig = G.param('pigment');
+  const bloom = G.param('bloom');
+  const grain = G.param('grain');
+
   // sun — a glowing watercolour disc
   const sunX = width * (0.24 + G.rng() * 0.52);
   const sunY = horizon * (0.42 + G.rng() * 0.3);
@@ -83,15 +94,13 @@ function draw() {
   Watercolor.paint({
     kind: 'circle', cx: sunX, cy: sunY, r: sunR,
     color: pal.sun, paper: pal.paper, rng: G.rng,
-    reach: 4, layers: 3, bleed: 0.9,
-    pigment: 9, bloom: 0.6, grain: 0.4, outline: false, shadow: false,
+    reach: reach, layers: layers, bleed: bleed * 0.85,
+    pigment: Math.max(6, pig * 0.7), bloom: Math.min(1, bloom + 0.25),
+    grain: grain * 0.5, outline: false, shadow: false,
   });
 
   // layered hills, back (light, high) to front (dark, low)
   const nH = G.param('hills');
-  const bleed = G.param('bleed');
-  const pig = G.param('pigment');
-  const grain = G.param('grain');
   let frontY = horizon;
   for (let i = 0; i < nH; i++) {
     const t = i / Math.max(1, nH - 1);
@@ -101,7 +110,7 @@ function draw() {
     const col = pal.hills[Math.min(pal.hills.length - 1, i)];
     Watercolor.paint({
       base: poly, color: col, paper: pal.paper, rng: G.rng,
-      reach: 3, layers: 3, detail: 2, bleed: bleed * 0.8,
+      reach: Math.max(2, reach - 1), layers: layers, detail: 2, bleed: bleed * 0.9,
       pigment: pig, bloom: 0, grain: grain * 0.5, outline: false, shadow: false,
     });
     if (i === nH - 1) frontY = baseY;
@@ -123,14 +132,14 @@ function draw() {
     line(x, groundY, x, canopyY);
     pop();
 
-    // canopy — a watercolour blob with slight colour variation
+    // canopy — a watercolour blob; now driven by the shared bleed/reach/bloom
     const jitter = 0.85 + G.rng() * 0.35;
     Watercolor.paint({
       kind: 'circle', cx: x, cy: canopyY, r: cR,
       color: [pal.tree[0] * jitter, pal.tree[1] * jitter, pal.tree[2] * jitter],
       paper: pal.paper, rng: G.rng,
-      reach: 4, layers: 3, bleed: 1.0,
-      pigment: 13, bloom: 0.3, grain: grain, outline: false, shadow: false,
+      reach: reach, layers: layers, bleed: bleed,
+      pigment: pig + 1, bloom: bloom, grain: grain, outline: false, shadow: false,
     });
   }
 }
