@@ -1,0 +1,136 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Generative Art</title>
+  <style>
+    :root {
+      --bg: #0b0b0e;
+      --fg: #ececef;
+      --muted: #8b8b96;
+      --card: #16161b;
+      --border: #26262e;
+      --accent: #d8b4fe;
+    }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; padding: 0; }
+    body {
+      background: var(--bg);
+      color: var(--fg);
+      font: 16px/1.5 ui-sans-serif, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      -webkit-font-smoothing: antialiased;
+    }
+    header {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 64px 24px 24px;
+    }
+    h1 {
+      font-size: clamp(2rem, 6vw, 3.5rem);
+      letter-spacing: -0.03em;
+      margin: 0 0 8px;
+    }
+    header p { color: var(--muted); margin: 0; max-width: 60ch; }
+    main {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 24px 24px 96px;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+      gap: 20px;
+    }
+    a.card {
+      display: block;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      overflow: hidden;
+      text-decoration: none;
+      color: inherit;
+      transition: transform .15s ease, border-color .15s ease;
+    }
+    a.card:hover { transform: translateY(-3px); border-color: var(--accent); }
+    .thumb {
+      aspect-ratio: 16 / 10;
+      background: linear-gradient(135deg, #1c1c24, #101015);
+      display: flex; align-items: center; justify-content: center;
+      color: var(--muted); font-size: 13px;
+    }
+    .thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .body { padding: 14px 16px 16px; }
+    .body h3 { margin: 0 0 4px; font-size: 1.05rem; letter-spacing: -0.01em; }
+    .body p { margin: 0 0 10px; color: var(--muted); font-size: 13px; }
+    .tags { display: flex; flex-wrap: wrap; gap: 6px; }
+    .tag {
+      font-size: 11px; color: var(--accent);
+      border: 1px solid var(--border); border-radius: 999px;
+      padding: 2px 9px;
+    }
+    .meta { color: var(--muted); font-size: 12px; margin-left: auto; }
+    .body .row { display: flex; align-items: center; gap: 8px; }
+    footer {
+      max-width: 1100px; margin: 0 auto; padding: 0 24px 64px;
+      color: var(--muted); font-size: 13px;
+    }
+    footer a { color: var(--accent); }
+    .empty { color: var(--muted); }
+  </style>
+</head>
+<body>
+  <header>
+    <h1 id="site-title">Generative Art</h1>
+    <p id="site-sub">A gallery of algorithmic sketches. Each piece runs live in the browser.</p>
+  </header>
+  <main>
+    <div class="grid" id="grid"><p class="empty">Loading…</p></div>
+  </main>
+  <footer>
+    Built with vanilla HTML + <a href="https://p5js.org">p5.js</a>. Add a project by dropping a
+    folder in <code>projects/</code> and an entry in <code>projects.json</code>.
+  </footer>
+
+  <script>
+    const base = location.pathname.replace(/index\.html$/, "");
+    fetch("projects.json")
+      .then(r => r.json())
+      .then(data => {
+        if (data.title) {
+          document.getElementById("site-title").textContent = data.title;
+          document.title = data.title;
+        }
+        const grid = document.getElementById("grid");
+        if (!data.projects || !data.projects.length) {
+          grid.innerHTML = '<p class="empty">No projects yet.</p>';
+          return;
+        }
+        grid.innerHTML = "";
+        for (const p of data.projects) {
+          const href = "projects/" + p.slug + "/";
+          const a = document.createElement("a");
+          a.className = "card";
+          a.href = href;
+          const thumb = p.thumb
+            ? '<div class="thumb"><img src="' + href + p.thumb + '" alt=""></div>'
+            : '<div class="thumb">' + (p.title || p.slug) + '</div>';
+          const tags = (p.tools || []).map(t => '<span class="tag">' + t + '</span>').join("");
+          a.innerHTML =
+            thumb +
+            '<div class="body">' +
+              '<div class="row"><h3>' + (p.title || p.slug) + '</h3>' +
+              (p.year ? '<span class="meta">' + p.year + '</span>' : '') + '</div>' +
+              (p.description ? '<p>' + p.description + '</p>' : '') +
+              '<div class="tags">' + tags + '</div>' +
+            '</div>';
+          grid.appendChild(a);
+        }
+      })
+      .catch(err => {
+        document.getElementById("grid").innerHTML =
+          '<p class="empty">Could not load projects.json — ' + err + '</p>';
+      });
+  </script>
+</body>
+</html>

@@ -1,0 +1,14 @@
+{
+  "title": "Generative Art",
+  "author": "dmaris70",
+  "projects": [
+    {
+      "slug": "001-flow-field",
+      "title": "Flow Field",
+      "year": 2026,
+      "tools": ["p5.js"],
+      "description": "Particles advected through a Perlin-noise vector field. Press R to reseed.",
+      "thumb": ""
+    }
+  ]
+}
