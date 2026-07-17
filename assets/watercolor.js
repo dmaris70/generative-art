@@ -80,14 +80,33 @@
     return pts;
   }
 
-  // one distortion pass: subdivide every edge + outward-biased midpoint push
-  function distort(pts, mag, gauss) {
+  // 3-tap gaussian blur on a wrapped scalar array — the convolution package's
+  // K_GAUSS_BLUR_3 ([1,2,1]/4). Smooths the per-vertex weight field so uneven
+  // bleeding varies gradually around the shape instead of edge-to-edge.
+  function blurWeights3(a) {
+    const n = a.length;
+    const out = new Array(n);
+    for (let i = 0; i < n; i++) {
+      out[i] = (a[(i - 1 + n) % n] + 2 * a[i] + a[(i + 1) % n]) * 0.25;
+    }
+    return out;
+  }
+
+  // one distortion pass: subdivide every edge + outward-biased midpoint push.
+  // Carries a per-vertex WEIGHT that scales each edge's push magnitude (so some
+  // sides bleed more than others), interpolated onto new midpoints and blurred.
+  function distort(pts, weights, mag, gauss, blur) {
     const n = pts.length;
-    const out = [];
+    const outP = [];
+    const outW = [];
     for (let i = 0; i < n; i++) {
       const a = pts[i];
       const b = pts[(i + 1) % n];
-      out.push({ x: a.x + gauss() * 0.5 * mag, y: a.y + gauss() * 0.5 * mag });
+      const w0 = weights[i];
+      const w1 = weights[(i + 1) % n];
+
+      outP.push({ x: a.x + gauss() * 0.5 * mag, y: a.y + gauss() * 0.5 * mag });
+      outW.push(w0);
 
       const ex = b.x - a.x;
       const ey = b.y - a.y;
@@ -98,6 +117,7 @@
       const t = Math.min(0.999, Math.max(0.001, 0.5 + gauss() * 0.133));
       const mx = a.x + ex * t;
       const my = a.y + ey * t;
+      const mw = w0 + (w1 - w0) * t;
 
       const theta = -Math.PI / 2 + gauss() * (Math.PI / 12); // outward normal
       const ct = Math.cos(theta);
@@ -106,12 +126,13 @@
       const ny = tx * st + ty * ct;
 
       let m = gauss() * (len / 3);
-      if (m < 0) m /= 5; // damp inward → bleed outward
-      m *= mag;
+      if (m < 0) m /= 5;   // damp inward → bleed outward
+      m *= mag * mw;       // weight modulates how far this edge bleeds
 
-      out.push({ x: mx + nx * m, y: my + ny * m });
+      outP.push({ x: mx + nx * m, y: my + ny * m });
+      outW.push(mw);
     }
-    return out;
+    return { pts: outP, w: blur ? blurWeights3(outW) : outW };
   }
 
   function smoothPoly(pts, k) {
@@ -126,6 +147,23 @@
     return out;
   }
 
+  function triArea(a, b, c) {
+    return Math.abs((a.x - c.x) * (b.y - a.y) - (a.x - b.x) * (c.y - a.y));
+  }
+
+  // light Visvalingam-style cleanup: drop near-collinear points (triangle area
+  // below the tolerance) — trims redundant vertices after smoothing
+  function simplifyArea(pts, tol) {
+    const n = pts.length;
+    if (n <= 12) return pts;
+    const out = [pts[0]];
+    for (let k = 1; k < n - 1; k++) {
+      if (triArea(out[out.length - 1], pts[k], pts[k + 1]) >= tol) out.push(pts[k]);
+    }
+    out.push(pts[n - 1]);
+    return out;
+  }
+
   // pure geometry: base polygon → array of layer polygons, tight to far-bled
   function watercolorize(base, opts) {
     opts = opts || {};
@@ -134,18 +172,36 @@
     const layerEvo = opts.detail != null ? opts.detail : (opts.layerEvolutions != null ? opts.layerEvolutions : 3);
     const mag = opts.bleed != null ? opts.bleed : 1.7;
     const smooth = opts.smooth != null ? opts.smooth : 0.35;
-    const gauss = makeGauss(opts.rng || Math.random);
+    const preEvo = opts.preEvolutions != null ? opts.preEvolutions : 0;
+    const blur = opts.blurWeights !== false;                       // default on
+    const tol = opts.simplify != null ? opts.simplify : 1.5;
+    const weightVar = opts.weightVar != null ? opts.weightVar : 0;
+    const rng = opts.rng || Math.random;
+    const gauss = makeGauss(rng);
+
+    // per-vertex weights → uneven, more natural bleeding when weightVar > 0.
+    // At 0 we don't touch the rng, so the render is identical to uniform bleed.
+    let prevP = base;
+    let prevW = weightVar > 0
+      ? base.map(function () { return 1 + (rng() * 2 - 1) * weightVar; })
+      : base.map(function () { return 1; });
+
+    for (let p = 0; p < preEvo; p++) {
+      const d = distort(prevP, prevW, mag, gauss, blur);
+      prevP = d.pts; prevW = d.w;
+    }
 
     const layers = [];
-    let prev = base;
     for (let e = 0; e < evolutions; e++) {
       for (let l = 0; l < layersPer; l++) {
-        let layer = distort(prev, mag, gauss);
-        for (let k = 0; k < layerEvo; k++) layer = distort(layer, mag, gauss);
-        layer = smoothPoly(smoothPoly(layer, smooth), smooth);
-        layers.push(layer);
+        let d = distort(prevP, prevW, mag, gauss, blur);
+        for (let k = 0; k < layerEvo; k++) d = distort(d.pts, d.w, mag, gauss, blur);
+        let poly = smoothPoly(smoothPoly(d.pts, smooth), smooth);
+        if (tol > 0) poly = simplifyArea(poly, tol);
+        layers.push(poly);
       }
-      prev = distort(prev, mag, gauss);
+      const d2 = distort(prevP, prevW, mag, gauss, blur);
+      prevP = d2.pts; prevW = d2.w;
     }
     return layers;
   }
