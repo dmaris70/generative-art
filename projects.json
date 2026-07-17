@@ -31,7 +31,7 @@
       "title": "Watercolor",
       "year": 2026,
       "tools": ["p5.js"],
-      "description": "Pigment blooms from stacked, Gaussian-deformed polygons — after Tyler Hobbs' watercolor-polygon method.",
+      "description": "Watercolour shapes bled from geometric polygons on textured paper — reimplements the watercolorizer / Tyler Hobbs evolution algorithm.",
       "thumb": ""
     },
     {
