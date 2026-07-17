@@ -3,11 +3,27 @@
   "author": "dmaris70",
   "projects": [
     {
+      "slug": "006-grid-collapse",
+      "title": "Grid Collapse",
+      "year": 2026,
+      "tools": ["p5.js"],
+      "description": "An ordered grid dissolving into randomness across a noise-warped front — after Tyler Hobbs' 'structure from randomness'.",
+      "thumb": ""
+    },
+    {
+      "slug": "005-differential-growth",
+      "title": "Differential Growth",
+      "year": 2026,
+      "tools": ["p5.js"],
+      "description": "A closed line that grows, repels itself and folds into organic coral-like boundaries. Animated; R reseeds.",
+      "thumb": ""
+    },
+    {
       "slug": "004-flow-ribbons",
       "title": "Flow Ribbons",
       "year": 2026,
       "tools": ["p5.js"],
-      "description": "Non-overlapping curves grown through a noise flow field with a collision grid — after Tyler Hobbs' Fidenza essays.",
+      "description": "Non-overlapping flow-field ribbons with variable-scale zones, turbulence regions and crisp polygon edges — after Tyler Hobbs' Fidenza.",
       "thumb": ""
     },
     {

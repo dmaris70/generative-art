@@ -1,11 +1,16 @@
 // Flow Ribbons — non-overlapping curves through a noise flow field.
 //
 // Technique (after Tyler Hobbs' "Flow Fields" / Fidenza essays, reimplemented
-// from scratch): build a vector field from Perlin noise, then grow curves that
-// step along it. A coarse occupancy grid records where ribbons already sit; a
-// new ribbon stops as soon as it would come within `spacing` of an existing one.
-// That collision test is what produces the signature packed-but-never-touching
-// composition. Ribbons are drawn thick, with a dark outline under the fill.
+// from scratch): build a vector field from Perlin noise and grow curves along
+// it, using a coarse occupancy grid so a new ribbon stops before it comes within
+// `spacing` of an existing one — that collision test gives the packed-but-never-
+// touching look. This version adds three Fidenza-family touches:
+//   • variable-scale zones — a low-frequency field sets each ribbon's width, so
+//     regions of fat and thin ribbons emerge;
+//   • turbulence regions — some areas inject extra high-frequency curl into the
+//     field, so calm laminar zones sit beside churning ones;
+//   • polygon ribbons — each curve is filled as a tapered polygon with a crisp
+//     outline, rather than a round-capped thick stroke.
 //
 // Static render. Keys: R new composition · S save PNG.
 
@@ -26,10 +31,12 @@ function setup() {
   G = GenArt.create({
     title: 'Flow Ribbons',
     params: {
-      ribbons: { value: 260, min: 40,  max: 700,  step: 20,  label: 'ribbons' },
-      scale:   { value: 1.1, min: 0.3, max: 4.0,  step: 0.1, label: 'field scale' },
-      width:   { value: 14,  min: 3,   max: 40,   step: 1,   label: 'width' },
-      spacing: { value: 4,   min: 0,   max: 20,   step: 1,   label: 'spacing' },
+      ribbons:    { value: 300, min: 40,  max: 800,  step: 20,  label: 'ribbons' },
+      scale:      { value: 1.1, min: 0.3, max: 4.0,  step: 0.1, label: 'field scale' },
+      width:      { value: 13,  min: 3,   max: 40,   step: 1,   label: 'base width' },
+      scaleVar:   { value: 0.6, min: 0.0, max: 1.0,  step: 0.05, label: 'scale zones' },
+      turbulence: { value: 0.5, min: 0.0, max: 1.0,  step: 0.05, label: 'turbulence' },
+      spacing:    { value: 4,   min: 0,   max: 20,   step: 1,   label: 'spacing' },
     },
     onReset: function () { redraw(); },
   });
@@ -47,9 +54,11 @@ function draw() {
   const maxCurves = G.param('ribbons');
   const scl = G.param('scale') * 0.001;
   const baseW = G.param('width');
+  const scaleVar = G.param('scaleVar');
+  const turb = G.param('turbulence');
   const margin = G.param('spacing');
 
-  // occupancy grid
+  // ---- occupancy grid ----
   const cell = 5;
   const gcols = Math.ceil(width / cell) + 1;
   const grows = Math.ceil(height / cell) + 1;
@@ -88,22 +97,38 @@ function draw() {
     }
   }
 
-  const fieldAngle = function (x, y) {
-    return noise(x * scl, y * scl) * TWO_PI * 2.0;
-  };
+  // ---- flow field with turbulence regions ----
+  function fieldAngle(x, y) {
+    let a = noise(x * scl, y * scl) * TWO_PI * 2.0;
+    if (turb > 0) {
+      const mask = noise(x * scl * 0.5 + 40, y * scl * 0.5 + 40);
+      if (mask > 0.5) {
+        const amt = (mask - 0.5) * 2 * turb;
+        a += (noise(x * 0.006 + 90, y * 0.006 + 90) - 0.5) * TWO_PI * 2 * amt;
+      }
+    }
+    return a;
+  }
+
+  // width from a low-frequency "scale zone" field, so fat and thin regions form
+  function zoneWidth(x, y) {
+    const z = noise(x * 0.0012 + 200, y * 0.0012 + 200);
+    const mul = 1 + (z - 0.5) * 2 * scaleVar * 1.6; // ~[1-1.6v, 1+1.6v]
+    return baseW * Math.max(0.25, mul) * (0.7 + G.rng() * 0.7);
+  }
 
   const stepLen = 2;
   const minPts = 22;
   const ribbons = [];
   let drawn = 0;
   let attempts = 0;
-  const maxAttempts = maxCurves * 40;
+  const maxAttempts = maxCurves * 45;
 
   while (drawn < maxCurves && attempts < maxAttempts) {
     attempts++;
     let x = G.rng() * width;
     let y = G.rng() * height;
-    const w = baseW * (0.4 + G.rng() * 1.7);
+    const w = zoneWidth(x, y);
     const reach = w / 2 + margin;
     if (occupiedNear(x, y, reach)) continue;
 
@@ -124,24 +149,50 @@ function draw() {
     drawn++;
   }
 
-  // render: dark outline first, colour fill on top
+  // ---- render as filled, tapered polygons with a crisp outline ----
   strokeJoin(ROUND);
-  strokeCap(ROUND);
-  noFill();
   for (const rb of ribbons) {
+    const edges = ribbonPolygon(rb.path, rb.w);
+
+    noStroke();
+    fill(rb.col[0], rb.col[1], rb.col[2]);
+    outlineShape(edges, false);
+
+    noFill();
     stroke(pal.ink[0], pal.ink[1], pal.ink[2]);
-    strokeWeight(rb.w + 2.5);
-    drawPath(rb.path);
-    stroke(rb.col[0], rb.col[1], rb.col[2]);
-    strokeWeight(rb.w);
-    drawPath(rb.path);
+    strokeWeight(1.5);
+    outlineShape(edges, true);
   }
 }
 
-function drawPath(path) {
+// Offset the centreline left/right by half-width, tapering toward both ends.
+function ribbonPolygon(path, w) {
+  const n = path.length;
+  const left = [];
+  const right = [];
+  for (let i = 0; i < n; i++) {
+    const a = path[Math.max(0, i - 1)];
+    const b = path[Math.min(n - 1, i + 1)];
+    let tx = b.x - a.x;
+    let ty = b.y - a.y;
+    const tl = Math.sqrt(tx * tx + ty * ty) || 1;
+    tx /= tl; ty /= tl;
+    const nx = -ty;
+    const ny = tx;
+    const t = n > 1 ? i / (n - 1) : 0;
+    const taper = Math.min(1, Math.min(t, 1 - t) * 5.0);
+    const hw = (w / 2) * (0.14 + 0.86 * taper);
+    left.push([path[i].x + nx * hw, path[i].y + ny * hw]);
+    right.push([path[i].x - nx * hw, path[i].y - ny * hw]);
+  }
+  return { left: left, right: right };
+}
+
+function outlineShape(edges, asStroke) {
   beginShape();
-  for (const p of path) curveVertex(p.x, p.y);
-  endShape();
+  for (const p of edges.left) vertex(p[0], p[1]);
+  for (let i = edges.right.length - 1; i >= 0; i--) vertex(edges.right[i][0], edges.right[i][1]);
+  endShape(CLOSE);
 }
 
 function keyPressed() {
