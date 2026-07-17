@@ -30,7 +30,7 @@ function setup() {
       layers:    { value: 60,   min: 10,   max: 120,  step: 5,    label: 'layers' },
       spread:    { value: 22,   min: 8,    max: 45,   step: 1,    label: 'size %' },
       roughness: { value: 0.10, min: 0.03, max: 0.25, step: 0.01, label: 'roughness' },
-      bleed:     { value: 0.55, min: 0.15, max: 1.0,  step: 0.05, label: 'bleed' },
+      bleed:     { value: 1.1,  min: 0.15, max: 2.0,  step: 0.05, label: 'bleed' },
       opacity:   { value: 5,    min: 2,    max: 18,   step: 1,    label: 'pigment' },
     },
     onReset: function () { redraw(); },
