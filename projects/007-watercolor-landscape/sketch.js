@@ -95,8 +95,8 @@ function draw() {
     kind: 'circle', cx: sunX, cy: sunY, r: sunR,
     color: pal.sun, paper: pal.paper, rng: G.rng,
     reach: reach, layers: layers, bleed: bleed * 0.85,
-    pigment: Math.max(6, pig * 0.7), bloom: Math.min(1, bloom + 0.25),
-    grain: grain * 0.5, outline: false, shadow: false,
+    pigment: Math.max(6, pig * 0.7), edge: 0.3, bloom: Math.min(1, bloom + 0.25),
+    grain: grain * 0.5, outline: true, shadow: false,
   });
 
   // layered hills, back (light, high) to front (dark, low)
@@ -116,30 +116,49 @@ function draw() {
     if (i === nH - 1) frontY = baseY;
   }
 
-  // trees along the front hill
+  // trees along the front hill — rendered with the SHAPES technique: geometric
+  // base (conifer triangle or round crown) with a visible outline, edge pooling
+  // and centre bloom, like the 003 watercolour shapes
   const nT = G.param('trees');
+  const treeKinds = ['conifer', 'conifer', 'conifer', 'round', 'round'];
+  const tSpan = width * 0.9;
   for (let i = 0; i < nT; i++) {
-    const x = width * (0.06 + G.rng() * 0.88);
+    // evenly spaced across the treeline with a little jitter (avoids clumping)
+    const x = width * 0.05 + tSpan * ((i + 0.5) / nT) + (G.rng() - 0.5) * (tSpan / nT) * 0.6;
     const groundY = frontY - height * 0.03 + G.rng() * height * 0.06;
     const h = height * (0.06 + G.rng() * 0.07);
     const cR = h * (0.45 + G.rng() * 0.3);
     const canopyY = groundY - h;
+    const kind = treeKinds[Math.floor(G.rng() * treeKinds.length)];
+    const jitter = 0.85 + G.rng() * 0.35;
+    const col = [pal.tree[0] * jitter, pal.tree[1] * jitter, pal.tree[2] * jitter];
+
+    // geometric base shape + where the trunk meets it
+    let base, trunkTop;
+    if (kind === 'conifer') {
+      const topY = canopyY - cR * 1.3;
+      const baseY = canopyY + cR * 0.8;
+      const halfW = cR * 0.9;
+      base = [{ x: x, y: topY }, { x: x + halfW, y: baseY }, { x: x - halfW, y: baseY }];
+      trunkTop = baseY - cR * 0.1;
+    } else {
+      base = Watercolor.primitive('circle', x, canopyY, cR);
+      trunkTop = canopyY + cR * 0.6;
+    }
 
     // trunk
     push();
     stroke(pal.trunk[0], pal.trunk[1], pal.trunk[2], 150);
     strokeWeight(Math.max(1.5, h * 0.03));
-    line(x, groundY, x, canopyY);
+    line(x, groundY, x, trunkTop);
     pop();
 
-    // canopy — a watercolour blob; now driven by the shared bleed/reach/bloom
-    const jitter = 0.85 + G.rng() * 0.35;
     Watercolor.paint({
-      kind: 'circle', cx: x, cy: canopyY, r: cR,
-      color: [pal.tree[0] * jitter, pal.tree[1] * jitter, pal.tree[2] * jitter],
-      paper: pal.paper, rng: G.rng,
+      base: base, cx: x, cy: canopyY, r: cR,
+      color: col, paper: pal.paper, rng: G.rng,
       reach: reach, layers: layers, bleed: bleed,
-      pigment: pig + 1, bloom: bloom, grain: grain, outline: false, shadow: false,
+      pigment: pig + 1, edge: 0.45, bloom: bloom, grain: grain,
+      outline: true, shadow: false,
     });
   }
 }

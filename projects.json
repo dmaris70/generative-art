@@ -7,7 +7,7 @@
       "title": "Watercolor Landscape",
       "year": 2026,
       "tools": ["p5.js"],
-      "description": "A generative watercolour landscape — sun, layered noise-ridge hills and trees — painted entirely with the reusable watercolor module.",
+      "description": "A generative watercolour landscape — outlined shape-trees (conifers + round crowns), a sun disc and layered noise-ridge hills — using the watercolor module's shapes technique.",
       "thumb": ""
     },
     {
