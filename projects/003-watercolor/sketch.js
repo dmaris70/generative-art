@@ -114,7 +114,7 @@ function draw() {
     // each layer independently wobbles the master edge by `bleed`; where many
     // layers overlap the pigment is dense, where few reach it fades → soft fringe
     for (let l = 0; l < nL; l++) {
-      const poly = deform(base, 5, bleed, 0.62);
+      const poly = deform(base, 6, bleed, 0.62);
       fill(col[0], col[1], col[2], alpha * (0.7 + G.rng() * 0.6));
       beginShape();
       for (const p of poly) vertex(p.x, p.y);
