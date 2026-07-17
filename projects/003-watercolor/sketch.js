@@ -23,6 +23,7 @@ const PALETTES = [
 ];
 
 const KINDS = ['triangle', 'square', 'pentagon', 'hexagon', 'circle'];
+let PAPER = [237, 232, 221];
 
 function setup() {
   createCanvas(windowWidth, windowHeight);
@@ -34,8 +35,9 @@ function setup() {
       shapes:  { value: 3,   min: 1,   max: 7,   step: 1,   label: 'shapes' },
       reach:   { value: 5,   min: 2,   max: 9,   step: 1,   label: 'bleed reach' },
       density: { value: 4,   min: 1,   max: 8,   step: 1,   label: 'layers' },
-      bleed:   { value: 1.4, min: 0.3, max: 2.5, step: 0.1, label: 'bleed' },
+      bleed:   { value: 1.7, min: 0.3, max: 2.8, step: 0.1, label: 'bleed' },
       pigment: { value: 14,  min: 3,   max: 30,  step: 1,   label: 'pigment' },
+      bloom:   { value: 0.45, min: 0.0, max: 1.0, step: 0.05, label: 'centre bloom' },
       grain:   { value: 1.0, min: 0.0, max: 2.5, step: 0.1, label: 'grain' },
     },
     onReset: function () { redraw(); },
@@ -86,8 +88,8 @@ function distort(pts, mag) {
   for (let i = 0; i < n; i++) {
     const a = pts[i];
     const b = pts[(i + 1) % n];
-    // keep original vertex, lightly wiggled
-    out.push({ x: a.x + gauss() * 0.8 * mag, y: a.y + gauss() * 0.8 * mag });
+    // keep original vertex, lightly wiggled (small, so lobes stay coherent)
+    out.push({ x: a.x + gauss() * 0.5 * mag, y: a.y + gauss() * 0.5 * mag });
 
     const ex = b.x - a.x;
     const ey = b.y - a.y;
@@ -117,6 +119,20 @@ function distort(pts, mag) {
   return out;
 }
 
+// one Laplacian smoothing pass — rounds the bulges into chunky lobes and
+// removes high-frequency fuzz without collapsing the shape
+function smoothPoly(pts, k) {
+  const n = pts.length;
+  const out = new Array(n);
+  for (let i = 0; i < n; i++) {
+    const a = pts[(i - 1 + n) % n];
+    const b = pts[i];
+    const c = pts[(i + 1) % n];
+    out[i] = { x: b.x + ((a.x + c.x) * 0.5 - b.x) * k, y: b.y + ((a.y + c.y) * 0.5 - b.y) * k };
+  }
+  return out;
+}
+
 // ---- progressive-evolution layer generator ----
 function watercolorize(base, evolutions, layersPerEvolution, layerEvolutions, mag) {
   const layers = [];
@@ -125,6 +141,7 @@ function watercolorize(base, evolutions, layersPerEvolution, layerEvolutions, ma
     for (let l = 0; l < layersPerEvolution; l++) {
       let layer = distort(prev, mag);
       for (let k = 0; k < layerEvolutions; k++) layer = distort(layer, mag);
+      layer = smoothPoly(smoothPoly(layer, 0.35), 0.35); // round into chunky lobes
       layers.push(layer);
     }
     prev = distort(prev, mag);
@@ -198,6 +215,28 @@ function paintShape(kind, cx, cy, r, col) {
     }
   }
 
+  // lighter-centre interior bloom: a radial wash of paper tone, clipped to the
+  // base, that lifts the middle and leaves the pooled pigment dark at the rim
+  const bloom = G.param('bloom');
+  if (bloom > 0) {
+    const ctx = drawingContext;
+    ctx.save();
+    ctx.beginPath();
+    ctx.moveTo(base[0].x, base[0].y);
+    for (let i = 1; i < base.length; i++) ctx.lineTo(base[i].x, base[i].y);
+    ctx.closePath();
+    ctx.clip();
+    const rr = r * 1.05;
+    const grad = ctx.createRadialGradient(cx, cy, 0, cx, cy, rr);
+    const pc = PAPER;
+    grad.addColorStop(0.0, 'rgba(' + pc[0] + ',' + pc[1] + ',' + pc[2] + ',' + bloom + ')');
+    grad.addColorStop(0.5, 'rgba(' + pc[0] + ',' + pc[1] + ',' + pc[2] + ',' + (bloom * 0.32) + ')');
+    grad.addColorStop(1.0, 'rgba(' + pc[0] + ',' + pc[1] + ',' + pc[2] + ',0)');
+    ctx.fillStyle = grad;
+    ctx.fillRect(cx - rr, cy - rr, rr * 2, rr * 2);
+    ctx.restore();
+  }
+
   // visible base outline
   noFill();
   stroke(col[0] * 0.55, col[1] * 0.55, col[2] * 0.55, 110);
@@ -236,6 +275,7 @@ function draw() {
   randomSeed(G.seed);
   noiseSeed(G.seed);
   const pal = PALETTES[Math.floor(G.rng() * PALETTES.length)];
+  PAPER = pal.paper;
 
   paper(makeRng(G.seed ^ 0x9e3779b9), pal.paper);
 
