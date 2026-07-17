@@ -29,6 +29,7 @@ function setup() {
       density: { value: 4,    min: 1,   max: 8,   step: 1,    label: 'layers' },
       bleed:   { value: 1.7,  min: 0.3, max: 2.8, step: 0.1,  label: 'bleed' },
       pigment: { value: 14,   min: 3,   max: 30,  step: 1,    label: 'pigment' },
+      edge:    { value: 0.4,  min: 0.0, max: 1.2, step: 0.05, label: 'edge pool' },
       bloom:   { value: 0.45, min: 0.0, max: 1.0, step: 0.05, label: 'centre bloom' },
       grain:   { value: 1.0,  min: 0.0, max: 2.5, step: 0.1,  label: 'grain' },
     },
@@ -75,6 +76,7 @@ function draw() {
       layers: G.param('density'),
       bleed: G.param('bleed'),
       pigment: G.param('pigment'),
+      edge: G.param('edge'),
       bloom: G.param('bloom'),
       grain: G.param('grain'),
     });

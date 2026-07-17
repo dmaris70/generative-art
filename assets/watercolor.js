@@ -202,13 +202,27 @@
       global.pop();
     }
 
-    // pigment layers — MULTIPLY build-up with slight tone jitter
+    // pigment layers — MULTIPLY build-up with slight tone jitter. Each layer's
+    // outline is also stroked, so pigment pools where layer edges cluster (the
+    // rim + finger edges) → denser, edge-darkened outskirts that read crisply.
+    const edge = opts.edge != null ? opts.edge : 0.35;
+    const nLayers = layers.length;
     global.blendMode(global.MULTIPLY);
-    global.noStroke();
-    for (const layer of layers) {
+    for (let i = 0; i < nLayers; i++) {
+      const layer = layers[i];
       const j = 0.82 + rng() * 0.3;
+      global.noStroke();
       global.fill(col[0] * j, col[1] * j, col[2] * j, alpha * (0.7 + rng() * 0.6));
       traceShape(layer);
+      if (edge > 0) {
+        // fade the edge stroke for outer (later) layers so pigment pools at the
+        // rim + finger edges rather than smearing across the whole halo
+        const ew = edge * (1 - (i / nLayers) * 0.75);
+        global.noFill();
+        global.stroke(col[0] * 0.7, col[1] * 0.7, col[2] * 0.7, alpha * ew * 1.7);
+        global.strokeWeight(1.3);
+        traceShape(layer);
+      }
     }
     global.blendMode(global.BLEND);
 
@@ -258,11 +272,10 @@
     }
   }
 
-  // procedural watercolour paper: fill + fine weave + grain
+  // procedural watercolour paper: fine canvas weave + gentle mottle + tooth
   function paperTexture(color, rng, opts) {
     opts = opts || {};
-    const weaveF = opts.weave != null ? opts.weave : 0.55;
-    const grainAmt = opts.grain != null ? opts.grain : 12;
+    const grainAmt = opts.grain != null ? opts.grain : 9;
     const r = rng || Math.random;
     global.background(color[0], color[1], color[2]);
     global.loadPixels();
@@ -271,9 +284,16 @@
     const h = global.height * d;
     const px = global.pixels;
     for (let y = 0; y < h; y++) {
+      const wy = Math.sin(y * 2.1);        // weft threads (fine, ~3px)
+      const my = Math.sin(y * 0.013);      // large-scale mottle
       for (let x = 0; x < w; x++) {
         const idx = 4 * (x + y * w);
-        const v = (Math.sin(x * weaveF) + Math.sin(y * weaveF)) * 2.0 + (r() - 0.5) * grainAmt;
+        // crosshatch of warp + weft threads → woven canvas look
+        const weave = (Math.sin(x * 2.1) + wy) * 1.25 + Math.sin((x - y) * 1.15) * 0.6;
+        // paper is never perfectly even
+        const mottle = (Math.sin(x * 0.011) + my) * 2.3;
+        const g = (r() - 0.5) * grainAmt;
+        const v = weave + mottle + g;
         px[idx] += v; px[idx + 1] += v; px[idx + 2] += v;
       }
     }

@@ -111,7 +111,7 @@ function draw() {
     Watercolor.paint({
       base: poly, color: col, paper: pal.paper, rng: G.rng,
       reach: Math.max(2, reach - 1), layers: layers, detail: 2, bleed: bleed * 0.9,
-      pigment: pig, bloom: 0, grain: grain * 0.5, outline: false, shadow: false,
+      pigment: pig, edge: 0.12, bloom: 0, grain: grain * 0.5, outline: false, shadow: false,
     });
     if (i === nH - 1) frontY = baseY;
   }
