@@ -3,6 +3,14 @@
   "author": "dmaris70",
   "projects": [
     {
+      "slug": "007-watercolor-landscape",
+      "title": "Watercolor Landscape",
+      "year": 2026,
+      "tools": ["p5.js"],
+      "description": "A generative watercolour landscape — sun, layered noise-ridge hills and trees — painted entirely with the reusable watercolor module.",
+      "thumb": ""
+    },
+    {
       "slug": "006-grid-collapse",
       "title": "Grid Collapse",
       "year": 2026,
