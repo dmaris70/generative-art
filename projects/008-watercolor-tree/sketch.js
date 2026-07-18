@@ -1,13 +1,13 @@
-// Watercolor Tree — identify each area, then paint it with watercolour.
+// Watercolor Tree — identify each area, then paint each with the real module.
 //
 //   1. binarise the ink;
 //   2. flood-fill from the borders → BACKGROUND (paper + sky gaps) — left white;
 //   3. label the enclosed pixels into connected components — each leaf, flower,
 //      shape, the trunk, each grass blade is its own region;
-//   4. give each region a colour by zone/size/shape;
-//   5. paint every region with the watercolour controls: a distance-to-edge field
-//      drives EDGE POOLING (darker rim) and CENTRE BLOOM (lighter middle) per cell,
-//      plus GRAIN and BLEED (spread past the lines). Ink overlaid on top.
+//   4. trace each region to a polygon and run it through Watercolor.paint(),
+//      clipped to the cell, so every area gets true layered watercolour bleed
+//      with the full control set (reach, layers, bleed, edge, bloom, grain,
+//      unevenness). Ink overlaid on top.
 //
 // Drop a PNG/JPG on the canvas, or save it beside this file as tree.png/tree.jpg.
 // Keys: R new colouring · S save PNG.
@@ -16,6 +16,7 @@ let G;
 let img = null;
 
 const PAPER = [248, 246, 240];
+const MAX_CELLS = 360; // cap paints for performance (largest regions first)
 const PALETTES = [
   { leaves: [[96, 132, 64], [120, 152, 78], [74, 108, 56], [142, 162, 86], [102, 138, 70]],
     flowers: [[226, 120, 150], [240, 188, 92], [206, 128, 194], [236, 150, 116], [222, 96, 110]],
@@ -37,13 +38,16 @@ function setup() {
   G = GenArt.create({
     title: 'Watercolor Tree',
     params: {
-      pigment: { value: 13,  min: 4,   max: 22,  step: 1,    label: 'pigment' },
-      edge:    { value: 0.5, min: 0.0, max: 1.2, step: 0.05, label: 'edge pool' },
-      bloom:   { value: 0.35, min: 0.0, max: 1.0, step: 0.05, label: 'centre bloom' },
-      grain:   { value: 0.6, min: 0.0, max: 2.0, step: 0.1,  label: 'grain' },
-      bleed:   { value: 1.4, min: 0.0, max: 5.0, step: 0.2,  label: 'bleed' },
-      flowers: { value: 55,  min: 0,   max: 100, step: 5,    label: 'flowers %' },
-      outline: { value: 100, min: 0,   max: 100, step: 5,    label: 'outline %' },
+      pigment: { value: 12,   min: 4,   max: 22,  step: 1,    label: 'pigment' },
+      reach:   { value: 3,    min: 2,   max: 6,   step: 1,    label: 'bleed reach' },
+      layers:  { value: 2,    min: 1,   max: 4,   step: 1,    label: 'layers' },
+      bleed:   { value: 1.3,  min: 0.4, max: 2.6, step: 0.1,  label: 'bleed' },
+      edge:    { value: 0.5,  min: 0.0, max: 1.2, step: 0.05, label: 'edge pool' },
+      bloom:   { value: 0.4,  min: 0.0, max: 1.0, step: 0.05, label: 'centre bloom' },
+      grain:   { value: 0.7,  min: 0.0, max: 2.0, step: 0.1,  label: 'grain' },
+      uneven:  { value: 0.15, min: 0.0, max: 1.0, step: 0.05, label: 'unevenness' },
+      flowers: { value: 55,   min: 0,   max: 100, step: 5,    label: 'flowers %' },
+      outline: { value: 100,  min: 0,   max: 100, step: 5,    label: 'outline %' },
     },
     onReset: function () { redraw(); },
   });
@@ -73,11 +77,10 @@ function jitter(c, rng, amt) {
   const f = 1 + (rng() * 2 - 1) * amt;
   return [Math.min(255, c[0] * f), Math.min(255, c[1] * f), Math.min(255, c[2] * f)];
 }
-function hash2(x, y) { const s = Math.sin(x * 12.9898 + y * 78.233) * 43758.5453; return s - Math.floor(s); }
-function clamp255(v) { return v < 0 ? 0 : v > 255 ? 255 : v; }
 
-function buildColoring(rng, pal) {
-  const mw = 480;
+// find enclosed regions → list of cells with a traced polygon + colour
+function findCells(rng, pal) {
+  const mw = 460;
   const mh = Math.max(1, Math.round((mw * img.height) / img.width));
   const N = mw * mh;
 
@@ -90,7 +93,6 @@ function buildColoring(rng, pal) {
   for (let i = 0; i < N; i++) ink[i] = (px[4 * i] + px[4 * i + 1] + px[4 * i + 2]) < 384 ? 1 : 0;
   g.remove();
 
-  // background = non-ink pixels reachable from the border
   const bg = new Uint8Array(N);
   const st = [];
   const seed = function (i) { if (!ink[i] && !bg[i]) { bg[i] = 1; st.push(i); } };
@@ -104,7 +106,6 @@ function buildColoring(rng, pal) {
     if (y < mh - 1) seed(i + mw);
   }
 
-  // label connected components of the enclosed pixels
   const label = new Int32Array(N);
   const info = [null];
   let comp = 0;
@@ -124,76 +125,58 @@ function buildColoring(rng, pal) {
       if (y > 0 && !ink[i - mw] && !bg[i - mw] && !label[i - mw]) { label[i - mw] = comp; q.push(i - mw); }
       if (y < mh - 1 && !ink[i + mw] && !bg[i + mw] && !label[i + mw]) { label[i + mw] = comp; q.push(i + mw); }
     }
-    info[comp] = { area: area, cx: sx / area, cy: sy / area, w: maxx - minx + 1, h: maxy - miny + 1 };
+    info[comp] = { c: comp, area: area, cx: sx / area, cy: sy / area, w: maxx - minx + 1, h: maxy - miny + 1 };
   }
 
-  // colour per region
-  const minArea = Math.max(6, N * 0.00002);
+  // keep the largest regions, colour + trace each
+  const minArea = Math.max(10, N * 0.00004);
+  const kept = [];
+  for (let c = 1; c <= comp; c++) if (info[c].area >= minArea) kept.push(info[c]);
+  kept.sort(function (a, b) { return b.area - a.area; });
+  if (kept.length > MAX_CELLS) kept.length = MAX_CELLS;
+
+  const sX = IW / mw, sY = IH / mh;
   const flowerP = G.param('flowers') / 100;
-  const col = new Array(comp + 1).fill(null);
-  for (let c = 1; c <= comp; c++) {
-    const it = info[c];
-    if (it.area < minArea) continue;
+  const cells = [];
+  for (const it of kept) {
     const ny = it.cy / mh, nx = it.cx / mw;
-    const round = Math.min(it.w, it.h) / Math.max(it.w, it.h);
-    if (ny > 0.85) col[c] = jitter(pal.grass, rng, 0.12);
-    else if (ny > 0.62 && Math.abs(nx - 0.5) < 0.16) col[c] = jitter(pal.trunk, rng, 0.1);
-    else if (it.area < N * 0.0018 && round > 0.5 && rng() < flowerP) col[c] = pal.flowers[Math.floor(rng() * pal.flowers.length)];
+    const roundv = Math.min(it.w, it.h) / Math.max(it.w, it.h);
+    let color;
+    if (ny > 0.85) color = jitter(pal.grass, rng, 0.12);
+    else if (ny > 0.62 && Math.abs(nx - 0.5) < 0.16) color = jitter(pal.trunk, rng, 0.1);
+    else if (it.area < N * 0.0018 && roundv > 0.5 && rng() < flowerP) color = pal.flowers[Math.floor(rng() * pal.flowers.length)];
     else {
       const b = pal.leaves[Math.floor(rng() * pal.leaves.length)];
       const light = 0.9 + (1 - ny) * 0.22;
-      col[c] = jitter([b[0] * light, b[1] * light, b[2] * light], rng, 0.07);
+      color = jitter([b[0] * light, b[1] * light, b[2] * light], rng, 0.07);
     }
-  }
 
-  // distance-to-edge for every enclosed pixel (2-pass chamfer) → drives the
-  // watercolour edge pooling + centre bloom per region
-  const INF = 1e9;
-  const dist = new Float32Array(N);
-  for (let i = 0; i < N; i++) dist[i] = (label[i] && col[label[i]]) ? INF : 0;
-  for (let y = 0; y < mh; y++) for (let x = 0; x < mw; x++) {
-    const i = x + y * mw; if (dist[i] === 0) continue;
-    let d = dist[i];
-    if (x > 0) d = Math.min(d, dist[i - 1] + 1);
-    if (y > 0) d = Math.min(d, dist[i - mw] + 1);
-    if (x > 0 && y > 0) d = Math.min(d, dist[i - mw - 1] + 1.414);
-    if (x < mw - 1 && y > 0) d = Math.min(d, dist[i - mw + 1] + 1.414);
-    dist[i] = d;
+    // trace the region by casting rays from its centroid (star-convex approx)
+    const maxR = 0.5 * Math.max(it.w, it.h) + 3;
+    const nRays = it.area > 2500 ? 22 : it.area > 700 ? 16 : 12;
+    const poly = [];
+    let ok = false;
+    for (let k = 0; k < nRays; k++) {
+      const a = (k / nRays) * TWO_PI, dx = Math.cos(a), dy = Math.sin(a);
+      let lr = 0;
+      for (let r = 1; r <= maxR; r++) {
+        const bx = Math.round(it.cx + dx * r), by = Math.round(it.cy + dy * r);
+        if (bx < 0 || bx >= mw || by < 0 || by >= mh || label[bx + by * mw] !== it.c) break;
+        lr = r;
+      }
+      if (lr > 1) ok = true;
+      poly.push({ x: IX + (it.cx + dx * lr) * sX, y: IY + (it.cy + dy * lr) * sY });
+    }
+    if (!ok) continue;
+    cells.push({
+      poly: poly,
+      cx: IX + it.cx * sX,
+      cy: IY + it.cy * sY,
+      r: Math.sqrt(it.area / Math.PI) * sX,
+      color: color,
+    });
   }
-  for (let y = mh - 1; y >= 0; y--) for (let x = mw - 1; x >= 0; x--) {
-    const i = x + y * mw; if (dist[i] === 0) continue;
-    let d = dist[i];
-    if (x < mw - 1) d = Math.min(d, dist[i + 1] + 1);
-    if (y < mh - 1) d = Math.min(d, dist[i + mw] + 1);
-    if (x < mw - 1 && y < mh - 1) d = Math.min(d, dist[i + mw + 1] + 1.414);
-    if (x > 0 && y < mh - 1) d = Math.min(d, dist[i + mw - 1] + 1.414);
-    dist[i] = d;
-  }
-
-  // shade each region into a colour image
-  const out = createImage(mw, mh);
-  out.loadPixels();
-  const edge = G.param('edge');
-  const bloom = G.param('bloom');
-  const grainA = G.param('grain') * 0.35;
-  const alpha = Math.round(140 + G.param('pigment') * 5);
-  const ew = 2 + edge * 7;
-  for (let i = 0; i < N; i++) {
-    const c = label[i] ? col[label[i]] : null, o = 4 * i;
-    if (!c) { out.pixels[o + 3] = 0; continue; }
-    const d = dist[i];
-    const et = Math.min(1, d / ew);
-    const dark = 1 - edge * 0.5 * (1 - et);                 // darker at the rim
-    const bt = Math.min(1, Math.max(0, (d - ew * 1.5) / (ew * 3))); // lighter deep inside
-    const gn = 1 + (hash2(i % mw, (i / mw) | 0) - 0.5) * grainA;
-    let r = c[0] * dark * gn, gg = c[1] * dark * gn, b = c[2] * dark * gn;
-    r += (PAPER[0] - r) * bloom * bt;
-    gg += (PAPER[1] - gg) * bloom * bt;
-    b += (PAPER[2] - b) * bloom * bt;
-    out.pixels[o] = clamp255(r); out.pixels[o + 1] = clamp255(gg); out.pixels[o + 2] = clamp255(b); out.pixels[o + 3] = alpha;
-  }
-  out.updatePixels();
-  return out;
+  return cells;
 }
 
 function draw() {
@@ -206,27 +189,39 @@ function draw() {
   computeFit();
 
   if (img) {
-    const colImg = buildColoring(rng, pal);
-    const bleed = G.param('bleed');   // spreads the colour past the ink lines
-    blendMode(MULTIPLY);
-    if (bleed > 0) {
-      const gg = createGraphics(colImg.width, colImg.height);
-      gg.pixelDensity(1);
-      gg.image(colImg, 0, 0);
-      gg.filter(BLUR, bleed);
-      image(gg, IX, IY, IW, IH);
-      gg.remove();
-    } else {
-      image(colImg, IX, IY, IW, IH);
+    const cells = findCells(rng, pal);
+    const ctx = drawingContext;
+    const reach = G.param('reach'), layers = G.param('layers'), bleed = G.param('bleed');
+    const edge = G.param('edge'), bloom = G.param('bloom'), grain = G.param('grain');
+    const uneven = G.param('uneven'), pig = G.param('pigment');
+
+    for (const cell of cells) {
+      // clip to a slightly enlarged cell so the outward bleed stays (mostly) in
+      ctx.save();
+      ctx.beginPath();
+      for (let i = 0; i < cell.poly.length; i++) {
+        const x = cell.cx + (cell.poly[i].x - cell.cx) * 1.12;
+        const y = cell.cy + (cell.poly[i].y - cell.cy) * 1.12;
+        i ? ctx.lineTo(x, y) : ctx.moveTo(x, y);
+      }
+      ctx.closePath();
+      ctx.clip();
+      Watercolor.paint({
+        base: cell.poly, cx: cell.cx, cy: cell.cy, r: cell.r,
+        color: cell.color, paper: PAPER, rng: rng,
+        reach: reach, layers: layers, detail: 3, bleed: bleed,
+        pigment: pig, edge: edge, bloom: bloom, grain: grain,
+        weightVar: uneven, outline: false, shadow: false,
+      });
+      ctx.restore();
     }
-    blendMode(BLEND);
 
     const a = G.param('outline') / 100;
     if (a > 0) {
       blendMode(MULTIPLY);
-      drawingContext.globalAlpha = a;
+      ctx.globalAlpha = a;
       image(img, IX, IY, IW, IH);
-      drawingContext.globalAlpha = 1;
+      ctx.globalAlpha = 1;
       blendMode(BLEND);
     }
   } else {
