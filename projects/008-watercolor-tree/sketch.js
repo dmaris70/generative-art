@@ -45,6 +45,7 @@ function setup() {
       bleed:   { value: 1.2, min: 0.6, max: 2.2, step: 0.1, label: 'bleed' },
       pigment: { value: 13,  min: 4,   max: 22,  step: 1,   label: 'pigment' },
       trunkW:  { value: 1.0, min: 0.4, max: 2.0, step: 0.1, label: 'trunk width' },
+      outline: { value: 100, min: 0,   max: 100, step: 5,   label: 'outline %' },
       grain:   { value: 0.8, min: 0.0, max: 2.0, step: 0.1, label: 'grain' },
     },
     onReset: function () { redraw(); },
@@ -198,10 +199,17 @@ function draw() {
   ctx.restore();
 
   // --- overlay the line drawing (ink stays; white lets colour show) ---
+  // outline % fades the ink: 100 = full black lines, lower = the watercolour
+  // dominates with the drawing sitting faintly behind the wash
   if (img) {
-    blendMode(MULTIPLY);
-    image(img, IX, IY, IW, IH);
-    blendMode(BLEND);
+    const a = G.param('outline') / 100;
+    if (a > 0) {
+      blendMode(MULTIPLY);
+      ctx.globalAlpha = a;
+      image(img, IX, IY, IW, IH);
+      ctx.globalAlpha = 1;
+      blendMode(BLEND);
+    }
   } else {
     noStroke();
     fill(120, 116, 108);
