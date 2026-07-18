@@ -23,11 +23,14 @@ function setup() {
       palette: { value: 0,   min: 0,   max: 5,   step: 1,    label: 'palette 0-5' },
       detail:  { value: 5,   min: 1,   max: 12,  step: 1,    label: 'detail' },
       smooth:  { value: 1.6, min: 0.0, max: 5.0, step: 0.2,  label: 'smooth' },
+      reach:   { value: 4,   min: 2,   max: 6,   step: 1,    label: 'bleed reach' },
+      layers:  { value: 3,   min: 1,   max: 4,   step: 1,    label: 'layers' },
+      bleed:   { value: 1.4, min: 0.4, max: 2.4, step: 0.1,  label: 'bleed' },
       pigment: { value: 15,  min: 4,   max: 26,  step: 1,    label: 'pigment' },
       edge:    { value: 0.5, min: 0.0, max: 1.2, step: 0.05, label: 'edge pool' },
       bloom:   { value: 0.3, min: 0.0, max: 1.0, step: 0.05, label: 'centre bloom' },
       grain:   { value: 0.7, min: 0.0, max: 2.0, step: 0.1,  label: 'grain' },
-      bleed:   { value: 0.4, min: 0.0, max: 3.0, step: 0.1,  label: 'soften' },
+      texture: { value: 60,  min: 0,   max: 140, step: 10,   label: 'texture (regions)' },
       ink:     { value: 90,  min: 0,   max: 100, step: 5,    label: 'ink %' },
       handdrawn:{ value: 0,  min: 0,   max: 4.0, step: 0.2,  label: 'hand-drawn' },
       filledges:{ value: 0,  min: 0,   max: 1,   step: 1,    label: 'fill edges' },
@@ -110,6 +113,37 @@ function boxBlur(a, w, h, r) {
     for (let y = 0; y < h; y++) { a[x + y * w] = s * n; s += t[x + cl(y + r + 1, 0, h - 1) * w] - t[x + cl(y - r, 0, h - 1) * w]; } }
 }
 
+// Moore-neighbour boundary tracing → a region's actual contour (handles
+// concave/pointed shapes). Ported from the tree colorizer.
+const MDX = [1, 1, 0, -1, -1, -1, 0, 1];
+const MDY = [0, 1, 1, 1, 0, -1, -1, -1];
+function traceContour(label, comp, mw, mh, start) {
+  let cx = start % mw, cy = (start / mw) | 0, back = 4;
+  const sx0 = cx, sy0 = cy, out = [], maxSteps = 8 * (mw + mh) + 64;
+  let steps = 0;
+  do {
+    out.push([cx, cy]);
+    let found = -1;
+    for (let k = 1; k <= 8; k++) { const d = (back + k) % 8, nx = cx + MDX[d], ny = cy + MDY[d];
+      if (nx >= 0 && nx < mw && ny >= 0 && ny < mh && label[nx + ny * mw] === comp) { found = d; break; } }
+    if (found < 0) break;
+    cx += MDX[found]; cy += MDY[found]; back = (found + 4) % 8; steps++;
+  } while (!(cx === sx0 && cy === sy0) && steps < maxSteps);
+  return out;
+}
+// region → canvas polygon: trace its contour, decimate, wind CW so bleed goes out
+function regionPoly(label, c, s0, mw, mh) {
+  const raw = traceContour(label, c, mw, mh, s0);
+  if (!raw || raw.length < 8) return null;
+  const stride = Math.max(1, Math.floor(raw.length / 48));
+  const sx = IW / mw, sy = IH / mh, pts = [];
+  for (let i = 0; i < raw.length; i += stride) pts.push({ x: IX + raw[i][0] * sx, y: IY + raw[i][1] * sy });
+  if (pts.length < 6) return null;
+  let a2 = 0; for (let i = 0; i < pts.length; i++) { const p = pts[i], q = pts[(i + 1) % pts.length]; a2 += p.x * q.y - q.x * p.y; }
+  if (a2 > 0) pts.reverse();
+  return pts;
+}
+
 function draw() {
   randomSeed(G.seed); noiseSeed(G.seed);
   const rng = Watercolor.makeRng(G.seed);
@@ -144,14 +178,14 @@ function draw() {
     }
     for (let s = 0; s < N; s++) {
       if (ink[s] || bg[s] || label[s]) continue; comp++;
-      let area = 0; stack.length = 0; stack.push(s); label[s] = comp;
-      while (stack.length) { const i = stack.pop(), x = i % mw, y = (i / mw) | 0; area++;
+      let area = 0, sx = 0, sy = 0; stack.length = 0; stack.push(s); label[s] = comp;
+      while (stack.length) { const i = stack.pop(), x = i % mw, y = (i / mw) | 0; area++; sx += x; sy += y;
         if (x > 0 && !ink[i - 1] && !bg[i - 1] && !label[i - 1]) { label[i - 1] = comp; stack.push(i - 1); }
         if (x < mw - 1 && !ink[i + 1] && !bg[i + 1] && !label[i + 1]) { label[i + 1] = comp; stack.push(i + 1); }
         if (y > 0 && !ink[i - mw] && !bg[i - mw] && !label[i - mw]) { label[i - mw] = comp; stack.push(i - mw); }
         if (y < mh - 1 && !ink[i + mw] && !bg[i + mw] && !label[i + mw]) { label[i + mw] = comp; stack.push(i + mw); }
       }
-      info[comp] = { c: comp, area: area, col: jitter(pal.colors[Math.floor(rng() * pal.colors.length)], rng, 0.1) };
+      info[comp] = { c: comp, area: area, s0: s, cx: sx / area, cy: sy / area, col: jitter(pal.colors[Math.floor(rng() * pal.colors.length)], rng, 0.1) };
     }
   } else {
     // PHOTO / COLOURED: smooth → colour-quantise → connected components; sample avg
@@ -162,16 +196,16 @@ function draw() {
     for (let i = 0; i < N; i++) key[i] = (Math.round(R[i] / q) << 16) | (Math.round(Gc[i] / q) << 8) | Math.round(B[i] / q);
     for (let s = 0; s < N; s++) {
       if (label[s]) continue; comp++; const k = key[s];
-      let area = 0, sr = 0, sg = 0, sb = 0; stack.length = 0; stack.push(s); label[s] = comp;
+      let area = 0, sr = 0, sg = 0, sb = 0, sx = 0, sy = 0; stack.length = 0; stack.push(s); label[s] = comp;
       while (stack.length) { const i = stack.pop(), x = i % mw, y = (i / mw) | 0;
-        area++; sr += px[4 * i]; sg += px[4 * i + 1]; sb += px[4 * i + 2];
+        area++; sr += px[4 * i]; sg += px[4 * i + 1]; sb += px[4 * i + 2]; sx += x; sy += y;
         if (x > 0 && !label[i - 1] && key[i - 1] === k) { label[i - 1] = comp; stack.push(i - 1); }
         if (x < mw - 1 && !label[i + 1] && key[i + 1] === k) { label[i + 1] = comp; stack.push(i + 1); }
         if (y > 0 && !label[i - mw] && key[i - mw] === k) { label[i - mw] = comp; stack.push(i - mw); }
         if (y < mh - 1 && !label[i + mw] && key[i + mw] === k) { label[i + mw] = comp; stack.push(i + mw); }
       }
       const sampled = [sr / area, sg / area, sb / area];
-      info[comp] = { c: comp, area: area, col: pal.name === 'Auto' ? sampled : nearestPal(sampled, pal.colors) };
+      info[comp] = { c: comp, area: area, s0: s, cx: sx / area, cy: sy / area, col: pal.name === 'Auto' ? sampled : nearestPal(sampled, pal.colors) };
     }
   }
 
@@ -210,12 +244,35 @@ function draw() {
     out.pixels[o] = clamp255(r); out.pixels[o + 1] = clamp255(gg); out.pixels[o + 2] = clamp255(b); out.pixels[o + 3] = alpha;
   }
   out.updatePixels();
-  const soft = G.param('bleed');
-  // dark backgrounds: draw colours normally (MULTIPLY would just darken them)
+  // flat underpainting: full coverage + correct colours for every region (no gaps).
+  // dark backgrounds draw normally (MULTIPLY would just crush the bright hues).
   blendMode(darkBg ? BLEND : MULTIPLY);
-  if (soft > 0.05) { const gg2 = createGraphics(mw, mh); gg2.pixelDensity(1); gg2.image(out, 0, 0); gg2.filter(BLUR, soft); image(gg2, IX, IY, IW, IH); gg2.remove(); }
-  else image(out, IX, IY, IW, IH);
+  image(out, IX, IY, IW, IH);
   blendMode(BLEND);
+
+  // REAL watercolour texture — paint the largest regions with the Watercolor
+  // module over the flat base: progressive evolution bleed, lobed fingered rims,
+  // edge pooling, granulation, drawn as crisp vector polygons at canvas resolution
+  // (not the 540px upscale). Largest first → back-to-front, small objects on top.
+  // Light grounds only: the module's MULTIPLY build-up needs light paper to read.
+  const nTex = Math.round(G.param('texture'));
+  if (!darkBg && nTex > 0) {
+    const reach = G.param('reach'), lyr = G.param('layers'), bmag = G.param('bleed');
+    const sxs = IW / mw, sys = IH / mh, list = [];
+    for (let c = 1; c <= comp; c++) { const it = info[c]; if (it && it.col && it.area > N * 0.00004) list.push(c); }
+    list.sort(function (a, b) { return info[b].area - info[a].area; });
+    const lim = Math.min(nTex, list.length);
+    for (let k = 0; k < lim; k++) {
+      const c = list[k], it = info[c], poly = regionPoly(label, c, it.s0, mw, mh);
+      if (!poly) continue;
+      Watercolor.paint({
+        base: poly, cx: IX + it.cx * sxs, cy: IY + it.cy * sys, r: Math.sqrt(it.area / Math.PI) * sxs,
+        color: it.col, paper: paperColor, rng: rng,
+        reach: reach, layers: lyr, detail: 3, bleed: bmag, pigment: pig,
+        edge: edge, bloom: bloom, grain: G.param('grain'), outline: false, shadow: false,
+      });
+    }
+  }
 
   // ink overlay — 'ink %' opacity; 'hand-drawn' wobbles the lines; colour = palette ink
   const ee = G.param('ink') / 100, hd = G.param('handdrawn');
