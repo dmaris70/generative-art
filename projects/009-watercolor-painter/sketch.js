@@ -49,6 +49,21 @@ function computeFit() {
 }
 function clamp255(v) { return v < 0 ? 0 : v > 255 ? 255 : v; }
 function hash2(x, y) { const s = Math.sin(x * 12.9898 + y * 78.233) * 43758.5453; return s - Math.floor(s); }
+function jitter(c, rng, amt) { const f = 1 + (rng() * 2 - 1) * amt; return [clamp255(c[0] * f), clamp255(c[1] * f), clamp255(c[2] * f)]; }
+
+// a harmonious palette for colouring line art (cells with no source colour)
+const LINE_PAL = [
+  [120, 156, 88], [86, 138, 156], [206, 128, 84], [214, 176, 92], [166, 108, 158],
+  [206, 116, 138], [96, 128, 178], [138, 166, 112], [224, 156, 116], [150, 126, 96],
+  [92, 150, 138], [190, 140, 180],
+];
+// detect a line drawing: mostly white, low colour saturation
+function isLineArt(px, N) {
+  let white = 0, sat = 0, n = 0;
+  for (let i = 0; i < N; i += 7) { const r = px[4 * i], g = px[4 * i + 1], b = px[4 * i + 2];
+    sat += Math.max(r, g, b) - Math.min(r, g, b); if (Math.max(r, g, b) > 225) white++; n++; }
+  return (sat / n) < 22 && (white / n) > 0.5;
+}
 
 // separable box blur on a Float32 channel
 function boxBlur(a, w, h, r) {
@@ -74,31 +89,48 @@ function draw() {
   const mw = 540, mh = Math.max(1, Math.round((mw * img.height) / img.width)), N = mw * mh;
   const g = createGraphics(mw, mh); g.pixelDensity(1); g.image(img, 0, 0, mw, mh); g.loadPixels();
   const px = g.pixels;
-  const R = new Float32Array(N), Gc = new Float32Array(N), B = new Float32Array(N);
-  for (let i = 0; i < N; i++) { R[i] = px[4 * i]; Gc[i] = px[4 * i + 1]; B[i] = px[4 * i + 2]; }
-  const sm = Math.round(G.param('smooth')); boxBlur(R, mw, mh, sm); boxBlur(Gc, mw, mh, sm); boxBlur(B, mw, mh, sm);
-
-  // quantise colours → key per pixel
-  const levels = 2 + G.param('detail'), q = 255 / (levels - 1);
-  const key = new Int32Array(N);
-  for (let i = 0; i < N; i++) {
-    const qr = Math.round(R[i] / q), qg = Math.round(Gc[i] / q), qb = Math.round(B[i] / q);
-    key[i] = (qr << 16) | (qg << 8) | qb;
-  }
-
-  // connected components of equal key
+  const lineart = isLineArt(px, N);
   const label = new Int32Array(N); const info = [null]; let comp = 0; const stack = [];
-  for (let s = 0; s < N; s++) {
-    if (label[s]) continue; comp++; const k = key[s];
-    let area = 0, sr = 0, sg = 0, sb = 0, cx = 0, cy = 0; stack.length = 0; stack.push(s); label[s] = comp;
-    while (stack.length) { const i = stack.pop(), x = i % mw, y = (i / mw) | 0;
-      area++; sr += px[4 * i]; sg += px[4 * i + 1]; sb += px[4 * i + 2]; cx += x; cy += y;
-      if (x > 0 && !label[i - 1] && key[i - 1] === k) { label[i - 1] = comp; stack.push(i - 1); }
-      if (x < mw - 1 && !label[i + 1] && key[i + 1] === k) { label[i + 1] = comp; stack.push(i + 1); }
-      if (y > 0 && !label[i - mw] && key[i - mw] === k) { label[i - mw] = comp; stack.push(i - mw); }
-      if (y < mh - 1 && !label[i + mw] && key[i + mw] === k) { label[i + mw] = comp; stack.push(i + mw); }
+
+  if (lineart) {
+    // LINE ART: ink = dark; background = non-ink reachable from the border; each
+    // enclosed cell → a palette colour (the drawing's own line-art coloring book)
+    const ink = new Uint8Array(N), bg = new Uint8Array(N);
+    for (let i = 0; i < N; i++) ink[i] = (px[4 * i] + px[4 * i + 1] + px[4 * i + 2]) < 384 ? 1 : 0;
+    const seed = function (i) { if (!ink[i] && !bg[i]) { bg[i] = 1; stack.push(i); } };
+    for (let x = 0; x < mw; x++) { seed(x); seed(x + (mh - 1) * mw); }
+    for (let y = 0; y < mh; y++) { seed(y * mw); seed(mw - 1 + y * mw); }
+    while (stack.length) { const i = stack.pop(), x = i % mw, y = (i / mw) | 0; if (x > 0) seed(i - 1); if (x < mw - 1) seed(i + 1); if (y > 0) seed(i - mw); if (y < mh - 1) seed(i + mw); }
+    for (let s = 0; s < N; s++) {
+      if (ink[s] || bg[s] || label[s]) continue; comp++;
+      let area = 0; stack.length = 0; stack.push(s); label[s] = comp;
+      while (stack.length) { const i = stack.pop(), x = i % mw, y = (i / mw) | 0; area++;
+        if (x > 0 && !ink[i - 1] && !bg[i - 1] && !label[i - 1]) { label[i - 1] = comp; stack.push(i - 1); }
+        if (x < mw - 1 && !ink[i + 1] && !bg[i + 1] && !label[i + 1]) { label[i + 1] = comp; stack.push(i + 1); }
+        if (y > 0 && !ink[i - mw] && !bg[i - mw] && !label[i - mw]) { label[i - mw] = comp; stack.push(i - mw); }
+        if (y < mh - 1 && !ink[i + mw] && !bg[i + mw] && !label[i + mw]) { label[i + mw] = comp; stack.push(i + mw); }
+      }
+      info[comp] = { c: comp, area: area, col: jitter(LINE_PAL[Math.floor(rng() * LINE_PAL.length)], rng, 0.12) };
     }
-    info[comp] = { c: comp, area: area, col: [sr / area, sg / area, sb / area], cx: cx / area, cy: cy / area, s0: s };
+  } else {
+    // PHOTO / COLOURED: smooth → colour-quantise → connected components; sample avg
+    const R = new Float32Array(N), Gc = new Float32Array(N), B = new Float32Array(N);
+    for (let i = 0; i < N; i++) { R[i] = px[4 * i]; Gc[i] = px[4 * i + 1]; B[i] = px[4 * i + 2]; }
+    const sm = Math.round(G.param('smooth')); boxBlur(R, mw, mh, sm); boxBlur(Gc, mw, mh, sm); boxBlur(B, mw, mh, sm);
+    const levels = 2 + G.param('detail'), q = 255 / (levels - 1), key = new Int32Array(N);
+    for (let i = 0; i < N; i++) key[i] = (Math.round(R[i] / q) << 16) | (Math.round(Gc[i] / q) << 8) | Math.round(B[i] / q);
+    for (let s = 0; s < N; s++) {
+      if (label[s]) continue; comp++; const k = key[s];
+      let area = 0, sr = 0, sg = 0, sb = 0; stack.length = 0; stack.push(s); label[s] = comp;
+      while (stack.length) { const i = stack.pop(), x = i % mw, y = (i / mw) | 0;
+        area++; sr += px[4 * i]; sg += px[4 * i + 1]; sb += px[4 * i + 2];
+        if (x > 0 && !label[i - 1] && key[i - 1] === k) { label[i - 1] = comp; stack.push(i - 1); }
+        if (x < mw - 1 && !label[i + 1] && key[i + 1] === k) { label[i + 1] = comp; stack.push(i + 1); }
+        if (y > 0 && !label[i - mw] && key[i - mw] === k) { label[i - mw] = comp; stack.push(i - mw); }
+        if (y < mh - 1 && !label[i + mw] && key[i + mw] === k) { label[i + mw] = comp; stack.push(i + mw); }
+      }
+      info[comp] = { c: comp, area: area, col: [sr / area, sg / area, sb / area] };
+    }
   }
 
   g.remove();
@@ -121,7 +153,9 @@ function draw() {
   const out = createImage(mw, mh); out.loadPixels();
   const pig = G.param('pigment'), alpha = Math.round(150 + pig * 5), ewb = 2 + edge * 8;
   for (let i = 0; i < N; i++) {
-    const c = info[label[i]].col, o = 4 * i;
+    const o = 4 * i, lb = label[i];
+    if (!lb) { out.pixels[o + 3] = 0; continue; } // ink / background → paper
+    const c = info[lb].col;
     // wobble the edge width with noise so the pooled rim reads organic, not clean
     const ew = ewb * (0.6 + 0.8 * ((Math.sin((i % mw) * 0.7) + Math.sin(((i / mw) | 0) * 0.7)) * 0.25 + 0.5));
     const d = dist[i], et = Math.min(1, d / ew), dk = 1 - edge * 0.45 * (1 - et);
@@ -138,20 +172,25 @@ function draw() {
   else image(out, IX, IY, IW, IH);
   blendMode(BLEND);
 
-  // optional ink edges over the top (definition)
-  const ee = G.param('edges') / 100;
+  // ink overlay — for line art the drawing's own lines ARE the picture, so keep
+  // them strong; for photos it's an optional edge accent
+  const ee = lineart ? Math.max(0.9, G.param('edges') / 100) : G.param('edges') / 100;
   if (ee > 0) {
-    const eg = createGraphics(mw, mh); eg.pixelDensity(1); eg.image(img, 0, 0, mw, mh); eg.loadPixels();
-    const ep = eg.pixels; const out = createImage(mw, mh); out.loadPixels();
-    for (let y = 0; y < mh; y++) for (let x = 0; x < mw; x++) {
-      const i = x + y * mw, o = 4 * i;
-      if (x === 0 || y === 0 || x === mw - 1 || y === mh - 1) { out.pixels[o + 3] = 0; continue; }
-      const gx = (ep[4 * (i + 1)] - ep[4 * (i - 1)]), gy = (ep[4 * (i + mw)] - ep[4 * (i - mw)]);
-      const m = Math.min(255, Math.abs(gx) + Math.abs(gy));
-      out.pixels[o] = 30; out.pixels[o + 1] = 28; out.pixels[o + 2] = 34; out.pixels[o + 3] = m > 40 ? m : 0;
+    if (lineart) {
+      blendMode(MULTIPLY); drawingContext.globalAlpha = ee; image(img, IX, IY, IW, IH); drawingContext.globalAlpha = 1; blendMode(BLEND);
+    } else {
+      const eg = createGraphics(mw, mh); eg.pixelDensity(1); eg.image(img, 0, 0, mw, mh); eg.loadPixels();
+      const ep = eg.pixels; const eo = createImage(mw, mh); eo.loadPixels();
+      for (let y = 0; y < mh; y++) for (let x = 0; x < mw; x++) {
+        const i = x + y * mw, o = 4 * i;
+        if (x === 0 || y === 0 || x === mw - 1 || y === mh - 1) { eo.pixels[o + 3] = 0; continue; }
+        const gx = (ep[4 * (i + 1)] - ep[4 * (i - 1)]), gy = (ep[4 * (i + mw)] - ep[4 * (i - mw)]);
+        const m = Math.min(255, Math.abs(gx) + Math.abs(gy));
+        eo.pixels[o] = 30; eo.pixels[o + 1] = 28; eo.pixels[o + 2] = 34; eo.pixels[o + 3] = m > 40 ? m : 0;
+      }
+      eo.updatePixels(); eg.remove();
+      blendMode(MULTIPLY); drawingContext.globalAlpha = ee; image(eo, IX, IY, IW, IH); drawingContext.globalAlpha = 1; blendMode(BLEND);
     }
-    out.updatePixels(); eg.remove();
-    blendMode(MULTIPLY); drawingContext.globalAlpha = ee; image(out, IX, IY, IW, IH); drawingContext.globalAlpha = 1; blendMode(BLEND);
   }
 }
 
