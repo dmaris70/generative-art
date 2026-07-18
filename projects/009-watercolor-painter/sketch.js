@@ -144,6 +144,23 @@ function regionPoly(label, c, s0, mw, mh) {
   return pts;
 }
 
+// dark-ground texture: build pigment as GLOW (ADD blend) instead of the module's
+// MULTIPLY, so bright colours accumulate out of the dark paper. Overlapping inner
+// layers → bright core; sparse outer fingers → dim halo that fades into the black.
+function paintGlow(poly, color, o) {
+  const layers = Watercolor.watercolorize(poly, { reach: o.reach, layers: o.layers, detail: 3, bleed: o.bleed, rng: o.rng });
+  // scale the per-layer add so full overlap converges to roughly the region
+  // colour, not white — bright pastel hues (cyan, cream) blow out otherwise.
+  const n = layers.length, a = Math.min(255, (o.pigment * 4) / Math.max(1, n));
+  blendMode(ADD); noStroke();
+  for (let i = 0; i < n; i++) {
+    const L = layers[i], j = 0.6 + o.rng() * 0.35;
+    fill(color[0] * j, color[1] * j, color[2] * j, a);
+    beginShape(); for (const p of L) vertex(p.x, p.y); endShape(CLOSE);
+  }
+  blendMode(BLEND);
+}
+
 function draw() {
   randomSeed(G.seed); noiseSeed(G.seed);
   const rng = Watercolor.makeRng(G.seed);
@@ -225,9 +242,14 @@ function draw() {
     if (x < mw - 1) d = Math.min(d, dist[i + 1] + 1); if (y < mh - 1) d = Math.min(d, dist[i + mw] + 1);
     if (x < mw - 1 && y < mh - 1) d = Math.min(d, dist[i + mw + 1] + 1.414); if (x > 0 && y < mh - 1) d = Math.min(d, dist[i + mw - 1] + 1.414); dist[i] = d; }
 
-  // one shaded region-colour image → correct colours, no cross-region multiply
+  // one shaded region-colour image → correct colours, no cross-region multiply.
+  // on dark grounds WITH glow texture, keep the base dim (a faint ground) so the
+  // ADD glow builds the bright cores instead of the base blowing out to white.
+  const nTexEarly = Math.round(G.param('texture'));
   const out = createImage(mw, mh); out.loadPixels();
-  const pig = G.param('pigment'), alpha = Math.round(150 + pig * 5), ewb = 2 + edge * 8;
+  const pig = G.param('pigment');
+  const alpha = (darkBg && nTexEarly > 0) ? Math.round(60 + pig * 2) : Math.round(150 + pig * 5);
+  const ewb = 2 + edge * 8;
   for (let i = 0; i < N; i++) {
     const o = 4 * i, lb = label[i];
     if (!lb) { out.pixels[o + 3] = 0; continue; } // ink / background → paper
@@ -250,13 +272,13 @@ function draw() {
   image(out, IX, IY, IW, IH);
   blendMode(BLEND);
 
-  // REAL watercolour texture — paint the largest regions with the Watercolor
-  // module over the flat base: progressive evolution bleed, lobed fingered rims,
-  // edge pooling, granulation, drawn as crisp vector polygons at canvas resolution
-  // (not the 540px upscale). Largest first → back-to-front, small objects on top.
-  // Light grounds only: the module's MULTIPLY build-up needs light paper to read.
+  // REAL watercolour texture — paint the largest regions over the flat base:
+  // progressive evolution bleed, lobed fingered rims, granulation, drawn as crisp
+  // vector polygons at canvas resolution (not the 540px upscale). Largest first →
+  // back-to-front, small objects on top. Light grounds use the module's MULTIPLY
+  // build-up; dark grounds use ADD glow so bright hues rise out of the black.
   const nTex = Math.round(G.param('texture'));
-  if (!darkBg && nTex > 0) {
+  if (nTex > 0) {
     const reach = G.param('reach'), lyr = G.param('layers'), bmag = G.param('bleed');
     const sxs = IW / mw, sys = IH / mh, list = [];
     for (let c = 1; c <= comp; c++) { const it = info[c]; if (it && it.col && it.area > N * 0.00004) list.push(c); }
@@ -265,12 +287,16 @@ function draw() {
     for (let k = 0; k < lim; k++) {
       const c = list[k], it = info[c], poly = regionPoly(label, c, it.s0, mw, mh);
       if (!poly) continue;
-      Watercolor.paint({
-        base: poly, cx: IX + it.cx * sxs, cy: IY + it.cy * sys, r: Math.sqrt(it.area / Math.PI) * sxs,
-        color: it.col, paper: paperColor, rng: rng,
-        reach: reach, layers: lyr, detail: 3, bleed: bmag, pigment: pig,
-        edge: edge, bloom: bloom, grain: G.param('grain'), outline: false, shadow: false,
-      });
+      if (darkBg) {
+        paintGlow(poly, it.col, { reach: reach, layers: lyr, bleed: bmag, pigment: pig, rng: rng });
+      } else {
+        Watercolor.paint({
+          base: poly, cx: IX + it.cx * sxs, cy: IY + it.cy * sys, r: Math.sqrt(it.area / Math.PI) * sxs,
+          color: it.col, paper: paperColor, rng: rng,
+          reach: reach, layers: lyr, detail: 3, bleed: bmag, pigment: pig,
+          edge: edge, bloom: bloom, grain: G.param('grain'), outline: false, shadow: false,
+        });
+      }
     }
   }
 
