@@ -13,17 +13,17 @@ const PALETTES = [
   { // warm dusk — cool dusty blues/purples receding under a peach sky
     paper: [240, 234, 223], sky: [236, 206, 184], sun: [232, 138, 74],
     hills: [[176, 160, 188], [144, 134, 178], [108, 106, 156], [76, 82, 126]],
-    tree: [64, 84, 74], trunk: [88, 62, 46],
+    tree: [64, 84, 74], trunk: [88, 62, 46], cloud: [214, 200, 208],
   },
   { // cool morning — greens and teals into a pale blue sky
     paper: [236, 238, 233], sky: [200, 220, 224], sun: [238, 206, 128],
     hills: [[176, 194, 176], [130, 168, 156], [92, 138, 128], [64, 108, 100]],
-    tree: [72, 108, 82], trunk: [80, 66, 54],
+    tree: [72, 108, 82], trunk: [80, 66, 54], cloud: [202, 214, 220],
   },
   { // muted autumn — ochre, olive and umber
     paper: [242, 235, 224], sky: [230, 208, 180], sun: [216, 108, 66],
     hills: [[196, 168, 118], [170, 134, 88], [136, 104, 70], [100, 78, 56]],
-    tree: [138, 104, 54], trunk: [92, 64, 44],
+    tree: [138, 104, 54], trunk: [92, 64, 44], cloud: [222, 210, 194],
   },
 ];
 
@@ -35,6 +35,7 @@ function setup() {
     title: 'Watercolor Landscape',
     params: {
       hills:   { value: 3,    min: 2,   max: 5,   step: 1,    label: 'hills' },
+      clouds:  { value: 3,    min: 0,   max: 7,   step: 1,    label: 'clouds' },
       trees:   { value: 7,    min: 0,   max: 16,  step: 1,    label: 'trees' },
       bleed:   { value: 1.1,  min: 0.4, max: 2.4, step: 0.1,  label: 'bleed' },
       reach:   { value: 4,    min: 2,   max: 8,   step: 1,    label: 'bleed reach' },
@@ -59,6 +60,20 @@ function ridgePoly(baseY, amp, off) {
   }
   pts.push({ x: width + 60, y: height + 300 });
   pts.push({ x: -60, y: height + 300 });
+  return pts;
+}
+
+// a puffy cloud polygon: lumpy on top (noise), flatter along the bottom
+function cloudPoly(cx, cy, w, h) {
+  const pts = [];
+  const n = 28;
+  for (let i = 0; i < n; i++) {
+    const a = (i / n) * TWO_PI;
+    const lump = 1 + 0.3 * (noise(Math.cos(a) * 1.6 + cx * 0.005, Math.sin(a) * 1.6 + 20) - 0.5) * 2;
+    const px = cx + Math.cos(a) * w * lump;
+    const py = Math.sin(a) > 0 ? cy + Math.sin(a) * h * 0.45 : cy + Math.sin(a) * h * lump;
+    pts.push({ x: px, y: py });
+  }
   return pts;
 }
 
@@ -99,6 +114,22 @@ function draw() {
     grain: grain * 0.5, outline: true, shadow: false,
   });
 
+  // clouds — outlined watercolour shapes drifting in the sky
+  const nC = G.param('clouds');
+  for (let i = 0; i < nC; i++) {
+    const cw = width * (0.08 + G.rng() * 0.07);
+    const cx = width * (0.06 + G.rng() * 0.88);
+    const cy = height * (0.09 + G.rng() * 0.24);
+    const poly = cloudPoly(cx, cy, cw, cw * 0.5);
+    Watercolor.paint({
+      base: poly, cx: cx, cy: cy, r: cw * 0.6,
+      color: pal.cloud, paper: [250, 250, 250], rng: G.rng,
+      reach: 3, layers: layers, bleed: 1.0,
+      pigment: 8, edge: 0.3, bloom: 0.25, grain: grain * 0.4,
+      outline: true, shadow: false,
+    });
+  }
+
   // layered hills, back (light, high) to front (dark, low)
   const nH = G.param('hills');
   let frontY = horizon;
@@ -111,7 +142,7 @@ function draw() {
     Watercolor.paint({
       base: poly, color: col, paper: pal.paper, rng: G.rng,
       reach: Math.max(2, reach - 1), layers: layers, detail: 2, bleed: bleed * 0.9,
-      pigment: pig, edge: 0.12, bloom: 0, grain: grain * 0.5, outline: false, shadow: false,
+      pigment: pig, edge: 0.12, bloom: 0, grain: grain * 0.5, outline: true, shadow: false,
     });
     if (i === nH - 1) frontY = baseY;
   }
