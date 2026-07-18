@@ -25,11 +25,13 @@ function setup() {
       smooth:  { value: 1.6, min: 0.0, max: 5.0, step: 0.2,  label: 'smooth' },
       reach:   { value: 3,   min: 2,   max: 6,   step: 1,    label: 'bleed reach' },
       layers:  { value: 3,   min: 1,   max: 4,   step: 1,    label: 'layers' },
+      wash:    { value: 2,   min: 1,   max: 5,   step: 1,    label: 'wash (smooth)' },
       bleed:   { value: 1.6, min: 0.4, max: 2.4, step: 0.1,  label: 'bleed' },
       pigment: { value: 17,  min: 4,   max: 26,  step: 1,    label: 'pigment' },
       edge:    { value: 0.55,min: 0.0, max: 1.2, step: 0.05, label: 'edge pool' },
       bloom:   { value: 0.15,min: 0.0, max: 1.0, step: 0.05, label: 'centre bloom' },
       grain:   { value: 0.4, min: 0.0, max: 2.0, step: 0.1,  label: 'grain' },
+      tooth:   { value: 0.35,min: 0.0, max: 1.0, step: 0.05, label: 'paper tooth' },
       outline: { value: 1,   min: 0,   max: 1,   step: 1,    label: 'shape outline' },
       texture: { value: 60,  min: 0,   max: 140, step: 10,   label: 'texture (regions)' },
       seal:    { value: 1,   min: 0,   max: 4,   step: 1,    label: 'seal gaps' },
@@ -339,12 +341,17 @@ function draw() {
     for (let c = 1; c <= comp; c++) { const it = info[c]; if (it && it.col && it.area > N * 0.00004) list.push(c); }
     list.sort(function (a, b) { return info[b].area - info[a].area; });
     const lim = Math.min(nTex, list.length);
+    // 'wash' (Hobbs' ~50 stacked low-opacity layers): more layers = smoother
+    // gradient. Scale per-layer alpha DOWN by the same factor so total pigment
+    // density stays constant — only the step count (smoothness) changes.
+    const washN = Math.max(1, Math.round(G.param('wash')));
+    const effLayers = lyr * washN, effPig = pig / washN;
     // weightVar/preEvolutions → the bleed pools unevenly on a few sides (mixed
     // wet/dry edges: bold soft lobes on some sides, crisper on others). Safe to
     // push weightVar up now that distort() clamps the outward jut to ~edge length.
     const commonOpts = {
-      paper: paperColor, reach: reach, layers: lyr, detail: 3, bleed: bmag, smooth: smoothK,
-      pigment: pig, edge: edge, bloom: bloom, grain: G.param('grain'),
+      paper: paperColor, reach: reach, layers: effLayers, detail: 3, bleed: bmag, smooth: smoothK,
+      pigment: effPig, edge: edge, bloom: bloom, grain: G.param('grain'),
       weightVar: 0.85, preEvolutions: 1, outline: G.param('outline') > 0, shadow: false,
     };
     const batch = [];
@@ -352,7 +359,8 @@ function draw() {
       const c = list[k], it = info[c], poly = regionPoly(label, c, it.s0, mw, mh, cpts);
       if (!poly) continue;
       if (darkBg) {
-        paintGlow(poly, it.col, { reach: reach, layers: lyr, bleed: bmag, smooth: smoothK, pigment: pig, rng: rng });
+        // glow self-normalises alpha by layer count, so keep pig (not effPig)
+        paintGlow(poly, it.col, { reach: reach, layers: effLayers, bleed: bmag, smooth: smoothK, pigment: pig, rng: rng });
       } else {
         // each region gets its own seeded rng so the interleaved draw order below
         // doesn't scramble any single region's appearance (order-independent)
@@ -366,6 +374,25 @@ function draw() {
     // layer-2 of every region, … so adjacent regions' bleed fringes intermix at
     // the boundaries instead of one finished region's halo sitting hard on another.
     if (batch.length) Watercolor.paintBatch(batch, commonOpts);
+  }
+
+  // 'paper tooth' (Hobbs' per-blob grain mask): flick paper-coloured grain over
+  // the wash so pigment reads mottled and the tooth of the paper shows through.
+  // Self-masking — paper-over-paper on the empty margins is invisible; only the
+  // darker pigment is lightened in the grain pattern.
+  const tooth = G.param('tooth');
+  if (tooth > 0.001) {
+    const tImg = createImage(mw, mh); tImg.loadPixels();
+    for (let y = 0; y < mh; y++) for (let x = 0; x < mw; x++) {
+      const i = x + y * mw, o = 4 * i;
+      if (!label[i]) { tImg.pixels[o + 3] = 0; continue; } // only tooth the painted regions
+      // two Perlin octaves → organic paper mottle + fine tooth (no digital speckle)
+      const nz = 0.6 * noise(x * 0.11, y * 0.11) + 0.4 * noise(x * 0.5 + 40, y * 0.5 + 40);
+      tImg.pixels[o] = paperColor[0]; tImg.pixels[o + 1] = paperColor[1]; tImg.pixels[o + 2] = paperColor[2];
+      tImg.pixels[o + 3] = tooth * 70 * nz;
+    }
+    tImg.updatePixels();
+    blendMode(BLEND); image(tImg, IX, IY, IW, IH);
   }
 
   // ink overlay — 'ink %' opacity; 'hand-drawn' wobbles the lines; colour = palette ink
