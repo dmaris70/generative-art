@@ -20,6 +20,7 @@ function setup() {
   G = GenArt.create({
     title: 'Watercolor Painter',
     params: {
+      palette: { value: 0,   min: 0,   max: 5,   step: 1,    label: 'palette 0-5' },
       detail:  { value: 5,   min: 1,   max: 12,  step: 1,    label: 'detail' },
       smooth:  { value: 1.6, min: 0.0, max: 5.0, step: 0.2,  label: 'smooth' },
       pigment: { value: 15,  min: 4,   max: 26,  step: 1,    label: 'pigment' },
@@ -53,24 +54,40 @@ function clamp255(v) { return v < 0 ? 0 : v > 255 ? 255 : v; }
 function hash2(x, y) { const s = Math.sin(x * 12.9898 + y * 78.233) * 43758.5453; return s - Math.floor(s); }
 function jitter(c, rng, amt) { const f = 1 + (rng() * 2 - 1) * amt; return [clamp255(c[0] * f), clamp255(c[1] * f), clamp255(c[2] * f)]; }
 
-// a harmonious palette for colouring line art (cells with no source colour)
+// default palette for colouring line art; index 0 in PALETTES ('Auto')
 const LINE_PAL = [
   [120, 156, 88], [86, 138, 156], [206, 128, 84], [214, 176, 92], [166, 108, 158],
   [206, 116, 138], [96, 128, 178], [138, 166, 112], [224, 156, 116], [150, 126, 96],
   [92, 150, 138], [190, 140, 180],
 ];
-// re-render the ink with a wobbly noise displacement → hand-drawn outlines
-function handDrawnInk(mw, mh, amount) {
+// named palettes: bg = paper/canvas, ink = line colour, colors = cell colours
+const PALETTES = [
+  { name: 'Auto', bg: [248, 246, 240], ink: [26, 24, 30], colors: LINE_PAL },
+  { name: 'Cyber-Noir', bg: [11, 12, 16], ink: [197, 198, 199], colors: [[31, 40, 51], [197, 198, 199], [102, 252, 241], [69, 162, 158]] },
+  { name: 'Desert Flow', bg: [234, 231, 220], ink: [70, 62, 56], colors: [[216, 195, 165], [142, 141, 138], [233, 128, 116], [232, 90, 79]] },
+  { name: 'Vaporwave', bg: [58, 0, 120], ink: [240, 240, 255], colors: [[181, 123, 255], [255, 102, 178], [152, 255, 237], [255, 244, 163]] },
+  { name: 'Mid-Century', bg: [244, 241, 234], ink: [30, 45, 59], colors: [[230, 197, 100], [122, 139, 123], [200, 107, 75], [30, 45, 59]] },
+  { name: 'Acid', bg: [8, 8, 8], ink: [235, 235, 235], colors: [[204, 255, 0], [255, 0, 127], [0, 240, 255], [255, 95, 31]] },
+];
+function nearestPal(c, colors) {
+  let best = colors[0], bd = 1e18;
+  for (const p of colors) { const d = (c[0] - p[0]) ** 2 + (c[1] - p[1]) ** 2 + (c[2] - p[2]) ** 2; if (d < bd) { bd = d; best = p; } }
+  return best;
+}
+// re-render the ink in inkColor, optionally wobbled by a noise field (hand-drawn)
+function buildInk(mw, mh, amount, inkColor) {
   const eg = createGraphics(mw, mh); eg.pixelDensity(1); eg.image(img, 0, 0, mw, mh); eg.loadPixels();
   const sp = eg.pixels, out = createImage(mw, mh); out.loadPixels();
   for (let y = 0; y < mh; y++) for (let x = 0; x < mw; x++) {
-    const dx = (Math.sin(x * 0.09 + y * 0.045) + Math.sin(y * 0.13 + 2)) * amount * 0.5;
-    const dy = (Math.sin(y * 0.09 + x * 0.04 + 1) + Math.sin(x * 0.12)) * amount * 0.5;
-    let sx = Math.round(x + dx), sy = Math.round(y + dy);
+    let sx = x, sy = y;
+    if (amount > 0) {
+      sx = Math.round(x + (Math.sin(x * 0.09 + y * 0.045) + Math.sin(y * 0.13 + 2)) * amount * 0.5);
+      sy = Math.round(y + (Math.sin(y * 0.09 + x * 0.04 + 1) + Math.sin(x * 0.12)) * amount * 0.5);
+    }
     sx = sx < 0 ? 0 : sx >= mw ? mw - 1 : sx; sy = sy < 0 ? 0 : sy >= mh ? mh - 1 : sy;
     const si = sx + sy * mw, o = 4 * (x + y * mw);
     const dark = (sp[4 * si] + sp[4 * si + 1] + sp[4 * si + 2]) / 3;
-    out.pixels[o] = 26; out.pixels[o + 1] = 24; out.pixels[o + 2] = 30;
+    out.pixels[o] = inkColor[0]; out.pixels[o + 1] = inkColor[1]; out.pixels[o + 2] = inkColor[2];
     out.pixels[o + 3] = dark < 165 ? Math.min(255, (165 - dark) * 2.4) : 0;
   }
   out.updatePixels(); eg.remove(); return out;
@@ -96,7 +113,9 @@ function boxBlur(a, w, h, r) {
 function draw() {
   randomSeed(G.seed); noiseSeed(G.seed);
   const rng = Watercolor.makeRng(G.seed);
-  Watercolor.paperTexture([248, 246, 240], Watercolor.makeRng(G.seed ^ 0x9e3779b9), { grain: 7 });
+  const pal = PALETTES[Math.max(0, Math.min(PALETTES.length - 1, Math.round(G.param('palette'))))];
+  const paperColor = pal.bg, darkBg = paperColor[0] + paperColor[1] + paperColor[2] < 330;
+  Watercolor.paperTexture(paperColor, Watercolor.makeRng(G.seed ^ 0x9e3779b9), { grain: 7 });
   computeFit();
 
   if (!img) {
@@ -132,7 +151,7 @@ function draw() {
         if (y > 0 && !ink[i - mw] && !bg[i - mw] && !label[i - mw]) { label[i - mw] = comp; stack.push(i - mw); }
         if (y < mh - 1 && !ink[i + mw] && !bg[i + mw] && !label[i + mw]) { label[i + mw] = comp; stack.push(i + mw); }
       }
-      info[comp] = { c: comp, area: area, col: jitter(LINE_PAL[Math.floor(rng() * LINE_PAL.length)], rng, 0.12) };
+      info[comp] = { c: comp, area: area, col: jitter(pal.colors[Math.floor(rng() * pal.colors.length)], rng, 0.1) };
     }
   } else {
     // PHOTO / COLOURED: smooth → colour-quantise → connected components; sample avg
@@ -151,7 +170,8 @@ function draw() {
         if (y > 0 && !label[i - mw] && key[i - mw] === k) { label[i - mw] = comp; stack.push(i - mw); }
         if (y < mh - 1 && !label[i + mw] && key[i + mw] === k) { label[i + mw] = comp; stack.push(i + mw); }
       }
-      info[comp] = { c: comp, area: area, col: [sr / area, sg / area, sb / area] };
+      const sampled = [sr / area, sg / area, sb / area];
+      info[comp] = { c: comp, area: area, col: pal.name === 'Auto' ? sampled : nearestPal(sampled, pal.colors) };
     }
   }
 
@@ -183,37 +203,43 @@ function draw() {
     const d = dist[i], et = Math.min(1, d / ew), dk = 1 - edge * 0.45 * (1 - et);
     const bt = Math.min(1, Math.max(0, (d - ew * 1.4) / (ew * 5)));
     const gn = 1 + (hash2(i % mw, (i / mw) | 0) - 0.5) * grainA;
+    // bloom pulls toward a lighter tint of the paper (works on dark palettes too)
+    const bl = darkBg ? [Math.min(255, c[0] * 1.4 + 40), Math.min(255, c[1] * 1.4 + 40), Math.min(255, c[2] * 1.4 + 40)] : paperColor;
     let r = c[0] * dk * gn, gg = c[1] * dk * gn, b = c[2] * dk * gn;
-    r += (248 - r) * bloom * bt; gg += (246 - gg) * bloom * bt; b += (240 - b) * bloom * bt;
+    r += (bl[0] - r) * bloom * bt; gg += (bl[1] - gg) * bloom * bt; b += (bl[2] - b) * bloom * bt;
     out.pixels[o] = clamp255(r); out.pixels[o + 1] = clamp255(gg); out.pixels[o + 2] = clamp255(b); out.pixels[o + 3] = alpha;
   }
   out.updatePixels();
   const soft = G.param('bleed');
-  blendMode(MULTIPLY);
+  // dark backgrounds: draw colours normally (MULTIPLY would just darken them)
+  blendMode(darkBg ? BLEND : MULTIPLY);
   if (soft > 0.05) { const gg2 = createGraphics(mw, mh); gg2.pixelDensity(1); gg2.image(out, 0, 0); gg2.filter(BLUR, soft); image(gg2, IX, IY, IW, IH); gg2.remove(); }
   else image(out, IX, IY, IW, IH);
   blendMode(BLEND);
 
-  // ink overlay — 'ink %' opacity; 'hand-drawn' wobbles the lines
+  // ink overlay — 'ink %' opacity; 'hand-drawn' wobbles the lines; colour = palette ink
   const ee = G.param('ink') / 100, hd = G.param('handdrawn');
-  if (ee > 0) {
-    if (lineart) {
-      const inkImg = hd > 0 ? handDrawnInk(mw, mh, hd) : img;
-      blendMode(MULTIPLY); drawingContext.globalAlpha = ee; image(inkImg, IX, IY, IW, IH); drawingContext.globalAlpha = 1; blendMode(BLEND);
-    } else if (ee > 0) {
-      const eg = createGraphics(mw, mh); eg.pixelDensity(1); eg.image(img, 0, 0, mw, mh); eg.loadPixels();
-      const ep = eg.pixels; const eo = createImage(mw, mh); eo.loadPixels();
-      for (let y = 0; y < mh; y++) for (let x = 0; x < mw; x++) {
-        const i = x + y * mw, o = 4 * i;
-        if (x === 0 || y === 0 || x === mw - 1 || y === mh - 1) { eo.pixels[o + 3] = 0; continue; }
-        const gx = (ep[4 * (i + 1)] - ep[4 * (i - 1)]), gy = (ep[4 * (i + mw)] - ep[4 * (i - mw)]);
-        const m = Math.min(255, Math.abs(gx) + Math.abs(gy));
-        eo.pixels[o] = 30; eo.pixels[o + 1] = 28; eo.pixels[o + 2] = 34; eo.pixels[o + 3] = m > 40 ? m : 0;
-      }
-      eo.updatePixels(); eg.remove();
-      blendMode(MULTIPLY); drawingContext.globalAlpha = ee; image(eo, IX, IY, IW, IH); drawingContext.globalAlpha = 1; blendMode(BLEND);
+  if (ee > 0 && lineart) {
+    const inkImg = buildInk(mw, mh, hd, pal.ink);
+    blendMode(BLEND); drawingContext.globalAlpha = ee; image(inkImg, IX, IY, IW, IH); drawingContext.globalAlpha = 1;
+  } else if (ee > 0) {
+    const eg = createGraphics(mw, mh); eg.pixelDensity(1); eg.image(img, 0, 0, mw, mh); eg.loadPixels();
+    const ep = eg.pixels; const eo = createImage(mw, mh); eo.loadPixels();
+    for (let y = 0; y < mh; y++) for (let x = 0; x < mw; x++) {
+      const i = x + y * mw, o = 4 * i;
+      if (x === 0 || y === 0 || x === mw - 1 || y === mh - 1) { eo.pixels[o + 3] = 0; continue; }
+      const gx = (ep[4 * (i + 1)] - ep[4 * (i - 1)]), gy = (ep[4 * (i + mw)] - ep[4 * (i - mw)]);
+      const m = Math.min(255, Math.abs(gx) + Math.abs(gy));
+      eo.pixels[o] = pal.ink[0]; eo.pixels[o + 1] = pal.ink[1]; eo.pixels[o + 2] = pal.ink[2]; eo.pixels[o + 3] = m > 40 ? m : 0;
     }
+    eo.updatePixels(); eg.remove();
+    blendMode(BLEND); drawingContext.globalAlpha = ee; image(eo, IX, IY, IW, IH); drawingContext.globalAlpha = 1;
   }
+
+  // palette name label
+  noStroke(); fill(darkBg ? 220 : 120, darkBg ? 220 : 116, darkBg ? 220 : 108);
+  textAlign(LEFT, BOTTOM); textSize(13);
+  text('palette ' + Math.round(G.param('palette')) + ': ' + pal.name, IX + 4, height - 8);
 }
 
 function keyPressed() {
