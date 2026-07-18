@@ -3,6 +3,14 @@
   "author": "dmaris70",
   "projects": [
     {
+      "slug": "008-watercolor-tree",
+      "title": "Watercolor Tree",
+      "year": 2026,
+      "tools": ["p5.js"],
+      "description": "Colours a line drawing with the watercolour technique — drop a tree PNG on the canvas to paint it. Also a standalone generative watercolour tree.",
+      "thumb": ""
+    },
+    {
       "slug": "007-watercolor-landscape",
       "title": "Watercolor Landscape",
       "year": 2026,
