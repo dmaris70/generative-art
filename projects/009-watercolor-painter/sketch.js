@@ -25,7 +25,7 @@ function setup() {
       smooth:  { value: 1.6, min: 0.0, max: 5.0, step: 0.2,  label: 'smooth' },
       reach:   { value: 3,   min: 2,   max: 6,   step: 1,    label: 'bleed reach' },
       layers:  { value: 3,   min: 1,   max: 4,   step: 1,    label: 'layers' },
-      bleed:   { value: 1.7, min: 0.4, max: 2.4, step: 0.1,  label: 'bleed' },
+      bleed:   { value: 1.6, min: 0.4, max: 2.4, step: 0.1,  label: 'bleed' },
       pigment: { value: 17,  min: 4,   max: 26,  step: 1,    label: 'pigment' },
       edge:    { value: 0.55,min: 0.0, max: 1.2, step: 0.05, label: 'edge pool' },
       bloom:   { value: 0.15,min: 0.0, max: 1.0, step: 0.05, label: 'centre bloom' },
@@ -351,8 +351,9 @@ function draw() {
           reach: reach, layers: lyr, detail: 3, bleed: bmag, smooth: smoothK, pigment: pig,
           edge: edge, bloom: bloom, grain: G.param('grain'),
           // weightVar/preEvolutions → the bleed pools unevenly on a few sides
-          // (connected lobed fingers) instead of an even faint halo of patches
-          weightVar: 0.9, preEvolutions: 1,
+          // (connected lobed fingers). Keep weightVar moderate: too high throws a
+          // few vertices into big geometric slivers instead of organic lobes.
+          weightVar: 0.5, preEvolutions: 1,
           outline: G.param('outline') > 0, shadow: false,
         });
       }

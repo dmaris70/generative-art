@@ -230,6 +230,19 @@
     global.endShape(global.CLOSE);
   }
 
+  // like traceShape but as a smooth closed Catmull-Rom curve, so the pigment
+  // layers read as rounded organic lobes instead of straight-edged polygon facets
+  function traceSmooth(poly) {
+    const n = poly.length;
+    if (n < 3) { traceShape(poly); return; }
+    global.beginShape();
+    global.curveVertex(poly[n - 1].x, poly[n - 1].y);
+    for (let i = 0; i < n; i++) global.curveVertex(poly[i].x, poly[i].y);
+    global.curveVertex(poly[0].x, poly[0].y);
+    global.curveVertex(poly[1].x, poly[1].y);
+    global.endShape();
+  }
+
   // paint ONE watercolour shape onto the current p5 canvas (global mode)
   function paint(opts) {
     const rng = opts.rng || Math.random;
@@ -269,7 +282,7 @@
       const j = 0.82 + rng() * 0.3;
       global.noStroke();
       global.fill(col[0] * j, col[1] * j, col[2] * j, alpha * (0.7 + rng() * 0.6));
-      traceShape(layer);
+      traceSmooth(layer);
       if (edge > 0) {
         // fade the edge stroke for outer (later) layers so pigment pools at the
         // rim + finger edges rather than smearing across the whole halo
@@ -277,7 +290,7 @@
         global.noFill();
         global.stroke(col[0] * 0.7, col[1] * 0.7, col[2] * 0.7, alpha * ew * 1.7);
         global.strokeWeight(1.3);
-        traceShape(layer);
+        traceSmooth(layer);
       }
     }
     global.blendMode(global.BLEND);
