@@ -339,25 +339,33 @@ function draw() {
     for (let c = 1; c <= comp; c++) { const it = info[c]; if (it && it.col && it.area > N * 0.00004) list.push(c); }
     list.sort(function (a, b) { return info[b].area - info[a].area; });
     const lim = Math.min(nTex, list.length);
+    // weightVar/preEvolutions → the bleed pools unevenly on a few sides (mixed
+    // wet/dry edges: bold soft lobes on some sides, crisper on others). Safe to
+    // push weightVar up now that distort() clamps the outward jut to ~edge length.
+    const commonOpts = {
+      paper: paperColor, reach: reach, layers: lyr, detail: 3, bleed: bmag, smooth: smoothK,
+      pigment: pig, edge: edge, bloom: bloom, grain: G.param('grain'),
+      weightVar: 0.85, preEvolutions: 1, outline: G.param('outline') > 0, shadow: false,
+    };
+    const batch = [];
     for (let k = 0; k < lim; k++) {
       const c = list[k], it = info[c], poly = regionPoly(label, c, it.s0, mw, mh, cpts);
       if (!poly) continue;
       if (darkBg) {
         paintGlow(poly, it.col, { reach: reach, layers: lyr, bleed: bmag, smooth: smoothK, pigment: pig, rng: rng });
       } else {
-        Watercolor.paint({
-          base: poly, cx: IX + it.cx * sxs, cy: IY + it.cy * sys, r: Math.sqrt(it.area / Math.PI) * sxs,
-          color: it.col, paper: paperColor, rng: rng,
-          reach: reach, layers: lyr, detail: 3, bleed: bmag, smooth: smoothK, pigment: pig,
-          edge: edge, bloom: bloom, grain: G.param('grain'),
-          // weightVar/preEvolutions → the bleed pools unevenly on a few sides
-          // (connected lobed fingers). Keep weightVar moderate: too high throws a
-          // few vertices into big geometric slivers instead of organic lobes.
-          weightVar: 0.5, preEvolutions: 1,
-          outline: G.param('outline') > 0, shadow: false,
+        // each region gets its own seeded rng so the interleaved draw order below
+        // doesn't scramble any single region's appearance (order-independent)
+        batch.push({
+          base: poly, color: it.col, cx: IX + it.cx * sxs, cy: IY + it.cy * sys,
+          r: Math.sqrt(it.area / Math.PI) * sxs, rng: Watercolor.makeRng((G.seed ^ (c * 0x9e3779b1)) >>> 0),
         });
       }
     }
+    // INTERLEAVED painting (Tyler Hobbs): draw layer-1 of every region, then
+    // layer-2 of every region, … so adjacent regions' bleed fringes intermix at
+    // the boundaries instead of one finished region's halo sitting hard on another.
+    if (batch.length) Watercolor.paintBatch(batch, commonOpts);
   }
 
   // ink overlay — 'ink %' opacity; 'hand-drawn' wobbles the lines; colour = palette ink

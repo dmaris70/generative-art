@@ -128,6 +128,9 @@
       let m = gauss() * (len / 3);
       if (m < 0) m /= 5;   // damp inward → bleed outward
       m *= mag * mw;       // weight modulates how far this edge bleeds
+      // clamp the outward jut to ~edge-length so a high weight can't throw a
+      // single vertex into a canvas-spanning geometric sliver
+      if (m > len * 1.35) m = len * 1.35;
 
       outP.push({ x: mx + nx * m, y: my + ny * m });
       outW.push(mw);
@@ -243,17 +246,80 @@
     global.endShape();
   }
 
+  // one pigment layer: MULTIPLY fill with tone jitter + a faded rim stroke that
+  // pools pigment at the edges. Assumes blendMode(MULTIPLY) is already set.
+  function drawLayer(layer, i, nLayers, col, alpha, edge, rng) {
+    const j = 0.82 + rng() * 0.3;
+    global.noStroke();
+    global.fill(col[0] * j, col[1] * j, col[2] * j, alpha * (0.7 + rng() * 0.6));
+    traceSmooth(layer);
+    if (edge > 0) {
+      const ew = edge * (1 - (i / nLayers) * 0.75);
+      global.noFill();
+      global.stroke(col[0] * 0.7, col[1] * 0.7, col[2] * 0.7, alpha * ew * 1.7);
+      global.strokeWeight(1.3);
+      traceSmooth(layer);
+    }
+  }
+
+  // per-shape finishing passes (drawn after the pigment layers): granulation,
+  // lighter-centre bloom, base outline. opts carries grain/bloom/paper/outline/cx/cy/r.
+  function finishShape(base, col, opts, rng) {
+    const grain = opts.grain != null ? opts.grain : 1.0;
+    const bloom = opts.bloom != null ? opts.bloom : 0.45;
+    const paper = opts.paper || [237, 232, 221];
+    const outline = opts.outline !== false;
+
+    if (grain > 0) {
+      const bb = bounds(base);
+      const count = Math.floor(grain * (bb.x1 - bb.x0) * (bb.y1 - bb.y0) * 0.004);
+      global.noStroke();
+      for (let k = 0; k < count; k++) {
+        const x = bb.x0 + rng() * (bb.x1 - bb.x0);
+        const y = bb.y0 + rng() * (bb.y1 - bb.y0);
+        if (!pointInPoly(x, y, base)) continue;
+        const d = rng() < 0.55 ? 0.55 : 1.25;
+        global.fill(col[0] * d, col[1] * d, col[2] * d, 10);
+        global.circle(x, y, 0.7 + rng() * 1.4);
+      }
+    }
+
+    if (bloom > 0) {
+      const ctx = global.drawingContext;
+      const bb = bounds(base);
+      const cx = opts.cx != null ? opts.cx : bb.x0;
+      const cy = opts.cy != null ? opts.cy : bb.y0;
+      const rr = (opts.r != null ? opts.r : Math.max(bb.x1 - bb.x0, bb.y1 - bb.y0) / 2) * 1.05;
+      ctx.save();
+      ctx.beginPath();
+      ctx.moveTo(base[0].x, base[0].y);
+      for (let i = 1; i < base.length; i++) ctx.lineTo(base[i].x, base[i].y);
+      ctx.closePath();
+      ctx.clip();
+      const g = ctx.createRadialGradient(cx, cy, 0, cx, cy, rr);
+      g.addColorStop(0.0, 'rgba(' + paper[0] + ',' + paper[1] + ',' + paper[2] + ',' + bloom + ')');
+      g.addColorStop(0.5, 'rgba(' + paper[0] + ',' + paper[1] + ',' + paper[2] + ',' + (bloom * 0.32) + ')');
+      g.addColorStop(1.0, 'rgba(' + paper[0] + ',' + paper[1] + ',' + paper[2] + ',0)');
+      ctx.fillStyle = g;
+      ctx.fillRect(cx - rr, cy - rr, rr * 2, rr * 2);
+      ctx.restore();
+    }
+
+    if (outline) {
+      global.noFill();
+      global.stroke(col[0] * 0.55, col[1] * 0.55, col[2] * 0.55, 110);
+      global.strokeWeight(1);
+      traceShape(base);
+    }
+  }
+
   // paint ONE watercolour shape onto the current p5 canvas (global mode)
   function paint(opts) {
     const rng = opts.rng || Math.random;
-    const gauss = makeGauss(rng);
     const col = opts.color;
-    const paper = opts.paper || [237, 232, 221];
     const base = opts.base || primitive(opts.kind || 'hexagon', opts.cx, opts.cy, opts.r);
     const alpha = opts.pigment != null ? opts.pigment : 14;
-    const bloom = opts.bloom != null ? opts.bloom : 0.45;
-    const grain = opts.grain != null ? opts.grain : 1.0;
-    const outline = opts.outline !== false;
+    const edge = opts.edge != null ? opts.edge : 0.35;
     const shadow = opts.shadow !== false;
 
     const layers = watercolorize(base, opts);
@@ -271,73 +337,45 @@
       global.pop();
     }
 
-    // pigment layers — MULTIPLY build-up with slight tone jitter. Each layer's
-    // outline is also stroked, so pigment pools where layer edges cluster (the
-    // rim + finger edges) → denser, edge-darkened outskirts that read crisply.
-    const edge = opts.edge != null ? opts.edge : 0.35;
-    const nLayers = layers.length;
     global.blendMode(global.MULTIPLY);
-    for (let i = 0; i < nLayers; i++) {
-      const layer = layers[i];
-      const j = 0.82 + rng() * 0.3;
-      global.noStroke();
-      global.fill(col[0] * j, col[1] * j, col[2] * j, alpha * (0.7 + rng() * 0.6));
-      traceSmooth(layer);
-      if (edge > 0) {
-        // fade the edge stroke for outer (later) layers so pigment pools at the
-        // rim + finger edges rather than smearing across the whole halo
-        const ew = edge * (1 - (i / nLayers) * 0.75);
-        global.noFill();
-        global.stroke(col[0] * 0.7, col[1] * 0.7, col[2] * 0.7, alpha * ew * 1.7);
-        global.strokeWeight(1.3);
-        traceSmooth(layer);
+    for (let i = 0; i < layers.length; i++) drawLayer(layers[i], i, layers.length, col, alpha, edge, rng);
+    global.blendMode(global.BLEND);
+
+    finishShape(base, col, opts, rng);
+  }
+
+  // paint MANY watercolour shapes with INTERLEAVED layer order (Tyler Hobbs: paint
+  // the first layer of every blob, then the second of every blob, …). All shapes
+  // are "wet" at the same time, so their unclipped bleed fringes intermix at the
+  // boundaries instead of one finished shape's halo sitting hard on top of another.
+  // shapes: [{ base:[{x,y}], color:[r,g,b], cx, cy, r, rng? }]; opts = shared params.
+  function paintBatch(shapes, opts) {
+    opts = opts || {};
+    const alpha = opts.pigment != null ? opts.pigment : 14;
+    const edge = opts.edge != null ? opts.edge : 0.35;
+    // per-shape geometry + its own rng, so each shape is order-independent and its
+    // appearance is identical to a standalone paint() with the same rng.
+    const prepared = shapes.map(function (s) {
+      const rng = s.rng || opts.rng || Math.random;
+      const o = Object.assign({}, opts, { rng: rng });
+      return { base: s.base, col: s.color, cx: s.cx, cy: s.cy, r: s.r, rng: rng, layers: watercolorize(s.base, o) };
+    });
+
+    let maxL = 0;
+    for (let p = 0; p < prepared.length; p++) if (prepared[p].layers.length > maxL) maxL = prepared[p].layers.length;
+
+    global.blendMode(global.MULTIPLY);
+    for (let li = 0; li < maxL; li++) {
+      for (let p = 0; p < prepared.length; p++) {
+        const pr = prepared[p];
+        if (li < pr.layers.length) drawLayer(pr.layers[li], li, pr.layers.length, pr.col, alpha, edge, pr.rng);
       }
     }
     global.blendMode(global.BLEND);
 
-    // granulation inside the base
-    if (grain > 0) {
-      const bb = bounds(base);
-      const count = Math.floor(grain * (bb.x1 - bb.x0) * (bb.y1 - bb.y0) * 0.004);
-      global.noStroke();
-      for (let k = 0; k < count; k++) {
-        const x = bb.x0 + rng() * (bb.x1 - bb.x0);
-        const y = bb.y0 + rng() * (bb.y1 - bb.y0);
-        if (!pointInPoly(x, y, base)) continue;
-        const d = rng() < 0.55 ? 0.55 : 1.25;
-        global.fill(col[0] * d, col[1] * d, col[2] * d, 10);
-        global.circle(x, y, 0.7 + rng() * 1.4);
-      }
-    }
-
-    // lighter-centre interior bloom (radial paper wash, clipped to base)
-    if (bloom > 0) {
-      const ctx = global.drawingContext;
-      const cx = opts.cx != null ? opts.cx : bounds(base).x0;
-      const cy = opts.cy != null ? opts.cy : bounds(base).y0;
-      const bb = bounds(base);
-      const rr = (opts.r != null ? opts.r : Math.max(bb.x1 - bb.x0, bb.y1 - bb.y0) / 2) * 1.05;
-      ctx.save();
-      ctx.beginPath();
-      ctx.moveTo(base[0].x, base[0].y);
-      for (let i = 1; i < base.length; i++) ctx.lineTo(base[i].x, base[i].y);
-      ctx.closePath();
-      ctx.clip();
-      const g = ctx.createRadialGradient(cx, cy, 0, cx, cy, rr);
-      g.addColorStop(0.0, 'rgba(' + paper[0] + ',' + paper[1] + ',' + paper[2] + ',' + bloom + ')');
-      g.addColorStop(0.5, 'rgba(' + paper[0] + ',' + paper[1] + ',' + paper[2] + ',' + (bloom * 0.32) + ')');
-      g.addColorStop(1.0, 'rgba(' + paper[0] + ',' + paper[1] + ',' + paper[2] + ',0)');
-      ctx.fillStyle = g;
-      ctx.fillRect(cx - rr, cy - rr, rr * 2, rr * 2);
-      ctx.restore();
-    }
-
-    // base outline
-    if (outline) {
-      global.noFill();
-      global.stroke(col[0] * 0.55, col[1] * 0.55, col[2] * 0.55, 110);
-      global.strokeWeight(1);
-      traceShape(base);
+    for (let p = 0; p < prepared.length; p++) {
+      const pr = prepared[p];
+      finishShape(pr.base, pr.col, Object.assign({}, opts, { cx: pr.cx, cy: pr.cy, r: pr.r }), pr.rng);
     }
   }
 
@@ -373,6 +411,7 @@
   global.Watercolor = {
     watercolorize: watercolorize,
     paint: paint,
+    paintBatch: paintBatch,
     paperTexture: paperTexture,
     primitive: primitive,
     makeRng: makeRng,
