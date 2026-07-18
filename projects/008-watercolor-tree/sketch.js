@@ -16,6 +16,11 @@
 let G;
 let img = null;
 
+// interactive click-to-merge state
+let LB = null, MW = 0, MH = 0;   // last segmentation label buffer + dims
+let mergePairs = [];             // user-merged label pairs
+let pendingLabel = -1;           // first-clicked area, awaiting a second
+
 const PAPER = [248, 246, 240];
 const PALETTES = [
   { leaves: [[96, 132, 64], [120, 152, 78], [74, 108, 56], [142, 162, 86], [102, 138, 70]],
@@ -34,6 +39,7 @@ function setup() {
   pixelDensity(1);
   noLoop();
   c.drop(gotFile);
+  c.mousePressed(onClick);
 
   G = GenArt.create({
     title: 'Watercolor Tree',
@@ -150,6 +156,7 @@ function buildColoring(rng, pal) {
     }
     info[comp] = { area: area, cx: sx / area, cy: sy / area, w: maxx - minx + 1, h: maxy - miny + 1 };
   }
+  LB = label; MW = mw; MH = mh; // expose for click-to-merge
 
   // colour each surface
   const minArea = Math.max(8, N * 0.00002);
@@ -222,13 +229,23 @@ function buildColoring(rng, pal) {
     dist[i] = d;
   }
 
+  // apply user click-merges: unify each merged group onto one colour
+  const parent = new Int32Array(comp + 1);
+  for (let c = 0; c <= comp; c++) parent[c] = c;
+  const root = function (a) { while (parent[a] !== a) { parent[a] = parent[parent[a]]; a = parent[a]; } return a; };
+  for (const m of mergePairs) {
+    if (m[0] > 0 && m[1] > 0 && m[0] <= comp && m[1] <= comp) parent[root(m[1])] = root(m[0]);
+  }
+
   const out = createImage(mw, mh);
   out.loadPixels();
   const edge = G.param('edge'), bloom = G.param('bloom'), grainA = G.param('grain') * 0.35;
   const alpha = Math.round(140 + G.param('pigment') * 5);
   const ew = 2 + edge * 7;
   for (let i = 0; i < N; i++) {
-    const c = (label[i] && !hole[i]) ? col[label[i]] : null;
+    const lb = label[i];
+    const rl = lb ? root(lb) : 0;
+    const c = (rl && !hole[i]) ? (col[rl] || col[lb]) : null;
     const o = 4 * i;
     if (!c) { out.pixels[o + 3] = 0; continue; }
     const d = dist[i];
@@ -275,6 +292,24 @@ function draw() {
       drawingContext.globalAlpha = 1;
       blendMode(BLEND);
     }
+
+    // highlight the first-clicked area while awaiting the second
+    if (pendingLabel > 0 && LB) {
+      const hl = createImage(MW, MH);
+      hl.loadPixels();
+      for (let i = 0; i < MW * MH; i++) {
+        if (LB[i] === pendingLabel) { hl.pixels[4 * i] = 255; hl.pixels[4 * i + 1] = 232; hl.pixels[4 * i + 2] = 40; hl.pixels[4 * i + 3] = 120; }
+        else hl.pixels[4 * i + 3] = 0;
+      }
+      hl.updatePixels();
+      image(hl, IX, IY, IW, IH);
+    }
+
+    noStroke();
+    fill(150, 146, 138);
+    textAlign(LEFT, BOTTOM);
+    textSize(13);
+    text('click two areas to merge them · press C to clear merges', IX + 4, height - 8);
   } else {
     noStroke();
     fill(120, 116, 108);
@@ -284,9 +319,24 @@ function draw() {
   }
 }
 
+// click one area then another to merge them into a single coloured surface
+function onClick() {
+  if (!img || !LB) return false;
+  const bx = Math.floor(((mouseX - IX) / IW) * MW);
+  const by = Math.floor(((mouseY - IY) / IH) * MH);
+  if (bx < 0 || bx >= MW || by < 0 || by >= MH) return false;
+  const L = LB[bx + by * MW];
+  if (L <= 0) { pendingLabel = -1; redraw(); return false; } // background / ink
+  if (pendingLabel < 0) pendingLabel = L;
+  else { if (L !== pendingLabel) mergePairs.push([pendingLabel, L]); pendingLabel = -1; }
+  redraw();
+  return false;
+}
+
 function keyPressed() {
   if (key === 'r' || key === 'R') G.randomize();
   if (key === 's' || key === 'S') saveCanvas('watercolor-tree-' + G.seed, 'png');
+  if (key === 'c' || key === 'C') { mergePairs = []; pendingLabel = -1; redraw(); }
 }
 
 function windowResized() {
