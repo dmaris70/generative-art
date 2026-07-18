@@ -74,7 +74,7 @@ function clamp255(v) { return v < 0 ? 0 : v > 255 ? 255 : v; }
 
 // ---- segmentation: whole surfaces + colours + trunk holes ----
 function segment(rng, pal) {
-  const mw = 460, mh = Math.max(1, Math.round((mw * img.height) / img.width)), N = mw * mh;
+  const mw = 560, mh = Math.max(1, Math.round((mw * img.height) / img.width)), N = mw * mh;
   const g = createGraphics(mw, mh); g.pixelDensity(1); g.image(img, 0, 0, mw, mh); g.loadPixels();
   const px = g.pixels; const ink = new Uint8Array(N);
   for (let i = 0; i < N; i++) ink[i] = (px[4 * i] + px[4 * i + 1] + px[4 * i + 2]) < 384 ? 1 : 0;
@@ -103,7 +103,7 @@ function segment(rng, pal) {
       if (x < mw - 1 && isSurf(i + 1) && !label[i + 1]) { label[i + 1] = comp; q.push(i + 1); }
       if (y > 0 && isSurf(i - mw) && !label[i - mw]) { label[i - mw] = comp; q.push(i - mw); }
       if (y < mh - 1 && isSurf(i + mw) && !label[i + mw]) { label[i + mw] = comp; q.push(i + mw); } }
-    info[comp] = { area: area, cx: sx / area, cy: sy / area, w: maxx - minx + 1, h: maxy - miny + 1 };
+    info[comp] = { area: area, cx: sx / area, cy: sy / area, w: maxx - minx + 1, h: maxy - miny + 1, s0: s };
   }
 
   const minArea = Math.max(8, N * 0.00002); const flowerP = G.param('flowers') / 100;
@@ -156,15 +156,36 @@ function trunkImage(seg) {
   out.updatePixels(); return out;
 }
 
-// star-convex trace of a region → canvas-space polygon
-function starPoly(seg, c) {
+// Moore-neighbour boundary tracing → the region's actual contour (handles
+// concave/pointed shapes, unlike star-convex ray-casting)
+const MDX = [1, 1, 0, -1, -1, -1, 0, 1];
+const MDY = [0, 1, 1, 1, 0, -1, -1, -1];
+function traceContour(label, comp, mw, mh, start) {
+  let cx = start % mw, cy = (start / mw) | 0, back = 4; // entered from the west
+  const sx0 = cx, sy0 = cy, out = [], maxSteps = 8 * (mw + mh) + 64;
+  let steps = 0;
+  do {
+    out.push([cx, cy]);
+    let found = -1;
+    for (let k = 1; k <= 8; k++) { const d = (back + k) % 8, nx = cx + MDX[d], ny = cy + MDY[d];
+      if (nx >= 0 && nx < mw && ny >= 0 && ny < mh && label[nx + ny * mw] === comp) { found = d; break; } }
+    if (found < 0) break;
+    cx += MDX[found]; cy += MDY[found]; back = (found + 4) % 8; steps++;
+  } while (!(cx === sx0 && cy === sy0) && steps < maxSteps);
+  return out;
+}
+// region → canvas polygon via its contour, decimated + winding-normalised (CW)
+function regionPoly(seg, c) {
   const { label, info, mw, mh } = seg, it = info[c];
-  const maxR = 0.5 * Math.max(it.w, it.h) + 3, n = it.area > 2500 ? 24 : it.area > 700 ? 18 : 13;
+  const raw = traceContour(label, c, mw, mh, it.s0);
+  if (!raw || raw.length < 8) return null;
+  const stride = Math.max(1, Math.floor(raw.length / 56));
   const sx = IW / mw, sy = IH / mh, pts = [];
-  for (let k = 0; k < n; k++) { const a = (k / n) * TWO_PI, dx = Math.cos(a), dy = Math.sin(a); let lr = 0;
-    for (let r = 1; r <= maxR; r++) { const bx = Math.round(it.cx + dx * r), by = Math.round(it.cy + dy * r); if (bx < 0 || bx >= mw || by < 0 || by >= mh || label[bx + by * mw] !== c) break; lr = r; }
-    pts.push({ x: IX + (it.cx + dx * lr) * sx, y: IY + (it.cy + dy * lr) * sy });
-  }
+  for (let i = 0; i < raw.length; i += stride) pts.push({ x: IX + raw[i][0] * sx, y: IY + raw[i][1] * sy });
+  if (pts.length < 6) return null;
+  // ensure clockwise (screen y-down) so the module bleeds outward
+  let a2 = 0; for (let i = 0; i < pts.length; i++) { const p = pts[i], q = pts[(i + 1) % pts.length]; a2 += p.x * q.y - q.x * p.y; }
+  if (a2 > 0) pts.reverse();
   return pts;
 }
 
@@ -191,22 +212,23 @@ function draw() {
   const root = function (a) { while (parent[a] !== a) { parent[a] = parent[parent[a]]; a = parent[a]; } return a; };
   for (const m of mergePairs) if (m[0] > 0 && m[1] > 0 && m[0] <= comp && m[1] <= comp) parent[root(m[1])] = root(m[0]);
 
-  // 1) trunk (soft watercolour body, holes white)
+  // 1) trunk (soft watercolour body, holes white) — crisp, not blurred
   const tImg = trunkImage(seg);
-  const bleed = G.param('bleed');
   blendMode(MULTIPLY);
-  if (bleed > 0) { const gg = createGraphics(seg.mw, seg.mh); gg.pixelDensity(1); gg.image(tImg, 0, 0); gg.filter(BLUR, bleed); image(gg, IX, IY, IW, IH); gg.remove(); }
-  else image(tImg, IX, IY, IW, IH);
+  image(tImg, IX, IY, IW, IH);
   blendMode(BLEND);
 
-  // 2) leaves / flowers / grass / butterflies → real watercolour, unclipped bleed
-  const minArea = N * 0.00012;
-  const reach = G.param('reach'), layers = G.param('layers'), edge = G.param('edge'), bloom = G.param('bloom'), grain = G.param('grain'), pig = G.param('pigment');
+  // 2) leaves / flowers / grass / butterflies → real watercolour, unclipped bleed,
+  //    traced to their actual contour. Lower cutoff paints the small details too.
+  const minArea = N * 0.00003;
+  const bleed = G.param('bleed'), reach = G.param('reach'), layers = G.param('layers');
+  const edge = G.param('edge'), bloom = G.param('bloom'), grain = G.param('grain'), pig = G.param('pigment');
   for (let c = 1; c <= comp; c++) {
     if (c === seg.woodyId) continue;
     const cc = col[root(c)] || col[c];
     if (!cc || info[c].area < minArea) continue;
-    const poly = starPoly(seg, c);
+    const poly = regionPoly(seg, c);
+    if (!poly) continue;
     Watercolor.paint({
       base: poly, cx: IX + info[c].cx * sx, cy: IY + info[c].cy * sy, r: Math.sqrt(info[c].area / Math.PI) * sx,
       color: cc, paper: PAPER, rng: rng,
