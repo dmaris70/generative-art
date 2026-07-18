@@ -131,11 +131,12 @@ function traceContour(label, comp, mw, mh, start) {
   } while (!(cx === sx0 && cy === sy0) && steps < maxSteps);
   return out;
 }
-// region → canvas polygon: trace its contour, decimate, wind CW so bleed goes out
-function regionPoly(label, c, s0, mw, mh) {
+// region → canvas polygon: trace its contour, decimate, wind CW so bleed goes out.
+// `target` (from the detail param) sets how many points to keep → shape fidelity.
+function regionPoly(label, c, s0, mw, mh, target) {
   const raw = traceContour(label, c, mw, mh, s0);
   if (!raw || raw.length < 8) return null;
-  const stride = Math.max(1, Math.floor(raw.length / 48));
+  const stride = Math.max(1, Math.floor(raw.length / target));
   const sx = IW / mw, sy = IH / mh, pts = [];
   for (let i = 0; i < raw.length; i += stride) pts.push({ x: IX + raw[i][0] * sx, y: IY + raw[i][1] * sy });
   if (pts.length < 6) return null;
@@ -148,7 +149,7 @@ function regionPoly(label, c, s0, mw, mh) {
 // MULTIPLY, so bright colours accumulate out of the dark paper. Overlapping inner
 // layers → bright core; sparse outer fingers → dim halo that fades into the black.
 function paintGlow(poly, color, o) {
-  const layers = Watercolor.watercolorize(poly, { reach: o.reach, layers: o.layers, detail: 3, bleed: o.bleed, rng: o.rng });
+  const layers = Watercolor.watercolorize(poly, { reach: o.reach, layers: o.layers, detail: 3, bleed: o.bleed, smooth: o.smooth, rng: o.rng });
   // scale the per-layer add so full overlap converges to roughly the region
   // colour, not white — bright pastel hues (cyan, cream) blow out otherwise.
   const n = layers.length, a = Math.min(255, (o.pigment * 4) / Math.max(1, n));
@@ -280,20 +281,24 @@ function draw() {
   const nTex = Math.round(G.param('texture'));
   if (nTex > 0) {
     const reach = G.param('reach'), lyr = G.param('layers'), bmag = G.param('bleed');
+    // detail → contour point budget (shape fidelity); smooth → module edge
+    // rounding. Both now bite on line art too, not just the photo segmentation.
+    const cpts = 18 + Math.round(G.param('detail')) * 6;
+    const smoothK = Math.min(0.49, 0.16 + G.param('smooth') * 0.06);
     const sxs = IW / mw, sys = IH / mh, list = [];
     for (let c = 1; c <= comp; c++) { const it = info[c]; if (it && it.col && it.area > N * 0.00004) list.push(c); }
     list.sort(function (a, b) { return info[b].area - info[a].area; });
     const lim = Math.min(nTex, list.length);
     for (let k = 0; k < lim; k++) {
-      const c = list[k], it = info[c], poly = regionPoly(label, c, it.s0, mw, mh);
+      const c = list[k], it = info[c], poly = regionPoly(label, c, it.s0, mw, mh, cpts);
       if (!poly) continue;
       if (darkBg) {
-        paintGlow(poly, it.col, { reach: reach, layers: lyr, bleed: bmag, pigment: pig, rng: rng });
+        paintGlow(poly, it.col, { reach: reach, layers: lyr, bleed: bmag, smooth: smoothK, pigment: pig, rng: rng });
       } else {
         Watercolor.paint({
           base: poly, cx: IX + it.cx * sxs, cy: IY + it.cy * sys, r: Math.sqrt(it.area / Math.PI) * sxs,
           color: it.col, paper: paperColor, rng: rng,
-          reach: reach, layers: lyr, detail: 3, bleed: bmag, pigment: pig,
+          reach: reach, layers: lyr, detail: 3, bleed: bmag, smooth: smoothK, pigment: pig,
           edge: edge, bloom: bloom, grain: G.param('grain'), outline: false, shadow: false,
         });
       }
