@@ -1,12 +1,13 @@
-// Watercolor Tree — colour a line drawing with the watercolour technique.
+// Watercolor Tree — colour a line drawing by identifying its areas, then filling.
 //
-// Instead of simulating a generic tree, this reads the SHAPE out of the uploaded
-// drawing: it downscales the ink, blurs it into a "density field" (dense scribble
-// areas — the leafy canopy, the grass — light up; empty sky stays dark), then
-// seeds watercolour blobs by rejection-sampling weighted by that density. So the
-// paint follows the drawing's real canopy, trunk and grass. Colour is chosen by
-// vertical zone (green leaves up top, brown trunk, green grass below, flower
-// dabs mixed in). The line drawing is overlaid on top via MULTIPLY.
+// Proper coloring-book logic: find the regions the ink encloses, then fill each.
+//   1. binarise the ink;
+//   2. flood-fill from the borders → the BACKGROUND (paper + sky gaps) — leave it;
+//   3. every other pixel is inside a cell → label connected components (each leaf,
+//      flower, shape is one region);
+//   4. give each region a colour by zone/size/shape (green leaves, warm flowers,
+//      brown trunk, green grass) and fill it, softened for a watercolour wash.
+// The line drawing is then overlaid on top via MULTIPLY.
 //
 // Drop a PNG/JPG on the canvas, or save it beside this file as tree.png/tree.jpg.
 // Keys: R new colouring · S save PNG.
@@ -14,19 +15,16 @@
 let G;
 let img = null;
 
-// density field derived from the drawing
-let DENS = null, DW = 0, DH = 0, densForImg = null;
-
 const PALETTES = [
-  { leaves: [[92, 128, 62], [116, 148, 74], [70, 104, 54], [138, 158, 84], [98, 134, 68]],
-    flowers: [[224, 132, 156], [238, 190, 96], [206, 132, 196], [236, 158, 120]],
-    trunk: [112, 80, 50], grass: [96, 126, 60] },
-  { leaves: [[136, 176, 96], [166, 196, 116], [114, 156, 82], [190, 204, 122], [146, 182, 104]],
-    flowers: [[240, 168, 190], [244, 208, 120], [200, 160, 220], [246, 186, 150]],
-    trunk: [120, 88, 56], grass: [130, 168, 92] },
-  { leaves: [[204, 132, 56], [180, 96, 50], [216, 168, 66], [156, 104, 52], [190, 140, 70]],
-    flowers: [[226, 120, 110], [240, 196, 110], [210, 150, 90], [232, 168, 120]],
-    trunk: [104, 70, 44], grass: [150, 138, 74] },
+  { leaves: [[96, 132, 64], [120, 152, 78], [74, 108, 56], [142, 162, 86], [102, 138, 70]],
+    flowers: [[226, 120, 150], [240, 188, 92], [206, 128, 194], [236, 150, 116], [222, 96, 110]],
+    trunk: [120, 84, 52], grass: [98, 130, 62] },
+  { leaves: [[140, 178, 98], [168, 198, 118], [116, 158, 84], [192, 206, 124], [148, 184, 106]],
+    flowers: [[242, 160, 188], [246, 206, 118], [198, 158, 220], [246, 184, 148], [236, 126, 150]],
+    trunk: [126, 92, 58], grass: [134, 172, 94] },
+  { leaves: [[196, 128, 54], [176, 94, 48], [214, 166, 64], [156, 104, 52], [186, 138, 68]],
+    flowers: [[226, 110, 96], [240, 194, 108], [214, 148, 88], [232, 166, 118], [206, 84, 78]],
+    trunk: [108, 72, 44], grass: [156, 142, 76] },
 ];
 
 function setup() {
@@ -38,12 +36,10 @@ function setup() {
   G = GenArt.create({
     title: 'Watercolor Tree',
     params: {
-      density: { value: 90,  min: 15,  max: 200, step: 5,   label: 'paint density' },
-      flowers: { value: 8,   min: 0,   max: 24,  step: 1,   label: 'flowers' },
-      bleed:   { value: 1.1, min: 0.6, max: 2.0, step: 0.1, label: 'bleed' },
       pigment: { value: 13,  min: 4,   max: 22,  step: 1,   label: 'pigment' },
+      flowers: { value: 55,  min: 0,   max: 100, step: 5,   label: 'flowers %' },
+      soften:  { value: 1.4, min: 0.0, max: 4.0, step: 0.2, label: 'soften' },
       outline: { value: 100, min: 0,   max: 100, step: 5,   label: 'outline %' },
-      grain:   { value: 0.8, min: 0.0, max: 2.0, step: 0.1, label: 'grain' },
     },
     onReset: function () { redraw(); },
   });
@@ -54,15 +50,13 @@ function setup() {
 
 function tryLoad(names, i) {
   if (i >= names.length) return;
-  loadImage(names[i], function (im) { img = im; densForImg = null; redraw(); }, function () { tryLoad(names, i + 1); });
+  loadImage(names[i], function (im) { img = im; redraw(); }, function () { tryLoad(names, i + 1); });
 }
 function gotFile(file) {
-  if (file && file.type === 'image') {
-    loadImage(file.data, function (im) { img = im; densForImg = null; redraw(); });
-  }
+  if (file && file.type === 'image') loadImage(file.data, function (im) { img = im; redraw(); });
 }
 
-// aspect-aware fit + mapping
+// aspect-aware fit
 let IX = 0, IY = 0, IW = 1, IH = 1;
 function computeFit() {
   const iw = img ? img.width : 650;
@@ -71,76 +65,94 @@ function computeFit() {
   IW = iw * s; IH = ih * s;
   IX = (width - IW) / 2; IY = (height - IH) / 2;
 }
-function mx(nx) { return IX + nx * IW; }
-function my(ny) { return IY + ny * IH; }
-function msr(nr) { return nr * IW; }
 
-// ---- density field from the drawing's ink ----
-function clampi(v, lo, hi) { return v < lo ? lo : v > hi ? hi : v; }
-
-function boxBlur(a, w, h, r) {
-  const tmp = new Float32Array(w * h);
-  const norm = 1 / (2 * r + 1);
-  for (let y = 0; y < h; y++) {
-    let sum = 0;
-    for (let x = -r; x <= r; x++) sum += a[clampi(x, 0, w - 1) + y * w];
-    for (let x = 0; x < w; x++) {
-      tmp[x + y * w] = sum * norm;
-      sum += a[clampi(x + r + 1, 0, w - 1) + y * w] - a[clampi(x - r, 0, w - 1) + y * w];
-    }
-  }
-  for (let x = 0; x < w; x++) {
-    let sum = 0;
-    for (let y = -r; y <= r; y++) sum += tmp[x + clampi(y, 0, h - 1) * w];
-    for (let y = 0; y < h; y++) {
-      a[x + y * w] = sum * norm;
-      sum += tmp[x + clampi(y + r + 1, 0, h - 1) * w] - tmp[x + clampi(y - r, 0, h - 1) * w];
-    }
-  }
+function jitter(c, rng, amt) {
+  const f = 1 + (rng() * 2 - 1) * amt;
+  return [Math.min(255, c[0] * f), Math.min(255, c[1] * f), Math.min(255, c[2] * f)];
 }
 
-function buildDensity() {
-  if (densForImg === img && DENS) return;
-  const mw = 300;
+// identify enclosed regions and fill each with a zone/shape-appropriate colour
+function buildColoring(rng, pal) {
+  const mw = 480;
   const mh = Math.max(1, Math.round((mw * img.height) / img.width));
+  const N = mw * mh;
+
   const g = createGraphics(mw, mh);
   g.pixelDensity(1);
   g.image(img, 0, 0, mw, mh);
   g.loadPixels();
   const px = g.pixels;
-  const d = new Float32Array(mw * mh);
-  for (let i = 0; i < mw * mh; i++) {
-    d[i] = 1 - (px[i * 4] + px[i * 4 + 1] + px[i * 4 + 2]) / 765; // darkness
-  }
-  const r = Math.max(2, Math.round(mw * 0.02));
-  boxBlur(d, mw, mh, r);
-  boxBlur(d, mw, mh, r);
-  let mxv = 0;
-  for (let i = 0; i < d.length; i++) if (d[i] > mxv) mxv = d[i];
-  if (mxv > 0) for (let i = 0; i < d.length; i++) d[i] /= mxv;
-  DENS = d; DW = mw; DH = mh; densForImg = img;
+  const ink = new Uint8Array(N);
+  for (let i = 0; i < N; i++) ink[i] = (px[4 * i] + px[4 * i + 1] + px[4 * i + 2]) < 384 ? 1 : 0;
   g.remove();
-}
 
-// rejection-sample a point (in normalised image coords) within a vertical band,
-// weighted by ink density so blobs land where the drawing has content
-function sampleDense(y0, y1, thr, rng) {
-  for (let t = 0; t < 60; t++) {
-    const gx = Math.floor(rng() * DW);
-    const gy = clampi(Math.floor((y0 + rng() * (y1 - y0)) * DH), 0, DH - 1);
-    const v = DENS[gx + gy * DW];
-    if (v > thr && rng() < v) return { nx: gx / DW, ny: gy / DH, v: v };
+  // 2) background = non-ink pixels reachable from the border
+  const bg = new Uint8Array(N);
+  const st = [];
+  const seed = function (i) { if (!ink[i] && !bg[i]) { bg[i] = 1; st.push(i); } };
+  for (let x = 0; x < mw; x++) { seed(x); seed(x + (mh - 1) * mw); }
+  for (let y = 0; y < mh; y++) { seed(y * mw); seed(mw - 1 + y * mw); }
+  while (st.length) {
+    const i = st.pop(), x = i % mw, y = (i / mw) | 0;
+    if (x > 0) seed(i - 1);
+    if (x < mw - 1) seed(i + 1);
+    if (y > 0) seed(i - mw);
+    if (y < mh - 1) seed(i + mw);
   }
-  return null;
-}
 
-function blob(nx, ny, r, col, rng, pig) {
-  Watercolor.paint({
-    kind: 'circle', cx: mx(nx), cy: my(ny), r: r,
-    color: col, paper: [248, 246, 240], rng: rng,
-    reach: 4, layers: 2, bleed: G.param('bleed'), pigment: pig,
-    edge: 0.28, bloom: 0.32, grain: G.param('grain'), outline: false, shadow: false,
-  });
+  // 3) label connected components of the enclosed pixels
+  const label = new Int32Array(N);
+  const info = [null];
+  let comp = 0;
+  const q = [];
+  for (let s = 0; s < N; s++) {
+    if (ink[s] || bg[s] || label[s]) continue;
+    comp++;
+    let area = 0, sx = 0, sy = 0, minx = mw, maxx = 0, miny = mh, maxy = 0;
+    q.length = 0; q.push(s); label[s] = comp;
+    while (q.length) {
+      const i = q.pop(), x = i % mw, y = (i / mw) | 0;
+      area++; sx += x; sy += y;
+      if (x < minx) minx = x; if (x > maxx) maxx = x;
+      if (y < miny) miny = y; if (y > maxy) maxy = y;
+      if (x > 0 && !ink[i - 1] && !bg[i - 1] && !label[i - 1]) { label[i - 1] = comp; q.push(i - 1); }
+      if (x < mw - 1 && !ink[i + 1] && !bg[i + 1] && !label[i + 1]) { label[i + 1] = comp; q.push(i + 1); }
+      if (y > 0 && !ink[i - mw] && !bg[i - mw] && !label[i - mw]) { label[i - mw] = comp; q.push(i - mw); }
+      if (y < mh - 1 && !ink[i + mw] && !bg[i + mw] && !label[i + mw]) { label[i + mw] = comp; q.push(i + mw); }
+    }
+    info[comp] = { area: area, cx: sx / area, cy: sy / area, w: maxx - minx + 1, h: maxy - miny + 1 };
+  }
+
+  // 4) choose a colour per region
+  const minArea = Math.max(6, N * 0.00002);
+  const flowerP = G.param('flowers') / 100;
+  const col = new Array(comp + 1).fill(null);
+  for (let c = 1; c <= comp; c++) {
+    const it = info[c];
+    if (it.area < minArea) continue;
+    const ny = it.cy / mh, nx = it.cx / mw;
+    const round = Math.min(it.w, it.h) / Math.max(it.w, it.h);
+    if (ny > 0.85) col[c] = jitter(pal.grass, rng, 0.12);
+    else if (ny > 0.62 && Math.abs(nx - 0.5) < 0.16) col[c] = jitter(pal.trunk, rng, 0.1);
+    else if (it.area < N * 0.0018 && round > 0.5 && rng() < flowerP) col[c] = pal.flowers[Math.floor(rng() * pal.flowers.length)];
+    else {
+      const b = pal.leaves[Math.floor(rng() * pal.leaves.length)];
+      const light = 0.9 + (1 - ny) * 0.22;
+      col[c] = jitter([b[0] * light, b[1] * light, b[2] * light], rng, 0.07);
+    }
+  }
+
+  // 5) paint each region into a colour image
+  const out = createImage(mw, mh);
+  out.loadPixels();
+  const alpha = Math.round(140 + G.param('pigment') * 5);
+  for (let i = 0; i < N; i++) {
+    const c = label[i], rgb = c ? col[c] : null, o = 4 * i;
+    if (rgb) { out.pixels[o] = rgb[0]; out.pixels[o + 1] = rgb[1]; out.pixels[o + 2] = rgb[2]; out.pixels[o + 3] = alpha; }
+    else out.pixels[o + 3] = 0;
+  }
+  out.updatePixels();
+  return out;
 }
 
 function draw() {
@@ -152,48 +164,23 @@ function draw() {
   Watercolor.paperTexture([248, 246, 240], Watercolor.makeRng(G.seed ^ 0x9e3779b9), { grain: 7 });
   computeFit();
 
-  const pig = G.param('pigment');
-
   if (img) {
-    buildDensity();
-    const n = G.param('density');
+    const colImg = buildColoring(rng, pal);
+    // draw the colour under the ink, softened so region edges read as a wash
+    const soft = G.param('soften');
+    blendMode(MULTIPLY);
+    if (soft > 0) {
+      const gg = createGraphics(colImg.width, colImg.height);
+      gg.pixelDensity(1);
+      gg.image(colImg, 0, 0);
+      gg.filter(BLUR, soft);
+      image(gg, IX, IY, IW, IH);
+      gg.remove();
+    } else {
+      image(colImg, IX, IY, IW, IH);
+    }
+    blendMode(BLEND);
 
-    // grass band (green) — bottom, follows the drawn grass
-    for (let i = 0; i < Math.round(n * 0.35); i++) {
-      const p = sampleDense(0.82, 1.0, 0.12, rng);
-      if (p) blob(p.nx, p.ny, msr(0.04 + rng() * 0.03), pal.grass, rng, pig - 2);
-    }
-    // trunk (brown) — below the canopy, follows the drawn trunk lines
-    for (let i = 0; i < Math.round(n * 0.18); i++) {
-      const p = sampleDense(0.63, 0.9, 0.06, rng);
-      if (p) blob(p.nx, p.ny, msr(0.03 + rng() * 0.025), pal.trunk, rng, pig);
-    }
-    // canopy (green) — upper region, follows the drawn foliage silhouette
-    for (let i = 0; i < n; i++) {
-      const p = sampleDense(0.0, 0.62, 0.17, rng);
-      if (!p) continue;
-      const light = 0.86 + (1 - p.ny) * 0.28;
-      const base = pal.leaves[Math.floor(rng() * pal.leaves.length)];
-      blob(p.nx, p.ny, msr(0.05 + rng() * 0.05),
-        [Math.min(255, base[0] * light), Math.min(255, base[1] * light), Math.min(255, base[2] * light)],
-        rng, Math.max(6, pig - 2));
-    }
-    // flower accents — warm dabs at dense spots in the canopy
-    for (let i = 0; i < G.param('flowers'); i++) {
-      const p = sampleDense(0.05, 0.6, 0.22, rng);
-      if (p) blob(p.nx, p.ny, msr(0.025 + rng() * 0.025), pal.flowers[Math.floor(rng() * pal.flowers.length)], rng, pig);
-    }
-  } else {
-    // no drawing yet — prompt
-    noStroke();
-    fill(120, 116, 108);
-    textAlign(CENTER, CENTER);
-    textSize(Math.max(13, IW * 0.03));
-    text('drop a tree line-drawing here (PNG/JPG)', width / 2, height / 2);
-  }
-
-  // overlay the drawing (outline % fades the ink)
-  if (img) {
     const a = G.param('outline') / 100;
     if (a > 0) {
       blendMode(MULTIPLY);
@@ -202,6 +189,12 @@ function draw() {
       drawingContext.globalAlpha = 1;
       blendMode(BLEND);
     }
+  } else {
+    noStroke();
+    fill(120, 116, 108);
+    textAlign(CENTER, CENTER);
+    textSize(Math.max(13, IW * 0.03));
+    text('drop a tree line-drawing here (PNG/JPG)', width / 2, height / 2);
   }
 }
 
