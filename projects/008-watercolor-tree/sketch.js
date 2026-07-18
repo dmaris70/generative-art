@@ -160,8 +160,10 @@ function buildColoring(rng, pal) {
     if (it.area < minArea) continue;
     const ny = it.cy / mh, nx = it.cx / mw;
     const roundv = Math.min(it.w, it.h) / Math.max(it.w, it.h);
-    if (ny > 0.85) col[c] = jitter(pal.grass, rng, 0.12);
-    else if (ny > 0.6 && Math.abs(nx - 0.5) < 0.2 && it.area > N * 0.004) col[c] = jitter(pal.trunk, rng, 0.1);
+    // the tall, large surface that runs from the grass up into the canopy is the
+    // woody structure (trunk + branches) → all brown
+    if (it.h > mh * 0.42 && it.area > N * 0.012) col[c] = jitter(pal.trunk, rng, 0.08);
+    else if (ny > 0.85) col[c] = jitter(pal.grass, rng, 0.12);
     else if (it.area < N * 0.0022 && roundv > 0.5 && rng() < flowerP) col[c] = pal.flowers[Math.floor(rng() * pal.flowers.length)];
     else {
       const b = pal.leaves[Math.floor(rng() * pal.leaves.length)];
@@ -197,16 +199,10 @@ function buildColoring(rng, pal) {
   const edge = G.param('edge'), bloom = G.param('bloom'), grainA = G.param('grain') * 0.35;
   const alpha = Math.round(140 + G.param('pigment') * 5);
   const ew = 2 + edge * 7;
-  const trunkCol = jitter(pal.trunk, rng, 0);
   for (let i = 0; i < N; i++) {
-    let c = label[i] ? col[label[i]] : null;
+    const c = label[i] ? col[label[i]] : null;
     const o = 4 * i;
     if (!c) { out.pixels[o + 3] = 0; continue; }
-    // trunk override: lower-central pixels of a big (merged trunk+canopy) surface
-    if (info[label[i]].area > N * 0.01) {
-      const py = ((i / mw) | 0) / mh, pxn = (i % mw) / mw;
-      if (py > 0.56 && Math.abs(pxn - 0.5) < 0.14) c = trunkCol;
-    }
     const d = dist[i];
     const et = Math.min(1, d / ew);
     const dark = 1 - edge * 0.5 * (1 - et);
