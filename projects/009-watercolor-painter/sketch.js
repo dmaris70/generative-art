@@ -31,6 +31,7 @@ function setup() {
       bloom:   { value: 0.3, min: 0.0, max: 1.0, step: 0.05, label: 'centre bloom' },
       grain:   { value: 0.7, min: 0.0, max: 2.0, step: 0.1,  label: 'grain' },
       texture: { value: 60,  min: 0,   max: 140, step: 10,   label: 'texture (regions)' },
+      seal:    { value: 1,   min: 0,   max: 4,   step: 1,    label: 'seal gaps' },
       ink:     { value: 90,  min: 0,   max: 100, step: 5,    label: 'ink %' },
       handdrawn:{ value: 0,  min: 0,   max: 4.0, step: 0.2,  label: 'hand-drawn' },
       filledges:{ value: 0,  min: 0,   max: 1,   step: 1,    label: 'fill edges' },
@@ -113,6 +114,22 @@ function boxBlur(a, w, h, r) {
     for (let y = 0; y < h; y++) { a[x + y * w] = s * n; s += t[x + cl(y + r + 1, 0, h - 1) * w] - t[x + cl(y - r, 0, h - 1) * w]; } }
 }
 
+// grow a binary mask outward by r (4-neighbour chebyshev-ish). Used to bridge
+// broken hand-drawn lines so the background flood can't leak through a 1px gap.
+function dilateMask(mask, mw, mh, r) {
+  let cur = mask;
+  for (let t = 0; t < r; t++) {
+    const nxt = new Uint8Array(cur);
+    for (let i = 0; i < cur.length; i++) {
+      if (cur[i]) continue;
+      const x = i % mw, y = (i / mw) | 0;
+      if ((x > 0 && cur[i - 1]) || (x < mw - 1 && cur[i + 1]) || (y > 0 && cur[i - mw]) || (y < mh - 1 && cur[i + mw])) nxt[i] = 1;
+    }
+    cur = nxt;
+  }
+  return cur;
+}
+
 // Moore-neighbour boundary tracing → a region's actual contour (handles
 // concave/pointed shapes). Ported from the tree colorizer.
 const MDX = [1, 1, 0, -1, -1, -1, 0, 1];
@@ -189,10 +206,19 @@ function draw() {
     // 'fill edges' off → the border-connected white is background (left blank);
     // on → skip it, so cut-off cells at the margins get coloured too
     if (G.param('filledges') <= 0) {
-      const seed = function (i) { if (!ink[i] && !bg[i]) { bg[i] = 1; stack.push(i); } };
+      // 'seal gaps': dilate the ink into a WALL so the border flood can't leak
+      // through breaks in wobbly hand-drawn lines. Flood over !wall, then grow the
+      // background back by the same radius (clamped to non-ink) so the outer margin
+      // still hugs the real outlines while sealed interior pockets become surfaces.
+      const seal = Math.round(G.param('seal'));
+      const wall = seal > 0 ? dilateMask(ink, mw, mh, seal) : ink;
+      const bgD = new Uint8Array(N);
+      const seed = function (i) { if (!wall[i] && !bgD[i]) { bgD[i] = 1; stack.push(i); } };
       for (let x = 0; x < mw; x++) { seed(x); seed(x + (mh - 1) * mw); }
       for (let y = 0; y < mh; y++) { seed(y * mw); seed(mw - 1 + y * mw); }
       while (stack.length) { const i = stack.pop(), x = i % mw, y = (i / mw) | 0; if (x > 0) seed(i - 1); if (x < mw - 1) seed(i + 1); if (y > 0) seed(i - mw); if (y < mh - 1) seed(i + mw); }
+      if (seal > 0) { const bgG = dilateMask(bgD, mw, mh, seal); for (let i = 0; i < N; i++) bg[i] = (bgG[i] && !ink[i]) ? 1 : 0; }
+      else bg.set(bgD);
     }
     for (let s = 0; s < N; s++) {
       if (ink[s] || bg[s] || label[s]) continue; comp++;
