@@ -1,13 +1,13 @@
-// Watercolor Tree — colour a line drawing by identifying its areas, then filling.
+// Watercolor Tree — identify each area, then paint it with watercolour.
 //
-// Proper coloring-book logic: find the regions the ink encloses, then fill each.
 //   1. binarise the ink;
-//   2. flood-fill from the borders → the BACKGROUND (paper + sky gaps) — leave it;
-//   3. every other pixel is inside a cell → label connected components (each leaf,
-//      flower, shape is one region);
-//   4. give each region a colour by zone/size/shape (green leaves, warm flowers,
-//      brown trunk, green grass) and fill it, softened for a watercolour wash.
-// The line drawing is then overlaid on top via MULTIPLY.
+//   2. flood-fill from the borders → BACKGROUND (paper + sky gaps) — left white;
+//   3. label the enclosed pixels into connected components — each leaf, flower,
+//      shape, the trunk, each grass blade is its own region;
+//   4. give each region a colour by zone/size/shape;
+//   5. paint every region with the watercolour controls: a distance-to-edge field
+//      drives EDGE POOLING (darker rim) and CENTRE BLOOM (lighter middle) per cell,
+//      plus GRAIN and BLEED (spread past the lines). Ink overlaid on top.
 //
 // Drop a PNG/JPG on the canvas, or save it beside this file as tree.png/tree.jpg.
 // Keys: R new colouring · S save PNG.
@@ -15,6 +15,7 @@
 let G;
 let img = null;
 
+const PAPER = [248, 246, 240];
 const PALETTES = [
   { leaves: [[96, 132, 64], [120, 152, 78], [74, 108, 56], [142, 162, 86], [102, 138, 70]],
     flowers: [[226, 120, 150], [240, 188, 92], [206, 128, 194], [236, 150, 116], [222, 96, 110]],
@@ -36,10 +37,13 @@ function setup() {
   G = GenArt.create({
     title: 'Watercolor Tree',
     params: {
-      pigment: { value: 13,  min: 4,   max: 22,  step: 1,   label: 'pigment' },
-      flowers: { value: 55,  min: 0,   max: 100, step: 5,   label: 'flowers %' },
-      soften:  { value: 1.4, min: 0.0, max: 4.0, step: 0.2, label: 'soften' },
-      outline: { value: 100, min: 0,   max: 100, step: 5,   label: 'outline %' },
+      pigment: { value: 13,  min: 4,   max: 22,  step: 1,    label: 'pigment' },
+      edge:    { value: 0.5, min: 0.0, max: 1.2, step: 0.05, label: 'edge pool' },
+      bloom:   { value: 0.35, min: 0.0, max: 1.0, step: 0.05, label: 'centre bloom' },
+      grain:   { value: 0.6, min: 0.0, max: 2.0, step: 0.1,  label: 'grain' },
+      bleed:   { value: 1.4, min: 0.0, max: 5.0, step: 0.2,  label: 'bleed' },
+      flowers: { value: 55,  min: 0,   max: 100, step: 5,    label: 'flowers %' },
+      outline: { value: 100, min: 0,   max: 100, step: 5,    label: 'outline %' },
     },
     onReset: function () { redraw(); },
   });
@@ -56,7 +60,6 @@ function gotFile(file) {
   if (file && file.type === 'image') loadImage(file.data, function (im) { img = im; redraw(); });
 }
 
-// aspect-aware fit
 let IX = 0, IY = 0, IW = 1, IH = 1;
 function computeFit() {
   const iw = img ? img.width : 650;
@@ -70,8 +73,9 @@ function jitter(c, rng, amt) {
   const f = 1 + (rng() * 2 - 1) * amt;
   return [Math.min(255, c[0] * f), Math.min(255, c[1] * f), Math.min(255, c[2] * f)];
 }
+function hash2(x, y) { const s = Math.sin(x * 12.9898 + y * 78.233) * 43758.5453; return s - Math.floor(s); }
+function clamp255(v) { return v < 0 ? 0 : v > 255 ? 255 : v; }
 
-// identify enclosed regions and fill each with a zone/shape-appropriate colour
 function buildColoring(rng, pal) {
   const mw = 480;
   const mh = Math.max(1, Math.round((mw * img.height) / img.width));
@@ -86,7 +90,7 @@ function buildColoring(rng, pal) {
   for (let i = 0; i < N; i++) ink[i] = (px[4 * i] + px[4 * i + 1] + px[4 * i + 2]) < 384 ? 1 : 0;
   g.remove();
 
-  // 2) background = non-ink pixels reachable from the border
+  // background = non-ink pixels reachable from the border
   const bg = new Uint8Array(N);
   const st = [];
   const seed = function (i) { if (!ink[i] && !bg[i]) { bg[i] = 1; st.push(i); } };
@@ -100,7 +104,7 @@ function buildColoring(rng, pal) {
     if (y < mh - 1) seed(i + mw);
   }
 
-  // 3) label connected components of the enclosed pixels
+  // label connected components of the enclosed pixels
   const label = new Int32Array(N);
   const info = [null];
   let comp = 0;
@@ -123,7 +127,7 @@ function buildColoring(rng, pal) {
     info[comp] = { area: area, cx: sx / area, cy: sy / area, w: maxx - minx + 1, h: maxy - miny + 1 };
   }
 
-  // 4) choose a colour per region
+  // colour per region
   const minArea = Math.max(6, N * 0.00002);
   const flowerP = G.param('flowers') / 100;
   const col = new Array(comp + 1).fill(null);
@@ -142,14 +146,51 @@ function buildColoring(rng, pal) {
     }
   }
 
-  // 5) paint each region into a colour image
+  // distance-to-edge for every enclosed pixel (2-pass chamfer) → drives the
+  // watercolour edge pooling + centre bloom per region
+  const INF = 1e9;
+  const dist = new Float32Array(N);
+  for (let i = 0; i < N; i++) dist[i] = (label[i] && col[label[i]]) ? INF : 0;
+  for (let y = 0; y < mh; y++) for (let x = 0; x < mw; x++) {
+    const i = x + y * mw; if (dist[i] === 0) continue;
+    let d = dist[i];
+    if (x > 0) d = Math.min(d, dist[i - 1] + 1);
+    if (y > 0) d = Math.min(d, dist[i - mw] + 1);
+    if (x > 0 && y > 0) d = Math.min(d, dist[i - mw - 1] + 1.414);
+    if (x < mw - 1 && y > 0) d = Math.min(d, dist[i - mw + 1] + 1.414);
+    dist[i] = d;
+  }
+  for (let y = mh - 1; y >= 0; y--) for (let x = mw - 1; x >= 0; x--) {
+    const i = x + y * mw; if (dist[i] === 0) continue;
+    let d = dist[i];
+    if (x < mw - 1) d = Math.min(d, dist[i + 1] + 1);
+    if (y < mh - 1) d = Math.min(d, dist[i + mw] + 1);
+    if (x < mw - 1 && y < mh - 1) d = Math.min(d, dist[i + mw + 1] + 1.414);
+    if (x > 0 && y < mh - 1) d = Math.min(d, dist[i + mw - 1] + 1.414);
+    dist[i] = d;
+  }
+
+  // shade each region into a colour image
   const out = createImage(mw, mh);
   out.loadPixels();
+  const edge = G.param('edge');
+  const bloom = G.param('bloom');
+  const grainA = G.param('grain') * 0.35;
   const alpha = Math.round(140 + G.param('pigment') * 5);
+  const ew = 2 + edge * 7;
   for (let i = 0; i < N; i++) {
-    const c = label[i], rgb = c ? col[c] : null, o = 4 * i;
-    if (rgb) { out.pixels[o] = rgb[0]; out.pixels[o + 1] = rgb[1]; out.pixels[o + 2] = rgb[2]; out.pixels[o + 3] = alpha; }
-    else out.pixels[o + 3] = 0;
+    const c = label[i] ? col[label[i]] : null, o = 4 * i;
+    if (!c) { out.pixels[o + 3] = 0; continue; }
+    const d = dist[i];
+    const et = Math.min(1, d / ew);
+    const dark = 1 - edge * 0.5 * (1 - et);                 // darker at the rim
+    const bt = Math.min(1, Math.max(0, (d - ew * 1.5) / (ew * 3))); // lighter deep inside
+    const gn = 1 + (hash2(i % mw, (i / mw) | 0) - 0.5) * grainA;
+    let r = c[0] * dark * gn, gg = c[1] * dark * gn, b = c[2] * dark * gn;
+    r += (PAPER[0] - r) * bloom * bt;
+    gg += (PAPER[1] - gg) * bloom * bt;
+    b += (PAPER[2] - b) * bloom * bt;
+    out.pixels[o] = clamp255(r); out.pixels[o + 1] = clamp255(gg); out.pixels[o + 2] = clamp255(b); out.pixels[o + 3] = alpha;
   }
   out.updatePixels();
   return out;
@@ -161,19 +202,18 @@ function draw() {
   const rng = Watercolor.makeRng(G.seed);
   const pal = PALETTES[Math.floor(rng() * PALETTES.length)];
 
-  Watercolor.paperTexture([248, 246, 240], Watercolor.makeRng(G.seed ^ 0x9e3779b9), { grain: 7 });
+  Watercolor.paperTexture(PAPER, Watercolor.makeRng(G.seed ^ 0x9e3779b9), { grain: 7 });
   computeFit();
 
   if (img) {
     const colImg = buildColoring(rng, pal);
-    // draw the colour under the ink, softened so region edges read as a wash
-    const soft = G.param('soften');
+    const bleed = G.param('bleed');   // spreads the colour past the ink lines
     blendMode(MULTIPLY);
-    if (soft > 0) {
+    if (bleed > 0) {
       const gg = createGraphics(colImg.width, colImg.height);
       gg.pixelDensity(1);
       gg.image(colImg, 0, 0);
-      gg.filter(BLUR, soft);
+      gg.filter(BLUR, bleed);
       image(gg, IX, IY, IW, IH);
       gg.remove();
     } else {
