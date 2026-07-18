@@ -25,7 +25,7 @@ function setup() {
       smooth:  { value: 1.6, min: 0.0, max: 5.0, step: 0.2,  label: 'smooth' },
       reach:   { value: 3,   min: 2,   max: 6,   step: 1,    label: 'bleed reach' },
       layers:  { value: 3,   min: 1,   max: 4,   step: 1,    label: 'layers' },
-      bleed:   { value: 1.5, min: 0.4, max: 2.4, step: 0.1,  label: 'bleed' },
+      bleed:   { value: 1.7, min: 0.4, max: 2.4, step: 0.1,  label: 'bleed' },
       pigment: { value: 17,  min: 4,   max: 26,  step: 1,    label: 'pigment' },
       edge:    { value: 0.55,min: 0.0, max: 1.2, step: 0.05, label: 'edge pool' },
       bloom:   { value: 0.15,min: 0.0, max: 1.0, step: 0.05, label: 'centre bloom' },
@@ -57,7 +57,13 @@ function computeFit() {
   IW = iw * s; IH = ih * s; IX = (width - IW) / 2; IY = (height - IH) / 2;
 }
 function clamp255(v) { return v < 0 ? 0 : v > 255 ? 255 : v; }
-function hash2(x, y) { const s = Math.sin(x * 12.9898 + y * 78.233) * 43758.5453; return s - Math.floor(s); }
+// integer hash → white-noise grain. A sin-based hash beats into a visible moiré
+// grid on large flat regions (the square); this stays organic at any size.
+function hash2(x, y) {
+  let h = (Math.imul(x | 0, 374761393) + Math.imul(y | 0, 668265263) + G.seed) | 0;
+  h = Math.imul(h ^ (h >>> 13), 1274126177);
+  return ((h ^ (h >>> 16)) >>> 0) / 4294967296;
+}
 function jitter(c, rng, amt) { const f = 1 + (rng() * 2 - 1) * amt; return [clamp255(c[0] * f), clamp255(c[1] * f), clamp255(c[2] * f)]; }
 
 // default palette for colouring line art; index 0 in PALETTES ('Auto')
@@ -298,8 +304,9 @@ function draw() {
     const o = 4 * i, lb = label[i];
     if (!lb) { out.pixels[o + 3] = 0; continue; } // ink / background → paper
     const c = info[lb].col;
-    // wobble the edge width with noise so the pooled rim reads organic, not clean
-    const ew = ewb * (0.6 + 0.8 * ((Math.sin((i % mw) * 0.7) + Math.sin(((i / mw) | 0) * 0.7)) * 0.25 + 0.5));
+    // wobble the edge width with smooth Perlin noise so the pooled rim reads
+    // organic — a sin(x)+sin(y) wobble beats into a diamond grid on flat regions
+    const ew = ewb * (0.6 + 0.8 * noise((i % mw) * 0.05, ((i / mw) | 0) * 0.05));
     const d = dist[i], et = Math.min(1, d / ew), dk = 1 - edge * 0.45 * (1 - et);
     const bt = Math.min(1, Math.max(0, (d - ew * 1.4) / (ew * 5)));
     const gn = 1 + (hash2(i % mw, (i / mw) | 0) - 0.5) * grainA;
@@ -345,7 +352,7 @@ function draw() {
           edge: edge, bloom: bloom, grain: G.param('grain'),
           // weightVar/preEvolutions → the bleed pools unevenly on a few sides
           // (connected lobed fingers) instead of an even faint halo of patches
-          weightVar: 0.7, preEvolutions: 1,
+          weightVar: 0.9, preEvolutions: 1,
           outline: G.param('outline') > 0, shadow: false,
         });
       }
