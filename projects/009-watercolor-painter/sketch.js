@@ -23,13 +23,14 @@ function setup() {
       palette: { value: 0,   min: 0,   max: 5,   step: 1,    label: 'palette 0-5' },
       detail:  { value: 5,   min: 1,   max: 12,  step: 1,    label: 'detail' },
       smooth:  { value: 1.6, min: 0.0, max: 5.0, step: 0.2,  label: 'smooth' },
-      reach:   { value: 4,   min: 2,   max: 6,   step: 1,    label: 'bleed reach' },
+      reach:   { value: 3,   min: 2,   max: 6,   step: 1,    label: 'bleed reach' },
       layers:  { value: 3,   min: 1,   max: 4,   step: 1,    label: 'layers' },
-      bleed:   { value: 1.4, min: 0.4, max: 2.4, step: 0.1,  label: 'bleed' },
-      pigment: { value: 15,  min: 4,   max: 26,  step: 1,    label: 'pigment' },
-      edge:    { value: 0.5, min: 0.0, max: 1.2, step: 0.05, label: 'edge pool' },
-      bloom:   { value: 0.3, min: 0.0, max: 1.0, step: 0.05, label: 'centre bloom' },
-      grain:   { value: 0.7, min: 0.0, max: 2.0, step: 0.1,  label: 'grain' },
+      bleed:   { value: 1.5, min: 0.4, max: 2.4, step: 0.1,  label: 'bleed' },
+      pigment: { value: 17,  min: 4,   max: 26,  step: 1,    label: 'pigment' },
+      edge:    { value: 0.55,min: 0.0, max: 1.2, step: 0.05, label: 'edge pool' },
+      bloom:   { value: 0.15,min: 0.0, max: 1.0, step: 0.05, label: 'centre bloom' },
+      grain:   { value: 0.4, min: 0.0, max: 2.0, step: 0.1,  label: 'grain' },
+      outline: { value: 1,   min: 0,   max: 1,   step: 1,    label: 'shape outline' },
       texture: { value: 60,  min: 0,   max: 140, step: 10,   label: 'texture (regions)' },
       seal:    { value: 1,   min: 0,   max: 4,   step: 1,    label: 'seal gaps' },
       linesense:{ value: 2,  min: 0,   max: 6,   step: 1,    label: 'line sense' },
@@ -341,7 +342,11 @@ function draw() {
           base: poly, cx: IX + it.cx * sxs, cy: IY + it.cy * sys, r: Math.sqrt(it.area / Math.PI) * sxs,
           color: it.col, paper: paperColor, rng: rng,
           reach: reach, layers: lyr, detail: 3, bleed: bmag, smooth: smoothK, pigment: pig,
-          edge: edge, bloom: bloom, grain: G.param('grain'), outline: false, shadow: false,
+          edge: edge, bloom: bloom, grain: G.param('grain'),
+          // weightVar/preEvolutions → the bleed pools unevenly on a few sides
+          // (connected lobed fingers) instead of an even faint halo of patches
+          weightVar: 0.7, preEvolutions: 1,
+          outline: G.param('outline') > 0, shadow: false,
         });
       }
     }
