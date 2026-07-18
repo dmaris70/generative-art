@@ -155,6 +155,7 @@ function buildColoring(rng, pal) {
   const minArea = Math.max(8, N * 0.00002);
   const flowerP = G.param('flowers') / 100;
   const col = new Array(comp + 1).fill(null);
+  let woodyId = 0, woodyArea = 0;
   for (let c = 1; c <= comp; c++) {
     const it = info[c];
     if (it.area < minArea) continue;
@@ -162,7 +163,10 @@ function buildColoring(rng, pal) {
     const roundv = Math.min(it.w, it.h) / Math.max(it.w, it.h);
     // the tall, large surface that runs from the grass up into the canopy is the
     // woody structure (trunk + branches) → all brown
-    if (it.h > mh * 0.42 && it.area > N * 0.012) col[c] = jitter(pal.trunk, rng, 0.08);
+    if (it.h > mh * 0.42 && it.area > N * 0.012) {
+      col[c] = jitter(pal.trunk, rng, 0.08);
+      if (it.area > woodyArea) { woodyArea = it.area; woodyId = c; }
+    }
     else if (ny > 0.85) col[c] = jitter(pal.grass, rng, 0.12);
     else if (it.area < N * 0.0022 && roundv > 0.5 && rng() < flowerP) col[c] = pal.flowers[Math.floor(rng() * pal.flowers.length)];
     else {
@@ -172,9 +176,33 @@ function buildColoring(rng, pal) {
     }
   }
 
+  // carve negative space out of the woody surface: the real wood is one body that
+  // reaches the ground; enclosed non-ink pockets that never reach the base are the
+  // sky-gaps between branches → leave them white
+  const hole = new Uint8Array(N);
+  if (woodyId) {
+    const lab2 = new Int32Array(N);
+    const q2 = [];
+    for (let s = 0; s < N; s++) {
+      if (label[s] !== woodyId || ink[s] || lab2[s]) continue;
+      q2.length = 0; q2.push(s); lab2[s] = 1;
+      let maxy = 0, area = 0;
+      const idx = [];
+      while (q2.length) {
+        const i = q2.pop(), x = i % mw, y = (i / mw) | 0;
+        area++; idx.push(i); if (y > maxy) maxy = y;
+        if (x > 0 && label[i - 1] === woodyId && !ink[i - 1] && !lab2[i - 1]) { lab2[i - 1] = 1; q2.push(i - 1); }
+        if (x < mw - 1 && label[i + 1] === woodyId && !ink[i + 1] && !lab2[i + 1]) { lab2[i + 1] = 1; q2.push(i + 1); }
+        if (y > 0 && label[i - mw] === woodyId && !ink[i - mw] && !lab2[i - mw]) { lab2[i - mw] = 1; q2.push(i - mw); }
+        if (y < mh - 1 && label[i + mw] === woodyId && !ink[i + mw] && !lab2[i + mw]) { lab2[i + mw] = 1; q2.push(i + mw); }
+      }
+      if (maxy < mh * 0.9 && area > N * 0.0006) for (const i of idx) hole[i] = 1;
+    }
+  }
+
   // distance to each surface's edge (boundary ink or background) → watercolour shading
   const dist = new Float32Array(N);
-  for (let i = 0; i < N; i++) dist[i] = (label[i] && col[label[i]]) ? 1e9 : 0;
+  for (let i = 0; i < N; i++) dist[i] = (label[i] && col[label[i]] && !hole[i]) ? 1e9 : 0;
   for (let y = 0; y < mh; y++) for (let x = 0; x < mw; x++) {
     const i = x + y * mw; if (dist[i] === 0) continue;
     let d = dist[i];
@@ -200,7 +228,7 @@ function buildColoring(rng, pal) {
   const alpha = Math.round(140 + G.param('pigment') * 5);
   const ew = 2 + edge * 7;
   for (let i = 0; i < N; i++) {
-    const c = label[i] ? col[label[i]] : null;
+    const c = (label[i] && !hole[i]) ? col[label[i]] : null;
     const o = 4 * i;
     if (!c) { out.pixels[o + 3] = 0; continue; }
     const d = dist[i];
