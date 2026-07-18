@@ -32,6 +32,7 @@ function setup() {
       grain:   { value: 0.7, min: 0.0, max: 2.0, step: 0.1,  label: 'grain' },
       texture: { value: 60,  min: 0,   max: 140, step: 10,   label: 'texture (regions)' },
       seal:    { value: 1,   min: 0,   max: 4,   step: 1,    label: 'seal gaps' },
+      linesense:{ value: 2,  min: 0,   max: 6,   step: 1,    label: 'line sense' },
       ink:     { value: 90,  min: 0,   max: 100, step: 5,    label: 'ink %' },
       handdrawn:{ value: 0,  min: 0,   max: 4.0, step: 0.2,  label: 'hand-drawn' },
       filledges:{ value: 0,  min: 0,   max: 1,   step: 1,    label: 'fill edges' },
@@ -192,17 +193,32 @@ function draw() {
     text('drop any image here (PNG/JPG) to watercolour it', width / 2, height / 2); return;
   }
 
-  const mw = 540, mh = Math.max(1, Math.round((mw * img.height) / img.width)), N = mw * mh;
-  const g = createGraphics(mw, mh); g.pixelDensity(1); g.image(img, 0, 0, mw, mh); g.loadPixels();
-  const px = g.pixels;
+  let mw = 540, mh = Math.max(1, Math.round((mw * img.height) / img.width)), N = mw * mh;
+  let g = createGraphics(mw, mh); g.pixelDensity(1); g.image(img, 0, 0, mw, mh); g.loadPixels();
+  let px = g.pixels;
   const lineart = isLineArt(px, N);
+  // line art: re-sample at a higher working resolution so thin outlines survive.
+  // at 540px a 1-2px line breaks into disconnected dots and the background flood
+  // leaks through, leaving the shape blank — the root cause of unpainted surfaces.
+  if (lineart) {
+    const mw2 = Math.min(1024, Math.max(540, img.width | 0));
+    if (mw2 !== mw) {
+      g.remove();
+      mw = mw2; mh = Math.max(1, Math.round((mw * img.height) / img.width)); N = mw * mh;
+      g = createGraphics(mw, mh); g.pixelDensity(1); g.image(img, 0, 0, mw, mh); g.loadPixels(); px = g.pixels;
+    }
+  }
   const label = new Int32Array(N); const info = [null]; let comp = 0; const stack = [];
 
   if (lineart) {
     // LINE ART: ink = dark; background = non-ink reachable from the border; each
     // enclosed cell → a palette colour (the drawing's own line-art coloring book)
+    // 'line sense': how dark a pixel must be to count as ink. Thin outlines fade
+    // to light grey when the image is downscaled, so a higher threshold recovers
+    // them as a continuous barrier instead of a broken dotted line.
+    const inkThresh = 384 + Math.round(G.param('linesense')) * 48;
     const ink = new Uint8Array(N), bg = new Uint8Array(N);
-    for (let i = 0; i < N; i++) ink[i] = (px[4 * i] + px[4 * i + 1] + px[4 * i + 2]) < 384 ? 1 : 0;
+    for (let i = 0; i < N; i++) ink[i] = (px[4 * i] + px[4 * i + 1] + px[4 * i + 2]) < inkThresh ? 1 : 0;
     // 'fill edges' off → the border-connected white is background (left blank);
     // on → skip it, so cut-off cells at the margins get coloured too
     if (G.param('filledges') <= 0) {
