@@ -32,6 +32,7 @@ function setup() {
       bloom:   { value: 0.15,min: 0.0, max: 1.0, step: 0.05, label: 'centre bloom' },
       grain:   { value: 0.4, min: 0.0, max: 2.0, step: 0.1,  label: 'grain' },
       tooth:   { value: 0.35,min: 0.0, max: 1.0, step: 0.05, label: 'paper tooth' },
+      mix:     { value: 3,   min: 0,   max: 10,  step: 1,    label: 'colour mix' },
       outline: { value: 1,   min: 0,   max: 1,   step: 1,    label: 'shape outline' },
       texture: { value: 60,  min: 0,   max: 140, step: 10,   label: 'texture (regions)' },
       seal:    { value: 1,   min: 0,   max: 4,   step: 1,    label: 'seal gaps' },
@@ -67,6 +68,34 @@ function hash2(x, y) {
   return ((h ^ (h >>> 16)) >>> 0) / 4294967296;
 }
 function jitter(c, rng, amt) { const f = 1 + (rng() * 2 - 1) * amt; return [clamp255(c[0] * f), clamp255(c[1] * f), clamp255(c[2] * f)]; }
+
+// RGB↔RYB (artist colour wheel) — mixing in RYB is subtractive like real paint:
+// blue+yellow→green, not the muddy near-black that averaging/MULTIPLY in RGB gives.
+// Sugita/Gossett-style approximation, channels 0..255.
+function rgb2ryb(r, g, b) {
+  r /= 255; g /= 255; b /= 255;
+  const w = Math.min(r, g, b); r -= w; g -= w; b -= w;
+  const mg = Math.max(r, g, b);
+  let y = Math.min(r, g); r -= y; g -= y;
+  if (b > 0 && g > 0) { b *= 0.5; g *= 0.5; }
+  y += g; b += g;
+  const my = Math.max(r, y, b);
+  if (my > 0) { const n = mg / my; r *= n; y *= n; b *= n; }
+  r += w; y += w; b += w;
+  return [r * 255, y * 255, b * 255];
+}
+function ryb2rgb(r, y, b) {
+  r /= 255; y /= 255; b /= 255;
+  const w = Math.min(r, y, b); r -= w; y -= w; b -= w;
+  const my = Math.max(r, y, b);
+  let g = Math.min(y, b); y -= g; b -= g;
+  if (b > 0 && g > 0) { b *= 2; g *= 2; }
+  r += y; g += y;
+  const mg = Math.max(r, g, b);
+  if (mg > 0) { const n = my / mg; r *= n; g *= n; b *= n; }
+  r += w; g += w; b += w;
+  return [r * 255, g * 255, b * 255];
+}
 
 // default palette for colouring line art; index 0 in PALETTES ('Auto')
 const LINE_PAL = [
@@ -294,6 +323,37 @@ function draw() {
     if (x < mw - 1) d = Math.min(d, dist[i + 1] + 1); if (y < mh - 1) d = Math.min(d, dist[i + mw] + 1);
     if (x < mw - 1 && y < mh - 1) d = Math.min(d, dist[i + mw + 1] + 1.414); if (x > 0 && y < mh - 1) d = Math.min(d, dist[i + mw - 1] + 1.414); dist[i] = d; }
 
+  // COLOUR MIXING: where two regions meet, blend their pigments in RYB space
+  // (subtractive → blue+yellow reads green, not muddy). Build a region-colour
+  // field, dilate it across ink/gaps so neighbours can touch, blur it in RYB, and
+  // near boundaries lerp each pixel toward the mixed field (interiors stay pure).
+  const mixRad = Math.round(G.param('mix'));
+  let mixFR = null, mixFG = null, mixFB = null;
+  if (mixRad > 0) {
+    const fR = new Float32Array(N), fG = new Float32Array(N), fB = new Float32Array(N), filled = new Uint8Array(N);
+    for (let i = 0; i < N; i++) {
+      const lb = label[i];
+      if (lb) { const c = info[lb].col; fR[i] = c[0]; fG[i] = c[1]; fB[i] = c[2]; filled[i] = 1; }
+      else { fR[i] = paperColor[0]; fG[i] = paperColor[1]; fB[i] = paperColor[2]; }
+    }
+    for (let t = 0; t < mixRad + 3; t++) {
+      const nf = filled.slice();
+      for (let i = 0; i < N; i++) {
+        if (filled[i]) continue;
+        const x = i % mw, y = (i / mw) | 0; let j = -1;
+        if (x > 0 && filled[i - 1]) j = i - 1; else if (x < mw - 1 && filled[i + 1]) j = i + 1;
+        else if (y > 0 && filled[i - mw]) j = i - mw; else if (y < mh - 1 && filled[i + mw]) j = i + mw;
+        if (j >= 0) { fR[i] = fR[j]; fG[i] = fG[j]; fB[i] = fB[j]; nf[i] = 1; }
+      }
+      filled.set(nf);
+    }
+    for (let i = 0; i < N; i++) { const t = rgb2ryb(fR[i], fG[i], fB[i]); fR[i] = t[0]; fG[i] = t[1]; fB[i] = t[2]; }
+    boxBlur(fR, mw, mh, mixRad); boxBlur(fG, mw, mh, mixRad); boxBlur(fB, mw, mh, mixRad);
+    for (let i = 0; i < N; i++) { const t = ryb2rgb(fR[i], fG[i], fB[i]); fR[i] = t[0]; fG[i] = t[1]; fB[i] = t[2]; }
+    mixFR = fR; mixFG = fG; mixFB = fB;
+  }
+  const mixBand = mixRad * 2.5;
+
   // one shaded region-colour image → correct colours, no cross-region multiply.
   // on dark grounds WITH glow texture, keep the base dim (a faint ground) so the
   // ADD glow builds the bright cores instead of the base blowing out to white.
@@ -305,7 +365,9 @@ function draw() {
   for (let i = 0; i < N; i++) {
     const o = 4 * i, lb = label[i];
     if (!lb) { out.pixels[o + 3] = 0; continue; } // ink / background → paper
-    const c = info[lb].col;
+    let c = info[lb].col;
+    // near a region boundary, lerp toward the RYB-mixed field (colours mix at seams)
+    if (mixFR) { const mt = Math.max(0, 1 - dist[i] / mixBand); if (mt > 0) c = [c[0] + (mixFR[i] - c[0]) * mt, c[1] + (mixFG[i] - c[1]) * mt, c[2] + (mixFB[i] - c[2]) * mt]; }
     // wobble the edge width with smooth Perlin noise so the pooled rim reads
     // organic — a sin(x)+sin(y) wobble beats into a diamond grid on flat regions
     const ew = ewb * (0.6 + 0.8 * noise((i % mw) * 0.05, ((i / mw) | 0) * 0.05));
