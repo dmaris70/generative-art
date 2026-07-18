@@ -27,7 +27,9 @@ function setup() {
       bloom:   { value: 0.3, min: 0.0, max: 1.0, step: 0.05, label: 'centre bloom' },
       grain:   { value: 0.7, min: 0.0, max: 2.0, step: 0.1,  label: 'grain' },
       bleed:   { value: 0.4, min: 0.0, max: 3.0, step: 0.1,  label: 'soften' },
-      edges:   { value: 0,   min: 0,   max: 100, step: 5,    label: 'ink edges %' },
+      ink:     { value: 90,  min: 0,   max: 100, step: 5,    label: 'ink %' },
+      handdrawn:{ value: 0,  min: 0,   max: 4.0, step: 0.2,  label: 'hand-drawn' },
+      filledges:{ value: 0,  min: 0,   max: 1,   step: 1,    label: 'fill edges' },
     },
     onReset: function () { redraw(); },
   });
@@ -57,6 +59,22 @@ const LINE_PAL = [
   [206, 116, 138], [96, 128, 178], [138, 166, 112], [224, 156, 116], [150, 126, 96],
   [92, 150, 138], [190, 140, 180],
 ];
+// re-render the ink with a wobbly noise displacement → hand-drawn outlines
+function handDrawnInk(mw, mh, amount) {
+  const eg = createGraphics(mw, mh); eg.pixelDensity(1); eg.image(img, 0, 0, mw, mh); eg.loadPixels();
+  const sp = eg.pixels, out = createImage(mw, mh); out.loadPixels();
+  for (let y = 0; y < mh; y++) for (let x = 0; x < mw; x++) {
+    const dx = (Math.sin(x * 0.09 + y * 0.045) + Math.sin(y * 0.13 + 2)) * amount * 0.5;
+    const dy = (Math.sin(y * 0.09 + x * 0.04 + 1) + Math.sin(x * 0.12)) * amount * 0.5;
+    let sx = Math.round(x + dx), sy = Math.round(y + dy);
+    sx = sx < 0 ? 0 : sx >= mw ? mw - 1 : sx; sy = sy < 0 ? 0 : sy >= mh ? mh - 1 : sy;
+    const si = sx + sy * mw, o = 4 * (x + y * mw);
+    const dark = (sp[4 * si] + sp[4 * si + 1] + sp[4 * si + 2]) / 3;
+    out.pixels[o] = 26; out.pixels[o + 1] = 24; out.pixels[o + 2] = 30;
+    out.pixels[o + 3] = dark < 165 ? Math.min(255, (165 - dark) * 2.4) : 0;
+  }
+  out.updatePixels(); eg.remove(); return out;
+}
 // detect a line drawing: mostly white, low colour saturation
 function isLineArt(px, N) {
   let white = 0, sat = 0, n = 0;
@@ -97,10 +115,14 @@ function draw() {
     // enclosed cell → a palette colour (the drawing's own line-art coloring book)
     const ink = new Uint8Array(N), bg = new Uint8Array(N);
     for (let i = 0; i < N; i++) ink[i] = (px[4 * i] + px[4 * i + 1] + px[4 * i + 2]) < 384 ? 1 : 0;
-    const seed = function (i) { if (!ink[i] && !bg[i]) { bg[i] = 1; stack.push(i); } };
-    for (let x = 0; x < mw; x++) { seed(x); seed(x + (mh - 1) * mw); }
-    for (let y = 0; y < mh; y++) { seed(y * mw); seed(mw - 1 + y * mw); }
-    while (stack.length) { const i = stack.pop(), x = i % mw, y = (i / mw) | 0; if (x > 0) seed(i - 1); if (x < mw - 1) seed(i + 1); if (y > 0) seed(i - mw); if (y < mh - 1) seed(i + mw); }
+    // 'fill edges' off → the border-connected white is background (left blank);
+    // on → skip it, so cut-off cells at the margins get coloured too
+    if (G.param('filledges') <= 0) {
+      const seed = function (i) { if (!ink[i] && !bg[i]) { bg[i] = 1; stack.push(i); } };
+      for (let x = 0; x < mw; x++) { seed(x); seed(x + (mh - 1) * mw); }
+      for (let y = 0; y < mh; y++) { seed(y * mw); seed(mw - 1 + y * mw); }
+      while (stack.length) { const i = stack.pop(), x = i % mw, y = (i / mw) | 0; if (x > 0) seed(i - 1); if (x < mw - 1) seed(i + 1); if (y > 0) seed(i - mw); if (y < mh - 1) seed(i + mw); }
+    }
     for (let s = 0; s < N; s++) {
       if (ink[s] || bg[s] || label[s]) continue; comp++;
       let area = 0; stack.length = 0; stack.push(s); label[s] = comp;
@@ -172,13 +194,13 @@ function draw() {
   else image(out, IX, IY, IW, IH);
   blendMode(BLEND);
 
-  // ink overlay — for line art the drawing's own lines ARE the picture, so keep
-  // them strong; for photos it's an optional edge accent
-  const ee = lineart ? Math.max(0.9, G.param('edges') / 100) : G.param('edges') / 100;
+  // ink overlay — 'ink %' opacity; 'hand-drawn' wobbles the lines
+  const ee = G.param('ink') / 100, hd = G.param('handdrawn');
   if (ee > 0) {
     if (lineart) {
-      blendMode(MULTIPLY); drawingContext.globalAlpha = ee; image(img, IX, IY, IW, IH); drawingContext.globalAlpha = 1; blendMode(BLEND);
-    } else {
+      const inkImg = hd > 0 ? handDrawnInk(mw, mh, hd) : img;
+      blendMode(MULTIPLY); drawingContext.globalAlpha = ee; image(inkImg, IX, IY, IW, IH); drawingContext.globalAlpha = 1; blendMode(BLEND);
+    } else if (ee > 0) {
       const eg = createGraphics(mw, mh); eg.pixelDensity(1); eg.image(img, 0, 0, mw, mh); eg.loadPixels();
       const ep = eg.pixels; const eo = createImage(mw, mh); eo.loadPixels();
       for (let y = 0; y < mh; y++) for (let x = 0; x < mw; x++) {
