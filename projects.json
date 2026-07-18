@@ -3,6 +3,14 @@
   "author": "dmaris70",
   "projects": [
     {
+      "slug": "009-watercolor-painter",
+      "title": "Watercolor Painter",
+      "year": 2026,
+      "tools": ["p5.js"],
+      "description": "Drop ANY image — it's segmented into colour regions, each sampled and repainted as a watercolour wash. A general watercolorize-any-image engine.",
+      "thumb": ""
+    },
+    {
       "slug": "008-watercolor-tree",
       "title": "Watercolor Tree",
       "year": 2026,
