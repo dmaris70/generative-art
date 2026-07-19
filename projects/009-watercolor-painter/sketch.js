@@ -31,7 +31,7 @@ function setup() {
       smooth:  { value: 1.6, min: 0.0, max: 5.0, step: 0.2,  label: 'smooth' },
       reach:   { value: 3,   min: 2,   max: 6,   step: 1,    label: 'bleed reach' },
       layers:  { value: 3,   min: 1,   max: 4,   step: 1,    label: 'layers' },
-      wash:    { value: 2,   min: 1,   max: 5,   step: 1,    label: 'wash (smooth)' },
+      wash:    { value: 2,   min: 1,   max: 8,   step: 1,    label: 'wash (smooth)' },
       bleed:   { value: 1.6, min: 0.4, max: 2.4, step: 0.1,  label: 'bleed' },
       pigment: { value: 17,  min: 4,   max: 26,  step: 1,    label: 'pigment' },
       edge:    { value: 0.55,min: 0.0, max: 1.2, step: 0.05, label: 'edge pool' },
