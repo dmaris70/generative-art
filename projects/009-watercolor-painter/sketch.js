@@ -36,6 +36,7 @@ function setup() {
       pigment: { value: 17,  min: 4,   max: 26,  step: 1,    label: 'pigment' },
       edge:    { value: 0.55,min: 0.0, max: 1.2, step: 0.05, label: 'edge pool' },
       softedge:{ value: 0.5, min: 0.0, max: 1.0, step: 0.05, label: 'soft edge' },
+      broken:  { value: 0.3, min: 0.0, max: 1.0, step: 0.05, label: 'broken edge' },
       bloom:   { value: 0.15,min: 0.0, max: 1.0, step: 0.05, label: 'centre bloom' },
       grain:   { value: 0.4, min: 0.0, max: 2.0, step: 0.1,  label: 'grain' },
       tooth:   { value: 0.35,min: 0.0, max: 1.0, step: 0.05, label: 'paper tooth' },
@@ -410,7 +411,7 @@ function draw() {
   const out = createImage(mw, mh); out.loadPixels();
   const pig = G.param('pigment');
   const alpha = (darkBg && nTexEarly > 0) ? Math.round(60 + pig * 2) : Math.round(150 + pig * 5);
-  const ewb = 2 + edge * 8, softAmt = G.param('softedge');
+  const ewb = 2 + edge * 8, softAmt = G.param('softedge'), brokenAmt = G.param('broken');
   for (let i = 0; i < N; i++) {
     const o = 4 * i, lb = label[i];
     if (!lb) { out.pixels[o + 3] = 0; continue; } // ink / background → paper
@@ -434,7 +435,18 @@ function draw() {
     // suppresses pooling here also softens the boundary; hard stretches stay crisp.
     const sf = Math.max(0, Math.min(1, (0.85 - evar) / 0.6));
     const set = Math.min(1, d / (ew * 2.4));
-    const af = 1 - softAmt * sf * (1 - set);
+    let af = 1 - softAmt * sf * (1 - set);
+    // BROKEN / dry-brush edges (De Masi): on some DRY (non-soft) rim stretches the
+    // pigment skips the paper's tooth, leaving a ragged speckled edge — pigment on
+    // the peaks, paper punching through the valleys. Selected by its own low-freq
+    // field, gated to the rim band and away from the soft/wet stretches.
+    if (brokenAmt > 0.001) {
+      const bx = i % mw, by = (i / mw) | 0;
+      const bs = Math.max(0, (noise(bx * 0.035 + 90, by * 0.035 + 90) - 0.42) / 0.4);
+      const rp = Math.max(0, 1 - d / (ew * 2.2));
+      const bk = Math.min(1, brokenAmt * bs * rp * (1 - sf));
+      if (bk > 0) { const tk = noise(bx * 0.38, by * 0.38); af *= 1 - bk * (1 - tk); }
+    }
     const bt = Math.min(1, Math.max(0, (d - ew * 1.4) / (ew * 5)));
     const gn = 1 + (hash2(i % mw, (i / mw) | 0) - 0.5) * grainA;
     // bloom pulls toward a lighter tint of the paper (works on dark palettes too)
