@@ -433,15 +433,19 @@ function draw() {
     const vx = bx - info[lb].cx, vy = by - info[lb].cy, vl = Math.hypot(vx, vy) || 1;
     let dir = 0.5 + 0.5 * ((vx * gdx[lb] + vy * gdy[lb]) / vl);
     dir = Math.max(0, Math.min(1, dir + (noise(bx * 0.03 + 40, by * 0.03 + 40) - 0.5) * 0.3));
-    const up = 1 - dir;
-    const dk = 1 - edge * 0.62 * dir * Math.pow(1 - et, 1.4);
+    // SHARPEN the fluctuation (cubic): pooling stays quiet across the shape then rises
+    // SUDDENLY toward the down side, reading as a dark 'bump' on one edge rather than a
+    // linear gradient; the up side dissolves with the same sudden onset on the opposite.
+    const poolG = dir * dir * dir;
+    const upG = (1 - dir) * (1 - dir) * (1 - dir);
+    const dk = 1 - edge * 0.62 * poolG * Math.pow(1 - et, 1.4);
     // SOFT + BROKEN edges live on the 'up' (weak-pool) side. Stored here and applied
     // as a post-texture EROSION (below) so they stay visible through the vector paint
     // layer — a soft stretch dissolves into paper, a dry stretch breaks over the tooth.
     const rp = Math.max(0, 1 - d / (ew * 3.0));
     const bs = Math.max(0, Math.min(1, (noise(bx * 0.035 + 90, by * 0.035 + 90) - 0.4) / 0.4));
-    let er = softAmt * up * (1 - bs) * rp;
-    if (brokenAmt > 0.001 && bs > 0) er += brokenAmt * up * bs * rp * (1 - noise(bx * 0.38, by * 0.38));
+    let er = softAmt * upG * (1 - bs) * rp;
+    if (brokenAmt > 0.001 && bs > 0) er += brokenAmt * upG * bs * rp * (1 - noise(bx * 0.38, by * 0.38));
     erodeArr[i] = Math.min(0.94, er);
     const bt = Math.min(1, Math.max(0, (d - ew * 1.4) / (ew * 5)));
     const gn = 1 + (hash2(i % mw, (i / mw) | 0) - 0.5) * grainA;
