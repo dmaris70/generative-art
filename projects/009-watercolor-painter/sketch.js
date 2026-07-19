@@ -413,8 +413,11 @@ function draw() {
   const alpha = (darkBg && nTexEarly > 0) ? Math.round(60 + pig * 2) : Math.round(150 + pig * 5);
   const ewb = 2 + edge * 8, softAmt = G.param('softedge'), brokenAmt = G.param('broken');
   // per-region tilt direction (random per seed) → DIRECTIONAL edge pool gradient
-  const gdx = new Float32Array(comp + 1), gdy = new Float32Array(comp + 1);
-  for (let c = 1; c <= comp; c++) { const a = hash2(c * 2 + 1, 777) * Math.PI * 2; gdx[c] = Math.cos(a); gdy[c] = Math.sin(a); }
+  const gdx = new Float32Array(comp + 1), gdy = new Float32Array(comp + 1), rrad = new Float32Array(comp + 1);
+  for (let c = 1; c <= comp; c++) {
+    const a = hash2(c * 2 + 1, 777) * Math.PI * 2; gdx[c] = Math.cos(a); gdy[c] = Math.sin(a);
+    rrad[c] = info[c] ? Math.sqrt(info[c].area / Math.PI) : 0; // region radius, caps erosion depth
+  }
   const erodeArr = new Float32Array(N); // soft/broken edge erosion, applied post-texture
   for (let i = 0; i < N; i++) {
     const o = 4 * i, lb = label[i];
@@ -437,16 +440,25 @@ function draw() {
     // SUDDENLY toward the down side, reading as a dark 'bump' on one edge rather than a
     // linear gradient; the up side dissolves with the same sudden onset on the opposite.
     const poolG = dir * dir * dir;
-    const upG = (1 - dir) * (1 - dir) * (1 - dir);
     const dk = 1 - edge * 0.62 * poolG * Math.pow(1 - et, 1.4);
     // SOFT + BROKEN edges live on the 'up' (weak-pool) side. Stored here and applied
-    // as a post-texture EROSION (below) so they stay visible through the vector paint
-    // layer — a soft stretch dissolves into paper, a dry stretch breaks over the tooth.
-    const rp = Math.max(0, 1 - d / (ew * 3.0));
+    // as a post-texture EROSION (below) so they read through the vector paint layer.
+    // Deliberately DRAMATIC: a wide band that grows with the amount (clamped to the
+    // region's own radius so small shapes aren't erased) and a broad up-side falloff —
+    // a soft stretch properly dissolves away, a dry stretch shatters over the tooth.
+    const eAmt = Math.max(softAmt, brokenAmt);
+    const eband = Math.min(ew * (2.5 + 7 * eAmt), rrad[lb] * 0.7);
+    const rp = eband > 0.5 ? Math.max(0, 1 - d / eband) : 0;
+    const upS = Math.pow(1 - dir, 1.4); // broader than the cubic pool bump → more rim
     const bs = Math.max(0, Math.min(1, (noise(bx * 0.035 + 90, by * 0.035 + 90) - 0.4) / 0.4));
-    let er = softAmt * upG * (1 - bs) * rp;
-    if (brokenAmt > 0.001 && bs > 0) er += brokenAmt * upG * bs * rp * (1 - noise(bx * 0.38, by * 0.38));
-    erodeArr[i] = Math.min(0.94, er);
+    let er = softAmt * 1.35 * upS * (1 - bs) * rp;
+    if (brokenAmt > 0.001 && bs > 0) {
+      // two-scale tooth + hard threshold → chunky, high-contrast dry-brush breakup
+      const tv = 0.6 * noise(bx * 0.38, by * 0.38) + 0.4 * noise(bx * 0.13 + 7, by * 0.13 + 7);
+      const tkc = Math.max(0, Math.min(1, (0.6 - tv) / 0.22));
+      er += brokenAmt * 1.5 * upS * bs * rp * tkc;
+    }
+    erodeArr[i] = Math.min(1, er);
     const bt = Math.min(1, Math.max(0, (d - ew * 1.4) / (ew * 5)));
     const gn = 1 + (hash2(i % mw, (i / mw) | 0) - 0.5) * grainA;
     // bloom pulls toward a lighter tint of the paper (works on dark palettes too)
