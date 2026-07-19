@@ -43,6 +43,7 @@ function setup() {
       mix:     { value: 3,   min: 0,   max: 10,  step: 1,    label: 'colour mix' },
       charge:  { value: 0.4, min: 0.0, max: 1.0, step: 0.05, label: 'charge colour' },
       backrun: { value: 0.25,min: 0.0, max: 1.0, step: 0.05, label: 'blooms' },
+      lift:    { value: 0.3, min: 0.0, max: 1.0, step: 0.05, label: 'lifting' },
       outline: { value: 1,   min: 0,   max: 1,   step: 1,    label: 'shape outline' },
       texture: { value: 60,  min: 0,   max: 140, step: 10,   label: 'texture (regions)' },
       seal:    { value: 1,   min: 0,   max: 4,   step: 1,    label: 'seal gaps' },
@@ -422,7 +423,7 @@ function draw() {
     rrad[c] = info[c] ? Math.sqrt(info[c].area / Math.PI) : 0; // region radius, caps erosion depth
     chw[c] = hash2(c * 3 + 5, 313) * 2 - 1;
   }
-  const chargeAmt = G.param('charge'), backrunAmt = G.param('backrun');
+  const chargeAmt = G.param('charge'), backrunAmt = G.param('backrun'), liftAmt = G.param('lift');
   const erodeArr = new Float32Array(N); // soft/broken edge erosion, applied post-texture
   for (let i = 0; i < N; i++) {
     const o = 4 * i, lb = label[i];
@@ -469,6 +470,15 @@ function draw() {
       const tv = 0.6 * noise(bx * 0.38, by * 0.38) + 0.4 * noise(bx * 0.13 + 7, by * 0.13 + 7);
       const tkc = Math.max(0, Math.min(1, (0.6 - tv) / 0.22));
       er += brokenAmt * 1.5 * upS * bs * rp * tkc;
+    }
+    // LIFTING (De Masi): pigment lifted back out with a damp brush — SOFT light
+    // patches with NO hard rim (that's what separates a lift from a bloom), revealing
+    // the paper. Sampled anisotropically so they read as brush lifts, not round blobs.
+    // Folded into the erosion buffer so they show through the vector paint layer.
+    if (liftAmt > 0.001) {
+      const lv = noise(bx * 0.012 + 900, by * 0.026 + 900);
+      const lf = Math.max(0, Math.min(1, (lv - 0.58) / 0.3));
+      if (lf > 0) er += liftAmt * lf * 0.8;
     }
     erodeArr[i] = Math.min(1, er);
     const bt = Math.min(1, Math.max(0, (d - ew * 1.4) / (ew * 5)));
