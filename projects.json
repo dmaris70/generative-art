@@ -7,7 +7,7 @@
       "title": "Watercolor Painter",
       "year": 2026,
       "tools": ["p5.js"],
-      "description": "Drop ANY image — it's segmented into colour regions, each sampled and repainted as a watercolour wash. A general watercolorize-any-image engine.",
+      "description": "A watercolour painting studio: drop any image (photo or line art), then pick a colour and click any region to paint it — real bleed, RYB colour mixing at seams, and paper tooth. Also auto-colours the whole image.",
       "thumb": ""
     },
     {

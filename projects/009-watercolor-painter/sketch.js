@@ -1,22 +1,28 @@
-// Watercolor Painter — turn ANY uploaded image into a watercolour painting.
+// Watercolor Painter — a watercolour painting studio for ANY uploaded image.
 //
-// Same method as the tree colorizer, generalised: segment the image into flat
-// regions (colour-quantise + connected components), sample each region's own
-// average colour, trace its contour, and paint it with the Watercolor module
-// (unclipped bleed). Largest regions first, so it reads back-to-front like a wash
-// with objects on top. Works on photos, illustrations, and line art.
+// Segment the image into flat regions (colour-quantise / line-art cells), then
+// paint each with the Watercolor module (interleaved unclipped bleed, RYB colour
+// mixing at seams, paper tooth). STUDIO: pick a colour from the top-left picker (or
+// a swatch) and CLICK a region to paint it; shift-click eyedrops a region's colour.
+// A click shows an instant flat preview, then the full watercolour render settles.
 //
 // Drop a PNG/JPG on the canvas, or save one beside this file as source.(png|jpg).
-// Keys: R re-seed the bleed · S save PNG.
+// Keys: R re-seed the bleed · S save PNG · C clear all painted regions.
 
 let G;
 let img = null;
+let overrides = {};              // studio: region label → [r,g,b] chosen colour
+let pickColor = [206, 128, 84];  // current studio colour
+let LB = null, LMW = 1, LMH = 1; // last segmentation, for click → region mapping
+let quickEdit = false, pendingFull = null; // fast flat preview, then full render
+let studioInput = null;
 
 function setup() {
   const c = createCanvas(windowWidth, windowHeight);
   pixelDensity(1);
   noLoop();
   c.drop(gotFile);
+  c.mousePressed(onCanvasClick); // studio: click a region to paint it
   G = GenArt.create({
     title: 'Watercolor Painter',
     params: {
@@ -43,15 +49,57 @@ function setup() {
     },
     onReset: function () { redraw(); },
   });
+  buildStudioUI();
   tryLoad(['source.png', 'source.jpg', 'source.jpeg'], 0);
   redraw();
+}
+
+// ---- studio: colour picker + swatches, click a region to paint it ----
+function hex2(v) { const s = Math.max(0, Math.min(255, Math.round(v))).toString(16); return s.length < 2 ? '0' + s : s; }
+function rgbToHex(c) { return '#' + hex2(c[0]) + hex2(c[1]) + hex2(c[2]); }
+function hexToRgb(h) { return [parseInt(h.slice(1, 3), 16), parseInt(h.slice(3, 5), 16), parseInt(h.slice(5, 7), 16)]; }
+function buildStudioUI() {
+  const bar = document.createElement('div');
+  bar.style.cssText = 'position:fixed;top:44px;left:16px;z-index:20;display:flex;gap:5px;align-items:center;background:rgba(22,22,26,.82);padding:6px 8px;border-radius:7px;font:12px ui-sans-serif,system-ui;color:#dcdce2;box-shadow:0 2px 10px #0004;';
+  const lab = document.createElement('span'); lab.textContent = 'paint'; lab.style.opacity = '.75'; bar.appendChild(lab);
+  const inp = document.createElement('input'); inp.type = 'color'; inp.value = rgbToHex(pickColor);
+  inp.style.cssText = 'width:26px;height:22px;border:none;background:none;cursor:pointer;padding:0;';
+  inp.oninput = function () { pickColor = hexToRgb(inp.value); };
+  studioInput = inp; bar.appendChild(inp);
+  for (const c of LINE_PAL) {
+    const b = document.createElement('button');
+    b.style.cssText = 'width:17px;height:17px;border:1px solid #0007;border-radius:3px;cursor:pointer;padding:0;background:rgb(' + c[0] + ',' + c[1] + ',' + c[2] + ');';
+    b.onclick = function () { pickColor = c.slice(); inp.value = rgbToHex(c); };
+    bar.appendChild(b);
+  }
+  const mk = function (txt, fn) { const b = document.createElement('button'); b.textContent = txt; b.style.cssText = 'margin-left:4px;padding:3px 7px;border:none;border-radius:4px;background:#3a3a44;color:#dcdce2;cursor:pointer;font:12px ui-sans-serif;'; b.onclick = fn; bar.appendChild(b); return b; };
+  mk('clear', function () { overrides = {}; redraw(); });
+  const hint = document.createElement('span'); hint.textContent = 'click a region · shift-click to pick its colour'; hint.style.cssText = 'opacity:.55;margin-left:4px;'; bar.appendChild(hint);
+  document.body.appendChild(bar);
+}
+function onCanvasClick() {
+  if (!img || !LB) return false;
+  const bx = Math.floor(((mouseX - IX) / IW) * LMW), by = Math.floor(((mouseY - IY) / IH) * LMH);
+  if (bx < 0 || bx >= LMW || by < 0 || by >= LMH) return false;
+  const L = LB[bx + by * LMW];
+  if (L <= 0) return false;
+  if (keyIsDown(SHIFT)) { // eyedropper: sample the region's current colour
+    const cur = overrides[L]; if (cur) { pickColor = cur.slice(); if (studioInput) studioInput.value = rgbToHex(cur); }
+    return false;
+  }
+  overrides[L] = pickColor.slice();
+  // instant flat preview, then the full watercolour render settles a beat later
+  quickEdit = true; redraw();
+  if (pendingFull) clearTimeout(pendingFull);
+  pendingFull = setTimeout(function () { quickEdit = false; redraw(); }, 350);
+  return false;
 }
 
 function tryLoad(names, i) {
   if (i >= names.length) return;
   loadImage(names[i], function (im) { img = im; redraw(); }, function () { tryLoad(names, i + 1); });
 }
-function gotFile(file) { if (file && file.type === 'image') loadImage(file.data, function (im) { img = im; redraw(); }); }
+function gotFile(file) { if (file && file.type === 'image') loadImage(file.data, function (im) { img = im; overrides = {}; redraw(); }); }
 
 let IX = 0, IY = 0, IW = 1, IH = 1;
 function computeFit() {
@@ -333,7 +381,7 @@ function draw() {
     const fR = new Float32Array(N), fG = new Float32Array(N), fB = new Float32Array(N), filled = new Uint8Array(N);
     for (let i = 0; i < N; i++) {
       const lb = label[i];
-      if (lb) { const c = info[lb].col; fR[i] = c[0]; fG[i] = c[1]; fB[i] = c[2]; filled[i] = 1; }
+      if (lb) { const c = overrides[lb] || info[lb].col; fR[i] = c[0]; fG[i] = c[1]; fB[i] = c[2]; filled[i] = 1; }
       else { fR[i] = paperColor[0]; fG[i] = paperColor[1]; fB[i] = paperColor[2]; }
     }
     for (let t = 0; t < mixRad + 3; t++) {
@@ -365,7 +413,7 @@ function draw() {
   for (let i = 0; i < N; i++) {
     const o = 4 * i, lb = label[i];
     if (!lb) { out.pixels[o + 3] = 0; continue; } // ink / background → paper
-    let c = info[lb].col;
+    let c = overrides[lb] || info[lb].col;
     // near a region boundary, lerp toward the RYB-mixed field (colours mix at seams)
     if (mixFR) { const mt = Math.max(0, 1 - dist[i] / mixBand); if (mt > 0) c = [c[0] + (mixFR[i] - c[0]) * mt, c[1] + (mixFG[i] - c[1]) * mt, c[2] + (mixFB[i] - c[2]) * mt]; }
     // wobble the edge width with smooth Perlin noise so the pooled rim reads
@@ -393,7 +441,7 @@ function draw() {
   // back-to-front, small objects on top. Light grounds use the module's MULTIPLY
   // build-up; dark grounds use ADD glow so bright hues rise out of the black.
   const nTex = Math.round(G.param('texture'));
-  if (nTex > 0) {
+  if (nTex > 0 && !quickEdit) {
     const reach = G.param('reach'), lyr = G.param('layers'), bmag = G.param('bleed');
     // detail → contour point budget (shape fidelity); smooth → module edge
     // rounding. Both now bite on line art too, not just the photo segmentation.
@@ -420,14 +468,15 @@ function draw() {
     for (let k = 0; k < lim; k++) {
       const c = list[k], it = info[c], poly = regionPoly(label, c, it.s0, mw, mh, cpts);
       if (!poly) continue;
+      const rc = overrides[c] || it.col; // studio override wins over the auto colour
       if (darkBg) {
         // glow self-normalises alpha by layer count, so keep pig (not effPig)
-        paintGlow(poly, it.col, { reach: reach, layers: effLayers, bleed: bmag, smooth: smoothK, pigment: pig, rng: rng });
+        paintGlow(poly, rc, { reach: reach, layers: effLayers, bleed: bmag, smooth: smoothK, pigment: pig, rng: rng });
       } else {
         // each region gets its own seeded rng so the interleaved draw order below
         // doesn't scramble any single region's appearance (order-independent)
         batch.push({
-          base: poly, color: it.col, cx: IX + it.cx * sxs, cy: IY + it.cy * sys,
+          base: poly, color: rc, cx: IX + it.cx * sxs, cy: IY + it.cy * sys,
           r: Math.sqrt(it.area / Math.PI) * sxs, rng: Watercolor.makeRng((G.seed ^ (c * 0x9e3779b1)) >>> 0),
         });
       }
@@ -443,7 +492,7 @@ function draw() {
   // Self-masking — paper-over-paper on the empty margins is invisible; only the
   // darker pigment is lightened in the grain pattern.
   const tooth = G.param('tooth');
-  if (tooth > 0.001) {
+  if (tooth > 0.001 && !quickEdit) {
     const tImg = createImage(mw, mh); tImg.loadPixels();
     for (let y = 0; y < mh; y++) for (let x = 0; x < mw; x++) {
       const i = x + y * mw, o = 4 * i;
@@ -476,6 +525,9 @@ function draw() {
     blendMode(BLEND); drawingContext.globalAlpha = ee; image(eo, IX, IY, IW, IH); drawingContext.globalAlpha = 1;
   }
 
+  // remember this segmentation so a canvas click can map to its region
+  LB = label; LMW = mw; LMH = mh;
+
   // palette name label
   noStroke(); fill(darkBg ? 220 : 120, darkBg ? 220 : 116, darkBg ? 220 : 108);
   textAlign(LEFT, BOTTOM); textSize(13);
@@ -485,5 +537,6 @@ function draw() {
 function keyPressed() {
   if (key === 'r' || key === 'R') G.randomize();
   if (key === 's' || key === 'S') saveCanvas('watercolor-painting-' + G.seed, 'png');
+  if (key === 'c' || key === 'C') { overrides = {}; redraw(); } // clear all painted regions
 }
 function windowResized() { resizeCanvas(windowWidth, windowHeight); redraw(); }
