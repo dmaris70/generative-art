@@ -412,6 +412,10 @@ function draw() {
   const pig = G.param('pigment');
   const alpha = (darkBg && nTexEarly > 0) ? Math.round(60 + pig * 2) : Math.round(150 + pig * 5);
   const ewb = 2 + edge * 8, softAmt = G.param('softedge'), brokenAmt = G.param('broken');
+  // per-region tilt direction (random per seed) → DIRECTIONAL edge pool gradient
+  const gdx = new Float32Array(comp + 1), gdy = new Float32Array(comp + 1);
+  for (let c = 1; c <= comp; c++) { const a = hash2(c * 2 + 1, 777) * Math.PI * 2; gdx[c] = Math.cos(a); gdy[c] = Math.sin(a); }
+  const erodeArr = new Float32Array(N); // soft/broken edge erosion, applied post-texture
   for (let i = 0; i < N; i++) {
     const o = 4 * i, lb = label[i];
     if (!lb) { out.pixels[o + 3] = 0; continue; } // ink / background → paper
@@ -422,38 +426,30 @@ function draw() {
     // organic — a sin(x)+sin(y) wobble beats into a diamond grid on flat regions
     const ew = ewb * (0.6 + 0.8 * noise((i % mw) * 0.05, ((i / mw) | 0) * 0.05));
     const d = dist[i], et = Math.min(1, d / ew);
-    // edge pooling VARIES around the rim (De Masi): some stretches pool darkly — a
-    // hard, "found" edge — while others barely darken — a soft, "lost" edge. A uniform
-    // dark ring is the tell of a mechanical fill. Low-freq noise gives coherent
-    // hard/soft runs; pow(1-et) concentrates the pigment into a crisp pooled line
-    // where it's strong (mimicking excess water pushing pigment to the rim as it dries).
-    const evar = 0.28 + 1.45 * noise((i % mw) * 0.03 + 40, ((i / mw) | 0) * 0.03 + 40);
-    const dk = 1 - edge * 0.5 * evar * Math.pow(1 - et, 1.4);
-    // SOFT / LOST edges: on the low-pooling ('wetter') stretches, fade the fill's
-    // opacity near the rim so the colour dissolves into the paper instead of ending
-    // on a hard line (De Masi wet-on-wet). The SAME wetness field (evar) that
-    // suppresses pooling here also softens the boundary; hard stretches stay crisp.
-    const sf = Math.max(0, Math.min(1, (0.85 - evar) / 0.6));
-    const set = Math.min(1, d / (ew * 2.4));
-    let af = 1 - softAmt * sf * (1 - set);
-    // BROKEN / dry-brush edges (De Masi): on some DRY (non-soft) rim stretches the
-    // pigment skips the paper's tooth, leaving a ragged speckled edge — pigment on
-    // the peaks, paper punching through the valleys. Selected by its own low-freq
-    // field, gated to the rim band and away from the soft/wet stretches.
-    if (brokenAmt > 0.001) {
-      const bx = i % mw, by = (i / mw) | 0;
-      const bs = Math.max(0, (noise(bx * 0.035 + 90, by * 0.035 + 90) - 0.42) / 0.4);
-      const rp = Math.max(0, 1 - d / (ew * 2.2));
-      const bk = Math.min(1, brokenAmt * bs * rp * (1 - sf));
-      if (bk > 0) { const tk = noise(bx * 0.38, by * 0.38); af *= 1 - bk * (1 - tk); }
-    }
+    const bx = i % mw, by = (i / mw) | 0;
+    // DIRECTIONAL edge pool: each region has a random tilt; the pigment pools DARK on
+    // the 'down' side (dir→1) and thins to nothing on the 'up' side (dir→0), a gradient
+    // across the shape — like water/gravity settling pigment to one edge as it dries.
+    const vx = bx - info[lb].cx, vy = by - info[lb].cy, vl = Math.hypot(vx, vy) || 1;
+    let dir = 0.5 + 0.5 * ((vx * gdx[lb] + vy * gdy[lb]) / vl);
+    dir = Math.max(0, Math.min(1, dir + (noise(bx * 0.03 + 40, by * 0.03 + 40) - 0.5) * 0.3));
+    const up = 1 - dir;
+    const dk = 1 - edge * 0.62 * dir * Math.pow(1 - et, 1.4);
+    // SOFT + BROKEN edges live on the 'up' (weak-pool) side. Stored here and applied
+    // as a post-texture EROSION (below) so they stay visible through the vector paint
+    // layer — a soft stretch dissolves into paper, a dry stretch breaks over the tooth.
+    const rp = Math.max(0, 1 - d / (ew * 3.0));
+    const bs = Math.max(0, Math.min(1, (noise(bx * 0.035 + 90, by * 0.035 + 90) - 0.4) / 0.4));
+    let er = softAmt * up * (1 - bs) * rp;
+    if (brokenAmt > 0.001 && bs > 0) er += brokenAmt * up * bs * rp * (1 - noise(bx * 0.38, by * 0.38));
+    erodeArr[i] = Math.min(0.94, er);
     const bt = Math.min(1, Math.max(0, (d - ew * 1.4) / (ew * 5)));
     const gn = 1 + (hash2(i % mw, (i / mw) | 0) - 0.5) * grainA;
     // bloom pulls toward a lighter tint of the paper (works on dark palettes too)
     const bl = darkBg ? [Math.min(255, c[0] * 1.4 + 40), Math.min(255, c[1] * 1.4 + 40), Math.min(255, c[2] * 1.4 + 40)] : paperColor;
     let r = c[0] * dk * gn, gg = c[1] * dk * gn, b = c[2] * dk * gn;
     r += (bl[0] - r) * bloom * bt; gg += (bl[1] - gg) * bloom * bt; b += (bl[2] - b) * bloom * bt;
-    out.pixels[o] = clamp255(r); out.pixels[o + 1] = clamp255(gg); out.pixels[o + 2] = clamp255(b); out.pixels[o + 3] = alpha * af;
+    out.pixels[o] = clamp255(r); out.pixels[o + 1] = clamp255(gg); out.pixels[o + 2] = clamp255(b); out.pixels[o + 3] = alpha;
   }
   out.updatePixels();
   // flat underpainting: full coverage + correct colours for every region (no gaps).
@@ -512,6 +508,17 @@ function draw() {
     // layer-2 of every region, … so adjacent regions' bleed fringes intermix at
     // the boundaries instead of one finished region's halo sitting hard on another.
     if (batch.length) Watercolor.paintBatch(batch, commonOpts);
+  }
+
+  // SOFT + BROKEN edge EROSION over the finished paint (base + vector texture) so
+  // those edges actually read — the vector layer would otherwise refill them. Punch
+  // paper through the composite at the 'up'-side rim: soft stretches dissolve, dry
+  // stretches break into tooth speckle.
+  if (softAmt > 0.001 || brokenAmt > 0.001) {
+    const em = createImage(mw, mh); em.loadPixels();
+    for (let i = 0; i < N; i++) { const o = 4 * i; em.pixels[o] = paperColor[0]; em.pixels[o + 1] = paperColor[1]; em.pixels[o + 2] = paperColor[2]; em.pixels[o + 3] = erodeArr[i] * 255; }
+    em.updatePixels();
+    blendMode(BLEND); image(em, IX, IY, IW, IH);
   }
 
   // 'paper tooth' (Hobbs' per-blob grain mask): flick paper-coloured grain over
