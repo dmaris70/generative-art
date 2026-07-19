@@ -35,6 +35,7 @@ function setup() {
       bleed:   { value: 1.6, min: 0.4, max: 2.4, step: 0.1,  label: 'bleed' },
       pigment: { value: 17,  min: 4,   max: 26,  step: 1,    label: 'pigment' },
       edge:    { value: 0.55,min: 0.0, max: 1.2, step: 0.05, label: 'edge pool' },
+      softedge:{ value: 0.5, min: 0.0, max: 1.0, step: 0.05, label: 'soft edge' },
       bloom:   { value: 0.15,min: 0.0, max: 1.0, step: 0.05, label: 'centre bloom' },
       grain:   { value: 0.4, min: 0.0, max: 2.0, step: 0.1,  label: 'grain' },
       tooth:   { value: 0.35,min: 0.0, max: 1.0, step: 0.05, label: 'paper tooth' },
@@ -409,7 +410,7 @@ function draw() {
   const out = createImage(mw, mh); out.loadPixels();
   const pig = G.param('pigment');
   const alpha = (darkBg && nTexEarly > 0) ? Math.round(60 + pig * 2) : Math.round(150 + pig * 5);
-  const ewb = 2 + edge * 8;
+  const ewb = 2 + edge * 8, softAmt = G.param('softedge');
   for (let i = 0; i < N; i++) {
     const o = 4 * i, lb = label[i];
     if (!lb) { out.pixels[o + 3] = 0; continue; } // ink / background → paper
@@ -427,13 +428,20 @@ function draw() {
     // where it's strong (mimicking excess water pushing pigment to the rim as it dries).
     const evar = 0.28 + 1.45 * noise((i % mw) * 0.03 + 40, ((i / mw) | 0) * 0.03 + 40);
     const dk = 1 - edge * 0.5 * evar * Math.pow(1 - et, 1.4);
+    // SOFT / LOST edges: on the low-pooling ('wetter') stretches, fade the fill's
+    // opacity near the rim so the colour dissolves into the paper instead of ending
+    // on a hard line (De Masi wet-on-wet). The SAME wetness field (evar) that
+    // suppresses pooling here also softens the boundary; hard stretches stay crisp.
+    const sf = Math.max(0, Math.min(1, (0.85 - evar) / 0.6));
+    const set = Math.min(1, d / (ew * 2.4));
+    const af = 1 - softAmt * sf * (1 - set);
     const bt = Math.min(1, Math.max(0, (d - ew * 1.4) / (ew * 5)));
     const gn = 1 + (hash2(i % mw, (i / mw) | 0) - 0.5) * grainA;
     // bloom pulls toward a lighter tint of the paper (works on dark palettes too)
     const bl = darkBg ? [Math.min(255, c[0] * 1.4 + 40), Math.min(255, c[1] * 1.4 + 40), Math.min(255, c[2] * 1.4 + 40)] : paperColor;
     let r = c[0] * dk * gn, gg = c[1] * dk * gn, b = c[2] * dk * gn;
     r += (bl[0] - r) * bloom * bt; gg += (bl[1] - gg) * bloom * bt; b += (bl[2] - b) * bloom * bt;
-    out.pixels[o] = clamp255(r); out.pixels[o + 1] = clamp255(gg); out.pixels[o + 2] = clamp255(b); out.pixels[o + 3] = alpha;
+    out.pixels[o] = clamp255(r); out.pixels[o + 1] = clamp255(gg); out.pixels[o + 2] = clamp255(b); out.pixels[o + 3] = alpha * af;
   }
   out.updatePixels();
   // flat underpainting: full coverage + correct colours for every region (no gaps).
