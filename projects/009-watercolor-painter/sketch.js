@@ -419,7 +419,14 @@ function draw() {
     // wobble the edge width with smooth Perlin noise so the pooled rim reads
     // organic — a sin(x)+sin(y) wobble beats into a diamond grid on flat regions
     const ew = ewb * (0.6 + 0.8 * noise((i % mw) * 0.05, ((i / mw) | 0) * 0.05));
-    const d = dist[i], et = Math.min(1, d / ew), dk = 1 - edge * 0.45 * (1 - et);
+    const d = dist[i], et = Math.min(1, d / ew);
+    // edge pooling VARIES around the rim (De Masi): some stretches pool darkly — a
+    // hard, "found" edge — while others barely darken — a soft, "lost" edge. A uniform
+    // dark ring is the tell of a mechanical fill. Low-freq noise gives coherent
+    // hard/soft runs; pow(1-et) concentrates the pigment into a crisp pooled line
+    // where it's strong (mimicking excess water pushing pigment to the rim as it dries).
+    const evar = 0.28 + 1.45 * noise((i % mw) * 0.03 + 40, ((i / mw) | 0) * 0.03 + 40);
+    const dk = 1 - edge * 0.5 * evar * Math.pow(1 - et, 1.4);
     const bt = Math.min(1, Math.max(0, (d - ew * 1.4) / (ew * 5)));
     const gn = 1 + (hash2(i % mw, (i / mw) | 0) - 0.5) * grainA;
     // bloom pulls toward a lighter tint of the paper (works on dark palettes too)
