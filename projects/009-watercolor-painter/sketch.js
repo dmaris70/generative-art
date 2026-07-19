@@ -41,6 +41,8 @@ function setup() {
       grain:   { value: 0.4, min: 0.0, max: 2.0, step: 0.1,  label: 'grain' },
       tooth:   { value: 0.35,min: 0.0, max: 1.0, step: 0.05, label: 'paper tooth' },
       mix:     { value: 3,   min: 0,   max: 10,  step: 1,    label: 'colour mix' },
+      charge:  { value: 0.4, min: 0.0, max: 1.0, step: 0.05, label: 'charge colour' },
+      backrun: { value: 0.25,min: 0.0, max: 1.0, step: 0.05, label: 'blooms' },
       outline: { value: 1,   min: 0,   max: 1,   step: 1,    label: 'shape outline' },
       texture: { value: 60,  min: 0,   max: 140, step: 10,   label: 'texture (regions)' },
       seal:    { value: 1,   min: 0,   max: 4,   step: 1,    label: 'seal gaps' },
@@ -414,10 +416,13 @@ function draw() {
   const ewb = 2 + edge * 8, softAmt = G.param('softedge'), brokenAmt = G.param('broken');
   // per-region tilt direction (random per seed) → DIRECTIONAL edge pool gradient
   const gdx = new Float32Array(comp + 1), gdy = new Float32Array(comp + 1), rrad = new Float32Array(comp + 1);
+  const chw = new Float32Array(comp + 1); // per-region warm(+)/cool(−) charge direction
   for (let c = 1; c <= comp; c++) {
     const a = hash2(c * 2 + 1, 777) * Math.PI * 2; gdx[c] = Math.cos(a); gdy[c] = Math.sin(a);
     rrad[c] = info[c] ? Math.sqrt(info[c].area / Math.PI) : 0; // region radius, caps erosion depth
+    chw[c] = hash2(c * 3 + 5, 313) * 2 - 1;
   }
+  const chargeAmt = G.param('charge'), backrunAmt = G.param('backrun');
   const erodeArr = new Float32Array(N); // soft/broken edge erosion, applied post-texture
   for (let i = 0; i < N; i++) {
     const o = 4 * i, lb = label[i];
@@ -425,6 +430,13 @@ function draw() {
     let c = overrides[lb] || info[lb].col;
     // near a region boundary, lerp toward the RYB-mixed field (colours mix at seams)
     if (mixFR) { const mt = Math.max(0, 1 - dist[i] / mixBand); if (mt > 0) c = [c[0] + (mixFR[i] - c[0]) * mt, c[1] + (mixFG[i] - c[1]) * mt, c[2] + (mixFB[i] - c[2]) * mt]; }
+    // CHARGING (De Masi): drift a second, temperature-shifted colour into parts of the
+    // wet wash so a region varies naturally instead of reading as one flat fill.
+    if (chargeAmt > 0.001) {
+      const cf = Math.max(0, (noise((i % mw) * 0.02 + 200, ((i / mw) | 0) * 0.02 + 200) - 0.35) / 0.65);
+      const k = chargeAmt * cf * chw[lb];
+      c = [clamp255(c[0] + k * 46), clamp255(c[1] + k * 12), clamp255(c[2] - k * 46)];
+    }
     // wobble the edge width with smooth Perlin noise so the pooled rim reads
     // organic — a sin(x)+sin(y) wobble beats into a diamond grid on flat regions
     const ew = ewb * (0.6 + 0.8 * noise((i % mw) * 0.05, ((i / mw) | 0) * 0.05));
@@ -461,9 +473,24 @@ function draw() {
     erodeArr[i] = Math.min(1, er);
     const bt = Math.min(1, Math.max(0, (d - ew * 1.4) / (ew * 5)));
     const gn = 1 + (hash2(i % mw, (i / mw) | 0) - 0.5) * grainA;
+    // BLOOMS / BACKRUNS (De Masi): water pushed into a drying wash shoves pigment
+    // outward — a lighter centre ringed by a hard, irregular 'cauliflower' rim.
+    let bloomF = 1;
+    if (backrunAmt > 0.001) {
+      // gate them to a few patches — a wash blooms in places, not everywhere
+      const gate = Math.max(0, Math.min(1, (noise(bx * 0.006 + 700, by * 0.006 + 700) - 0.5) / 0.22));
+      if (gate > 0) {
+        const bv = noise(bx * 0.011 + 500, by * 0.011 + 500);
+        const t = (bv - 0.52) / 0.06;                    // signed distance to the bloom front
+        const inside = Math.max(0, Math.min(1, t));      // washed-out interior
+        const rimb = Math.exp(-t * t * 3.5);             // pigment shoved to the front
+        const a = backrunAmt * gate;
+        bloomF = (1 - a * rimb * 0.24) * (1 + a * inside * 0.22);
+      }
+    }
     // bloom pulls toward a lighter tint of the paper (works on dark palettes too)
     const bl = darkBg ? [Math.min(255, c[0] * 1.4 + 40), Math.min(255, c[1] * 1.4 + 40), Math.min(255, c[2] * 1.4 + 40)] : paperColor;
-    let r = c[0] * dk * gn, gg = c[1] * dk * gn, b = c[2] * dk * gn;
+    let r = c[0] * dk * gn * bloomF, gg = c[1] * dk * gn * bloomF, b = c[2] * dk * gn * bloomF;
     r += (bl[0] - r) * bloom * bt; gg += (bl[1] - gg) * bloom * bt; b += (bl[2] - b) * bloom * bt;
     out.pixels[o] = clamp255(r); out.pixels[o + 1] = clamp255(gg); out.pixels[o + 2] = clamp255(b); out.pixels[o + 3] = alpha;
   }
