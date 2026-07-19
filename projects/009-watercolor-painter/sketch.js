@@ -44,6 +44,7 @@ function setup() {
       charge:  { value: 0.4, min: 0.0, max: 1.0, step: 0.05, label: 'charge colour' },
       backrun: { value: 0.25,min: 0.0, max: 1.0, step: 0.05, label: 'blooms' },
       lift:    { value: 0.3, min: 0.0, max: 1.0, step: 0.05, label: 'lifting' },
+      glaze:   { value: 0.3, min: 0.0, max: 1.0, step: 0.05, label: 'glaze (depth)' },
       outline: { value: 1,   min: 0,   max: 1,   step: 1,    label: 'shape outline' },
       texture: { value: 60,  min: 0,   max: 140, step: 10,   label: 'texture (regions)' },
       seal:    { value: 1,   min: 0,   max: 4,   step: 1,    label: 'seal gaps' },
@@ -591,6 +592,31 @@ function draw() {
     }
     tImg.updatePixels();
     blendMode(BLEND); image(tImg, IX, IY, IW, IH);
+  }
+
+  // GLAZING (De Masi): a deliberate transparent SECOND wash laid over the dry painting
+  // — it deepens value and shifts temperature on one side to build form and shadow,
+  // without obscuring what's underneath (MULTIPLY is literally a glaze). Applied at
+  // COMPOSITION scale so it unifies across regions, which is what gives the piece
+  // overall light direction. Masked to painted areas so the preserved whites stay clean.
+  const glazeAmt = G.param('glaze');
+  if (glazeAmt > 0.001 && !quickEdit) {
+    const warm = hash2(31, 97) > 0.5;                       // per-seed: warm or cool glaze
+    const gt = warm ? [214, 182, 148] : [150, 163, 196];    // a real glaze must carry value
+    const ga = hash2(57, 13) * Math.PI * 2, gvx = Math.cos(ga), gvy = Math.sin(ga);
+    const gStr = (darkBg ? 0.45 : 1) * glazeAmt;            // don't crush dark grounds
+    const gi = createImage(mw, mh); gi.loadPixels();
+    for (let y = 0; y < mh; y++) for (let x = 0; x < mw; x++) {
+      const i = x + y * mw, o = 4 * i;
+      if (!label[i]) { gi.pixels[o + 3] = 0; continue; }
+      let gf = 0.5 + 1.5 * ((x / mw - 0.5) * gvx + (y / mh - 0.5) * gvy); // across the whole image
+      gf = Math.max(0, Math.min(1, gf + (noise(x * 0.006 + 1300, y * 0.006 + 1300) - 0.5) * 0.7));
+      gf = Math.pow(gf, 1.3);                               // bias the glaze onto the shadow side
+      gi.pixels[o] = gt[0]; gi.pixels[o + 1] = gt[1]; gi.pixels[o + 2] = gt[2];
+      gi.pixels[o + 3] = gStr * gf * 255;
+    }
+    gi.updatePixels();
+    blendMode(MULTIPLY); image(gi, IX, IY, IW, IH); blendMode(BLEND);
   }
 
   // ink overlay — 'ink %' opacity; 'hand-drawn' wobbles the lines; colour = palette ink
