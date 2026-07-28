@@ -3,6 +3,14 @@
   "author": "dmaris70",
   "projects": [
     {
+      "slug": "010-plotter-interrupt",
+      "title": "Plotter Interrupt",
+      "year": 2026,
+      "tools": ["p5.js", "plotter"],
+      "description": "A field of irregular dotted rulings and heavy fragmented bars, with a void where the pen never came down. The menu down the left is a real HP-GL program whose every value is measured off the drawing beside it. Stroke-only; press V for plotter-ready SVG.",
+      "thumb": ""
+    },
+    {
       "slug": "009-watercolor-painter",
       "title": "Watercolor Painter",
       "year": 2026,

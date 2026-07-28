@@ -1,0 +1,895 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Studio — Generative Art</title>
+  <style>
+    :root {
+      --bg: #0b0b0e; --fg: #ececef; --muted: #8b8b96;
+      --card: #16161b; --border: #26262e; --accent: #d8b4fe;
+    }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; height: 100%; }
+    body {
+      background: var(--bg); color: var(--fg); overflow: hidden;
+      font: 14px/1.5 ui-sans-serif, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      -webkit-font-smoothing: antialiased;
+      display: grid; grid-template-columns: 340px 1fr; height: 100vh;
+    }
+    /* ---------- panel ---------- */
+    aside {
+      border-right: 1px solid var(--border); background: #0e0e12;
+      display: flex; flex-direction: column; min-height: 0;
+    }
+    .head { padding: 14px 16px; border-bottom: 1px solid var(--border); }
+    .head a { color: var(--accent); text-decoration: none; font-size: 12px; opacity: .8; }
+    .head h1 { margin: 6px 0 0; font-size: 1.05rem; letter-spacing: -0.01em; }
+    .scroll { overflow-y: auto; flex: 1 1 auto; padding: 12px 16px 24px; }
+    .foot { border-top: 1px solid var(--border); padding: 12px 16px; display: grid; gap: 8px; grid-template-columns: 1fr 1fr; }
+    h2 {
+      font-size: 11px; text-transform: uppercase; letter-spacing: .08em;
+      color: var(--muted); margin: 18px 0 8px; font-weight: 600;
+    }
+    h2:first-child { margin-top: 4px; }
+    button, select, input {
+      font: inherit; font-size: 13px; color: var(--fg); background: var(--card);
+      border: 1px solid var(--border); border-radius: 8px; padding: 6px 9px;
+    }
+    button { cursor: pointer; }
+    button:hover { border-color: var(--accent); color: var(--accent); }
+    button.wide { width: 100%; }
+    button.go { background: #1d1a26; border-color: #3b3350; color: var(--accent); font-weight: 600; }
+    .row { display: flex; gap: 8px; align-items: center; }
+    .row > * { min-width: 0; }
+    .row .grow { flex: 1 1 auto; }
+    /* ---------- layers ---------- */
+    .layer { border: 1px solid var(--border); border-radius: 10px; background: var(--card); margin-bottom: 8px; }
+    .layer.off { opacity: .45; }
+    .lhead { display: flex; align-items: center; gap: 6px; padding: 8px 10px; }
+    .lhead .name { flex: 1 1 auto; font-size: 13px; cursor: pointer; user-select: none; }
+    .lhead button { padding: 2px 7px; font-size: 12px; background: none; border-color: transparent; }
+    .lbody { padding: 2px 10px 10px; border-top: 1px solid var(--border); }
+    .lbody.hide { display: none; }
+    .hint { color: var(--muted); font-size: 11px; margin: 8px 0 6px; }
+    .ctl { display: grid; grid-template-columns: 92px 1fr 44px; gap: 8px; align-items: center; margin: 5px 0; }
+    .ctl label { color: var(--muted); font-size: 11px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .ctl input[type=range] { width: 100%; padding: 0; background: none; border: 0; accent-color: var(--accent); }
+    .ctl .val { color: var(--muted); font-size: 11px; text-align: right; font-variant-numeric: tabular-nums; }
+    .ctl input[type=text] { grid-column: 2 / span 2; }
+    .ctl input[type=checkbox] { justify-self: start; accent-color: var(--accent); }
+    /* ---------- stage ---------- */
+    main { position: relative; display: flex; align-items: center; justify-content: center; padding: 24px; min-width: 0; }
+    #stage { box-shadow: 0 24px 60px rgba(0,0,0,.55); line-height: 0; }
+    #stage canvas { display: block; }
+    .badge {
+      position: absolute; left: 24px; bottom: 18px; color: var(--muted); font-size: 12px;
+      font-variant-numeric: tabular-nums;
+    }
+    /* ---------- versions ---------- */
+    #versions {
+      position: absolute; left: 0; right: 0; bottom: 0; background: rgba(11,11,14,.94);
+      border-top: 1px solid var(--border); padding: 10px 12px; display: none; gap: 8px;
+      overflow-x: auto; white-space: nowrap;
+    }
+    #versions.show { display: block; }
+    #versions canvas {
+      height: 96px; width: auto; border: 1px solid var(--border); border-radius: 6px;
+      cursor: pointer; display: inline-block; margin-right: 8px; vertical-align: top;
+    }
+    #versions canvas:hover { border-color: var(--accent); }
+    /* ---------- pens ---------- */
+    .pen { display: grid; grid-template-columns: 26px 1fr auto; gap: 8px; align-items: center; margin: 5px 0; }
+    .pen input[type=color] {
+      width: 26px; height: 22px; padding: 0; border-radius: 6px; border: 1px solid var(--border);
+      background: none; cursor: pointer;
+    }
+    .pen .pname { color: var(--muted); font-size: 12px; }
+    .pen .pcount { color: var(--muted); font-size: 11px; font-variant-numeric: tabular-nums; }
+    .pen.unused { opacity: .45; }
+    .swatches { display: flex; gap: 5px; align-items: center; }
+    .swatches button {
+      width: 18px; height: 18px; padding: 0; border-radius: 50%; border: 2px solid transparent;
+    }
+    .swatches button.sel { border-color: var(--fg); }
+  </style>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.4/p5.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/p5.plotsvg@latest/lib/p5.plotSvg.js"></script>
+  <script src="assets/strokefont.js"></script>
+  <script src="assets/marks.js"></script>
+</head>
+<body>
+  <aside>
+    <div class="head">
+      <a href="./">← gallery</a>
+      <h1>Studio</h1>
+    </div>
+
+    <div class="scroll">
+      <h2>Composition</h2>
+      <div class="row">
+        <input class="grow" id="seed" type="text" inputmode="numeric" />
+        <button id="dice" title="new seed">🎲</button>
+      </div>
+      <div class="row" style="margin-top:8px">
+        <button class="go grow" id="generate">✨ Generate artwork</button>
+      </div>
+      <div class="row" style="margin-top:8px">
+        <select class="grow" id="preset">
+          <option value="">start from a preset…</option>
+        </select>
+      </div>
+
+      <h2>Paper</h2>
+      <div class="row">
+        <select class="grow" id="paper">
+          <option value="fit">fit window</option>
+          <option value="1.4142">A-series landscape</option>
+          <option value="0.7071">A-series portrait</option>
+          <option value="1">square</option>
+          <option value="2">panorama 2:1</option>
+        </select>
+      </div>
+      <div class="ctl" style="margin-top:8px">
+        <label>margin</label>
+        <input type="range" id="margin" min="0" max="0.2" step="0.005" />
+        <span class="val" id="margin-val"></span>
+      </div>
+      <div class="ctl">
+        <label title="reserve a column on the left for type">left column</label>
+        <input type="range" id="gutter" min="0" max="0.4" step="0.01" />
+        <span class="val" id="gutter-val"></span>
+      </div>
+      <div class="ctl">
+        <label title="layers hide what falls behind them">occlusion</label>
+        <input type="checkbox" id="occlusion" />
+      </div>
+
+      <h2>Pens</h2>
+      <div id="pens"></div>
+
+      <h2>Layers</h2>
+      <div id="layers"></div>
+      <div class="row" style="margin-top:8px">
+        <select class="grow" id="addType"></select>
+        <button id="add">+ add</button>
+      </div>
+    </div>
+
+    <div class="foot">
+      <button id="png">Save PNG</button>
+      <button id="svg">Save SVG</button>
+      <button id="link">Copy link</button>
+      <button id="vers">Versions</button>
+    </div>
+  </aside>
+
+  <main>
+    <div id="stage"></div>
+    <div class="badge" id="badge"></div>
+    <div id="versions"></div>
+  </main>
+
+<script>
+/* ------------------------------------------------------------------ state */
+
+const PAPER = [244, 241, 232];
+
+// One pen per layer — the way a plotter actually works. Each pen becomes its own SVG
+// layer, plotted as a separate pass with the paper left untouched between them.
+const PENS_DEFAULT = [
+  { name: 'black', color: '#1a1a1a' },
+  { name: 'sanguine', color: '#a83b2c' },
+  { name: 'blue', color: '#2f4c86' },
+  { name: 'sepia', color: '#8a6a3d' },
+];
+
+const PRESETS = {
+  // [type, params, text, pen]
+  'Interrupt': { gutter: 0.22, layers: [
+    ['rulings', { density: 90, angle: 38, dot: 5.5, drift: 0.45, vertical: 0.5, mirror: 1 }, '', 0],
+    ['bars', { count: 12, length: 0.16, weight: 7, frags: 3, spread: 0.16, tilt: 0 }, '', 0],
+    ['voidPatch', { size: 0.42, x: 0.58, y: 0.42, wobble: 0.32, squash: 1.1 }],
+    ['program', { size: 12, x: 0.005, y: 0.01, rows: 22, box: 1 }, '', 1],
+    ['frame', { corners: 1, border: 0, rule: 1, ticks: 24, weight: 2 }, '', 1],
+  ] },
+  'Terrain': { gutter: 0, layers: [
+    ['rings', { count: 34, radius: 0.46, x: 0.5, y: 0.52, wobble: 0.22, broken: 0.35 }, '', 0],
+    ['flow', { count: 140, steps: 90, scale: 1.2, step: 3, turns: 1.6, dash: 1 }, '', 1],
+    ['frame', { corners: 1, border: 0, rule: 0, ticks: 0, weight: 2 }, '', 0],
+  ] },
+  'Weave': { gutter: 0, layers: [
+    ['grid', { cols: 7, rows: 5, jitter: 0.08, split: 0.5, depth: 3, weight: 1 }, '', 0],
+    ['hatch', { angle: 35, spacing: 7, size: 0.4, x: 0.4, y: 0.5, cross: 0, outline: 1 }, '', 2],
+    ['rulings', { density: 40, angle: 62, dot: 8, drift: 0.3, vertical: 0.2, mirror: 0 }, '', 0],
+  ] },
+  'Field': { gutter: 0, layers: [
+    ['flow', { count: 320, steps: 160, scale: 1.8, step: 3, turns: 2.6, dash: 0 }, '', 2],
+    ['bars', { count: 9, length: 0.2, weight: 9, frags: 3, spread: 0.24, tilt: 0 }, '', 0],
+    ['voidPatch', { size: 0.3, x: 0.32, y: 0.6, wobble: 0.4, squash: 1.6 }],
+  ] },
+  'Specimen': { gutter: 0, layers: [
+    ['hatch', { angle: 20, spacing: 6, size: 0.44, x: 0.5, y: 0.44, cross: 1, outline: 1 }, '', 3],
+    ['rings', { count: 8, radius: 0.3, x: 0.5, y: 0.44, wobble: 0.3, broken: 0.6 }, '', 0],
+    ['label', { size: 18, x: 0.01, y: 1.04, weight: 2 }, 'SPECIMEN 01', 0],
+    ['frame', { corners: 1, border: 1, rule: 0, ticks: 0, weight: 1 }, '', 1],
+  ] },
+};
+
+const defaults = (type) => {
+  const p = {};
+  const d = Marks.ELEMENTS[type].params;
+  for (const k in d) p[k] = d[k].value;
+  return p;
+};
+
+let state = {
+  seed: (Math.random() * 4294967296) >>> 0,
+  paper: 'fit',
+  margin: 0.055,
+  gutter: 0,
+  occlusion: true,
+  pens: PENS_DEFAULT.map((p) => ({ name: p.name, color: p.color })),
+  layers: [],
+};
+
+function layer(type, params, text, pen) {
+  return {
+    type: type,
+    on: true,
+    open: false,
+    pen: pen || 0,
+    params: Object.assign(defaults(type), params || {}),
+    text: text !== undefined ? text : (Marks.ELEMENTS[type].text || ''),
+  };
+}
+
+function usePreset(name) {
+  const p = PRESETS[name];
+  state.gutter = p.gutter || 0;
+  state.layers = p.layers.map((l) => layer(l[0], l[1], l[2], l[3]));
+  state.layers[0].open = true;
+}
+
+const hexToRgb = (h) => {
+  const m = /^#?([\da-f]{2})([\da-f]{2})([\da-f]{2})$/i.exec(h || '');
+  return m ? [parseInt(m[1], 16), parseInt(m[2], 16), parseInt(m[3], 16)] : [24, 24, 26];
+};
+
+/* ------------------------------------------------------------- url state */
+
+function encode() {
+  const s = {
+    s: state.seed, p: state.paper, m: state.margin, g: state.gutter,
+    o: state.occlusion ? 1 : 0,
+    P: state.pens.map((p) => p.color),
+    L: state.layers.map((l) => [l.type, l.on ? 1 : 0, l.params, l.text || '', l.pen | 0]),
+  };
+  return btoa(unescape(encodeURIComponent(JSON.stringify(s))));
+}
+
+function decode(str) {
+  try {
+    const s = JSON.parse(decodeURIComponent(escape(atob(str))));
+    state.seed = s.s >>> 0;
+    state.paper = s.p || 'fit';
+    state.margin = s.m === undefined ? 0.055 : s.m;
+    state.gutter = s.g || 0;
+    state.occlusion = s.o === undefined ? true : !!s.o;
+    state.pens = PENS_DEFAULT.map((p, i) => ({
+      name: p.name,
+      color: (s.P && s.P[i]) || p.color,
+    }));
+    state.layers = (s.L || [])
+      .filter((l) => Marks.ELEMENTS[l[0]])
+      .map((l) => {
+        const lay = layer(l[0], l[2], l[3], l[4] | 0);
+        lay.on = !!l[1];
+        return lay;
+      });
+    return state.layers.length > 0;
+  } catch (e) {
+    return false;
+  }
+}
+
+function syncURL() {
+  const u = new URL(location.href);
+  u.searchParams.set('a', encode());
+  history.replaceState(null, '', u.toString());
+}
+
+/* ------------------------------------------------------------- rendering */
+
+// Each layer draws from its own stream, so tuning one layer leaves the others
+// exactly as they were — the whole point of a studio rather than a slot machine.
+const mix = (seed, i) => (((seed ^ Math.imul(i + 1, 2654435761)) >>> 0) ^ (i * 40503)) >>> 0;
+
+function compose(w, h) {
+  const U = Math.max(Math.min(w, h), 320) / 900;
+  const m = Math.min(w, h) * state.margin;
+  const page = { x0: m, y0: m, x1: w - m, y1: h - m };
+  // the gutter is reserved for type; the drawing gets what's left
+  const field = { x0: m + (state.gutter || 0) * (w - 2 * m), y0: m, x1: w - m, y1: h - m };
+  const shared = { field: field, page: page, canvas: { w: w, h: h }, U: U };
+
+  // masks first — every other layer is clipped against them
+  const masks = [];
+  state.layers.forEach((l, i) => {
+    const el = Marks.ELEMENTS[l.type];
+    if (!l.on || !el.mask) return;
+    const ctx = Marks.context(Object.assign({ seed: mix(state.seed, i), masks: [] }, shared));
+    masks.push(el.build(ctx, l.params));
+  });
+
+  // Build layer by layer, keeping each layer's strokes separate so a later layer can
+  // delete what falls behind it. `all` stays flat because elements like the HP-GL
+  // program read the marks already laid down, regardless of which pen made them.
+  const built = [];
+  let all = [];
+  state.layers.forEach((l, i) => {
+    const el = Marks.ELEMENTS[l.type];
+    if (!l.on || el.mask) return;
+    const ctx = Marks.context(Object.assign({ seed: mix(state.seed, i), masks: masks }, shared));
+    const s = el.build(ctx, l.params, all, l.text);
+    built.push({
+      pen: Math.min(Math.max(l.pen | 0, 0), state.pens.length - 1),
+      strokes: s,
+      occ: ctx.occluders,
+    });
+    all = all.concat(s);
+  });
+
+  // Painter's order: layer i hides everything built before it. Measured in length,
+  // not stroke count — clipping a line in two leaves more strokes and less ink.
+  let hiddenLen = 0, totalLen = 0;
+  if (state.occlusion !== false) {
+    for (let i = 0; i < built.length; i++) {
+      if (!built[i].occ.length) continue;
+      for (let j = 0; j < i; j++) {
+        const before = Marks.totalLength(built[j].strokes);
+        built[j].strokes = Marks.occlude(built[j].strokes, built[i].occ);
+        hiddenLen += before - Marks.totalLength(built[j].strokes);
+      }
+    }
+    for (const b of built) totalLen += Marks.totalLength(b.strokes);
+  }
+
+  const buckets = state.pens.map(() => []);
+  let count = 0;
+  for (const b of built) {
+    for (const st of b.strokes) buckets[b.pen].push(st);
+    count += b.strokes.length;
+  }
+
+  const groups = buckets.map((b) => Marks.flatten(b, U));
+  return {
+    groups: groups,
+    polylines: groups.reduce((a, g) => a.concat(g), []),
+    perPen: groups.map((g) => g.length),
+    U: U,
+    count: count,
+    hiddenPct: hiddenLen > 0 ? Math.round((hiddenLen / (hiddenLen + totalLen)) * 100) : 0,
+  };
+}
+
+let cached = null;
+
+/* ------------------------------------------------------------ plot estimate */
+
+// Measured against vpype on a real export (see docs/plotter-guide.md §6). The
+// surprise is the third term: on dotted work the pen lifts, not the travel,
+// are most of the plot.
+const PLOT = {
+  vDown: 40,   // mm/s, a sensible fineliner drawing speed
+  vUp: 130,    // mm/s, pen-up travel
+  lift: 0.30,  // s for one pen down+up cycle
+  pxToMm: 25.4 / 96,
+};
+
+// Greedy nearest-neighbour over path endpoints, either end allowed — the same
+// thing `vpype linesort` does, so the estimate reflects an optimised plot.
+function nnTravel(polys) {
+  const n = polys.length;
+  if (n < 2) return 0;
+  const ax = new Float64Array(n), ay = new Float64Array(n);
+  const bx = new Float64Array(n), by = new Float64Array(n);
+  let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+  for (let i = 0; i < n; i++) {
+    const p = polys[i], a = p[0], b = p[p.length - 1];
+    ax[i] = a.x; ay[i] = a.y; bx[i] = b.x; by[i] = b.y;
+    minX = Math.min(minX, a.x, b.x); maxX = Math.max(maxX, a.x, b.x);
+    minY = Math.min(minY, a.y, b.y); maxY = Math.max(maxY, a.y, b.y);
+  }
+  const cell = Math.max(1e-6, Math.sqrt(Math.max((maxX - minX) * (maxY - minY), 1) / n) * 1.5);
+  const cols = Math.max(1, Math.ceil((maxX - minX) / cell) + 1);
+  const rows = Math.max(1, Math.ceil((maxY - minY) / cell) + 1);
+  const grid = new Map();
+  const key = (gx, gy) => gy * cols + gx;
+  const gxOf = (x) => Math.min(cols - 1, Math.max(0, Math.floor((x - minX) / cell)));
+  const gyOf = (y) => Math.min(rows - 1, Math.max(0, Math.floor((y - minY) / cell)));
+  for (let i = 0; i < n; i++) {
+    for (const [x, y, v] of [[ax[i], ay[i], i * 2], [bx[i], by[i], i * 2 + 1]]) {
+      const k = key(gxOf(x), gyOf(y));
+      const arr = grid.get(k);
+      if (arr) arr.push(v); else grid.set(k, [v]);
+    }
+  }
+
+  const done = new Uint8Array(n);
+  done[0] = 1;
+  let cx = bx[0], cy = by[0], total = 0, visited = 1;
+  const span = Math.max(cols, rows);
+  while (visited < n) {
+    let best = -1, bestD = Infinity;
+    const gx = gxOf(cx), gy = gyOf(cy);
+    for (let r = 0; r < span; r++) {
+      for (let y = gy - r; y <= gy + r; y++) {
+        if (y < 0 || y >= rows) continue;
+        for (let x = gx - r; x <= gx + r; x++) {
+          if (x < 0 || x >= cols) continue;
+          // only the ring itself: the interior was covered by smaller r
+          if (r > 0 && x !== gx - r && x !== gx + r && y !== gy - r && y !== gy + r) continue;
+          const arr = grid.get(key(x, y));
+          if (!arr) continue;
+          for (let q = 0; q < arr.length; q++) {
+            const v = arr[q], i = v >> 1;
+            if (done[i]) continue;
+            const px = v & 1 ? bx[i] : ax[i], py = v & 1 ? by[i] : ay[i];
+            const d = Math.hypot(px - cx, py - cy);
+            if (d < bestD) { bestD = d; best = v; }
+          }
+        }
+      }
+      if (best >= 0 && bestD <= r * cell) break; // nothing outside this ring can be nearer
+    }
+    if (best < 0) break;
+    const i = best >> 1;
+    done[i] = 1; visited++;
+    total += bestD;
+    if (best & 1) { cx = ax[i]; cy = ay[i]; } else { cx = bx[i]; cy = by[i]; }
+  }
+  return total;
+}
+
+function estimate(polys, mmPerPx) {
+  let ink = 0;
+  for (const pts of polys) {
+    for (let i = 1; i < pts.length; i++) ink += Math.hypot(pts[i].x - pts[i - 1].x, pts[i].y - pts[i - 1].y);
+  }
+  const travel = polys.length > 24000 ? null : nnTravel(polys); // don't stall the UI
+  const inkMm = ink * mmPerPx;
+  const travelMm = (travel === null ? ink * 2 : travel) * mmPerPx;
+  const seconds = inkMm / PLOT.vDown + travelMm / PLOT.vUp + polys.length * PLOT.lift;
+  return { lifts: polys.length, inkMm: inkMm, travelMm: travelMm, seconds: seconds, exact: travel !== null };
+}
+
+const fmtTime = (s) => (s < 90 ? Math.round(s) + ' s' : s < 5400 ? Math.round(s / 60) + ' min' :
+                        (s / 3600).toFixed(1) + ' h');
+
+function paint(g, w, h) {
+  const r = compose(w, h);
+  cached = r;
+  g.background(PAPER[0], PAPER[1], PAPER[2]);
+  g.noFill();
+  g.strokeWeight(Math.max(1, 1.15 * r.U));
+  g.strokeCap(g.ROUND || ROUND);
+  g.strokeJoin(g.ROUND || ROUND);
+
+  // Draw pen by pen, in pen order — the same order the machine will plot them, and
+  // what makes the SVG group cleanly into one layer per colour.
+  r.groups.forEach((polys, pi) => {
+    if (!polys.length) return;
+    const c = hexToRgb(state.pens[pi].color);
+    g.stroke(c[0], c[1], c[2]);
+    for (const pts of polys) {
+      if (pts.length === 2) g.line(pts[0].x, pts[0].y, pts[1].x, pts[1].y);
+      else {
+        g.beginShape();
+        for (const p of pts) g.vertex(p.x, p.y);
+        g.endShape();
+      }
+    }
+  });
+  return r;
+}
+
+/* ---------------------------------------------------------------- sketch */
+
+let cw = 800, ch = 600;
+
+function stageSize() {
+  const main = document.querySelector('main');
+  const availW = Math.max(200, main.clientWidth - 48);
+  const availH = Math.max(200, main.clientHeight - 48);
+  if (state.paper === 'fit') return [Math.round(availW), Math.round(availH)];
+  const ratio = parseFloat(state.paper);
+  let w = availW, h = w / ratio;
+  if (h > availH) { h = availH; w = h * ratio; }
+  return [Math.round(w), Math.round(h)];
+}
+
+function setup() {
+  const [w, h] = stageSize();
+  cw = w; ch = h;
+  const c = createCanvas(w, h);
+  c.parent('stage');
+  pixelDensity(1);
+  noLoop();
+  redrawArt();
+}
+
+function draw() {
+  paint(window, cw, ch);
+  badge(); // p5 defers the first redraw past setup(), so the count is reported here
+  buildPens(); // per-pen mark counts are only known once the composition has run
+}
+
+function redrawArt() {
+  const [w, h] = stageSize();
+  if (w !== cw || h !== ch) { cw = w; ch = h; resizeCanvas(w, h); }
+  redraw();
+  badge();
+  syncURL();
+}
+
+function badge() {
+  const on = state.layers.filter((l) => l.on).length;
+  document.getElementById('badge').textContent =
+    'seed ' + state.seed + '  ·  ' + on + ' layers  ·  ' +
+    (cached ? cached.polylines.length.toLocaleString() : 0) + ' marks' +
+    (cached && cached.hiddenPct ? '  ·  ' + cached.hiddenPct + '% hidden' : '') +
+    '  ·  ' + cw + '×' + ch;
+}
+
+function windowResized() { redrawArt(); }
+
+/* -------------------------------------------------------------------- ui */
+
+const el = (id) => document.getElementById(id);
+
+function buildPens() {
+  const box = el('pens');
+  box.innerHTML = '';
+
+  // Estimates assume the sheet is plotted at A4 — the long edge is 297 mm.
+  const mmPerPx = cached ? 297 / Math.max(cw, ch) : 0;
+  const est = cached && cached.groups
+    ? cached.groups.map((g) => (g.length ? estimate(g, mmPerPx) : null))
+    : [];
+
+  state.pens.forEach((pen, i) => {
+    const used = state.layers.some((l) => l.on && (l.pen | 0) === i && !Marks.ELEMENTS[l.type].mask);
+    const row = document.createElement('div');
+    row.className = 'pen' + (used ? '' : ' unused');
+    const sw = document.createElement('input');
+    sw.type = 'color';
+    sw.value = pen.color;
+    sw.title = 'pen ' + (i + 1) + ' — ' + pen.name;
+    sw.oninput = () => { pen.color = sw.value; redrawArt(); buildPens(); buildPanel(); };
+    const nm = document.createElement('span');
+    nm.className = 'pname';
+    nm.textContent = (i + 1) + '. ' + pen.name;
+    const ct = document.createElement('span');
+    ct.className = 'pcount';
+    const e = est[i];
+    ct.textContent = e
+      ? e.lifts.toLocaleString() + ' · ' + fmtTime(e.seconds)
+      : '—';
+    if (e) ct.title = e.lifts.toLocaleString() + ' marks · ' + (e.inkMm / 1000).toFixed(2) +
+      ' m of ink · ' + (e.travelMm / 1000).toFixed(2) + ' m of travel';
+    row.appendChild(sw); row.appendChild(nm); row.appendChild(ct);
+    box.appendChild(row);
+  });
+
+  const live = est.filter(Boolean);
+  const note = document.createElement('div');
+  note.className = 'hint';
+  if (live.length) {
+    const total = live.reduce((a, e) => a + e.seconds, 0);
+    const lifts = live.reduce((a, e) => a + e.lifts, 0);
+    const liftShare = Math.round(((lifts * PLOT.lift) / total) * 100);
+    note.innerHTML =
+      '<b>≈ ' + fmtTime(total) + '</b> to plot at A4, in ' + live.length +
+      (live.length > 1 ? ' passes' : ' pass') + ' — ' + liftShare + '% of it pen lifts.' +
+      (liftShare > 60 ? '<br>Fewer, longer marks would cut this far more than path optimisation can.' : '');
+  } else {
+    note.textContent = 'nothing to plot yet';
+  }
+  box.appendChild(note);
+}
+
+function buildPanel() {
+  const box = el('layers');
+  box.innerHTML = '';
+  state.layers.forEach((l, i) => {
+    const def = Marks.ELEMENTS[l.type];
+    const card = document.createElement('div');
+    card.className = 'layer' + (l.on ? '' : ' off');
+
+    const head = document.createElement('div');
+    head.className = 'lhead';
+    head.innerHTML =
+      '<button data-a="eye" title="show/hide">' + (l.on ? '👁' : '·') + '</button>' +
+      '<span class="name">' + def.label + '</span>' +
+      '<button data-a="up" title="move up">▲</button>' +
+      '<button data-a="down" title="move down">▼</button>' +
+      '<button data-a="del" title="remove">✕</button>';
+    head.querySelector('.name').onclick = () => { l.open = !l.open; buildPanel(); };
+    head.querySelectorAll('button').forEach((b) => {
+      b.onclick = () => {
+        const a = b.dataset.a;
+        if (a === 'eye') l.on = !l.on;
+        if (a === 'del') state.layers.splice(i, 1);
+        if (a === 'up' && i > 0) state.layers.splice(i - 1, 0, state.layers.splice(i, 1)[0]);
+        if (a === 'down' && i < state.layers.length - 1) state.layers.splice(i + 1, 0, state.layers.splice(i, 1)[0]);
+        buildPanel();
+        redrawArt();
+      };
+    });
+    card.appendChild(head);
+
+    const body = document.createElement('div');
+    body.className = 'lbody' + (l.open ? '' : ' hide');
+    if (def.hint) body.innerHTML = '<div class="hint">' + def.hint + '</div>';
+
+    if (!def.mask) {
+      const row = document.createElement('div');
+      row.className = 'ctl';
+      row.innerHTML = '<label>pen</label>';
+      const sw = document.createElement('div');
+      sw.className = 'swatches';
+      state.pens.forEach((pen, pi) => {
+        const b = document.createElement('button');
+        b.style.background = pen.color;
+        b.className = (l.pen | 0) === pi ? 'sel' : '';
+        b.title = 'pen ' + (pi + 1) + ' — ' + pen.name;
+        b.onclick = () => { l.pen = pi; buildPanel(); redrawArt(); buildPens(); };
+        sw.appendChild(b);
+      });
+      row.appendChild(sw);
+      body.appendChild(row);
+    }
+
+    if (l.text !== undefined && (l.type === 'label')) {
+      const row = document.createElement('div');
+      row.className = 'ctl';
+      row.innerHTML = '<label>text</label>';
+      const inp = document.createElement('input');
+      inp.type = 'text';
+      inp.value = l.text;
+      inp.oninput = () => { l.text = inp.value; redrawArt(); };
+      row.appendChild(inp);
+      body.appendChild(row);
+    }
+
+    for (const key in def.params) {
+      const d = def.params[key];
+      const row = document.createElement('div');
+      row.className = 'ctl';
+      const isFlag = d.min === 0 && d.max === 1 && d.step === 1;
+      row.innerHTML = '<label title="' + (d.label || key) + '">' + (d.label || key) + '</label>';
+      if (isFlag) {
+        const cb = document.createElement('input');
+        cb.type = 'checkbox';
+        cb.checked = l.params[key] >= 0.5;
+        cb.onchange = () => { l.params[key] = cb.checked ? 1 : 0; redrawArt(); };
+        row.appendChild(cb);
+      } else {
+        const r = document.createElement('input');
+        r.type = 'range'; r.min = d.min; r.max = d.max; r.step = d.step; r.value = l.params[key];
+        const v = document.createElement('span');
+        v.className = 'val'; v.textContent = l.params[key];
+        r.oninput = () => {
+          l.params[key] = parseFloat(r.value);
+          v.textContent = r.value;
+          redrawArt();
+        };
+        row.appendChild(r); row.appendChild(v);
+      }
+      body.appendChild(row);
+    }
+    card.appendChild(body);
+    box.appendChild(card);
+  });
+}
+
+// Plottable ceiling: past this the sheet is mud and the plot takes half a day.
+const MARK_LIMIT = 26000;
+
+function randomComposition() {
+  const rnd = (a, b) => a + Math.random() * (b - a);
+  const pick = (a) => a[Math.floor(Math.random() * a.length)];
+
+  // Roll each parameter on a triangular distribution through its declared default,
+  // rather than uniformly across the range — the ends of these ranges are where
+  // 40×40 grids and 900-line fields live, and those aren't artworks.
+  const roll = (d) => {
+    const r = (Math.random() + Math.random()) / 2;
+    const t = r < 0.5 ? d.min + (d.value - d.min) * r * 2
+                      : d.value + (d.max - d.value) * (r - 0.5) * 2;
+    return Math.round(t / d.step) * d.step;
+  };
+
+  const structural = ['rulings', 'flow', 'grid', 'rings', 'hatch'];
+  let layers = [];
+  let withProgram = false;
+
+  for (let attempt = 0; attempt < 5; attempt++) {
+    const n = 1 + Math.floor(Math.random() * 2.6);
+    const chosen = [];
+    while (chosen.length < n) {
+      const t = pick(structural);
+      if (chosen.indexOf(t) === -1) chosen.push(t);
+    }
+    // Most plots stay one-pen; a second colour is a deliberate move, not the norm.
+    const penCount = Math.random() < 0.45 ? 2 : 1;
+    layers = chosen.map((t, li) => {
+      const l = layer(t, null, undefined, li < penCount ? li : Math.floor(Math.random() * penCount));
+      const d = Marks.ELEMENTS[t].params;
+      for (const k in d) {
+        l.params[k] = d[k].min === 0 && d[k].max === 1 && d[k].step === 1
+          ? (Math.random() < 0.5 ? 0 : 1)   // flags stay coin flips
+          : roll(d[k]);
+      }
+      return l;
+    });
+    if (Math.random() < 0.6) layers.push(layer('bars'));
+    if (Math.random() < 0.55) layers.unshift(layer('voidPatch', { x: rnd(0.2, 0.8), y: rnd(0.2, 0.8) }));
+    withProgram = Math.random() < 0.4;
+    if (withProgram) layers.push(layer('program'));
+    if (Math.random() < 0.7) layers.push(layer('frame', { rule: withProgram ? 1 : 0 }));
+
+    // measure before committing — mark counts don't depend on canvas size
+    state.layers = layers;
+    state.gutter = withProgram ? Math.round(rnd(0.16, 0.28) * 100) / 100 : 0;
+    if (compose(600, 420).polylines.length <= MARK_LIMIT) break;
+  }
+
+  el('gutter').value = state.gutter;
+  el('gutter-val').textContent = state.gutter;
+  state.seed = (Math.random() * 4294967296) >>> 0;
+  el('seed').value = state.seed;
+  buildPanel();
+  redrawArt();
+}
+
+function showVersions() {
+  const strip = el('versions');
+  if (strip.classList.contains('show')) { strip.classList.remove('show'); strip.innerHTML = ''; return; }
+  strip.classList.add('show');
+  strip.innerHTML = '<span style="color:var(--muted);font-size:12px">rendering…</span>';
+  setTimeout(() => {
+    strip.innerHTML = '';
+    const keep = state.seed;
+    const tw = Math.round(160 * (cw / ch)), th = 160;
+    for (let i = 0; i < 8; i++) {
+      const seed = (Math.random() * 4294967296) >>> 0;
+      state.seed = seed;
+      const g = createGraphics(tw, th);
+      g.pixelDensity(1);
+      paint(g, tw, th);
+      const c = g.canvas;
+      c.title = 'seed ' + seed;
+      c.onclick = () => {
+        state.seed = seed;
+        el('seed').value = seed;
+        redrawArt();
+      };
+      strip.appendChild(c); // the graphics' own canvas node becomes the thumbnail
+    }
+    state.seed = keep;
+    cached = null;
+    redrawArt();
+  }, 30);
+}
+
+/* ------------------------------------------------------------------ wire */
+
+function initUI() {
+  const addSel = el('addType');
+  for (const k in Marks.ELEMENTS) {
+    const o = document.createElement('option');
+    o.value = k; o.textContent = Marks.ELEMENTS[k].label;
+    addSel.appendChild(o);
+  }
+  const pre = el('preset');
+  for (const k in PRESETS) {
+    const o = document.createElement('option');
+    o.value = k; o.textContent = k;
+    pre.appendChild(o);
+  }
+
+  el('seed').value = state.seed;
+  el('paper').value = state.paper;
+  el('margin').value = state.margin;
+  el('margin-val').textContent = state.margin;
+  el('gutter').value = state.gutter;
+  el('gutter-val').textContent = state.gutter;
+  el('occlusion').checked = state.occlusion !== false;
+
+  el('occlusion').onchange = (e) => { state.occlusion = e.target.checked; redrawArt(); };
+
+  el('seed').onchange = (e) => {
+    const v = e.target.value.trim();
+    state.seed = /^\d+$/.test(v) ? Number(v) >>> 0 : hashStr(v);
+    e.target.value = state.seed;
+    redrawArt();
+  };
+  el('dice').onclick = () => {
+    state.seed = (Math.random() * 4294967296) >>> 0;
+    el('seed').value = state.seed;
+    redrawArt();
+  };
+  el('generate').onclick = randomComposition;
+  el('preset').onchange = (e) => {
+    if (!e.target.value) return;
+    usePreset(e.target.value);
+    buildPanel();
+    redrawArt();
+    e.target.value = '';
+  };
+  el('paper').onchange = (e) => { state.paper = e.target.value; redrawArt(); };
+  el('margin').oninput = (e) => {
+    state.margin = parseFloat(e.target.value);
+    el('margin-val').textContent = state.margin;
+    redrawArt();
+  };
+  el('gutter').oninput = (e) => {
+    state.gutter = parseFloat(e.target.value);
+    el('gutter-val').textContent = state.gutter;
+    redrawArt();
+  };
+  el('add').onclick = () => {
+    const l = layer(addSel.value);
+    l.open = true;
+    state.layers.push(l);
+    buildPanel();
+    redrawArt();
+  };
+
+  el('png').onclick = () => saveCanvas('studio-' + state.seed, 'png');
+  el('svg').onclick = () => {
+    if (typeof beginRecordSvg !== 'function') return;
+    setSvgResolutionDPI(96);
+    // one group per stroke colour → one Inkscape layer per pen, plotted pass by pass
+    if (typeof setSvgGroupByStrokeColor === 'function') setSvgGroupByStrokeColor(true);
+    beginRecordSvg('studio-' + state.seed + '.svg');
+    try { paint(window, cw, ch); } finally { endRecordSvg(); }
+  };
+  el('link').onclick = (e) => {
+    syncURL();
+    navigator.clipboard.writeText(location.href).then(() => {
+      const b = e.target; const t = b.textContent;
+      b.textContent = 'Copied ✓';
+      setTimeout(() => { b.textContent = t; }, 1200);
+    }, () => {});
+  };
+  el('vers').onclick = showVersions;
+
+  document.addEventListener('keydown', (ev) => {
+    if (ev.metaKey || ev.ctrlKey || ev.altKey) return;
+    const t = ev.target;
+    if (t && (t.tagName === 'INPUT' || t.tagName === 'SELECT' || t.tagName === 'TEXTAREA')) return;
+    if (ev.key === 'r' || ev.key === 'R') el('dice').click();
+    if (ev.key === 'g' || ev.key === 'G') randomComposition();
+    if (ev.key === 'v' || ev.key === 'V') el('svg').click();
+    if (ev.key === 's' || ev.key === 'S') el('png').click();
+  });
+}
+
+function hashStr(str) {
+  let h = 2166136261 >>> 0;
+  for (let i = 0; i < str.length; i++) { h ^= str.charCodeAt(i); h = Math.imul(h, 16777619); }
+  return h >>> 0;
+}
+
+// boot: URL state wins, otherwise open on a preset
+const fromURL = new URLSearchParams(location.search).get('a');
+if (!fromURL || !decode(fromURL)) usePreset('Interrupt');
+initUI();
+buildPens();
+buildPanel();
+</script>
+</body>
+</html>

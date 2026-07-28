@@ -17,6 +17,8 @@ function setup() {
     onReset: reset, // called on seed change / randomize / param tweak
   });
 
+  // Plotter.attach(G);   // adds "Save SVG (V)" — see docs/plotter-guide.md
+
   reset();
 }
 

@@ -65,16 +65,29 @@
   function readURL() {
     const params = {};
     let seedRaw = null;
+    let gui = true;
     try {
       const u = new URL(global.location.href);
       seedRaw = u.searchParams.get('seed');
+      const g = u.searchParams.get('gui');
+      if (g === '0' || g === 'false' || g === 'off') gui = false; // contact-sheet tiles
       for (const [k, v] of u.searchParams) {
         if (k.indexOf('p_') === 0) params[k.slice(2)] = parseFloat(v);
       }
     } catch (e) {
       /* file:// or no location — fall back to random */
     }
-    return { seedRaw, params };
+    return { seedRaw, params, gui };
+  }
+
+  // "/projects/010-plotter-interrupt/" → "010-plotter-interrupt", else null.
+  function slugFromPath() {
+    try {
+      const m = global.location.pathname.match(/\/projects\/([^/]+)\//);
+      return m ? m[1] : null;
+    } catch (e) {
+      return null;
+    }
   }
 
   function create(config) {
@@ -103,6 +116,7 @@
     const api = {
       title: title,
       params: values,
+      gui: null, // set below once lil-gui is up — lets add-ons (plotter.js) extend the panel
       get seed() {
         return seed;
       },
@@ -152,6 +166,9 @@
       randomize: function () {
         setSeed((Math.random() * 4294967296) >>> 0);
       },
+      variations: function () {
+        api.variations();
+      },
       copyLink: function () {
         const url = global.location.href;
         const done = function () {
@@ -176,12 +193,28 @@
           );
         }
       },
+      // Open a contact sheet: the same piece, same parameters, many seeds.
+      variations: function () {
+        const slug = slugFromPath();
+        if (!slug) return;
+        const u = new URL('../../variations.html', global.location.href);
+        u.searchParams.set('p', slug);
+        u.searchParams.set('from', String(seed));
+        for (const key in values) u.searchParams.set('p_' + key, String(values[key]));
+        global.open(u.toString(), '_blank');
+      },
     };
+
+    if (!fromURL.gui) {
+      syncURL();
+      return api; // headless: a tile in a contact sheet, no panel
+    }
 
     if (!global.lil || !global.lil.GUI) {
       console.warn('genart.js: lil-gui not found — GUI disabled.');
     } else {
       const gui = new global.lil.GUI({ title: title });
+      api.gui = gui;
       seedCtl = gui
         .add(ctrl, 'seed')
         .name('seed')
@@ -202,6 +235,7 @@
           });
       }
 
+      if (slugFromPath()) gui.add(ctrl, 'variations').name('⊞ Contact sheet');
       copyCtl = gui.add(ctrl, 'copyLink').name('Copy share link');
       gui.add(ctrl, 'savePNG').name('Save PNG (S)');
     }

@@ -1,0 +1,359 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Canon — Generative Art</title>
+  <style>
+    :root {
+      --bg: #0b0b0e; --fg: #ececef; --muted: #8b8b96;
+      --card: #16161b; --border: #26262e; --accent: #d8b4fe;
+    }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; height: 100%; }
+    body {
+      background: var(--bg); color: var(--fg); overflow: hidden;
+      font: 14px/1.55 ui-sans-serif, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      -webkit-font-smoothing: antialiased;
+      display: grid; grid-template-columns: 1fr 400px; height: 100vh;
+    }
+    main { position: relative; display: flex; align-items: center; justify-content: center; padding: 24px; min-width: 0; }
+    #stage { box-shadow: 0 24px 60px rgba(0,0,0,.55); line-height: 0; }
+    #stage canvas { display: block; }
+    .badge { position: absolute; left: 24px; bottom: 16px; color: var(--muted); font-size: 12px; font-variant-numeric: tabular-nums; }
+    aside {
+      border-left: 1px solid var(--border); background: #0e0e12;
+      display: flex; flex-direction: column; min-height: 0;
+    }
+    .head { padding: 14px 18px; border-bottom: 1px solid var(--border); }
+    .head a { color: var(--accent); text-decoration: none; font-size: 12px; opacity: .8; }
+    .head h1 { margin: 6px 0 0; font-size: 1.05rem; letter-spacing: -0.01em; }
+    .head p { margin: 6px 0 0; color: var(--muted); font-size: 12px; }
+    .scroll { overflow-y: auto; flex: 1 1 auto; padding: 14px 18px 24px; }
+    .nav { display: flex; gap: 8px; margin-bottom: 10px; }
+    select, button {
+      font: inherit; font-size: 13px; color: var(--fg); background: var(--card);
+      border: 1px solid var(--border); border-radius: 8px; padding: 6px 9px; cursor: pointer;
+    }
+    select { flex: 1 1 auto; min-width: 0; }
+    button:hover { border-color: var(--accent); color: var(--accent); }
+    h2 { font-size: 1.15rem; margin: 14px 0 2px; letter-spacing: -0.01em; }
+    .meta { color: var(--muted); font-size: 13px; margin: 0 0 12px; }
+    .sysname { color: var(--accent); font-size: 12px; text-transform: uppercase; letter-spacing: .08em; margin: 14px 0 4px; font-weight: 600; }
+    .cap p { margin: 0 0 10px; font-size: 13.5px; }
+    .cap p.dim { color: var(--muted); }
+    .phase { border-left: 3px solid var(--accent); padding: 2px 0 2px 10px; color: var(--muted); font-size: 13px; margin: 12px 0; }
+    .note { border-top: 1px solid var(--border); margin-top: 14px; padding-top: 4px; }
+    .note h4 { font-size: 13.5px; margin: 14px 0 6px; letter-spacing: -0.005em; }
+    .note p, .note li { font-size: 13px; margin: 0 0 9px; }
+    .note ul { margin: 0 0 10px; padding-left: 18px; }
+    .note li { margin: 0 0 5px; }
+    .note a { color: var(--accent); text-decoration: none; }
+    .note a:hover { text-decoration: underline; }
+    .note .pending { color: var(--muted); font-size: 12.5px; font-style: italic; }
+    .src { border-top: 1px solid var(--border); margin-top: 14px; padding-top: 12px; color: var(--muted); font-size: 12.5px; }
+    .src a { color: var(--accent); }
+    .flagnote { color: #c99a4a; font-size: 12px; margin-top: 6px; }
+    .foot { border-top: 1px solid var(--border); padding: 12px 18px; display: grid; gap: 8px; grid-template-columns: 1fr 1fr; }
+  </style>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.4/p5.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/p5.plotsvg@latest/lib/p5.plotSvg.js"></script>
+  <script src="assets/strokefont.js"></script>
+  <script src="assets/marks.js"></script>
+  <script src="assets/canon.js"></script>
+</head>
+<body>
+  <main>
+    <div id="stage"></div>
+    <div class="badge" id="badge"></div>
+  </main>
+  <aside>
+    <div class="head">
+      <a href="./">← gallery</a>
+      <h1>Canon</h1>
+      <p>One drawing per work in the collection. Same piece, same drawing — always.</p>
+    </div>
+    <div class="scroll">
+      <div class="nav">
+        <button id="prev" title="previous">←</button>
+        <select id="work"></select>
+        <button id="next" title="next">→</button>
+        <button id="rand" title="random">🎲</button>
+      </div>
+      <div class="cap" id="cap"></div>
+    </div>
+    <div class="foot">
+      <button id="png">Save PNG</button>
+      <button id="svg">Save SVG</button>
+    </div>
+  </aside>
+
+<script>
+const PAPER = [244, 241, 232];
+let works = [], idx = 0, cached = null;
+let cw = 800, ch = 600;
+
+const el = (id) => document.getElementById(id);
+const hexToRgb = (h) => {
+  const m = /^#?([\da-f]{2})([\da-f]{2})([\da-f]{2})$/i.exec(h || '');
+  return m ? [parseInt(m[1],16), parseInt(m[2],16), parseInt(m[3],16)] : [24,24,26];
+};
+const mix = (seed, i) => (((seed ^ Math.imul(i + 1, 2654435761)) >>> 0) ^ (i * 40503)) >>> 0;
+
+/* ------------------------------------------------------------- composition */
+
+function compose(work, w, h) {
+  const gen = Canon.generate(work);
+  if (!gen) return null;
+  const U = Math.max(Math.min(w, h), 320) / 900;
+  const m = Math.min(w, h) * 0.06;
+  const page = { x0: m, y0: m, x1: w - m, y1: h - m };
+  const shared = { field: page, page: page, canvas: { w: w, h: h }, U: U };
+
+  const masks = [];
+  gen.layers.forEach((l, i) => {
+    if (l[0] !== 'voidPatch') return;
+    const ctx = Marks.context(Object.assign({ seed: mix(gen.seed, i), masks: [] }, shared));
+    masks.push(Marks.ELEMENTS.voidPatch.build(ctx, l[1]));
+  });
+
+  const built = [];
+  let all = [];
+  gen.layers.forEach((l, i) => {
+    const def = Marks.ELEMENTS[l[0]];
+    if (!def || def.mask) return;
+    const ctx = Marks.context(Object.assign({ seed: mix(gen.seed, i), masks: masks }, shared));
+    const s = def.build(ctx, l[1], all, l[3]);
+    built.push({ pen: l[2] || 0, strokes: s, occ: ctx.occluders });
+    all = all.concat(s);
+  });
+
+  // painter's order occlusion, as in the studio
+  for (let i = 0; i < built.length; i++) {
+    if (!built[i].occ.length) continue;
+    for (let j = 0; j < i; j++) built[j].strokes = Marks.occlude(built[j].strokes, built[i].occ);
+  }
+
+  const buckets = Canon.PENS.map(() => []);
+  for (const b of built) for (const st of b.strokes) buckets[b.pen].push(st);
+  const groups = buckets.map((b) => Marks.flatten(b, U));
+  return { gen: gen, groups: groups, U: U,
+           marks: groups.reduce((a, g) => a + g.length, 0) };
+}
+
+function paint(g, work, w, h) {
+  const r = compose(work, w, h);
+  if (!r) return null;
+  cached = r;
+  g.background(PAPER[0], PAPER[1], PAPER[2]);
+  g.noFill();
+  g.strokeWeight(Math.max(1, 1.15 * r.U));
+  g.strokeCap(g.ROUND || ROUND);
+  g.strokeJoin(g.ROUND || ROUND);
+  r.groups.forEach((polys, pi) => {
+    if (!polys.length) return;
+    const c = hexToRgb(Canon.PENS[pi].color);
+    g.stroke(c[0], c[1], c[2]);
+    for (const pts of polys) {
+      if (pts.length === 2) g.line(pts[0].x, pts[0].y, pts[1].x, pts[1].y);
+      else { g.beginShape(); for (const p of pts) g.vertex(p.x, p.y); g.endShape(); }
+    }
+  });
+  return r;
+}
+
+/* ------------------------------------------------------------------ sketch */
+
+function stageSize() {
+  const main = document.querySelector('main');
+  const availW = Math.max(200, main.clientWidth - 48);
+  const availH = Math.max(200, main.clientHeight - 48);
+  const ratio = 1.4142; // the sheet is A-series landscape
+  let w = availW, h = w / ratio;
+  if (h > availH) { h = availH; w = h * ratio; }
+  return [Math.round(w), Math.round(h)];
+}
+
+function setup() {
+  const [w, h] = stageSize();
+  cw = w; ch = h;
+  const c = createCanvas(w, h);
+  c.parent('stage');
+  pixelDensity(1);
+  noLoop();
+}
+
+function draw() {
+  if (works.length) {
+    paint(window, works[idx], cw, ch);
+    badge();
+  }
+}
+
+function show(i) {
+  idx = ((i % works.length) + works.length) % works.length;
+  el('work').value = String(idx);
+  const [w, h] = stageSize();
+  if (w !== cw || h !== ch) { cw = w; ch = h; resizeCanvas(w, h); }
+  redraw();
+  caption();
+  const u = new URL(location.href);
+  u.searchParams.set('w', works[idx].work_id);
+  history.replaceState(null, '', u.toString());
+}
+
+function windowResized() { show(idx); }
+
+function badge() {
+  const w = works[idx];
+  el('badge').textContent = w.work_id + '  ·  seed ' + (cached ? cached.gen.seed : '') +
+    '  ·  ' + (cached ? cached.marks.toLocaleString() : 0) + ' marks  ·  diagonal ' +
+    (cached ? cached.gen.angle : '') + '° (' + w.year + ')';
+}
+
+/* ------------------------------------------------------- research notes */
+
+// Tiny renderer for the note format (FORMAT.md): ### headers, * bullets,
+// **bold**, [text](url), paragraphs. Escapes first, then applies markup.
+function mdToHtml(md) {
+  const inline = (s) =>
+    esc(s)
+      .replace(/\[\[?(\d+|[^\]]+?)\]?\]\((https?:\/\/[^)\s]+)\)/g,
+               '<a href="$2" target="_blank" rel="noopener">$1</a>')
+      .replace(/\*\*([^*]+)\*\*/g, '<b>$1</b>');
+  const out = [];
+  let list = null, para = [];
+  const flushPara = () => {
+    if (para.length) { out.push('<p>' + inline(para.join(' ')) + '</p>'); para = []; }
+  };
+  const flushList = () => {
+    if (list) { out.push('<ul>' + list.join('') + '</ul>'); list = null; }
+  };
+  for (const raw of md.split(/\r?\n/)) {
+    const line = raw.trim();
+    if (!line) { flushPara(); flushList(); continue; }
+    if (line.startsWith('### ')) {
+      flushPara(); flushList();
+      out.push('<h4>' + inline(line.slice(4)) + '</h4>');
+    } else if (/^[*-]\s+/.test(line)) {
+      flushPara();
+      (list = list || []).push('<li>' + inline(line.replace(/^[*-]\s+/, '')) + '</li>');
+    } else {
+      flushList();
+      para.push(line);
+    }
+  }
+  flushPara(); flushList();
+  return out.join('\n');
+}
+
+let noteToken = 0; // stale-response guard: only the latest fetch may render
+
+function loadNote(work) {
+  const box = document.getElementById('note');
+  if (!box) return;
+  const token = ++noteToken;
+  box.innerHTML = '<div class="sysname">The work</div><p class="pending">loading research notes…</p>';
+  fetch('data/notes/' + work.work_id + '.md')
+    .then((r) => { if (!r.ok) throw new Error(r.status); return r.text(); })
+    .then((md) => {
+      if (token !== noteToken) return;
+      box.innerHTML = '<div class="sysname">The work</div>' + mdToHtml(md);
+    })
+    .catch(() => {
+      if (token !== noteToken) return;
+      box.innerHTML = '<div class="sysname">The work</div>' +
+        '<p class="pending">No research note for ' + esc(work.work_id) + ' yet.</p>';
+    });
+}
+
+/* ----------------------------------------------------------------- caption */
+
+function caption() {
+  const w = works[idx];
+  const sys = Canon.SYSTEMS[w.system];
+  const gen = cached ? cached.gen : Canon.generate(w);
+  let html = '';
+  html += '<h2>' + esc(w.title) + '</h2>';
+  html += '<p class="meta">' + esc(w.artist) + ' · ' + esc(w.year) + '</p>';
+  html += '<div class="sysname">' + esc(w.system) + ' — ' + esc(sys.name) + '</div>';
+  html += '<p>' + esc(sys.principle) + '</p>';
+  html += '<p class="dim">' + esc(sys.practice) + '</p>';
+  html += '<div class="sysname">The drawing</div>';
+  html += '<p>' + esc(sys.drawing) + '</p>';
+  html += '<p class="dim">Seed is the hash of ' + esc(w.work_id) +
+          '; the diagonal is set by the year (' + esc(w.year) + ' → ' + gen.angle + '°).</p>';
+  html += '<div class="phase">' + esc(gen.phaseNote) + '</div>';
+  html += '<div class="note" id="note"></div>';
+  html += '<div class="src">In the collection via <b>' + esc(w.holder) + '</b>' +
+          (w.buy_url ? ' — <a href="' + esc(w.buy_url) + '" target="_blank" rel="noopener">source</a>' : '') +
+          (w.route ? '<br>' + esc(w.route) : '') + '</div>';
+  if (w.flag && w.flag !== 'clean') {
+    html += '<div class="flagnote">⚑ ' + esc(w.flag) +
+      (w.flag === 'PD-work' ? ' — traditional/public-domain material; the recording, not the work, is what is held.' : '') +
+      (w.flag === 'uncertain-details' ? ' — some catalogue details unverified.' : '') + '</div>';
+  }
+  el('cap').innerHTML = html;
+  loadNote(w);
+}
+
+function esc(s) {
+  return String(s).replace(/[&<>"]/g, (c) => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+}
+
+/* --------------------------------------------------------------------- ui */
+
+function initUI() {
+  const sel = el('work');
+  const bySys = {};
+  works.forEach((w, i) => { (bySys[w.system] = bySys[w.system] || []).push([w, i]); });
+  Object.keys(bySys).sort().forEach((s) => {
+    const og = document.createElement('optgroup');
+    og.label = s + ' — ' + Canon.SYSTEMS[s].name;
+    for (const [w, i] of bySys[s]) {
+      const o = document.createElement('option');
+      o.value = String(i);
+      o.textContent = w.work_id.replace('REC-', '') + ' · ' + w.title + ' — ' + w.artist;
+      og.appendChild(o);
+    }
+    sel.appendChild(og);
+  });
+  sel.onchange = (e) => show(parseInt(e.target.value, 10));
+  el('prev').onclick = () => show(idx - 1);
+  el('next').onclick = () => show(idx + 1);
+  el('rand').onclick = () => show(Math.floor(Math.random() * works.length));
+  el('png').onclick = () => saveCanvas(works[idx].work_id.toLowerCase() + '-' + cached.gen.seed, 'png');
+  el('svg').onclick = () => {
+    if (typeof beginRecordSvg !== 'function') return;
+    setSvgResolutionDPI(96);
+    if (typeof setSvgGroupByStrokeColor === 'function') setSvgGroupByStrokeColor(true);
+    beginRecordSvg(works[idx].work_id.toLowerCase() + '.svg');
+    try { paint(window, works[idx], cw, ch); } finally { endRecordSvg(); }
+  };
+  document.addEventListener('keydown', (e) => {
+    if (e.metaKey || e.ctrlKey || e.altKey) return;
+    const t = e.target;
+    if (t && (t.tagName === 'INPUT' || t.tagName === 'SELECT')) return;
+    if (e.key === 'ArrowLeft') show(idx - 1);
+    if (e.key === 'ArrowRight') show(idx + 1);
+    if (e.key === 'r' || e.key === 'R') el('rand').click();
+    if (e.key === 's' || e.key === 'S') el('png').click();
+    if (e.key === 'v' || e.key === 'V') el('svg').click();
+  });
+}
+
+fetch('data/dmcf-v1.csv')
+  .then((r) => r.text())
+  .then((text) => {
+    works = Canon.parseCSV(text).filter((w) => Canon.SYSTEMS[w.system]);
+    initUI();
+    const want = new URLSearchParams(location.search).get('w');
+    const at = want ? works.findIndex((w) => w.work_id === want) : -1;
+    show(at >= 0 ? at : 0);
+  })
+  .catch((err) => {
+    el('cap').innerHTML = '<p>Could not load data/dmcf-v1.csv — ' + esc(err) + '</p>';
+  });
+</script>
+</body>
+</html>

@@ -1,0 +1,431 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Reserve — Sounds of Changes</title>
+  <style>
+    :root {
+      --bg: #060709; --panel: #0a0c10; --fg: #d8d4c8; --muted: #7d7a70;
+      --border: #1d2027; --amber: #d9a441; --cyan: #58c5d4; --red: #c34434;
+    }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; height: 100%; }
+    body {
+      background: var(--bg); color: var(--fg); overflow: hidden;
+      font: 14px/1.55 ui-sans-serif, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      -webkit-font-smoothing: antialiased;
+      display: grid; grid-template-columns: 1fr 400px; height: 100vh;
+    }
+    main { position: relative; display: flex; align-items: center; justify-content: center; padding: 24px; min-width: 0; }
+    #stage { box-shadow: 0 0 80px rgba(0,0,0,.9), 0 0 1px rgba(216,212,200,.25); line-height: 0; }
+    #stage canvas { display: block; }
+    .badge { position: absolute; left: 24px; bottom: 16px; color: var(--muted); font-size: 12px; font-variant-numeric: tabular-nums; }
+    aside { border-left: 1px solid var(--border); background: var(--panel); display: flex; flex-direction: column; min-height: 0; }
+    .head { padding: 14px 18px; border-bottom: 1px solid var(--border); }
+    .head a { color: var(--amber); text-decoration: none; font-size: 12px; opacity: .85; }
+    .head h1 { margin: 6px 0 0; font-size: 1.05rem; letter-spacing: -0.01em; }
+    .head p { margin: 6px 0 0; color: var(--muted); font-size: 12px; }
+    .scroll { overflow-y: auto; flex: 1 1 auto; padding: 14px 18px 24px; }
+    .nav { display: flex; gap: 8px; margin-bottom: 10px; }
+    select, button {
+      font: inherit; font-size: 13px; color: var(--fg); background: #10131a;
+      border: 1px solid var(--border); border-radius: 8px; padding: 6px 9px; cursor: pointer;
+    }
+    select { flex: 1 1 auto; min-width: 0; }
+    button:hover { border-color: var(--amber); color: var(--amber); }
+    h2 { font-size: 1.15rem; margin: 14px 0 2px; letter-spacing: -0.01em; }
+    .meta { color: var(--muted); font-size: 13px; margin: 0 0 12px; }
+    .sysname { color: var(--amber); font-size: 12px; text-transform: uppercase; letter-spacing: .08em; margin: 14px 0 4px; font-weight: 600; }
+    .cap p { margin: 0 0 10px; font-size: 13.5px; }
+    .cap p.dim { color: var(--muted); }
+    .status { border-left: 3px solid var(--amber); padding: 6px 0 6px 10px; font-size: 13px; margin: 12px 0; }
+    .status.stream { border-color: var(--cyan); }
+    .status.none { border-color: var(--red); }
+    .status a { color: inherit; }
+    .note { border-top: 1px solid var(--border); margin-top: 14px; padding-top: 4px; }
+    .note h4 { font-size: 13.5px; margin: 14px 0 6px; }
+    .note p, .note li { font-size: 13px; margin: 0 0 9px; }
+    .note ul { margin: 0 0 10px; padding-left: 18px; }
+    .note li { margin: 0 0 5px; }
+    .note a { color: var(--amber); text-decoration: none; }
+    .note a:hover { text-decoration: underline; }
+    .note .pending { color: var(--muted); font-size: 12.5px; font-style: italic; }
+    .foot { border-top: 1px solid var(--border); padding: 12px 18px; display: grid; gap: 8px; grid-template-columns: 1fr 1fr; }
+  </style>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.4/p5.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/p5.plotsvg@latest/lib/p5.plotSvg.js"></script>
+  <script src="assets/strokefont.js"></script>
+  <script src="assets/marks.js"></script>
+  <script src="assets/canon.js"></script>
+</head>
+<body>
+  <main>
+    <div id="stage"></div>
+    <div class="badge" id="badge"></div>
+  </main>
+  <aside>
+    <div class="head">
+      <a href="./">← gallery</a>
+      <h1>Reserve</h1>
+      <p>Sounds of Changes — the works the market no longer carries. Out of print,
+         streamed, or never released; held here as drawings.</p>
+    </div>
+    <div class="scroll">
+      <div class="nav">
+        <button id="prev" title="previous">←</button>
+        <select id="work"></select>
+        <button id="next" title="next">→</button>
+      </div>
+      <div class="cap" id="cap"></div>
+    </div>
+    <div class="foot">
+      <button id="png">Save PNG</button>
+      <button id="svg">Save SVG</button>
+    </div>
+  </aside>
+
+<script>
+/*
+ * The Reserve's visual system — the SPOOL. Deliberately not the canon's: where the
+ * canon is a plot on paper (cream ground, rectilinear field, a command menu), the
+ * reserve is phosphor on black — the drawing of a carrier, not a performance.
+ *
+ *   - Every work is one spiral: the groove/reel that carried its recording.
+ *   - The SYSTEM modulates the groove (chance jitters it, serial quantizes it,
+ *     loops phase-copy it, drone doubles it into beats, drawn-sound dashes it,
+ *     oral lineage lets it wander).
+ *   - The YEAR sets the number of revolutions — older works have longer spools.
+ *   - The STATUS is the erosion:
+ *       secondhand — dropout eats the groove; radial splice scars (amber)
+ *       stream     — the whole groove immaterial, fine dashes (cyan)
+ *       none       — the spool barely begins, then stops (red)
+ *   - Seed = hash(work_id), as in the canon: same piece, same drawing, forever.
+ *
+ * Plots as white/metallic gel pen on black stock (see docs/plotter-guide.md §8).
+ */
+
+const BG = [6, 7, 9];
+const TRACE = [232, 228, 216];
+const ACCENTS = { secondhand: [217, 164, 65], stream: [88, 197, 212], none: [195, 68, 52] };
+
+// groove modulation per system — amplitude, noise frequency, quantize steps,
+// phase copies, dash character (0 = solid runs, 1 = fine dashes)
+const MOD = {
+  'SYS-001': { amp: 0.055, freq: 3.2, quant: 0, copies: 1, dash: 0.35 }, // chance: jittered groove
+  'SYS-002': { amp: 0.03, freq: 1.0, quant: 12, copies: 1, dash: 0 },    // serial: quantized steps
+  'SYS-003': { amp: 0.02, freq: 2.0, quant: 0, copies: 2, dash: 0 },     // process: interference pair
+  'SYS-005': { amp: 0.04, freq: 5.0, quant: 0, copies: 1, dash: 0.15 },  // computed: high-freq function
+  'SYS-008': { amp: 0.025, freq: 1.4, quant: 0, copies: 3, dash: 0 },    // loops: phase copies drifting
+  'SYS-011': { amp: 0.03, freq: 2.6, quant: 0, copies: 1, dash: 0.7 },   // drawn sound: notation dashes
+  'SYS-012': { amp: 0.012, freq: 0.7, quant: 0, copies: 2, dash: 0 },    // drone: near-identical pair, beating
+  'SYS-013': { amp: 0.02, freq: 1.8, quant: 8, copies: 1, dash: 0.2 },   // modal: cyclic gates
+  'SYS-019': { amp: 0.06, freq: 0.9, quant: 0, copies: 1, dash: 0 },     // carried song: slow wander
+};
+const MOD_DEFAULT = { amp: 0.035, freq: 2.0, quant: 0, copies: 1, dash: 0.2 };
+
+let works = [], idx = 0, cached = null;
+let cw = 800, ch = 600;
+const el = (id) => document.getElementById(id);
+
+/* ------------------------------------------------------------- composition */
+
+function compose(work, w, h) {
+  const seed = Canon.hashStr(work.work_id);
+  const ctx = Marks.context({ seed: seed, field: { x0: 0, y0: 0, x1: w, y1: h }, U: 1, masks: [] });
+  const R = ctx.rng;
+  const mod = MOD[work.system] || MOD_DEFAULT;
+  const status = work._route;
+
+  const cx = w / 2, cy = h / 2;
+  const maxR = Math.min(w, h) * 0.4;
+  const r0 = maxR * 0.07;
+  const year = Number(work.year) || 1970;
+  const revs = Math.max(8, Math.min(26, Math.round(10 + (2030 - year) / 7)));
+  const thetaMax = Math.PI * 2 * revs;
+  // 'none': the spool barely begins — a fraction of one side of the reel
+  const cutoff = status === 'none' ? thetaMax * (0.12 + R() * 0.06) : thetaMax;
+
+  const base = [], accent = [];
+  const dropout = status === 'secondhand' ? 0.34 + R() * 0.1 : 0;
+  const phase0 = R() * 100;
+
+  for (let c = 0; c < mod.copies; c++) {
+    const copyOff = c * (work.system === 'SYS-012' ? 0.006 : 0.05); // drone pair sits close → beats
+    const copyR = c * maxR * (work.system === 'SYS-012' ? 0.004 : 0.012);
+    let run = [];
+    let dashAcc = 0, dashOn = true, dashLen = 6 + R() * 6, gapLen = 2 + R() * 3;
+
+    const step = 0.02;
+    for (let t = 0; t < cutoff; t += step) {
+      const frac = t / thetaMax;
+      const rBase = r0 + frac * (maxR - r0) + copyR;
+      const n = ctx.noise(Math.cos(t) * mod.freq + phase0, Math.sin(t) * mod.freq + frac * 6 + c * 9, 2);
+      let r = rBase + (n - 0.5) * 2 * mod.amp * maxR;
+      if (mod.quant) {
+        const qs = (maxR - r0) / (revs * 2) * (12 / mod.quant);
+        r = Math.round(r / qs) * qs;
+      }
+      const a = t + copyOff;
+      const x = cx + Math.cos(a) * r, y = cy + Math.sin(a) * r;
+
+      // erosion
+      let on = true;
+      if (dropout && ctx.noise(t * 0.55 + phase0, c * 3 + 50) < dropout) on = false;
+      if (status === 'stream') { // immaterial: everything finely dashed
+        dashAcc += step * r;
+        if (dashOn && dashAcc > 4) { dashOn = false; dashAcc = 0; }
+        else if (!dashOn && dashAcc > 3) { dashOn = true; dashAcc = 0; }
+        if (!dashOn) on = false;
+      } else if (mod.dash > 0) { // system's own dash character
+        dashAcc += step * r;
+        if (dashOn && dashAcc > dashLen * (1.2 - mod.dash)) { dashOn = false; dashAcc = 0; gapLen = (2 + R() * 4) * mod.dash * 3; }
+        else if (!dashOn && dashAcc > gapLen) { dashOn = true; dashAcc = 0; dashLen = 4 + R() * 8; }
+        if (!dashOn) on = false;
+      }
+
+      if (on) run.push({ x, y });
+      else if (run.length > 1) { base.push(run); run = []; }
+      else run = [];
+    }
+    if (run.length > 1) base.push(run);
+  }
+
+  // status marks in the accent colour
+  if (status === 'secondhand') {
+    // splice scars: radial cuts through the spool
+    const scars = 2 + Math.floor(R() * 3);
+    for (let s = 0; s < scars; s++) {
+      const a = R() * Math.PI * 2;
+      const rIn = r0 + R() * (maxR - r0) * 0.5;
+      const rOut = rIn + (maxR - r0) * (0.18 + R() * 0.3);
+      accent.push([{ x: cx + Math.cos(a) * rIn, y: cy + Math.sin(a) * rIn },
+                   { x: cx + Math.cos(a) * rOut, y: cy + Math.sin(a) * rOut }]);
+    }
+  } else if (status === 'none') {
+    // the point where it stops — a terminal tick, and the emptiness after
+    const a = cutoff;
+    const r = r0 + (cutoff / thetaMax) * (maxR - r0);
+    const x = cx + Math.cos(a) * r, y = cy + Math.sin(a) * r;
+    accent.push([{ x: x - 6, y: y - 6 }, { x: x + 6, y: y + 6 }]);
+    accent.push([{ x: x + 6, y: y - 6 }, { x: x - 6, y: y + 6 }]);
+  }
+
+  // outer ring: the reel's flange — broken for secondhand, solid otherwise
+  const ringR = maxR * 1.07;
+  let ring = [];
+  for (let t = 0; t <= Math.PI * 2 + 0.01; t += 0.02) {
+    const broken = status === 'secondhand' && ctx.noise(t * 1.3 + 7, 99) < 0.32;
+    const x = cx + Math.cos(t) * ringR, y = cy + Math.sin(t) * ringR;
+    if (!broken) ring.push({ x, y });
+    else if (ring.length > 1) { accent.push(ring); ring = []; }
+    else ring = [];
+  }
+  if (ring.length > 1) accent.push(ring);
+
+  // catalogue line in single-stroke type, accent-coloured
+  const fs = Math.max(8, Math.min(12, w * 0.011));
+  const label = work.work_id + ' ' + work.year + ' — ' + status.toUpperCase();
+  for (const l of StrokeFont.text(label, cx - StrokeFont.width(label, fs) / 2, cy + ringR + fs, fs)) {
+    accent.push(l);
+  }
+
+  return { base, accent, seed, revs, status,
+           marks: base.length + accent.length };
+}
+
+function paint(g, work, w, h) {
+  const r = compose(work, w, h);
+  cached = r;
+  g.background(BG[0], BG[1], BG[2]);
+  g.noFill();
+  g.strokeCap(g.ROUND || ROUND);
+  g.strokeJoin(g.ROUND || ROUND);
+  g.strokeWeight(Math.max(1, Math.min(w, h) / 760));
+  g.stroke(TRACE[0], TRACE[1], TRACE[2]);
+  for (const pts of r.base) drawPoly(g, pts);
+  const ac = ACCENTS[r.status] || ACCENTS.secondhand;
+  g.stroke(ac[0], ac[1], ac[2]);
+  for (const pts of r.accent) drawPoly(g, pts);
+  return r;
+}
+
+function drawPoly(g, pts) {
+  if (pts.length === 2) { g.line(pts[0].x, pts[0].y, pts[1].x, pts[1].y); return; }
+  g.beginShape();
+  for (const p of pts) g.vertex(p.x, p.y);
+  g.endShape();
+}
+
+/* ------------------------------------------------------------------ sketch */
+
+function stageSize() {
+  const main = document.querySelector('main');
+  const s = Math.max(200, Math.min(main.clientWidth, main.clientHeight) - 48);
+  return [Math.round(s), Math.round(s)]; // the reserve is square: a reel, not a sheet
+}
+
+function setup() {
+  const [w, h] = stageSize();
+  cw = w; ch = h;
+  const c = createCanvas(w, h);
+  c.parent('stage');
+  pixelDensity(1);
+  noLoop();
+}
+
+function draw() {
+  if (works.length) { paint(window, works[idx], cw, ch); badge(); }
+}
+
+function show(i) {
+  idx = ((i % works.length) + works.length) % works.length;
+  el('work').value = String(idx);
+  const [w, h] = stageSize();
+  if (w !== cw || h !== ch) { cw = w; ch = h; resizeCanvas(w, h); }
+  redraw();
+  caption();
+  const u = new URL(location.href);
+  u.searchParams.set('w', works[idx].work_id);
+  history.replaceState(null, '', u.toString());
+}
+
+function windowResized() { show(idx); }
+
+function badge() {
+  const w = works[idx];
+  el('badge').textContent = w.work_id + '  ·  seed ' + (cached ? cached.seed : '') +
+    '  ·  ' + (cached ? cached.revs : '') + ' revolutions (' + w.year + ')  ·  ' +
+    (cached ? cached.status : '');
+}
+
+/* ----------------------------------------------------------------- caption */
+
+const STATUS_TEXT = {
+  secondhand: 'In the reserve: the catalogued recording is out of print — it survives in used copies only. The spool is eaten by dropout; the amber cuts are splices.',
+  stream: 'In the reserve: never sold, it survives as a free stream. The groove is drawn immaterial — present, but nothing to hold.',
+  none: 'In the reserve: no acquirable release exists. The spool barely begins, then stops — the red cross marks where it ends.',
+};
+
+function esc(s) {
+  return String(s).replace(/[&<>"]/g, (c) => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+}
+
+function mdToHtml(md) {
+  const inline = (s) =>
+    esc(s)
+      .replace(/\[\[?(\d+|[^\]]+?)\]?\]\((https?:\/\/[^)\s]+)\)/g,
+               '<a href="$2" target="_blank" rel="noopener">$1</a>')
+      .replace(/\*\*([^*]+)\*\*/g, '<b>$1</b>');
+  const out = [];
+  let list = null, para = [];
+  const flushPara = () => { if (para.length) { out.push('<p>' + inline(para.join(' ')) + '</p>'); para = []; } };
+  const flushList = () => { if (list) { out.push('<ul>' + list.join('') + '</ul>'); list = null; } };
+  for (const raw of md.split(/\r?\n/)) {
+    const line = raw.trim();
+    if (!line) { flushPara(); flushList(); continue; }
+    if (line.startsWith('### ')) { flushPara(); flushList(); out.push('<h4>' + inline(line.slice(4)) + '</h4>'); }
+    else if (/^[*-]\s+/.test(line)) { flushPara(); (list = list || []).push('<li>' + inline(line.replace(/^[*-]\s+/, '')) + '</li>'); }
+    else { flushList(); para.push(line); }
+  }
+  flushPara(); flushList();
+  return out.join('\n');
+}
+
+let noteToken = 0;
+function loadNote(work) {
+  const box = document.getElementById('note');
+  if (!box) return;
+  const token = ++noteToken;
+  box.innerHTML = '<div class="sysname">The work</div><p class="pending">loading…</p>';
+  fetch('data/notes/' + work.work_id + '.md')
+    .then((r) => { if (!r.ok) throw new Error(r.status); return r.text(); })
+    .then((md) => { if (token === noteToken) box.innerHTML = '<div class="sysname">The work</div>' + mdToHtml(md); })
+    .catch(() => { if (token === noteToken) box.innerHTML = ''; });
+}
+
+function caption() {
+  const w = works[idx];
+  const sys = Canon.SYSTEMS[w.system];
+  let html = '';
+  html += '<h2>' + esc(w.title) + '</h2>';
+  html += '<p class="meta">' + esc(w.artist) + ' · ' + esc(w.year) + '</p>';
+  html += '<div class="status ' + esc(w._route) + '">' + esc(STATUS_TEXT[w._route] || '') +
+          (w._url ? ' <a href="' + esc(w._url) + '" target="_blank" rel="noopener">last known source →</a>' : '') + '</div>';
+  if (sys) {
+    html += '<div class="sysname">' + esc(w.system) + ' — ' + esc(sys.name) + '</div>';
+    html += '<p>' + esc(sys.principle) + '</p>';
+    html += '<p class="dim">' + esc(sys.practice) + '</p>';
+  }
+  html += '<div class="sysname">The drawing</div>';
+  html += '<p>The spool: one spiral, the groove that carried the recording. The system modulates it' +
+          (w.system === 'SYS-012' ? ' — here a near-identical pair, beating like tuned strings' : '') +
+          (w.system === 'SYS-008' ? ' — here phase copies drifting apart, a loop echoing itself' : '') +
+          (w.system === 'SYS-001' ? ' — here jitter: the groove wanders as chance dictates' : '') +
+          (w.system === 'SYS-005' ? ' — here a computed function, high-frequency and exact' : '') +
+          (w.system === 'SYS-011' ? ' — here dashes: notation, a groove drawn to be read' : '') +
+          (w.system === 'SYS-019' ? ' — here a slow wander: the carried song, never twice the same' : '') +
+          '; the year sets its ' + (cached ? cached.revs : '') + ' revolutions; the erosion is its status. ' +
+          'Seed is the hash of ' + esc(w.work_id) + ' — the same piece always yields the same spool.</p>';
+  html += '<div class="note" id="note"></div>';
+  el('cap').innerHTML = html;
+  loadNote(w);
+}
+
+/* --------------------------------------------------------------------- ui */
+
+function initUI() {
+  const sel = el('work');
+  works.forEach((w, i) => {
+    const o = document.createElement('option');
+    o.value = String(i);
+    o.textContent = w.work_id.replace('REC-', '') + ' · ' + w.title + ' — ' + w.artist;
+    sel.appendChild(o);
+  });
+  sel.onchange = (e) => show(parseInt(e.target.value, 10));
+  el('prev').onclick = () => show(idx - 1);
+  el('next').onclick = () => show(idx + 1);
+  el('png').onclick = () => saveCanvas('reserve-' + works[idx].work_id.toLowerCase(), 'png');
+  el('svg').onclick = () => {
+    if (typeof beginRecordSvg !== 'function') return;
+    setSvgResolutionDPI(96);
+    if (typeof setSvgGroupByStrokeColor === 'function') setSvgGroupByStrokeColor(true);
+    beginRecordSvg('reserve-' + works[idx].work_id.toLowerCase() + '.svg');
+    try { paint(window, works[idx], cw, ch); } finally { endRecordSvg(); }
+  };
+  document.addEventListener('keydown', (e) => {
+    if (e.metaKey || e.ctrlKey || e.altKey) return;
+    const t = e.target;
+    if (t && (t.tagName === 'INPUT' || t.tagName === 'SELECT')) return;
+    if (e.key === 'ArrowLeft') show(idx - 1);
+    if (e.key === 'ArrowRight') show(idx + 1);
+    if (e.key === 's' || e.key === 'S') el('png').click();
+    if (e.key === 'v' || e.key === 'V') el('svg').click();
+  });
+}
+
+Promise.all([
+  fetch('data/dmcf-v1.csv').then((r) => r.text()),
+  fetch('data/acquisition-guide.csv').then((r) => r.text()),
+]).then(([csvText, acqText]) => {
+  const meta = Canon.parseCSV(csvText);
+  const acq = {};
+  for (const r of Canon.parseCSV(acqText)) acq[r.work_id] = r;
+  works = meta.filter((w) => {
+    const a = acq[w.work_id];
+    return a && ['secondhand', 'stream', 'none'].includes((a.route || '').trim());
+  });
+  works.forEach((w) => {
+    w._route = acq[w.work_id].route.trim();
+    w._url = acq[w.work_id].url;
+  });
+  initUI();
+  const want = new URLSearchParams(location.search).get('w');
+  const at = want ? works.findIndex((w) => w.work_id === want) : -1;
+  show(at >= 0 ? at : 0);
+}).catch((err) => {
+  el('cap').innerHTML = '<p>Could not load data — ' + esc(err) + '</p>';
+});
+</script>
+</body>
+</html>
