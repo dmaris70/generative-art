@@ -249,13 +249,23 @@ half drawn as elevation over a heavy ground line and hatched earth. Both views s
 scale, the legend and tenets are unchanged (the scene is the same data), and the floor
 scale up the margin keys to the section's ground line.
 
+The **portfolio board** ([`projects/011-isometric-strata/portfolio.html`](projects/011-isometric-strata/portfolio.html),
+or the ⊞ Portfolio button in the sheet's panel) lays many sheets on one board under a
+shared title strip: one sheet per style at a fixed seed (`?set=styles`), one style across
+the six sites (`set=sites`), one style across the three papers in both views
+(`set=papers`), or one style across twelve seeds (`set=seeds`); `style=1..12` picks the
+style, `seed` the seed. Each tile is a full sheet built and painted by the engine into its
+own buffer, captioned with its style, site, paper, view, seed and tenets score. Sheets
+draw one per frame; **S** saves the board as a PNG.
+
 The pipeline is `seed → spec → scene → sort → hand`: the seed fixes a specification
 (style, site, paper, palette, detail, density, floors…); the style and site generators
 emit 3-D primitives into a scene; the scene is depth-sorted and drawn by a renderer that
 lays every stroke down like a pencil — wobble, overshoot, a second pass that doesn't quite
 register — with clipped fills that read as coloured pencil or ruled hatching on mottled
 graph paper. The engine lives in the project's `lib/` (core, plan, render, paper, sheet,
-site, and one file per style); [`DESIGN.md`](projects/011-isometric-strata/DESIGN.md)
+site, one file per style, and `strata.js`, the facade whose `build(opts)` and
+`paint(g, state)` both the sheet and the portfolio board call); [`DESIGN.md`](projects/011-isometric-strata/DESIGN.md)
 records the analysis the design came from. Parameters force a style, floor count, detail,
 site density or building count; **R** reseeds.
 
