@@ -219,7 +219,7 @@ specification. Nothing on the sheet is decorative text — the legend's counts a
 from the geometry actually drawn (`MURO(43)` means forty-three walls were placed), and the
 specification lists the choices the seed made.
 
-The building is one of eleven **styles**, each a vocabulary of parts recombined by the seed:
+The building is one of twelve **styles**, each a vocabulary of parts recombined by the seed:
 
 | style | parts |
 |---|---|
@@ -233,6 +233,7 @@ The building is one of eleven **styles**, each a vocabulary of parts recombined 
 | **Archigram** — the plug-in rig | an exoskeleton of latticed masts and trusses on the envelope with cable ties across its faces · every service outside it: ducts in pop colours, escalator tubes up the flanks, tanks on brackets · inside only open decks and the pods plugged onto them, stacked pod on pod · tower cranes on the corner masts lifting one more pod in. Tenets: exo-structure, exo-services, pods only within, plugged in, in transit, checked as `TENETS n/5` |
 | **Miesian** — the glass box on its plinth | a travertine plinth with paving joints, a flight of steps and a reflecting pool · a regular grid of steel columns standing one module outside the glass · a glazed skin ruled by mullions on the module, spandrels and slabs on the taller boxes · a thin roof plane overhanging all round · one free-standing core and a few free-standing stone planes. Tenets: less is more (a part budget), on the module (every set-out coordinate a multiple), structure expressed, raised on a plinth, free plan, checked as `TENETS n/5` |
 | **Cycladic** — the white village | terraces stepping up the slope behind stone retaining walls · a contiguous cluster of whitewashed cubes, one or two storeys, every flat roof a terrace behind a parapet with pergolas and chimneys · external stairs up the flanks · walled courts with a tree · a chapel with a blue dome and a bell wall of arched openings · barrel vaults · arches over the lanes · a windmill on the ridge · blue only on doors, shutters and the dome. Tenets: low-rise, contiguous, roof as terrace, stepped, blue on openings, checked as `TENETS n/5` |
+| **Rossian** — the analogous city | a court enclosed by a long colonnade bar on plain square piers · inside it only archetypes: a red cube, a cylinder on a cube crowned with a cone, a gabled bar, a free cone · square, identical windows in silent rows centred on every face · every solid casting a hatched shadow from one sun · a row of trees along the open side. Tenets: archetypes, square windows, silent façades (a small window share of every wall), asymmetric whole, one sun, checked as `TENETS n/5` |
 | **Five Points** — the purist villa | pilotis and air at ground level · a free plan of partitions off the grid · a free façade set outside the columns · ribbon windows · a roof garden with planters and a solarium wall · a ramp and a spiral-stair core. Each of Le Corbusier's five tenets is also a predicate run over the drawn scene, reported as `TENETS n/5` |
 
 standing on one of six **sites** (city, city edge, plaza district, hillside, park,

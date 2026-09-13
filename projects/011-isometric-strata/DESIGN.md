@@ -137,8 +137,15 @@ first grammar built from a settlement rule rather than a building rule — the
 tenets are about the aggregate: no house above two storeys over its own
 ground, one connected cluster (a flood fill over the occupied cells), every
 flat roof behind a parapet, ground rising row by row, blue on doors, shutters
-and the dome only. The same pattern fits any dogma that states itself as
-rules: Rossi (archetypes only), Kahn (served and servant spaces).
+and the dome only. `styles/rossi.js` is typology: only
+archetypes may stand in the court, windows are one square repeated and set out
+symmetrically on each face, every façade keeps its window share small, the
+whole leans off the court's centre, and every solid casts a hatched shadow —
+the hull of its footprint and its footprint carried up and over — from the one
+sun; the shadows' directions are the fifth predicate. The silent-façade tenet
+caught a bookkeeping error (glazing split evenly across two faces of unequal
+size) on the first run. The same pattern fits any dogma that states itself as
+rules: Kahn (served and servant spaces), Hejduk (masques).
 
 ## 6. Extending it
 
