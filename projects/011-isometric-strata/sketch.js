@@ -59,7 +59,9 @@ function setup() {
 }
 
 function fitCanvas() {
-  const w = Math.min(windowWidth, windowHeight * (SW / SH));
+  // a host page may reserve a strip (window.STRATA_INSET px) for its own bar
+  const inset = window.STRATA_INSET || 0;
+  const w = Math.min(windowWidth, (windowHeight - inset) * (SW / SH));
   const h = w * (SH / SW);
   if (!window._c) window._c = createCanvas(w, h);
   else resizeCanvas(w, h);
@@ -188,7 +190,7 @@ function build() {
   const s = Math.min((L.frame.w * 0.56) / (bx1 - bx0), (L.frame.h * 0.66) / (by1 - by0));
   const fcx = L.frame.x + L.frame.w / 2, fcy = L.frame.y + L.frame.h * 0.52;
   fit = { s: s, ox: fcx - ((bx0 + bx1) / 2) * s, oy: fcy - ((by0 + by1) / 2) * s };
-  window.__strata = { spec: spec, scene: scene, meta: meta, fit: fit };
+  window.__strata = { spec: spec, scene: scene, meta: meta, fit: fit, G: G };
 }
 
 // ---------------------------------------------------------------- render
