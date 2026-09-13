@@ -6,8 +6,8 @@
 // are tallied from the geometry actually drawn, a scale bar, and the sheet's
 // specification. The building is one of four styles — the Mexican-modern
 // patio mat, the deconstructivist crystalline tower, the geodesic expo mast,
-// the brutalist mosaic block — each a vocabulary of parts recombined by the
-// seed, standing on one of six site types.
+// the brutalist mosaic block, the Five Points villa — each a vocabulary of
+// parts recombined by the seed, standing on one of six site types.
 //
 // Pipeline: seed → spec (style, site, paper, palette, detail…) → Scene of 3-D
 // primitives (styles/*.js + site.js) → depth sort → hand-drawn render
@@ -32,12 +32,15 @@ const PALETTES = {
   DEWLINE: { colors: [[104, 118, 132], [140, 156, 172], [186, 196, 206], [150, 166, 180]], accent: [230, 112, 46] },
   ARCTIC: { colors: [[120, 136, 152], [170, 184, 196], [204, 212, 220], [130, 150, 170]], accent: [210, 70, 50] },
   SIGNAL: { colors: [[96, 104, 112], [150, 156, 164], [200, 204, 210], [120, 128, 136]], accent: [232, 132, 30] },
+  PURIST: { colors: [[238, 234, 224], [214, 208, 192], [124, 152, 176], [214, 160, 60], [60, 62, 66]], water: [110, 136, 160] },
+  SAVOYE: { colors: [[240, 237, 228], [222, 216, 200], [130, 156, 178], [90, 116, 92], [220, 150, 140]], water: [110, 136, 160] },
+  POLYCHROMIE: { colors: [[236, 232, 222], [206, 198, 180], [140, 164, 186], [196, 96, 64], [86, 132, 170]], water: [110, 136, 160] },
   EARTH: { colors: [[192, 96, 58], [75, 125, 138], [210, 161, 58], [111, 154, 90], [156, 107, 74]] },
   CONCRETE: { colors: [[120, 118, 112], [156, 152, 144], [192, 96, 58], [98, 110, 118], [180, 176, 166]] },
   RUSTED: { colors: [[176, 84, 48], [140, 66, 40], [210, 161, 58], [92, 96, 100], [200, 140, 100]] },
 };
 
-const STYLE_KEYS = ['mexican', 'decon', 'geodesic', 'brutalist'];
+const STYLE_KEYS = ['mexican', 'decon', 'geodesic', 'brutalist', 'corbusier'];
 
 function setup() {
   fitCanvas();
@@ -45,7 +48,7 @@ function setup() {
   G = GenArt.create({
     title: 'Isometric Strata',
     params: {
-      mode: { value: 0, min: 0, max: 4, step: 1, label: 'style (0 auto, 1 mex, 2 decon, 3 geo, 4 brut)' },
+      mode: { value: 0, min: 0, max: 5, step: 1, label: 'style (0 auto, 1 mex, 2 decon, 3 geo, 4 brut, 5 corb)' },
       floors: { value: 0, min: 0, max: 10, step: 1, label: 'floors (0 auto)' },
       detail: { value: 0, min: 0, max: 3, step: 1, label: 'detail (0 auto)' },
       density: { value: 0, min: 0, max: 3, step: 1, label: 'site density (0 auto)' },
@@ -92,7 +95,7 @@ function windowResized() {
 function build() {
   const R = ISO.rng(G.seed);
   const pm = G.param('mode') | 0;
-  const key = pm >= 1 && pm <= 4 ? STYLE_KEYS[pm - 1] : R.pick(STYLE_KEYS);
+  const key = pm >= 1 && pm <= STYLE_KEYS.length ? STYLE_KEYS[pm - 1] : R.pick(STYLE_KEYS);
   const style = ISO.styles[key];
 
   const detailN = G.param('detail') | 0 || R.weighted([[1, 3], [2, 3], [3, 2]]);
@@ -190,7 +193,7 @@ function build() {
   const s = Math.min((L.frame.w * 0.56) / (bx1 - bx0), (L.frame.h * 0.66) / (by1 - by0));
   const fcx = L.frame.x + L.frame.w / 2, fcy = L.frame.y + L.frame.h * 0.52;
   fit = { s: s, ox: fcx - ((bx0 + bx1) / 2) * s, oy: fcy - ((by0 + by1) / 2) * s };
-  window.__strata = { spec: spec, scene: scene, meta: meta, fit: fit, G: G };
+  window.__strata = { spec: spec, scene: scene, meta: meta, fit: fit, G: G, tenets: extra.tenets || null };
 }
 
 // ---------------------------------------------------------------- render

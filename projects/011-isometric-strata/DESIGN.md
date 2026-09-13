@@ -99,7 +99,20 @@ One subtlety: canvas `save`/`restore` around a clip resets the context's fill
 colour behind p5's back, and p5 caches the last style it set — so `unclip` re-syncs
 with a sentinel colour.
 
-## 5. Extending it
+## 5. Dogma as predicate
+
+A style can carry a doctrine as well as a vocabulary. `styles/corbusier.js`
+builds Le Corbusier's Five Points and then runs each tenet as a predicate over
+the finished scene — no wall below the first floor, partitions off the column
+grid, a façade standing clear of the columns, ribbon glazing over most of the
+façade length, a planted roof behind a parapet — and returns `TENETS n/5` for
+the specification box. The count comes from what was drawn (items are tagged
+as they are placed), so a sheet that fails a tenet says so. The same pattern
+fits any dogma that states itself as rules: De Stijl (no two planes meet at a
+corner), Palladio (mirror symmetry), Metabolism (capsules attach only to the
+spine).
+
+## 6. Extending it
 
 - **A new style** is one file in `lib/styles/` exporting `{ key, header, titles,
   substyles, types, palettes, sites, shapes, floors, legend, size(), build(ctx) }`.
