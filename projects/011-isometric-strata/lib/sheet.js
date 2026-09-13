@@ -11,8 +11,9 @@
 
   const W = 1500, H = 2000;
 
-  function layout() {
-    return {
+  function layout(o) {
+    o = o || {};
+    const L = {
       W: W, H: H,
       title: { x: 75, y: 45, w: 1350, h: 130 },
       titleDiv: [525, 1290],
@@ -20,7 +21,14 @@
       footer: { x: 75, y: 1795, w: 1350, h: 160 },
       footerDiv: [325, 1075],
       scaleX: 40,
+      schedule: null,
     };
+    if (o.schedule) {
+      // the schedule column takes the right of the drawing band
+      L.frame.w = 956;
+      L.schedule = { x: 1154, y: 205, w: 276, h: 1565 };
+    }
+    return L;
   }
 
   const CHROME = { color: [58, 64, 74], alpha: 190, weight: 1.05, wob: 0.45, overshoot: 1.5 };
@@ -99,8 +107,8 @@
     hand.text(String(val), x + hand.textWidth(key, s) + s * 0.9, y, s, TXT);
   }
 
-  function draw(hand, meta, floorInfo) {
-    const L = layout();
+  function draw(hand, meta, floorInfo, layoutOpts) {
+    const L = layout(layoutOpts);
     const T = L.title, F = L.footer, FR = L.frame;
 
     // ---- title block ----

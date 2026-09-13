@@ -76,8 +76,11 @@
   const pv = opts.view | 0;
   const view = pv === 1 ? 'AXONOMETRIC' : pv === 2 ? 'PLAN + SECTION' : R.chance(0.3) ? 'PLAN + SECTION' : 'AXONOMETRIC';
 
+  const schedule = opts.schedule === undefined ? true : !!opts.schedule;
+
   const spec = {
     view: view,
+    schedule: schedule,
     style: style, key: key,
     title: R.pick(style.titles),
     substyle: R.pick(style.substyles),
@@ -154,7 +157,7 @@
 
   // fit: the building sets the scale (about half the frame wide), the site
   // runs on past it and is clipped by the frame, as on a real sheet
-  const L = Sheet.layout();
+  const L = Sheet.layout({ schedule: schedule });
   const bh = floors * spec.floorH * 1.15;
   const corners = [
     [union.x, union.y, 0], [union.x + union.w, union.y, 0], [union.x, union.y + union.d, 0], [union.x + union.w, union.y + union.d, 0],
@@ -249,7 +252,7 @@ function paint(g, state, opts) {
   const wob = opts.wobble === undefined ? 1 : opts.wobble;
   const inkScale = (opts.ink === undefined ? 1 : opts.ink) * (spec.ink === 'FINE' ? 0.82 : spec.ink === 'HEAVY' ? 1.3 : 1);
   const hand = Hand.create(g, R.fork('hand'), { wob: wob, weightScale: inkScale });
-  const L = Sheet.layout();
+  const L = Sheet.layout({ schedule: spec.schedule });
   const U = g.width / SW;
 
   // paper
@@ -261,7 +264,7 @@ function paint(g, state, opts) {
   g.push();
   g.scale(U);
   Paper.grid(hand, SW, SH, spec.grid === 'SMALL' ? 12.5 : 20);
-  Paper.marginalia(hand, R.fork('margin'), SW, SH, [L.title, L.footer], spec.paper === 'ROUGH' ? 1.4 : 1);
+  Paper.marginalia(hand, R.fork('margin'), SW, SH, L.schedule ? [L.title, L.footer, L.schedule] : [L.title, L.footer], spec.paper === 'ROUGH' ? 1.4 : 1);
 
   let floorInfo;
   if (spec.view === 'AXONOMETRIC') {
@@ -280,7 +283,8 @@ function paint(g, state, opts) {
   }
 
   // chrome, with the floor scale keyed to the building's ground line
-  Sheet.draw(hand, state.meta, floorInfo);
+  Sheet.draw(hand, state.meta, floorInfo, { schedule: spec.schedule });
+  if (spec.schedule && Strata.drawSchedule) Strata.drawSchedule(hand, state, L.schedule);
   g.pop();
 
   // pencil tooth over everything: the paper's own texture multiplied back in
@@ -291,5 +295,5 @@ function paint(g, state, opts) {
   g.blendMode(g.BLEND);
 }
 
-  global.Strata = { SW: SW, SH: SH, PALETTES: PALETTES, STYLE_KEYS: STYLE_KEYS, build: build, paint: paint };
+  global.Strata = Object.assign(global.Strata || {}, { SW: SW, SH: SH, PALETTES: PALETTES, STYLE_KEYS: STYLE_KEYS, build: build, paint: paint });
 })(window);

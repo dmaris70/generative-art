@@ -34,6 +34,7 @@ function setup() {
       detail: { value: 0, min: 0, max: 3, step: 1, label: 'detail (0 auto)' },
       density: { value: 0, min: 0, max: 3, step: 1, label: 'site density (0 auto)' },
       bldgs: { value: 0, min: 0, max: 2, step: 1, label: 'buildings (0 auto)' },
+      schedule: { value: 1, min: 0, max: 1, step: 1, label: 'schedule column' },
       wobble: { value: 1, min: 0, max: 2.5, step: 0.1, label: 'hand wobble' },
       ink: { value: 1, min: 0.5, max: 1.8, step: 0.05, label: 'ink weight' },
     },
@@ -46,6 +47,7 @@ function setup() {
       if (G.param('mode') | 0) u.searchParams.set('style', String(G.param('mode') | 0));
       window.open(u.toString(), '_blank');
     } }, 'portfolio').name('⊞ Portfolio board');
+    G.gui.add({ meta: copyMetadata }, 'meta').name('Copy metadata JSON (M)');
   }
   reset();
 }
@@ -64,14 +66,22 @@ function opts() {
     seed: G.seed,
     view: G.param('view'), mode: G.param('mode'), floors: G.param('floors'), detail: G.param('detail'),
     density: G.param('density'), bldgs: G.param('bldgs'), wobble: G.param('wobble'), ink: G.param('ink'),
+    schedule: G.param('schedule'),
   };
+}
+
+function copyMetadata() {
+  if (!state) return;
+  const json = JSON.stringify(Strata.metadata(state), null, 2);
+  if (navigator.clipboard) navigator.clipboard.writeText(json).catch(function () {});
+  console.log(json);
 }
 
 function reset() {
   randomSeed(G.seed);
   noiseSeed(G.seed);
   state = Strata.build(opts());
-  window.__strata = Object.assign({ G: G }, state);
+  window.__strata = Object.assign({ G: G, metadata: Strata.metadata(state) }, state);
   render();
 }
 
@@ -84,6 +94,7 @@ function draw() {}
 function keyPressed() {
   if (key === 'r' || key === 'R') G.randomize();
   if (key === 's' || key === 'S') saveCanvas('isometric-strata-' + G.seed, 'png');
+  if (key === 'm' || key === 'M') copyMetadata();
 }
 
 function windowResized() {
