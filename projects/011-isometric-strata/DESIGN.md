@@ -111,9 +111,14 @@ as they are placed), so a sheet that fails a tenet says so. `styles/destijl.js` 
 for Van Doesburg's plastic architecture: every tagged face axis-aligned, no plan
 corner closed by two planes at one level, no mirror axis (a plane counts as
 mirrored when its reflection is also a plane), no primary-coloured face larger
-than a door, every slab overrunning the volume. The same pattern fits any dogma
-that states itself as rules: Palladio (mirror symmetry), Metabolism (capsules
-attach only to the spine).
+than a door, every slab overrunning the volume. `styles/metabolism.js` carries a growth rule
+rather than a composition rule: every capsule attaches to a shaft face, no
+capsule touches another, at least an eighth of the slots stay vacant, capsules
+on consecutive levels of a face do not stack in one lane, and every capsule has
+a service branch — so the legend's MODULE minus CAPSULE is the number the
+structure could still accept. The same pattern fits any dogma that states
+itself as rules: Palladio (mirror symmetry), Archigram (nothing structural
+inside the envelope).
 
 ## 6. Extending it
 
