@@ -150,10 +150,16 @@
         const mx = (a[0] + b[0]) / 2 - cx[0], my = (a[1] + b[1]) / 2 - cx[1];
         if (nx * mx + ny * my < 0) { nx = -nx; ny = -ny; } // make it outward
         const l = Math.hypot(nx, ny) || 1;
+        // the true face normal — a sloped side (a hipped roof, a sheared volume)
+        // can face the viewer even when its plan normal points away
+        let n3 = geom.cross(geom.sub(b, a), geom.sub(top[i], a));
+        if (n3[0] * nx + n3[1] * ny < 0) n3 = geom.mul(n3, -1);
+        const l3 = geom.len(n3) || 1;
         sides.push({
           pts: [a, b, top[(i + 1) % n], top[i]],
           n: [nx / l, ny / l],
-          visible: nx + ny > 1e-6,
+          n3: [n3[0] / l3, n3[1] / l3, n3[2] / l3],
+          visible: (n3[0] + n3[1] + n3[2]) / l3 > 1e-6,
         });
       }
       return { top: top, base: base, sides: sides };

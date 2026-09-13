@@ -219,7 +219,7 @@ specification. Nothing on the sheet is decorative text — the legend's counts a
 from the geometry actually drawn (`MURO(43)` means forty-three walls were placed), and the
 specification lists the choices the seed made.
 
-The building is one of seven **styles**, each a vocabulary of parts recombined by the seed:
+The building is one of eight **styles**, each a vocabulary of parts recombined by the seed:
 
 | style | parts |
 |---|---|
@@ -229,6 +229,7 @@ The building is one of seven **styles**, each a vocabulary of parts recombined b
 | **Brutalist** — the mosaic block | slabs following an L, T or stepped outline · parapets, reveals, brise-soleil · braced cores · walkways · a field of pilotis · a mosaic of hundreds of unit cubes stacked to a noise field |
 | **De Stijl** — the sliding planes | at every corner one plane runs on and the other stops short, leaving a void or a pane of glass · slabs overrun the volume · free posts rising past the roof · balconies, rails and black joints carrying the primaries · counter-construction planes floating off the volume. Van Doesburg's tenets (elementary, anti-cubic, asymmetric, colour as element, overrun) are checked over the drawn scene as `TENETS n/5` |
 | **Metabolism** — the capsule tower | a permanent service shaft with pipes running its height · capsules plugged onto its faces in a staggered spiral, each with a porthole, four bolts and a service branch · vacant slots left as room to grow · cantilevered decks · trussed bridges between two shafts · a helical stair. Tenets: permanent spine, discrete capsules, growth reserve, staggered, serviced, checked over the drawn scene as `TENETS n/5` |
+| **Palladian** — the villa on its axis | a raised, mirror-symmetric block with hipped roofs · a temple front on the axis (giant-order columns, entablature, pediment) with a broad flight of steps · windows in an ABA rhythm with little pediments · lower wings joined by colonnaded arms and hollowed with niches · a drum and dome over the hall · parterres and an avenue mirrored about the axis. Tenets: symmetry (every drawn face whose mirror would be visible has it), portico on axis, ABA rhythm, hierarchy, harmonic ratio, checked as `TENETS n/5` |
 | **Five Points** — the purist villa | pilotis and air at ground level · a free plan of partitions off the grid · a free façade set outside the columns · ribbon windows · a roof garden with planters and a solarium wall · a ramp and a spiral-stair core. Each of Le Corbusier's five tenets is also a predicate run over the drawn scene, reported as `TENETS n/5` |
 
 standing on one of six **sites** (city, city edge, plaza district, hillside, park,

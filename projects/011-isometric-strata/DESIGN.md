@@ -116,9 +116,16 @@ rather than a composition rule: every capsule attaches to a shaft face, no
 capsule touches another, at least an eighth of the slots stay vacant, capsules
 on consecutive levels of a face do not stack in one lane, and every capsule has
 a service branch — so the legend's MODULE minus CAPSULE is the number the
-structure could still accept. The same pattern fits any dogma that states
-itself as rules: Palladio (mirror symmetry), Archigram (nothing structural
-inside the envelope).
+structure could still accept. `styles/palladio.js` is the first classical
+grammar: the plan mask is mirrored (`plan.mirror`), and the symmetry tenet is
+stated for a culled drawing — every drawn face whose mirror image would face
+the viewer must have that image drawn — alongside the portico on the axis, an
+ABA bay rhythm, wings lower than the block, and a block proportioned to one of
+Palladio's ratios. Writing it exposed a renderer defect: prism sides were culled
+by their plan normal alone, so a hipped roof's far slopes, which face upward,
+were dropped; `geom.prism` now tests the true face normal. The same pattern
+fits any dogma that states itself as rules: Archigram (nothing structural
+inside the envelope), Mies (structure as a visible grid of mullions).
 
 ## 6. Extending it
 
