@@ -130,6 +130,7 @@
     union = { x: x0, y: y0, w: x1 - x0, d: y1 - y0 };
   }
 
+  const buildingItems = scene.items.length;
   Site.build({
     rng: R.fork('site'), scene: scene, plot: union, site: spec.site, density: spec.density,
     detail: detailN, floorH: spec.floorH, buildingH: floors * spec.floorH, water: palette.water, palette: palette,
@@ -198,7 +199,7 @@
   };
   ortho.sec.ox = ortho.plan.ox;
   ortho.sec.ground = ortho.sec.y + labelH + (secH - labelH) / 2 + ((ez1 + 2) / 2) * so - so;
-  return { seed: seed, spec: spec, scene: scene, meta: meta, fit: fit, ortho: ortho, tenets: extra.tenets || null };
+  return { seed: seed, spec: spec, scene: scene, meta: meta, fit: fit, ortho: ortho, tenets: extra.tenets || null, stats: { buildingItems: buildingItems, siteItems: scene.items.length - buildingItems, union: union } };
 }
 
   // Plan above, section below: the same scene cut by two half-spaces. The plan
