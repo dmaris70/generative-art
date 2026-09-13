@@ -297,7 +297,7 @@ change without a new version, a new rarity table and a new selection.
 
 **Launch decisions** are recorded in `edition/decisions.json` (platform: own ERC-721 via
 Manifold; chain: Ethereum mainnet; licence: CC BY-NC 4.0 images, source-available code;
-title: Isometric Strata; artist: pseudonym pending) and the **reserves** in
+title: Isometric Strata; artist: 668 349, the isopsephy of the artist's name) and the **reserves** in
 `edition/reserves-256.json`, picked by rule with `tools/strata-reserve.mjs`: two per
 style, the highest-scoring token as artist proof and the lowest-numbered plan-and-section
 as institutional reserve, 24 held and 232 offered. The export tool merges artist, licence,
