@@ -104,7 +104,9 @@
       external_url: 'https://dmaris70.github.io/generative-art/projects/011-isometric-strata/?seed=' + state.seed,
       attributes: r.traits.map((t) => ({ trait_type: t.trait_type, value: t.value, rarity: t.frequency, tier: t.tier })),
       properties: {
-        series: SERIES, generator: VERSION, seed: state.seed, hash: hash(state), dwg: sp.dwg, project: sp.project,
+        series: SERIES, generator: VERSION, fingerprint: global.STRATA_FREEZE ? global.STRATA_FREEZE.fingerprint : null,
+        commit: global.STRATA_FREEZE ? global.STRATA_FREEZE.commit : null,
+        seed: state.seed, hash: hash(state), dwg: sp.dwg, project: sp.project,
         edition: ed,
         rarity: { bits: Math.round(r.bits * 100) / 100, rank: r.rank, tier: r.tier, basis: r.basis },
         variables: {
@@ -157,7 +159,8 @@
     if (ed) row('EDITION', ed.number + ' / ' + ed.size);
     row('TOKEN', '#' + state.seed);
     row('DWG', sp.dwg);
-    row('GENERATOR', 'V' + VERSION);
+    const fz = global.STRATA_FREEZE;
+    row('GENERATOR', 'V' + VERSION + (fz && fz.fingerprint ? '  ' + fz.fingerprint.slice(0, 8).toUpperCase() : ''));
     row('HASH', hash(state));
     row('SCORE', r.bits.toFixed(1) + ' BITS');
     row('RANK', r.rank === null ? 'UNRANKED' : 'TOP ' + (r.rank * 100 < 1 ? (r.rank * 100).toFixed(1) : Math.ceil(r.rank * 100)) + '%');
