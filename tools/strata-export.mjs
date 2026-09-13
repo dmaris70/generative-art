@@ -17,13 +17,24 @@
 //   node tools/strata-export.mjs all          the whole edition
 //   env: STRATA_EXPORT_DIR (default projects/011-isometric-strata/export)
 //        STRATA_EXPORT_W (default 3000)
+//        STRATA_CHROME   path to a Chromium binary; unset, Playwright's own is used
+//   Outside this container: npm i playwright@1.56.1 && npx playwright install chromium
+//   The manifest hashes were made with Playwright 1.56.1's Chromium; a different
+//   Chromium build may rasterise differently, so pin that version to reproduce them.
 
 import fs from 'node:fs';
 import path from 'node:path';
 import crypto from 'node:crypto';
 import { spawn, execSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
-import { chromium } from '/opt/node22/lib/node_modules/playwright/index.mjs';
+// playwright: the project's node_modules first, else the global install this container ships
+const { chromium } = await (async () => {
+  try { return await import('playwright'); }
+  catch { return import('/opt/node22/lib/node_modules/playwright/index.mjs'); }
+})();
+// Chromium: STRATA_CHROME, else the container's build, else the browser Playwright installed itself
+const CHROME = process.env.STRATA_CHROME
+  || (fs.existsSync('/opt/pw-browsers/chromium-1194/chrome-linux/chrome') ? '/opt/pw-browsers/chromium-1194/chrome-linux/chrome' : undefined);
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const root = path.resolve(here, '..');
@@ -64,7 +75,7 @@ const pad = (n) => String(n).padStart(3, '0');
 // 3. render
 const server = spawn('python3', ['-m', 'http.server', '8134'], { cwd: root, stdio: 'ignore' });
 await new Promise((r) => setTimeout(r, 800));
-const browser = await chromium.launch({ executablePath: '/opt/pw-browsers/chromium-1194/chrome-linux/chrome' });
+const browser = await chromium.launch({ executablePath: CHROME });
 try {
   // one render of a seed in a given view (0 = the seed's own, 1 axon, 2 plan and section)
   async function render(seed, view) {

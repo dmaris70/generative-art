@@ -34,5 +34,15 @@
     "mint price and mechanics",
     "launch date",
     "content storage (Arweave vs IPFS)"
-  ]
+  ],
+  "archive": {
+    "status": "verified",
+    "date": "2026-09-13",
+    "medium": "external drive, offline",
+    "form": "256 zips (one per token: canonical PNG, companion PNG, metadata JSON) + SHA256SUMS.zips + manifest.json + verify.sh",
+    "bytes": 6973394186,
+    "manifest_sha256": "2a725cfce5ff55ce7dfd1526b1a7915285276cd56b04505d40fb5e595cd505c5",
+    "verification": "verify.sh on the drive: 256 zip hashes OK, 769 entries extracted, all 768 files match manifest.json",
+    "regeneration": "byte-identical from the frozen generator with tools/strata-export.mjs and Playwright 1.56.1 (see README)"
+  }
 }
