@@ -6,7 +6,8 @@
 // are tallied from the geometry actually drawn, a scale bar, and the sheet's
 // specification. The building is one of four styles — the Mexican-modern
 // patio mat, the deconstructivist crystalline tower, the geodesic expo mast,
-// the brutalist mosaic block, the Five Points villa, the De Stijl house — each a vocabulary of
+// the brutalist mosaic block, the Five Points villa, the De Stijl house, the
+// Metabolist capsule tower — each a vocabulary of
 // parts recombined by the seed, standing on one of six site types.
 //
 // Pipeline: seed → spec (style, site, paper, palette, detail…) → Scene of 3-D
@@ -38,12 +39,15 @@ const PALETTES = {
   RIETVELD: { colors: [[240, 238, 232], [200, 40, 40], [40, 70, 160], [236, 196, 30], [40, 42, 46], [150, 152, 156]], water: [110, 136, 160] },
   MONDRIAN: { colors: [[244, 242, 238], [214, 34, 32], [24, 60, 140], [246, 208, 42], [30, 30, 34], [200, 200, 198]], water: [110, 136, 160] },
   DOESBURG: { colors: [[236, 234, 228], [190, 60, 50], [60, 90, 150], [220, 180, 60], [50, 52, 56], [128, 132, 138]], water: [110, 136, 160] },
+  NAKAGIN: { colors: [[150, 148, 142], [234, 232, 226], [226, 108, 40], [58, 60, 64], [120, 140, 160]], water: [110, 136, 160] },
+  EXPO70: { colors: [[196, 196, 192], [240, 240, 236], [206, 36, 40], [40, 40, 44], [60, 100, 170]], water: [110, 136, 160] },
+  KIKUTAKE: { colors: [[140, 142, 140], [228, 226, 218], [60, 140, 150], [70, 72, 74], [214, 160, 60]], water: [110, 136, 160] },
   EARTH: { colors: [[192, 96, 58], [75, 125, 138], [210, 161, 58], [111, 154, 90], [156, 107, 74]] },
   CONCRETE: { colors: [[120, 118, 112], [156, 152, 144], [192, 96, 58], [98, 110, 118], [180, 176, 166]] },
   RUSTED: { colors: [[176, 84, 48], [140, 66, 40], [210, 161, 58], [92, 96, 100], [200, 140, 100]] },
 };
 
-const STYLE_KEYS = ['mexican', 'decon', 'geodesic', 'brutalist', 'corbusier', 'destijl'];
+const STYLE_KEYS = ['mexican', 'decon', 'geodesic', 'brutalist', 'corbusier', 'destijl', 'metabolism'];
 
 function setup() {
   fitCanvas();
@@ -51,7 +55,7 @@ function setup() {
   G = GenArt.create({
     title: 'Isometric Strata',
     params: {
-      mode: { value: 0, min: 0, max: 6, step: 1, label: 'style (0 auto, 1 mex, 2 decon, 3 geo, 4 brut, 5 corb, 6 stijl)' },
+      mode: { value: 0, min: 0, max: 7, step: 1, label: 'style (0 auto, 1 mex, 2 decon, 3 geo, 4 brut, 5 corb, 6 stijl, 7 metab)' },
       floors: { value: 0, min: 0, max: 10, step: 1, label: 'floors (0 auto)' },
       detail: { value: 0, min: 0, max: 3, step: 1, label: 'detail (0 auto)' },
       density: { value: 0, min: 0, max: 3, step: 1, label: 'site density (0 auto)' },
