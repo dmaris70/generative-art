@@ -315,6 +315,18 @@ its own hash. Re-runs skip tokens whose files already match the manifest, so a l
 can be resumed. The full edition renders in about 43 minutes of drawing time (10 s a token,
 two drawings each) to 768 files and 6.5 GB, every hash re-verified after the run.
 
+To regenerate the edition on any machine (Node 22, a checkout of the repo):
+
+```
+npm i playwright@1.56.1 && npx playwright install chromium
+STRATA_EXPORT_DIR=/Volumes/SANDISK/isometric-strata node tools/strata-export.mjs all
+```
+
+The tool verifies the freeze first and refuses to run on a modified generator. The same
+Playwright version gives the same Chromium build, so the files come out byte-identical to
+the recorded manifest; a different Chromium may rasterise differently, in which case the
+run is still a valid edition of the frozen generator, but its hashes are its own.
+
 The **portfolio board** ([`projects/011-isometric-strata/portfolio.html`](projects/011-isometric-strata/portfolio.html),
 or the ⊞ Portfolio button in the sheet's panel) lays many sheets on one board under a
 shared title strip: one sheet per style at a fixed seed (`?set=styles`), one style across
