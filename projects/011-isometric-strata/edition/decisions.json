@@ -32,8 +32,7 @@
   },
   "open": [
     "mint price and mechanics",
-    "launch date",
-    "content storage (Arweave vs IPFS)"
+    "launch date"
   ],
   "archive": {
     "status": "verified",
@@ -44,5 +43,25 @@
     "manifest_sha256": "2a725cfce5ff55ce7dfd1526b1a7915285276cd56b04505d40fb5e595cd505c5",
     "verification": "verify.sh on the drive: 256 zip hashes OK, 769 entries extracted, all 768 files match manifest.json",
     "regeneration": "byte-identical from the frozen generator with tools/strata-export.mjs and Playwright 1.56.1 (see README)"
+  },
+  "storage": {
+    "choice": "Arweave",
+    "decidedAt": "2026-09-13",
+    "scope": "canonical PNG and companion PNG of every token; metadata JSON bound to ar:// URIs by tools/strata-publish.mjs after upload",
+    "reasons": [
+      "permanence: one payment, data replicated by the network rather than kept alive by a pinning contract",
+      "fit with the platform decision: Manifold Studio stores media on Arweave by default",
+      "verifiability: each metadata file carries the SHA-256 of the bytes at its URI, so the on-sheet record, the manifest and the stored file can be checked against each other by anyone"
+    ],
+    "rejected": {
+      "IPFS": "content-addressed but only as durable as its pinning; the edition would depend on a pinning service staying paid and alive"
+    },
+    "procedure": [
+      "upload the 512 PNGs from the verified archive (any Arweave uploader; a bundler service is fine, the transaction ids are what matter)",
+      "convert the upload receipt to uris.json: { \"<file>\": \"ar://<txid>\" } for every file",
+      "node tools/strata-publish.mjs uris.json — refuses if any file is unmapped or any local file drifted from the manifest",
+      "spot-check: fetch a few URIs, hash the bytes, compare with the sha256 in the bound metadata",
+      "upload export/published/*.json (the bound metadata) and use those URIs as the token URIs at mint"
+    ]
   }
 }
