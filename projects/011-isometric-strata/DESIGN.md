@@ -186,7 +186,18 @@ chrome's idiom, and `Strata.metadata` emits the same as ERC-721 JSON. Because
 the table is empirical, a generator change that moves the distribution means a
 re-run and a version bump; the sheet prints the basis it was ranked against.
 
-## 9. Extending it
+## 9. The edition
+
+Seeds are unlimited; looks are not. A look — style, substyle, view, palette — is
+what a collector sees before the schedule, and the generator holds about 360 of
+them (measured: 400 seen in 30,000 seeds, 363 effective by entropy). Drawn at
+random, half of a 256 edition would share a look with another token; curated,
+none does. `tools/strata-select.mjs` is that curation as a deterministic
+procedure with every rule written down and every rejection counted, so the
+edition is reproducible from the pool and the rules, and the sheet prints the
+edition number it was given.
+
+## 10. Extending it
 
 - **A new style** is one file in `lib/styles/` exporting `{ key, header, titles,
   substyles, types, palettes, sites, shapes, floors, legend, size(), build(ctx) }`.

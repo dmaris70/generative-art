@@ -80,6 +80,14 @@
     return { traits: out, bits: bits, rank: rank, tier: tier, basis: table ? { samples: table.samples, version: table.version } : null };
   }
 
+  // the curated edition, when one is loaded: seed → edition number
+  function edition(state) {
+    const E = global.STRATA_EDITION;
+    if (!E || !E.seeds) return null;
+    const n = E.seeds[String(state.seed)];
+    return n ? { number: n, size: E.size } : null;
+  }
+
   function hash(state) {
     return ('00000000' + global.ISO.hash32(VERSION + ':' + state.seed).toString(16)).slice(-8).toUpperCase();
   }
@@ -87,8 +95,9 @@
   function metadata(state) {
     const r = rarity(state), sp = state.spec;
     const hex = (c) => '#' + c.map((v) => ('0' + v.toString(16)).slice(-2)).join('');
+    const ed = edition(state);
     return {
-      name: 'Isometric Strata #' + state.seed,
+      name: 'Isometric Strata ' + (ed ? ed.number + '/' + ed.size : '#' + state.seed),
       description: sp.title + ' — a ' + sp.style.key.toLowerCase() + ' ' + sp.type.toLowerCase() + ' on a ' + sp.site.toLowerCase() +
         ' site, drawn as ' + (sp.view === 'AXONOMETRIC' ? 'an axonometric' : 'a plan and section') + ' on ' + sp.paper.toLowerCase() +
         ' paper. Every count in its legend is tallied from the geometry actually drawn' + (state.tenets ? '; its ' + state.tenets.length + ' tenets are checked over the drawn scene (' + r.traits.find((t) => t.trait_type === 'Tenets').value + ').' : '.'),
@@ -96,6 +105,7 @@
       attributes: r.traits.map((t) => ({ trait_type: t.trait_type, value: t.value, rarity: t.frequency, tier: t.tier })),
       properties: {
         series: SERIES, generator: VERSION, seed: state.seed, hash: hash(state), dwg: sp.dwg, project: sp.project,
+        edition: ed,
         rarity: { bits: Math.round(r.bits * 100) / 100, rank: r.rank, tier: r.tier, basis: r.basis },
         variables: {
           floors: sp.floors, floorHeight: Math.round(sp.floorH * 100) / 100, buildings: sp.bldgs, shape: sp.shape,
@@ -143,6 +153,8 @@
     // token
     section('TOKEN');
     row('SERIES', SERIES);
+    const ed = edition(state);
+    if (ed) row('EDITION', ed.number + ' / ' + ed.size);
     row('TOKEN', '#' + state.seed);
     row('DWG', sp.dwg);
     row('GENERATOR', 'V' + VERSION);
@@ -215,5 +227,5 @@
   }
 
   global.Strata = global.Strata || {};
-  Object.assign(global.Strata, { VERSION: VERSION, SERIES: SERIES, traits: traits, rarity: rarity, metadata: metadata, drawSchedule: drawSchedule, tierFor: tierFor });
+  Object.assign(global.Strata, { VERSION: VERSION, SERIES: SERIES, traits: traits, rarity: rarity, metadata: metadata, edition: edition, drawSchedule: drawSchedule, tierFor: tierFor });
 })(window);
