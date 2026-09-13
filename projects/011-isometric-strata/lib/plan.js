@@ -100,10 +100,17 @@
     return loops;
   }
 
+  // Mirror the left half of a mask onto the right: a symmetric plan.
+  function mirror(m) {
+    const nx = m.length;
+    for (let i = 0; i < Math.floor(nx / 2); i++) for (let j = 0; j < m[i].length; j++) m[nx - 1 - i][j] = m[i][j];
+    return m;
+  }
+
   // grid loop → world polygon at height z
   function toWorld(loop, x0, y0, cell, z) {
     return loop.map((p) => [x0 + p[0] * cell, y0 + p[1] * cell, z || 0]);
   }
 
-  global.ISO.plan = { SHAPES: SHAPES, mask: mask, cells: cells, at: at, outline: outline, toWorld: toWorld };
+  global.ISO.plan = { SHAPES: SHAPES, mask: mask, mirror: mirror, cells: cells, at: at, outline: outline, toWorld: toWorld };
 })(window);

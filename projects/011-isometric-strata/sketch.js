@@ -7,7 +7,7 @@
 // specification. The building is one of four styles — the Mexican-modern
 // patio mat, the deconstructivist crystalline tower, the geodesic expo mast,
 // the brutalist mosaic block, the Five Points villa, the De Stijl house, the
-// Metabolist capsule tower — each a vocabulary of
+// Metabolist capsule tower, the Palladian villa — each a vocabulary of
 // parts recombined by the seed, standing on one of six site types.
 //
 // Pipeline: seed → spec (style, site, paper, palette, detail…) → Scene of 3-D
@@ -42,12 +42,15 @@ const PALETTES = {
   NAKAGIN: { colors: [[150, 148, 142], [234, 232, 226], [226, 108, 40], [58, 60, 64], [120, 140, 160]], water: [110, 136, 160] },
   EXPO70: { colors: [[196, 196, 192], [240, 240, 236], [206, 36, 40], [40, 40, 44], [60, 100, 170]], water: [110, 136, 160] },
   KIKUTAKE: { colors: [[140, 142, 140], [228, 226, 218], [60, 140, 150], [70, 72, 74], [214, 160, 60]], water: [110, 136, 160] },
+  INTONACO: { colors: [[236, 226, 206], [190, 110, 80], [200, 196, 186], [120, 100, 80], [130, 150, 170]], water: [110, 136, 160] },
+  PIETRA: { colors: [[224, 220, 210], [150, 120, 100], [184, 180, 170], [90, 88, 84], [140, 160, 176]], water: [110, 136, 160] },
+  VENETO: { colors: [[240, 232, 214], [180, 90, 70], [206, 200, 184], [110, 90, 70], [110, 140, 160]], water: [110, 136, 160] },
   EARTH: { colors: [[192, 96, 58], [75, 125, 138], [210, 161, 58], [111, 154, 90], [156, 107, 74]] },
   CONCRETE: { colors: [[120, 118, 112], [156, 152, 144], [192, 96, 58], [98, 110, 118], [180, 176, 166]] },
   RUSTED: { colors: [[176, 84, 48], [140, 66, 40], [210, 161, 58], [92, 96, 100], [200, 140, 100]] },
 };
 
-const STYLE_KEYS = ['mexican', 'decon', 'geodesic', 'brutalist', 'corbusier', 'destijl', 'metabolism'];
+const STYLE_KEYS = ['mexican', 'decon', 'geodesic', 'brutalist', 'corbusier', 'destijl', 'metabolism', 'palladio'];
 
 function setup() {
   fitCanvas();
@@ -55,7 +58,7 @@ function setup() {
   G = GenArt.create({
     title: 'Isometric Strata',
     params: {
-      mode: { value: 0, min: 0, max: 7, step: 1, label: 'style (0 auto, 1 mex, 2 decon, 3 geo, 4 brut, 5 corb, 6 stijl, 7 metab)' },
+      mode: { value: 0, min: 0, max: 8, step: 1, label: 'style (0 auto, 1 mex, 2 decon, 3 geo, 4 brut, 5 corb, 6 stijl, 7 metab, 8 pall)' },
       floors: { value: 0, min: 0, max: 10, step: 1, label: 'floors (0 auto)' },
       detail: { value: 0, min: 0, max: 3, step: 1, label: 'detail (0 auto)' },
       density: { value: 0, min: 0, max: 3, step: 1, label: 'site density (0 auto)' },
@@ -139,7 +142,7 @@ function build() {
   const plot = Object.assign({ x: -size.w / 2, y: -size.d / 2 }, size);
   const ctx = {
     rng: R.fork('style'), scene: scene, plot: plot, floors: floors, floorH: spec.floorH,
-    palette: palette, detail: detailN, shape: spec.shape, annex: false,
+    palette: palette, detail: detailN, shape: spec.shape, annex: false, substyle: spec.substyle,
   };
   const extra = style.build(ctx) || {};
 
