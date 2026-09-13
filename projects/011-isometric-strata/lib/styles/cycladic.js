@@ -249,7 +249,7 @@
         { name: 'STEPPED', ok: stepped },
         { name: 'BLUE ON OPENINGS', ok: blueFaces.length > 0 && blueOnly },
       ];
-      return { kv: [['TENETS', tenets.filter((t) => t.ok).length + '/5']], tenets: tenets };
+      return { kv: [['TENETS', tenets.filter((t) => t.ok).length + '/5']], tenets: tenets, datum: ground[Math.floor(nx / 2)] };
     },
   };
 

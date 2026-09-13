@@ -282,5 +282,68 @@
     }
   }
 
-  global.Hand = { create: create, render: render, INK: INK };
+  // ---- orthographic views: clip the scene to a half-space, draw the far side,
+  // and mark where the cut passes through a face with a heavy line ----
+  function clipPoly(pts, axis, max) {
+    const out = [], cuts = [];
+    for (let i = 0; i < pts.length; i++) {
+      const a = pts[i], b = pts[(i + 1) % pts.length];
+      const ina = a[axis] <= max, inb = b[axis] <= max;
+      if (ina) out.push(a);
+      if (ina !== inb) {
+        const t = (max - a[axis]) / (b[axis] - a[axis]);
+        const q = [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t, a[2] + (b[2] - a[2]) * t];
+        out.push(q);
+        cuts.push(q);
+      }
+    }
+    return { pts: out, cuts: cuts };
+  }
+
+  function clipLine(pts, axis, max) {
+    const runs = [];
+    let cur = [];
+    for (let i = 0; i < pts.length - 1; i++) {
+      const a = pts[i], b = pts[i + 1];
+      const ina = a[axis] <= max, inb = b[axis] <= max;
+      if (ina && cur.length === 0) cur.push(a);
+      if (ina && inb) cur.push(b);
+      else if (ina !== inb) {
+        const t = (max - a[axis]) / (b[axis] - a[axis]);
+        const q = [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t, a[2] + (b[2] - a[2]) * t];
+        if (ina) { cur.push(q); runs.push(cur); cur = []; }
+        else { cur = [q, b]; }
+      }
+    }
+    if (cur.length > 1) runs.push(cur);
+    return runs;
+  }
+
+  // o: { axis, max, depth(p3) → key, view: 'plan'|'section', cutPen }
+  function renderView(scene, hand, P, o) {
+    const items = scene.items.slice().sort((a, b) => {
+      if (a.layer !== b.layer) return a.layer - b.layer;
+      const ca = a.pts ? global.ISO.geom.centroid(a.pts) : a.anchor || [0, 0, 0];
+      const cb = b.pts ? global.ISO.geom.centroid(b.pts) : b.anchor || [0, 0, 0];
+      return o.depth(ca) - o.depth(cb);
+    });
+    const cutSegs = [];
+    for (const it of items) {
+      if (it.kind === 'face') {
+        const c = clipPoly(it.pts, o.axis, o.max);
+        if (c.pts.length >= 3) hand.poly(c.pts.map(P), it.fill, it.edge);
+        for (let i = 0; i + 1 < c.cuts.length; i += 2) cutSegs.push([P(c.cuts[i]), P(c.cuts[i + 1])]);
+      } else if (it.kind === 'line') {
+        for (const run of clipLine(it.pts, o.axis, o.max)) hand.line(run.map(P), it.pen);
+      } else if (it.kind === 'custom') {
+        if (it.anchor[o.axis] > o.max) continue;
+        if (it.alt) it.alt(hand, P, o.view, it);
+        else it.draw(hand, P, it);
+      }
+    }
+    const cp = o.cutPen || { alpha: 235, weight: 2.1, wob: 0.35 };
+    for (const sgm of cutSegs) hand.line(sgm, cp);
+  }
+
+  global.Hand = { create: create, render: render, renderView: renderView, clipPoly: clipPoly, clipLine: clipLine, INK: INK };
 })(window);

@@ -322,7 +322,7 @@
   Scene.prototype.custom = function (anchor, draw, o) {
     o = o || {};
     return this.add({
-      kind: 'custom', anchor: anchor, draw: draw, layer: o.layer,
+      kind: 'custom', anchor: anchor, draw: draw, alt: o.alt || null, layer: o.layer,
       depth: o.depth === undefined ? depth(anchor) + (o.bias || 0) : o.depth, tag: o.tag,
     });
   };

@@ -275,7 +275,7 @@
         { name: 'HARMONIC RATIO', ok: harmonic },
       ];
       void hasDome;
-      return { kv: [['TENETS', tenets.filter((t) => t.ok).length + '/5']], tenets: tenets };
+      return { kv: [['TENETS', tenets.filter((t) => t.ok).length + '/5']], tenets: tenets, datum: pod };
     },
   };
 

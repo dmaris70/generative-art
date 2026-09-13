@@ -119,7 +119,22 @@
       hand.poly(pts, null, { alpha: 150, weight: 0.75, wob: 0.9 });
       hand.line([[base[0], cy + r * 0.85], [base[0], base[1]]], { alpha: 160, weight: 0.9, wob: 0.5 });
       if (r > 3.5) hand.line([[base[0] - r * 0.3, cy + r * 0.2], [base[0], cy + r * 0.6], [base[0] + r * 0.3, cy + r * 0.1]], { alpha: 90, weight: 0.6, wob: 0.8 });
-    }, { layer: 1, bias: -0.2 });
+    }, {
+      layer: 1, bias: -0.2, tag: 'tree',
+      alt: function (hand, P, view) {
+        const base = P([x, y, 0]), px = P([x + 1, y, 0]);
+        const unit = Math.hypot(px[0] - base[0], px[1] - base[1]);
+        const r = unit * sz * 0.9;
+        if (view === 'plan') {
+          hand.circle(base[0], base[1], r, { alpha: 140, weight: 0.7, wob: 1.0 });
+          hand.dot(base[0], base[1], 0.8, { alpha: 160 });
+        } else {
+          const top = P([x, y, sz * 2.4 + stemH]);
+          hand.line([base, [base[0], top[1] + r * 0.6]], { alpha: 160, weight: 0.9, wob: 0.5 });
+          hand.circle(base[0], top[1], r, { alpha: 140, weight: 0.7, wob: 1.0 });
+        }
+      },
+    });
   }
 
   function treeRow(ctx, a, b, spacing) {

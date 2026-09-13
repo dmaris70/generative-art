@@ -187,7 +187,7 @@
         { name: 'RAISED ON PLINTH', ok: raised },
         { name: 'FREE PLAN', ok: freePlan },
       ];
-      return { kv: [['TENETS', tenets.filter((t) => t.ok).length + '/5']], tenets: tenets };
+      return { kv: [['TENETS', tenets.filter((t) => t.ok).length + '/5']], tenets: tenets, datum: plH };
     },
   };
 
