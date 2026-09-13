@@ -240,6 +240,15 @@ standing on one of six **sites** (city, city edge, plaza district, hillside, par
 waterfront) built from kerbs and dashed roads, paving grids, plaza panels, street trees,
 neighbouring blocks with window rows, an escarpment, a quay and water.
 
+Every sheet comes in two **views**. The axonometric is the default; about a third of
+seeds (or `view` = 2 in the panel) draw the same scene as a **plan and section** sheet:
+the plan is the scene cut a little above the building's own ground floor and seen from
+above, with the cut edges drawn heavy and a section line A-A marked across it; the
+section is the scene cut at the plot's centre line and seen from the front, with the far
+half drawn as elevation over a heavy ground line and hatched earth. Both views share one
+scale, the legend and tenets are unchanged (the scene is the same data), and the floor
+scale up the margin keys to the section's ground line.
+
 The pipeline is `seed → spec → scene → sort → hand`: the seed fixes a specification
 (style, site, paper, palette, detail, density, floors…); the style and site generators
 emit 3-D primitives into a scene; the scene is depth-sorted and drawn by a renderer that

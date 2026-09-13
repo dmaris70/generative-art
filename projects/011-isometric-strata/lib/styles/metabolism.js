@@ -261,7 +261,7 @@
         { name: 'STAGGERED', ok: pairs === 0 || stacked / pairs < 0.5 },
         { name: 'SERVICED', ok: nService >= capsules.length },
       ];
-      return { kv: [['TENETS', tenets.filter((t) => t.ok).length + '/5']], tenets: tenets };
+      return { kv: [['TENETS', tenets.filter((t) => t.ok).length + '/5']], tenets: tenets, datum: FH * 0.8 };
     },
   };
 

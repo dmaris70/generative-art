@@ -147,7 +147,21 @@ caught a bookkeeping error (glazing split evenly across two faces of unequal
 size) on the first run. The same pattern fits any dogma that states itself as
 rules: Kahn (served and servant spaces), Hejduk (masques).
 
-## 6. Extending it
+## 6. A second sheet type
+
+Because the scene is pure data, a second projection costs one function and a
+layout. `Hand.renderView` clips every face and line to a half-space (Sutherland–
+Hodgman for polygons, segment clipping for polylines), sorts by a depth key the
+view supplies, draws the surviving geometry through the view's projection, and
+then draws every edge where the cut passed through a face as a heavy line. The
+plan keeps `z ≤ datum + 1.2…1.6` and sorts by z (a roof plan of what is left,
+which is the ground floor with its walls cut); the section keeps `y ≤ cut` and
+sorts by y so the far half draws as elevation. Custom glyphs carry an optional
+`alt(hand, P, view)` — a tree is a circle in plan and a lollipop in section.
+Styles on a podium or a plinth return a `datum` so the plan is cut above their
+own ground floor, not the site's.
+
+## 7. Extending it
 
 - **A new style** is one file in `lib/styles/` exporting `{ key, header, titles,
   substyles, types, palettes, sites, shapes, floors, legend, size(), build(ctx) }`.
