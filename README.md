@@ -312,7 +312,8 @@ Each token also gets its **companion drawing**, the same seed drawn through the 
 (plan and section for an axonometric token and vice versa) by the same frozen generator —
 non-canonical, listed under the metadata's `properties.companion` and in the manifest with
 its own hash. Re-runs skip tokens whose files already match the manifest, so a long export
-can be resumed.
+can be resumed. The full edition renders in about 43 minutes of drawing time (10 s a token,
+two drawings each) to 768 files and 6.5 GB, every hash re-verified after the run.
 
 The **portfolio board** ([`projects/011-isometric-strata/portfolio.html`](projects/011-isometric-strata/portfolio.html),
 or the ⊞ Portfolio button in the sheet's panel) lays many sheets on one board under a
