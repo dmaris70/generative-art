@@ -8,7 +8,7 @@
 // patio mat, the deconstructivist crystalline tower, the geodesic expo mast,
 // the brutalist mosaic block, the Five Points villa, the De Stijl house, the
 // Metabolist capsule tower, the Palladian villa, the
-// Archigram plug-in rig — each a vocabulary of
+// Archigram plug-in rig, the Miesian glass box — each a vocabulary of
 // parts recombined by the seed, standing on one of six site types.
 //
 // Pipeline: seed → spec (style, site, paper, palette, detail…) → Scene of 3-D
@@ -49,12 +49,15 @@ const PALETTES = {
   ZOOM: { colors: [[240, 240, 236], [246, 200, 20], [220, 40, 140], [30, 180, 210], [40, 40, 44]], water: [110, 136, 160] },
   POP: { colors: [[242, 240, 232], [236, 120, 30], [40, 100, 190], [210, 40, 50], [40, 40, 44]], water: [110, 136, 160] },
   HIGHTECH: { colors: [[214, 216, 218], [206, 36, 40], [40, 90, 170], [236, 196, 30], [50, 52, 56]], water: [110, 136, 160] },
+  TRAVERTINE: { colors: [[226, 216, 196], [70, 56, 40], [168, 190, 186], [40, 44, 50], [104, 128, 140]], water: [104, 128, 140] },
+  ONYX: { colors: [[220, 214, 200], [40, 42, 46], [176, 196, 200], [96, 70, 50], [96, 120, 136]], water: [96, 120, 136] },
+  STEEL: { colors: [[206, 206, 200], [36, 38, 42], [160, 186, 196], [60, 62, 66], [110, 134, 150]], water: [110, 134, 150] },
   EARTH: { colors: [[192, 96, 58], [75, 125, 138], [210, 161, 58], [111, 154, 90], [156, 107, 74]] },
   CONCRETE: { colors: [[120, 118, 112], [156, 152, 144], [192, 96, 58], [98, 110, 118], [180, 176, 166]] },
   RUSTED: { colors: [[176, 84, 48], [140, 66, 40], [210, 161, 58], [92, 96, 100], [200, 140, 100]] },
 };
 
-const STYLE_KEYS = ['mexican', 'decon', 'geodesic', 'brutalist', 'corbusier', 'destijl', 'metabolism', 'palladio', 'archigram'];
+const STYLE_KEYS = ['mexican', 'decon', 'geodesic', 'brutalist', 'corbusier', 'destijl', 'metabolism', 'palladio', 'archigram', 'mies'];
 
 function setup() {
   fitCanvas();
@@ -62,7 +65,7 @@ function setup() {
   G = GenArt.create({
     title: 'Isometric Strata',
     params: {
-      mode: { value: 0, min: 0, max: 9, step: 1, label: 'style (0 auto, 1 mex, 2 decon, 3 geo, 4 brut, 5 corb, 6 stijl, 7 metab, 8 pall, 9 archi)' },
+      mode: { value: 0, min: 0, max: 10, step: 1, label: 'style (0 auto, 1 mex, 2 decon, 3 geo, 4 brut, 5 corb, 6 stijl, 7 metab, 8 pall, 9 archi, 10 mies)' },
       floors: { value: 0, min: 0, max: 10, step: 1, label: 'floors (0 auto)' },
       detail: { value: 0, min: 0, max: 3, step: 1, label: 'detail (0 auto)' },
       density: { value: 0, min: 0, max: 3, step: 1, label: 'site density (0 auto)' },
