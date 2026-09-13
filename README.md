@@ -295,6 +295,12 @@ and the selector reproduce the committed table and edition byte for byte, and th
 seeds rendered three times each gave identical PNG hashes. Nothing in the drawing path may
 change without a new version, a new rarity table and a new selection.
 
+**Assets** come from `tools/strata-export.mjs`: it verifies the freeze, renders each
+requested token headlessly at 3000 × 4000 from the vendored libraries, writes the PNG and
+the token's ERC-721 metadata JSON (image file name and hash included), checks that the page
+reports the expected edition number and the frozen fingerprint, and records both files'
+SHA-256 in `export/manifest.json` (`1`, `1-12` or `all`; the export folder is not committed).
+
 The **portfolio board** ([`projects/011-isometric-strata/portfolio.html`](projects/011-isometric-strata/portfolio.html),
 or the ⊞ Portfolio button in the sheet's panel) lays many sheets on one board under a
 shared title strip: one sheet per style at a fixed seed (`?set=styles`), one style across
