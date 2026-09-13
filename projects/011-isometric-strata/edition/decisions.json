@@ -1,11 +1,38 @@
 {
   "series": "ISOMETRIC STRATA",
   "decidedAt": "2026-09-13",
-  "platform": { "choice": "Own ERC-721 contract via Manifold", "rationale": "The edition is curated (specific seeds); random-at-mint launchpads would discard the selection. Artist-owned contract, batch mint of predetermined tokens with pinned images, generator archived." },
-  "chain": { "choice": "Ethereum mainnet", "rationale": "Strongest provenance and collector expectation for a 256-piece curated edition; gas accepted." },
-  "reserves": { "choice": "24 reserved, 2 per style, by rule", "record": "edition/reserves-256.json", "offered": 232, "rationale": "12 artist proofs (highest score per style) and 12 institutional reserves (lowest-numbered plan-and-section per style); auditable like the selection." },
-  "licence": { "image": "CC BY-NC 4.0", "code": "source-available, no derivative mints", "rationale": "Holders and the public may share and display with attribution; commercial rights and the series identity stay with the artist; the repository stays public for verification." },
-  "title": { "choice": "Isometric Strata", "rationale": "Already frozen into every sheet's schedule and DWG ids; no re-freeze needed." },
-  "artist": { "choice": "PSEUDONYM PENDING", "status": "pending", "note": "A pseudonym will be credited; the name is filled in at export time and appears only in metadata and the collection page, never on the frozen sheets." },
-  "open": ["pseudonym", "mint price and mechanics", "launch date", "content storage (Arweave vs IPFS)"]
+  "platform": {
+    "choice": "Own ERC-721 contract via Manifold",
+    "rationale": "The edition is curated (specific seeds); random-at-mint launchpads would discard the selection. Artist-owned contract, batch mint of predetermined tokens with pinned images, generator archived."
+  },
+  "chain": {
+    "choice": "Ethereum mainnet",
+    "rationale": "Strongest provenance and collector expectation for a 256-piece curated edition; gas accepted."
+  },
+  "reserves": {
+    "choice": "24 reserved, 2 per style, by rule",
+    "record": "edition/reserves-256.json",
+    "offered": 232,
+    "rationale": "12 artist proofs (highest score per style) and 12 institutional reserves (lowest-numbered plan-and-section per style); auditable like the selection."
+  },
+  "licence": {
+    "image": "CC BY-NC 4.0",
+    "code": "source-available, no derivative mints",
+    "rationale": "Holders and the public may share and display with attribution; commercial rights and the series identity stay with the artist; the repository stays public for verification."
+  },
+  "title": {
+    "choice": "Isometric Strata",
+    "rationale": "Already frozen into every sheet's schedule and DWG ids; no re-freeze needed."
+  },
+  "artist": {
+    "choice": "668 349",
+    "status": "decided",
+    "derivation": "Isopsephy (the Milesian letter-number system) of the artist's name: Δημήτρης = Δ4 η8 μ40 ή8 τ300 ρ100 η8 ς200 = 668; Μάρης = Μ40 ά1 ρ100 η8 ς200 = 349. Attic acrophonic: ΗΗΗΗΗΗΔΔΔΔΔΔΠΙΙΙ and ΗΗΗΔΔΔΔΠΙΙΙΙ.",
+    "note": "Appears in metadata and on the collection page only, never on the frozen sheets. DA-MA-TE (Demeter's Linear B form) was excluded for name collisions."
+  },
+  "open": [
+    "mint price and mechanics",
+    "launch date",
+    "content storage (Arweave vs IPFS)"
+  ]
 }
