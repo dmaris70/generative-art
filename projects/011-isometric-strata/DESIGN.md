@@ -214,7 +214,20 @@ Flags become exclusions with their measurements attached; the selector replaces
 each excluded seed with the next candidate of its look; audit and selection
 alternate until no sheet is flagged.
 
-## 11. Extending it
+## 11. The freeze
+
+Rarity and the edition are only true of one generator, so the generator is a
+named, fingerprinted thing: a SHA-256 over every file that can change a drawing,
+recorded with the commit and the hashes of the rarity table and the edition.
+The pages load the fingerprint and print it on every sheet; a verify command
+recomputes it. Three checks stand behind v1.0: the sampler and the selector are
+deterministic (they reproduce the committed table and edition exactly), the
+render is deterministic run to run in Chromium (identical PNG hashes), and no
+render depends on anything outside the repository. Cross-browser identity of
+canvas antialiasing is not guaranteed by any browser, which is why the pinned
+renders, not the live page, will be the canonical works.
+
+## 12. Extending it
 
 - **A new style** is one file in `lib/styles/` exporting `{ key, header, titles,
   substyles, types, palettes, sites, shapes, floors, legend, size(), build(ctx) }`.
