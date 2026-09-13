@@ -209,6 +209,39 @@ Captions carry the system's principle, the research note, and the last-known sou
 link. Exports stroke-only SVG in two colour groups — these plot as **white/metallic gel
 pen on black stock** (guide §8).
 
+## Isometric Strata — the drawing sheets
+
+[`projects/011-isometric-strata/`](projects/011-isometric-strata/) turns every seed into a
+complete architectural working drawing: a title block, a north arrow, the palette's own
+swatches, a framed hand-drawn axonometric of a building on its site with the floor levels
+scaled up the margin, and a footer carrying a legend, a scale bar and the sheet's
+specification. Nothing on the sheet is decorative text — the legend's counts are tallied
+from the geometry actually drawn (`MURO(43)` means forty-three walls were placed), and the
+specification lists the choices the seed made.
+
+The building is one of four **styles**, each a vocabulary of parts recombined by the seed:
+
+| style | parts |
+|---|---|
+| **Mexican modern** — the patio mat | walls on a cell grid as tall coloured planes, some running past the plan as freestanding screens · patios · pools · openings (vano) and light slits (luz) · slabs with a roof mesh · a tower · stairs · stone plinths · a lattice screen · solid masses |
+| **Deconstructivist** — the crystalline tower | a sheared prism hatched along its shear · a column bundle · a spine of tilted planes and screens · ramps · cantilevers · braced frames · leaning shards · dashed floor plates |
+| **Geodesic** — the expo mast | stepped mast clusters · geodesic hemispheres strut by strut with hubs in the accent ink · rings and bracing · hexagonal decks with shelters · footings · ground patterns · dimension notes at TECHNICAL detail |
+| **Brutalist** — the mosaic block | slabs following an L, T or stepped outline · parapets, reveals, brise-soleil · braced cores · walkways · a field of pilotis · a mosaic of hundreds of unit cubes stacked to a noise field |
+
+standing on one of six **sites** (city, city edge, plaza district, hillside, park,
+waterfront) built from kerbs and dashed roads, paving grids, plaza panels, street trees,
+neighbouring blocks with window rows, an escarpment, a quay and water.
+
+The pipeline is `seed → spec → scene → sort → hand`: the seed fixes a specification
+(style, site, paper, palette, detail, density, floors…); the style and site generators
+emit 3-D primitives into a scene; the scene is depth-sorted and drawn by a renderer that
+lays every stroke down like a pencil — wobble, overshoot, a second pass that doesn't quite
+register — with clipped fills that read as coloured pencil or ruled hatching on mottled
+graph paper. The engine lives in the project's `lib/` (core, plan, render, paper, sheet,
+site, and one file per style); [`DESIGN.md`](projects/011-isometric-strata/DESIGN.md)
+records the analysis the design came from. Parameters force a style, floor count, detail,
+site density or building count; **R** reseeds.
+
 ## Contact sheet
 
 `variations.html` renders one piece across many seeds as a grid of live tiles — the

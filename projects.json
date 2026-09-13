@@ -3,6 +3,14 @@
   "author": "dmaris70",
   "projects": [
     {
+      "slug": "011-isometric-strata",
+      "title": "Isometric Strata",
+      "year": 2026,
+      "tools": ["p5.js"],
+      "description": "Generative architectural drawing sheets: a hand-drawn axonometric of a building on its site — Mexican-modern patio mat, deconstructivist tower, geodesic expo mast or brutalist mosaic block — inside a full title block, floor scale, legend tallied from the geometry, scale bar and specification, on textured graph paper. R for a new sheet.",
+      "thumb": ""
+    },
+    {
       "slug": "010-plotter-interrupt",
       "title": "Plotter Interrupt",
       "year": 2026,
