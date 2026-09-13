@@ -63,5 +63,12 @@
       "spot-check: fetch a few URIs, hash the bytes, compare with the sha256 in the bound metadata",
       "upload export/published/*.json (the bound metadata) and use those URIs as the token URIs at mint"
     ]
+  },
+  "release": {
+    "tag": "v1.0",
+    "commit": "68afafbb00fad4b267e15537fc27eaf981916d2b",
+    "fingerprintedTree": "719dbbea267a6eca781ed8fe2f57b9e978a32751",
+    "url": "https://github.com/dmaris70/generative-art/releases/tag/v1.0",
+    "publishedAt": "2026-09-13T19:35:39Z"
   }
 }
