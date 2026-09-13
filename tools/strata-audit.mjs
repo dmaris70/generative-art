@@ -10,14 +10,21 @@
 // Metrics for seeds already audited are kept, so re-runs only render new tokens.
 //
 //   node tools/strata-audit.mjs [size=256]
-//   requires: playwright (global), Chromium at /opt/pw-browsers, a vendored p5 + lil-gui
-//   in the scratch dir (or a network path for the CDN)
+//   requires: playwright (node_modules or global) and its Chromium (or STRATA_CHROME),
+//   a vendored p5 + lil-gui in the scratch dir (or a network path for the CDN)
 
 import fs from 'node:fs';
 import path from 'node:path';
 import { spawn } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
-import { chromium } from '/opt/node22/lib/node_modules/playwright/index.mjs';
+// playwright: the project's node_modules first, else the global install this container ships
+const { chromium } = await (async () => {
+  try { return await import('playwright'); }
+  catch { return import('/opt/node22/lib/node_modules/playwright/index.mjs'); }
+})();
+// Chromium: STRATA_CHROME, else the container's build, else the browser Playwright installed itself
+const CHROME = process.env.STRATA_CHROME
+  || (fs.existsSync('/opt/pw-browsers/chromium-1194/chrome-linux/chrome') ? '/opt/pw-browsers/chromium-1194/chrome-linux/chrome' : undefined);
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const root = path.resolve(here, '..');
@@ -44,7 +51,7 @@ process.stderr.write(`${todo.length} tokens to render, ${edition.tokens.length -
 if (todo.length) {
   const server = spawn('python3', ['-m', 'http.server', '8131'], { cwd: root, stdio: 'ignore' });
   await new Promise((r) => setTimeout(r, 800));
-  const browser = await chromium.launch({ executablePath: '/opt/pw-browsers/chromium-1194/chrome-linux/chrome' });
+  const browser = await chromium.launch({ executablePath: CHROME });
   const page = await browser.newPage({ viewport: { width: 1500, height: 2000 }, deviceScaleFactor: 1 });
   await page.route('**/p5.min.js', (r) => r.fulfill({ path: path.join(VENDOR, 'p5.min.js'), contentType: 'application/javascript' }));
   await page.route('**/lil-gui.umd.min.js', (r) => r.fulfill({ path: path.join(VENDOR, 'lil-gui.umd.min.js'), contentType: 'application/javascript' }));
