@@ -9,7 +9,7 @@
 // the brutalist mosaic block, the Five Points villa, the De Stijl house, the
 // Metabolist capsule tower, the Palladian villa, the
 // Archigram plug-in rig, the Miesian glass box, the
-// Cycladic village — each a vocabulary of
+// Cycladic village, the Rossian analogous city — each a vocabulary of
 // parts recombined by the seed, standing on one of six site types.
 //
 // Pipeline: seed → spec (style, site, paper, palette, detail…) → Scene of 3-D
@@ -56,12 +56,15 @@ const PALETTES = {
   ASVESTI: { colors: [[246, 243, 234], [40, 90, 170], [160, 156, 146], [130, 96, 60], [90, 130, 160]], water: [90, 130, 160] },
   SANTORINI: { colors: [[248, 246, 240], [36, 78, 160], [92, 90, 88], [150, 100, 70], [70, 120, 160]], water: [70, 120, 160] },
   FOLEGANDROS: { colors: [[244, 240, 228], [60, 110, 170], [172, 164, 150], [120, 90, 60], [100, 140, 166]], water: [100, 140, 166] },
+  GALLARATESE: { colors: [[236, 230, 218], [178, 52, 42], [214, 168, 72], [128, 130, 134], [40, 110, 100]], water: [100, 130, 150] },
+  CATALDO: { colors: [[228, 220, 206], [190, 60, 48], [200, 150, 70], [110, 112, 116], [60, 96, 120]], water: [100, 130, 150] },
+  TEATRO: { colors: [[240, 236, 226], [160, 50, 44], [220, 180, 80], [140, 142, 146], [30, 100, 110]], water: [100, 130, 150] },
   EARTH: { colors: [[192, 96, 58], [75, 125, 138], [210, 161, 58], [111, 154, 90], [156, 107, 74]] },
   CONCRETE: { colors: [[120, 118, 112], [156, 152, 144], [192, 96, 58], [98, 110, 118], [180, 176, 166]] },
   RUSTED: { colors: [[176, 84, 48], [140, 66, 40], [210, 161, 58], [92, 96, 100], [200, 140, 100]] },
 };
 
-const STYLE_KEYS = ['mexican', 'decon', 'geodesic', 'brutalist', 'corbusier', 'destijl', 'metabolism', 'palladio', 'archigram', 'mies', 'cycladic'];
+const STYLE_KEYS = ['mexican', 'decon', 'geodesic', 'brutalist', 'corbusier', 'destijl', 'metabolism', 'palladio', 'archigram', 'mies', 'cycladic', 'rossi'];
 
 function setup() {
   fitCanvas();
@@ -69,7 +72,7 @@ function setup() {
   G = GenArt.create({
     title: 'Isometric Strata',
     params: {
-      mode: { value: 0, min: 0, max: 11, step: 1, label: 'style (0 auto, 1 mex, 2 decon, 3 geo, 4 brut, 5 corb, 6 stijl, 7 metab, 8 pall, 9 archi, 10 mies, 11 cyc)' },
+      mode: { value: 0, min: 0, max: 12, step: 1, label: 'style (0 auto, 1 mex, 2 decon, 3 geo, 4 brut, 5 corb, 6 stijl, 7 metab, 8 pall, 9 archi, 10 mies, 11 cyc, 12 rossi)' },
       floors: { value: 0, min: 0, max: 10, step: 1, label: 'floors (0 auto)' },
       detail: { value: 0, min: 0, max: 3, step: 1, label: 'detail (0 auto)' },
       density: { value: 0, min: 0, max: 3, step: 1, label: 'site density (0 auto)' },
