@@ -133,6 +133,7 @@ try {
       companion: { view: comp.view, image: compFile, image_sha256: compHash, image_bytes: comp.png.length },
       metadata: metaFile, metadata_sha256: sha(metaBuf), renderedAt: new Date().toISOString(), ms: Date.now() - t0,
     };
+    manifest.updatedAt = new Date().toISOString();
     fs.writeFileSync(manifestFile, JSON.stringify(manifest, null, 2) + '\n');
     console.log(`${base}: ${t.view} ${(png.length / 1048576).toFixed(2)} MB ${imageHash.slice(0, 12)}… + companion ${comp.view} ${(comp.png.length / 1048576).toFixed(2)} MB ${compHash.slice(0, 12)}… in ${Date.now() - t0} ms`);
   }
