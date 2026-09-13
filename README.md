@@ -327,6 +327,15 @@ Playwright version gives the same Chromium build, so the files come out byte-ide
 the recorded manifest; a different Chromium may rasterise differently, in which case the
 run is still a valid edition of the frozen generator, but its hashes are its own.
 
+**Content storage** is Arweave (`edition/decisions.json` records why). Once the PNGs are
+uploaded, `tools/strata-publish.mjs uris.json` binds the metadata to them: it rewrites `image`
+and `properties.companion.image` to the `ar://` URIs, records the storage with the SHA-256 of
+the bytes at each URI under `properties.storage`, and writes the bound metadata and
+`manifest-published.json` to `export/published/`. It refuses to run if any file in the
+manifest has no URI or any local file no longer matches its recorded hash, so the binding
+cannot silently point at the wrong bytes. The bound metadata files are what get uploaded as
+the token URIs at mint.
+
 The **portfolio board** ([`projects/011-isometric-strata/portfolio.html`](projects/011-isometric-strata/portfolio.html),
 or the ⊞ Portfolio button in the sheet's panel) lays many sheets on one board under a
 shared title strip: one sheet per style at a fixed seed (`?set=styles`), one style across
