@@ -161,7 +161,18 @@ sorts by y so the far half draws as elevation. Custom glyphs carry an optional
 Styles on a podium or a plinth return a `datum` so the plan is cut above their
 own ground floor, not the site's.
 
-## 7. Extending it
+## 7. The portfolio board
+
+`lib/strata.js` is the facade: `build(opts)` turns a seed and a few overrides
+(style, view, floors, detail, density, buildings, site, paper) into a state —
+spec, scene, legend, both fits, tenets — and `paint(g, state)` draws that state
+as a sheet scaled to any renderer's width. The sketch is one client; the
+portfolio board (`portfolio.js`) is another: it plans a set of build specs, paints
+each into its own graphics buffer one per frame, and lays the buffers on a board
+under a shared title strip with captions. Nothing in the styles or the site knows
+which client is calling.
+
+## 8. Extending it
 
 - **A new style** is one file in `lib/styles/` exporting `{ key, header, titles,
   substyles, types, palettes, sites, shapes, floors, legend, size(), build(ctx) }`.
