@@ -16,6 +16,7 @@ const SETS = {
   sites: { cols: 3, count: 6, label: 'ONE STYLE, SIX SITES' },
   papers: { cols: 3, count: 6, label: 'ONE STYLE, THREE PAPERS, TWO VIEWS' },
   seeds: { cols: 4, count: 12, label: 'ONE STYLE, TWELVE SEEDS' },
+  edition: { cols: 4, count: 12, label: 'THE CURATED EDITION, TWELVE PER PAGE' },
 };
 const TILE = { w: 420, h: 560, gap: 30, cap: 44 };
 const MARGIN = 44, HEADER = 132;
@@ -29,13 +30,14 @@ function readURL() {
     seed: seed && /^\d+$/.test(seed) ? Number(seed) >>> 0 : (Math.random() * 4294967296) >>> 0,
     set: SETS[u.searchParams.get('set')] ? u.searchParams.get('set') : 'styles',
     style: Math.max(0, Math.min(12, Number(u.searchParams.get('style')) || 0)),
+    page: Math.max(1, Number(u.searchParams.get('page')) || 1),
     gui: u.searchParams.get('gui') !== '0',
   };
 }
 
 function setup() {
   const init = readURL();
-  ctrl = { seed: String(init.seed), set: init.set, style: init.style, reseed: reseed, save: save };
+  ctrl = { seed: String(init.seed), set: init.set, style: init.style, page: init.page, reseed: reseed, save: save };
   pixelDensity(1);
   createCanvas(10, 10);
   if (init.gui && window.lil && window.lil.GUI) {
@@ -43,6 +45,7 @@ function setup() {
     gui.add(ctrl, 'seed').name('seed').onFinishChange(rebuild);
     gui.add(ctrl, 'set', Object.keys(SETS)).name('set').onChange(rebuild);
     gui.add(ctrl, 'style', 0, 12, 1).name('style (0 = from seed)').onChange(rebuild);
+    gui.add(ctrl, 'page', 1, 40, 1).name('edition page').onChange(rebuild);
     gui.add(ctrl, 'reseed').name('🎲 reseed (R)');
     gui.add(ctrl, 'save').name('Save PNG (S)');
   }
@@ -66,6 +69,14 @@ function plan() {
   const R = ISO.rng(seed ^ 0x9e37);
   const styleN = ctrl.style || R.int(1, Strata.STYLE_KEYS.length);
   const out = [];
+  if (ctrl.set === 'edition') {
+    const E = window.STRATA_EDITION;
+    const entries = E ? Object.entries(E.seeds).map(([sd, n]) => [Number(sd), n]).sort((a, b) => a[1] - b[1]) : [];
+    const pages = Math.max(1, Math.ceil(entries.length / set.count));
+    const page = Math.min(pages, ctrl.page);
+    for (const [sd] of entries.slice((page - 1) * set.count, page * set.count)) out.push({ seed: sd, mode: 0, view: 0 });
+    return { seed: seed, set: set, styleN: styleN, specs: out, page: page, pages: pages, editionSize: entries.length };
+  }
   for (let i = 0; i < set.count; i++) {
     if (ctrl.set === 'styles') out.push({ seed: seed, mode: i + 1, view: 1 });
     else if (ctrl.set === 'sites') out.push({ seed: seed, mode: styleN, view: 1, site: Site.TYPES[i] });
@@ -81,6 +92,7 @@ function rebuild() {
     u.searchParams.set('seed', ctrl.seed);
     u.searchParams.set('set', ctrl.set);
     if (ctrl.style) u.searchParams.set('style', String(ctrl.style)); else u.searchParams.delete('style');
+    if (ctrl.set === 'edition') u.searchParams.set('page', String(ctrl.page)); else u.searchParams.delete('page');
     window.history.replaceState(null, '', u.toString());
   } catch (e) { /* file:// */ }
   board = plan();
@@ -146,7 +158,8 @@ function paintBoard() {
   const dwg = 'IS-' + ('000000' + (ISO.hash32(String(board.seed)) >>> 8).toString(16)).slice(-6).toUpperCase();
   const right = boardW - MARGIN - 16;
   H.text('SET: ' + ctrl.set.toUpperCase(), right, MARGIN + 18, 11, TXT2, { align: 'right' });
-  H.text('SEED: ' + board.seed + (ctrl.set !== 'styles' ? '   STYLE: ' + ISO.styles[Strata.STYLE_KEYS[board.styleN - 1]].key : ''), right, MARGIN + 42, 11, TXT2, { align: 'right' });
+  if (ctrl.set === 'edition') H.text('EDITION OF ' + board.editionSize + '   PAGE ' + board.page + ' / ' + board.pages, right, MARGIN + 42, 11, TXT2, { align: 'right' });
+  else H.text('SEED: ' + board.seed + (ctrl.set !== 'styles' ? '   STYLE: ' + ISO.styles[Strata.STYLE_KEYS[board.styleN - 1]].key : ''), right, MARGIN + 42, 11, TXT2, { align: 'right' });
   H.text('SHEETS: ' + tiles.length + '   DWG: ' + dwg + '   ' + next + '/' + tiles.length + ' DRAWN', right, MARGIN + 66, 11, TXT2, { align: 'right' });
   H.line([[MARGIN + 16, MARGIN + HEADER - 40], [boardW - MARGIN - 16, MARGIN + HEADER - 40]], Sheet.CHROME2);
   Sheet.SYM.grid(H, right - 8, MARGIN + 86, 8);
@@ -161,7 +174,8 @@ function paintBoard() {
     else { fill(232, 228, 216, 200); rect(t.x, t.y, TILE.w, TILE.h); }
     H.rect(t.x, t.y, TILE.w, TILE.h, { color: [58, 64, 74], alpha: 200, weight: 1.0, wob: 0.3 });
     // the caption
-    const n = ('0' + (t.i + 1)).slice(-2);
+    const ed = t.state && Strata.edition ? Strata.edition(t.state) : null;
+    const n = ed ? ed.number + '/' + ed.size : ('0' + (t.i + 1)).slice(-2);
     if (t.state) {
       const sp = t.state.spec;
       const ten = t.state.tenets ? 'TENETS ' + t.state.tenets.filter((q) => q.ok).length + '/' + t.state.tenets.length : 'SEED ' + t.state.seed;

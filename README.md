@@ -263,6 +263,19 @@ through the engine in Node (the build is p5-free), tallies every trait value, an
 attributes with rarity and tier, and properties with the seed, hash, variables, legend
 and tenets. The column can be switched off with the `schedule` parameter.
 
+The **edition** is curated, not drawn: `tools/strata-select.mjs` builds a large seed pool
+(60,000 seeds by default) and selects under explicit rules — tenets must pass in full,
+no two tokens share a look (style + substyle + view + palette), equal style quotas, and
+within a style substyles, views (about two thirds axonometric) and palettes filled
+round-robin, with the least-used site and paper winning inside a look and the rarity score
+only breaking ties. The record is `edition/edition-256.json` (pool, rules, rejections,
+distribution, every token's seed, traits, score, tier, hash) and `edition/edition-256.js`
+is what the sheet and the board load: a selected seed's schedule shows its
+**EDITION n / 256**, its metadata is named by edition number, and the board's `set=edition`
+pages through the edition twelve at a time (`page=`). Measured on 30,000 seeds, the
+generator holds about 360 distinct looks, so 256 is the size at which every token is unique
+at look level; above about 1,000 the series would eat itself.
+
 The **portfolio board** ([`projects/011-isometric-strata/portfolio.html`](projects/011-isometric-strata/portfolio.html),
 or the ⊞ Portfolio button in the sheet's panel) lays many sheets on one board under a
 shared title strip: one sheet per style at a fixed seed (`?set=styles`), one style across
