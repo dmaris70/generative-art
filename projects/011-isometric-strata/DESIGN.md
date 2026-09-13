@@ -197,7 +197,24 @@ procedure with every rule written down and every rejection counted, so the
 edition is reproducible from the pool and the rules, and the sheet prints the
 edition number it was given.
 
-## 10. Extending it
+## 10. Objective curation
+
+A curatorial pass without a curator: two filters, both written down and both
+measured. The state gates run over the whole pool before selection — part count
+and ink load banded per style at the 10th and 90th percentiles, the building's
+projected proportion, the site's share of the scene, empty legend entries, the
+geometry a section cut actually meets. The rendered audit then measures the
+selected sheets from their pixels — ink coverage relative to the sheet's own
+paper luminance (so vintage and rough stock are judged alike), colour presence
+against the same palette, the ink centroid's offset on axonometric sheets — and
+flags outliers against the style's median. Two calibration lessons are worth
+keeping: measure at full sheet width, since half-pixel lines vanish at half
+size, and never count a flat colour field as ink, or a bold slab reads as mud.
+Flags become exclusions with their measurements attached; the selector replaces
+each excluded seed with the next candidate of its look; audit and selection
+alternate until no sheet is flagged.
+
+## 11. Extending it
 
 - **A new style** is one file in `lib/styles/` exporting `{ key, header, titles,
   substyles, types, palettes, sites, shapes, floors, legend, size(), build(ctx) }`.

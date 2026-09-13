@@ -7,7 +7,7 @@
   "firstSeed": 1,
   "count": 60000,
   "tenetEligible": 59501,
-  "eligible": 31139,
+  "eligible": 31107,
   "rejected": {
    "tenets": 499,
    "parts": 11072,
@@ -16,7 +16,7 @@
    "site": 8139,
    "legend": 198,
    "section": 90,
-   "excluded": 0
+   "excluded": 32
   },
   "bands": {
    "PALLADIAN": {
@@ -140,7 +140,7 @@
     ]
    }
   },
-  "exclusions": 0
+  "exclusions": 32
  },
  "rules": [
   "tenets must pass in full where a style has them",
@@ -151,7 +151,7 @@
   "within a style: substyles, views (about 67% axonometric) and palettes filled round-robin",
   "within a look: least-used site and paper in the style, then the higher rarity score, then the lower seed"
  ],
- "generatedAt": "2026-09-13T12:09:29.814Z",
+ "generatedAt": "2026-09-13T12:21:30.639Z",
  "distribution": {
   "style": {
    "MEXICAN MODERN": 22,
@@ -173,47 +173,47 @@
   },
   "site": {
    "PLAZA DIST": 49,
-   "PARK": 49,
-   "WATERFRONT": 39,
+   "PARK": 50,
    "CITY": 43,
+   "WATERFRONT": 38,
    "HILLSIDE": 27,
    "CITY EDGE": 49
   },
   "paper": {
-   "STANDARD": 84,
-   "ROUGH": 86,
+   "STANDARD": 85,
+   "ROUGH": 85,
    "VINTAGE": 86
   },
   "tier": {
-   "EPIC": 49,
-   "RARE": 60,
-   "LEGENDARY": 23,
-   "UNCOMMON": 89,
-   "COMMON": 35
+   "EPIC": 51,
+   "LEGENDARY": 19,
+   "COMMON": 39,
+   "RARE": 61,
+   "UNCOMMON": 86
   },
   "floors": {
    "1": 21,
-   "2": 34,
-   "3": 33,
-   "4": 33,
-   "5": 33,
+   "2": 37,
+   "3": 32,
+   "4": 32,
+   "5": 31,
    "6": 24,
-   "7": 24,
-   "8": 17,
-   "9": 19,
-   "10": 15,
-   "11": 2,
+   "7": 23,
+   "8": 19,
+   "9": 18,
+   "10": 14,
+   "11": 4,
    "12": 1
   },
   "buildings": {
-   "1": 118,
-   "2": 138
+   "1": 122,
+   "2": 134
   }
  },
  "bits": {
   "min": 37.62,
-  "max": 50.52,
-  "mean": 43.95
+  "max": 49.17,
+  "mean": 43.87
  },
  "tokens": [
   {
@@ -248,36 +248,6 @@
   },
   {
    "m": {
-    "parts": 76,
-    "aspect": 0.61,
-    "inkLoad": 33.4,
-    "siteRatio": 0.15,
-    "zeroLegend": 0,
-    "cutFaces": 158
-   },
-   "seed": 2251,
-   "style": "MEXICAN MODERN",
-   "substyle": "JARDIN",
-   "view": "PLAN + SECTION",
-   "palette": "ROSA",
-   "site": "PARK",
-   "paper": "STANDARD",
-   "floors": 4,
-   "buildings": 1,
-   "shape": "CORNER",
-   "type": "PATIO",
-   "tenets": "NA",
-   "parts": "MODERATE",
-   "bits": 44.61,
-   "rank": 0.1025,
-   "tier": "RARE",
-   "dwg": "IS-133E8D",
-   "hash": "09B14856",
-   "look": "MEXICAN MODERN|JARDIN|PLAN + SECTION|ROSA",
-   "edition": 2
-  },
-  {
-   "m": {
     "parts": 83,
     "aspect": 0.73,
     "inkLoad": 32.2,
@@ -304,37 +274,7 @@
    "dwg": "IS-98ED45",
    "hash": "4DA17783",
    "look": "MEXICAN MODERN|JARDIN|PLAN + SECTION|TLALPAN",
-   "edition": 3
-  },
-  {
-   "m": {
-    "parts": 107,
-    "aspect": 0.93,
-    "inkLoad": 45.6,
-    "siteRatio": 1.34,
-    "zeroLegend": 0,
-    "cutFaces": 128
-   },
-   "seed": 6446,
-   "style": "MEXICAN MODERN",
-   "substyle": "PATIO MAT",
-   "view": "PLAN + SECTION",
-   "palette": "CAL",
-   "site": "WATERFRONT",
-   "paper": "STANDARD",
-   "floors": 6,
-   "buildings": 2,
-   "shape": "RECTANGLE",
-   "type": "CAPILLA",
-   "tenets": "NA",
-   "parts": "MODERATE",
-   "bits": 41.85,
-   "rank": 0.3325,
-   "tier": "UNCOMMON",
-   "dwg": "IS-38D314",
-   "hash": "F317E9F4",
-   "look": "MEXICAN MODERN|PATIO MAT|PLAN + SECTION|CAL",
-   "edition": 4
+   "edition": 2
   },
   {
    "m": {
@@ -364,7 +304,7 @@
    "dwg": "IS-8ED9AB",
    "hash": "183B106B",
    "look": "MEXICAN MODERN|CAPILLA|PLAN + SECTION|AZUL",
-   "edition": 5
+   "edition": 3
   },
   {
    "m": {
@@ -394,7 +334,37 @@
    "dwg": "IS-301142",
    "hash": "6E520835",
    "look": "MEXICAN MODERN|CASA PATIO|PLAN + SECTION|CAL",
-   "edition": 6
+   "edition": 4
+  },
+  {
+   "m": {
+    "parts": 99,
+    "aspect": 0.72,
+    "inkLoad": 40.9,
+    "siteRatio": 1.16,
+    "zeroLegend": 0,
+    "cutFaces": 100
+   },
+   "seed": 18090,
+   "style": "MEXICAN MODERN",
+   "substyle": "PATIO MAT",
+   "view": "PLAN + SECTION",
+   "palette": "CAL",
+   "site": "WATERFRONT",
+   "paper": "VINTAGE",
+   "floors": 6,
+   "buildings": 1,
+   "shape": "RECTANGLE",
+   "type": "CAPILLA",
+   "tenets": "NA",
+   "parts": "MODERATE",
+   "bits": 40.01,
+   "rank": 0.555,
+   "tier": "COMMON",
+   "dwg": "IS-63FBCE",
+   "hash": "323CDFA2",
+   "look": "MEXICAN MODERN|PATIO MAT|PLAN + SECTION|CAL",
+   "edition": 5
   },
   {
    "m": {
@@ -424,6 +394,36 @@
    "dwg": "IS-F96D94",
    "hash": "973F7479",
    "look": "MEXICAN MODERN|CUADRA|AXONOMETRIC|TLALPAN",
+   "edition": 6
+  },
+  {
+   "m": {
+    "parts": 111,
+    "aspect": 0.85,
+    "inkLoad": 40.9,
+    "siteRatio": 0.18,
+    "zeroLegend": 0,
+    "cutFaces": 0
+   },
+   "seed": 24891,
+   "style": "MEXICAN MODERN",
+   "substyle": "PATIO MAT",
+   "view": "AXONOMETRIC",
+   "palette": "TLALPAN",
+   "site": "PARK",
+   "paper": "VINTAGE",
+   "floors": 6,
+   "buildings": 1,
+   "shape": "COURT",
+   "type": "CAPILLA",
+   "tenets": "NA",
+   "parts": "MODERATE",
+   "bits": 45.14,
+   "rank": 0.07,
+   "tier": "RARE",
+   "dwg": "IS-07FC7A",
+   "hash": "EBCC3F80",
+   "look": "MEXICAN MODERN|PATIO MAT|AXONOMETRIC|TLALPAN",
    "edition": 7
   },
   {
@@ -488,63 +488,33 @@
   },
   {
    "m": {
-    "parts": 118,
-    "aspect": 0.82,
-    "inkLoad": 37,
-    "siteRatio": 1.56,
+    "parts": 104,
+    "aspect": 0.83,
+    "inkLoad": 39.5,
+    "siteRatio": 1.3,
     "zeroLegend": 0,
-    "cutFaces": 0
+    "cutFaces": 161
    },
-   "seed": 29864,
-   "style": "MEXICAN MODERN",
-   "substyle": "JARDIN",
-   "view": "AXONOMETRIC",
-   "palette": "CAL",
-   "site": "WATERFRONT",
-   "paper": "VINTAGE",
-   "floors": 6,
-   "buildings": 2,
-   "shape": "COURT",
-   "type": "CAPILLA",
-   "tenets": "NA",
-   "parts": "MODERATE",
-   "bits": 45.81,
-   "rank": 0.04,
-   "tier": "EPIC",
-   "dwg": "IS-54B1AF",
-   "hash": "77687355",
-   "look": "MEXICAN MODERN|JARDIN|AXONOMETRIC|CAL",
-   "edition": 10
-  },
-  {
-   "m": {
-    "parts": 92,
-    "aspect": 0.93,
-    "inkLoad": 36,
-    "siteRatio": 0.32,
-    "zeroLegend": 0,
-    "cutFaces": 131
-   },
-   "seed": 31258,
+   "seed": 26893,
    "style": "MEXICAN MODERN",
    "substyle": "CUADRA",
    "view": "PLAN + SECTION",
    "palette": "AZUL",
-   "site": "HILLSIDE",
+   "site": "WATERFRONT",
    "paper": "ROUGH",
-   "floors": 5,
-   "buildings": 2,
+   "floors": 4,
+   "buildings": 1,
    "shape": "COURT",
    "type": "PATIO",
    "tenets": "NA",
    "parts": "MODERATE",
-   "bits": 48.26,
-   "rank": 0.005,
-   "tier": "LEGENDARY",
-   "dwg": "IS-137C13",
-   "hash": "1A058853",
+   "bits": 46.35,
+   "rank": 0.025,
+   "tier": "EPIC",
+   "dwg": "IS-F0F7F9",
+   "hash": "50163898",
    "look": "MEXICAN MODERN|CUADRA|PLAN + SECTION|AZUL",
-   "edition": 11
+   "edition": 10
   },
   {
    "m": {
@@ -574,67 +544,7 @@
    "dwg": "IS-6DAF1B",
    "hash": "C49CC15D",
    "look": "MEXICAN MODERN|CAPILLA|AXONOMETRIC|AZUL",
-   "edition": 12
-  },
-  {
-   "m": {
-    "parts": 121,
-    "aspect": 0.73,
-    "inkLoad": 38.4,
-    "siteRatio": 0.15,
-    "zeroLegend": 0,
-    "cutFaces": 0
-   },
-   "seed": 33190,
-   "style": "MEXICAN MODERN",
-   "substyle": "CUADRA",
-   "view": "AXONOMETRIC",
-   "palette": "CAL",
-   "site": "PLAZA DIST",
-   "paper": "ROUGH",
-   "floors": 5,
-   "buildings": 2,
-   "shape": "LSHAPE",
-   "type": "CUADRA",
-   "tenets": "NA",
-   "parts": "MODERATE",
-   "bits": 45.3,
-   "rank": 0.06,
-   "tier": "RARE",
-   "dwg": "IS-A920E1",
-   "hash": "65E3877C",
-   "look": "MEXICAN MODERN|CUADRA|AXONOMETRIC|CAL",
-   "edition": 13
-  },
-  {
-   "m": {
-    "parts": 84,
-    "aspect": 1.02,
-    "inkLoad": 46.2,
-    "siteRatio": 1.03,
-    "zeroLegend": 0,
-    "cutFaces": 0
-   },
-   "seed": 38888,
-   "style": "MEXICAN MODERN",
-   "substyle": "PATIO MAT",
-   "view": "AXONOMETRIC",
-   "palette": "TLALPAN",
-   "site": "WATERFRONT",
-   "paper": "VINTAGE",
-   "floors": 6,
-   "buildings": 1,
-   "shape": "COURT",
-   "type": "PATIO",
-   "tenets": "NA",
-   "parts": "MODERATE",
-   "bits": 46.75,
-   "rank": 0.015,
-   "tier": "EPIC",
-   "dwg": "IS-6E5A61",
-   "hash": "2F2785A1",
-   "look": "MEXICAN MODERN|PATIO MAT|AXONOMETRIC|TLALPAN",
-   "edition": 14
+   "edition": 11
   },
   {
    "m": {
@@ -664,37 +574,7 @@
    "dwg": "IS-30363C",
    "hash": "5A2B5F0E",
    "look": "MEXICAN MODERN|CASA PATIO|AXONOMETRIC|CAL",
-   "edition": 15
-  },
-  {
-   "m": {
-    "parts": 107,
-    "aspect": 0.78,
-    "inkLoad": 47.2,
-    "siteRatio": 0.22,
-    "zeroLegend": 0,
-    "cutFaces": 0
-   },
-   "seed": 41737,
-   "style": "MEXICAN MODERN",
-   "substyle": "CASA PATIO",
-   "view": "AXONOMETRIC",
-   "palette": "TLALPAN",
-   "site": "CITY",
-   "paper": "VINTAGE",
-   "floors": 5,
-   "buildings": 1,
-   "shape": "CORNER",
-   "type": "CUADRA",
-   "tenets": "NA",
-   "parts": "MODERATE",
-   "bits": 44.33,
-   "rank": 0.12,
-   "tier": "RARE",
-   "dwg": "IS-3C4C9D",
-   "hash": "73D0E0E2",
-   "look": "MEXICAN MODERN|CASA PATIO|AXONOMETRIC|TLALPAN",
-   "edition": 16
+   "edition": 12
   },
   {
    "m": {
@@ -724,7 +604,7 @@
    "dwg": "IS-C39CB5",
    "hash": "CD35746A",
    "look": "MEXICAN MODERN|CASA PATIO|AXONOMETRIC|AZUL",
-   "edition": 17
+   "edition": 13
   },
   {
    "m": {
@@ -754,7 +634,67 @@
    "dwg": "IS-5214E4",
    "hash": "043AB887",
    "look": "MEXICAN MODERN|CUADRA|AXONOMETRIC|ROSA",
-   "edition": 18
+   "edition": 14
+  },
+  {
+   "m": {
+    "parts": 90,
+    "aspect": 0.82,
+    "inkLoad": 33.9,
+    "siteRatio": 0.59,
+    "zeroLegend": 0,
+    "cutFaces": 0
+   },
+   "seed": 49152,
+   "style": "MEXICAN MODERN",
+   "substyle": "JARDIN",
+   "view": "AXONOMETRIC",
+   "palette": "CAL",
+   "site": "CITY",
+   "paper": "VINTAGE",
+   "floors": 5,
+   "buildings": 1,
+   "shape": "COURT",
+   "type": "CAPILLA",
+   "tenets": "NA",
+   "parts": "MODERATE",
+   "bits": 45.96,
+   "rank": 0.035,
+   "tier": "EPIC",
+   "dwg": "IS-0A28E6",
+   "hash": "914D0265",
+   "look": "MEXICAN MODERN|JARDIN|AXONOMETRIC|CAL",
+   "edition": 15
+  },
+  {
+   "m": {
+    "parts": 87,
+    "aspect": 0.8,
+    "inkLoad": 41,
+    "siteRatio": 0.23,
+    "zeroLegend": 0,
+    "cutFaces": 150
+   },
+   "seed": 51207,
+   "style": "MEXICAN MODERN",
+   "substyle": "JARDIN",
+   "view": "PLAN + SECTION",
+   "palette": "ROSA",
+   "site": "PLAZA DIST",
+   "paper": "STANDARD",
+   "floors": 5,
+   "buildings": 1,
+   "shape": "COURT",
+   "type": "CASA",
+   "tenets": "NA",
+   "parts": "MODERATE",
+   "bits": 45.36,
+   "rank": 0.06,
+   "tier": "RARE",
+   "dwg": "IS-6F32D0",
+   "hash": "1B497985",
+   "look": "MEXICAN MODERN|JARDIN|PLAN + SECTION|ROSA",
+   "edition": 16
   },
   {
    "m": {
@@ -784,7 +724,7 @@
    "dwg": "IS-D03BEC",
    "hash": "CD72CB1E",
    "look": "MEXICAN MODERN|CAPILLA|AXONOMETRIC|ROSA",
-   "edition": 19
+   "edition": 17
   },
   {
    "m": {
@@ -814,7 +754,37 @@
    "dwg": "IS-2E1052",
    "hash": "AD7BBC9D",
    "look": "MEXICAN MODERN|CAPILLA|PLAN + SECTION|TLALPAN",
-   "edition": 20
+   "edition": 18
+  },
+  {
+   "m": {
+    "parts": 79,
+    "aspect": 0.83,
+    "inkLoad": 30.1,
+    "siteRatio": 1.57,
+    "zeroLegend": 0,
+    "cutFaces": 0
+   },
+   "seed": 54548,
+   "style": "MEXICAN MODERN",
+   "substyle": "CUADRA",
+   "view": "AXONOMETRIC",
+   "palette": "CAL",
+   "site": "WATERFRONT",
+   "paper": "ROUGH",
+   "floors": 3,
+   "buildings": 1,
+   "shape": "COURT",
+   "type": "CUADRA",
+   "tenets": "NA",
+   "parts": "MODERATE",
+   "bits": 44.39,
+   "rank": 0.1175,
+   "tier": "RARE",
+   "dwg": "IS-48B0B4",
+   "hash": "8EDB53B8",
+   "look": "MEXICAN MODERN|CUADRA|AXONOMETRIC|CAL",
+   "edition": 19
   },
   {
    "m": {
@@ -844,7 +814,7 @@
    "dwg": "IS-2B376F",
    "hash": "E29F08AA",
    "look": "MEXICAN MODERN|PATIO MAT|AXONOMETRIC|ROSA",
-   "edition": 21
+   "edition": 20
   },
   {
    "m": {
@@ -874,6 +844,36 @@
    "dwg": "IS-4E50DC",
    "hash": "6BC68D3F",
    "look": "MEXICAN MODERN|CASA PATIO|PLAN + SECTION|ROSA",
+   "edition": 21
+  },
+  {
+   "m": {
+    "parts": 141,
+    "aspect": 0.65,
+    "inkLoad": 42.2,
+    "siteRatio": 0.26,
+    "zeroLegend": 0,
+    "cutFaces": 0
+   },
+   "seed": 58112,
+   "style": "MEXICAN MODERN",
+   "substyle": "CASA PATIO",
+   "view": "AXONOMETRIC",
+   "palette": "TLALPAN",
+   "site": "HILLSIDE",
+   "paper": "STANDARD",
+   "floors": 5,
+   "buildings": 2,
+   "shape": "COURT",
+   "type": "PATIO",
+   "tenets": "NA",
+   "parts": "MODERATE",
+   "bits": 45.01,
+   "rank": 0.075,
+   "tier": "RARE",
+   "dwg": "IS-4FCA9F",
+   "hash": "EF149507",
+   "look": "MEXICAN MODERN|CASA PATIO|AXONOMETRIC|TLALPAN",
    "edition": 22
   },
   {
@@ -1568,66 +1568,6 @@
   },
   {
    "m": {
-    "parts": 433,
-    "aspect": 1.01,
-    "inkLoad": 29.3,
-    "siteRatio": 0.22,
-    "zeroLegend": 0,
-    "cutFaces": 0
-   },
-   "seed": 3925,
-   "style": "GEODESIC",
-   "substyle": "TRIAD",
-   "view": "AXONOMETRIC",
-   "palette": "SIGNAL",
-   "site": "CITY EDGE",
-   "paper": "VINTAGE",
-   "floors": 5,
-   "buildings": 2,
-   "shape": "CROSS",
-   "type": "MAST",
-   "tenets": "NA",
-   "parts": "CROWDED",
-   "bits": 47.1,
-   "rank": 0.01,
-   "tier": "EPIC",
-   "dwg": "IS-84492C",
-   "hash": "F20A4871",
-   "look": "GEODESIC|TRIAD|AXONOMETRIC|SIGNAL",
-   "edition": 46
-  },
-  {
-   "m": {
-    "parts": 373,
-    "aspect": 1.88,
-    "inkLoad": 24.8,
-    "siteRatio": 1.7,
-    "zeroLegend": 0,
-    "cutFaces": 0
-   },
-   "seed": 9944,
-   "style": "GEODESIC",
-   "substyle": "EXPO SPHERE",
-   "view": "AXONOMETRIC",
-   "palette": "ARCTIC",
-   "site": "WATERFRONT",
-   "paper": "STANDARD",
-   "floors": 9,
-   "buildings": 2,
-   "shape": "CROSS",
-   "type": "MAST",
-   "tenets": "NA",
-   "parts": "CROWDED",
-   "bits": 47.95,
-   "rank": 0.005,
-   "tier": "LEGENDARY",
-   "dwg": "IS-0B710E",
-   "hash": "2AA1F2BE",
-   "look": "GEODESIC|EXPO SPHERE|AXONOMETRIC|ARCTIC",
-   "edition": 47
-  },
-  {
-   "m": {
     "parts": 383,
     "aspect": 1.35,
     "inkLoad": 26.3,
@@ -1654,7 +1594,7 @@
    "dwg": "IS-A465EA",
    "hash": "B5BCA3E5",
    "look": "GEODESIC|STEPPED MAST|PLAN + SECTION|SIGNAL",
-   "edition": 48
+   "edition": 46
   },
   {
    "m": {
@@ -1684,7 +1624,7 @@
    "dwg": "IS-0B124F",
    "hash": "41CF1134",
    "look": "GEODESIC|RADOME|AXONOMETRIC|SIGNAL",
-   "edition": 49
+   "edition": 47
   },
   {
    "m": {
@@ -1714,7 +1654,7 @@
    "dwg": "IS-57F9A6",
    "hash": "1A290CF4",
    "look": "GEODESIC|EXPO SPHERE|PLAN + SECTION|MONOCHROME",
-   "edition": 50
+   "edition": 48
   },
   {
    "m": {
@@ -1744,7 +1684,7 @@
    "dwg": "IS-F5253A",
    "hash": "8B79BF1D",
    "look": "GEODESIC|EXPO SPHERE|AXONOMETRIC|SIGNAL",
-   "edition": 51
+   "edition": 49
   },
   {
    "m": {
@@ -1774,37 +1714,37 @@
    "dwg": "IS-8D8FB0",
    "hash": "8A8C79D0",
    "look": "GEODESIC|DOPPEL|AXONOMETRIC|DEWLINE",
-   "edition": 52
+   "edition": 50
   },
   {
    "m": {
-    "parts": 438,
-    "aspect": 1.5,
-    "inkLoad": 32.8,
-    "siteRatio": 0.17,
+    "parts": 325,
+    "aspect": 1.33,
+    "inkLoad": 33.1,
+    "siteRatio": 0.21,
     "zeroLegend": 0,
     "cutFaces": 0
    },
-   "seed": 20375,
+   "seed": 22922,
    "style": "GEODESIC",
-   "substyle": "DOPPEL",
+   "substyle": "TRIAD",
    "view": "AXONOMETRIC",
-   "palette": "ARCTIC",
-   "site": "CITY EDGE",
-   "paper": "ROUGH",
-   "floors": 9,
-   "buildings": 2,
-   "shape": "STEPPED",
-   "type": "ARRAY",
+   "palette": "SIGNAL",
+   "site": "PARK",
+   "paper": "VINTAGE",
+   "floors": 6,
+   "buildings": 1,
+   "shape": "CROSS",
+   "type": "DOPPEL",
    "tenets": "NA",
    "parts": "CROWDED",
-   "bits": 48.7,
-   "rank": 0.0025,
-   "tier": "LEGENDARY",
-   "dwg": "IS-C660D7",
-   "hash": "35E27A23",
-   "look": "GEODESIC|DOPPEL|AXONOMETRIC|ARCTIC",
-   "edition": 53
+   "bits": 46.26,
+   "rank": 0.0275,
+   "tier": "EPIC",
+   "dwg": "IS-05E9A7",
+   "hash": "D3814A67",
+   "look": "GEODESIC|TRIAD|AXONOMETRIC|SIGNAL",
+   "edition": 51
   },
   {
    "m": {
@@ -1834,7 +1774,37 @@
    "dwg": "IS-546278",
    "hash": "67F3B8A9",
    "look": "GEODESIC|DOPPEL|AXONOMETRIC|MONOCHROME",
-   "edition": 54
+   "edition": 52
+  },
+  {
+   "m": {
+    "parts": 401,
+    "aspect": 1.42,
+    "inkLoad": 28.8,
+    "siteRatio": 1.34,
+    "zeroLegend": 0,
+    "cutFaces": 72
+   },
+   "seed": 24735,
+   "style": "GEODESIC",
+   "substyle": "STEPPED MAST",
+   "view": "PLAN + SECTION",
+   "palette": "MONOCHROME",
+   "site": "WATERFRONT",
+   "paper": "ROUGH",
+   "floors": 8,
+   "buildings": 2,
+   "shape": "STEPPED",
+   "type": "MAST",
+   "tenets": "NA",
+   "parts": "CROWDED",
+   "bits": 48.43,
+   "rank": 0.0025,
+   "tier": "LEGENDARY",
+   "dwg": "IS-91F320",
+   "hash": "C6B22567",
+   "look": "GEODESIC|STEPPED MAST|PLAN + SECTION|MONOCHROME",
+   "edition": 53
   },
   {
    "m": {
@@ -1864,7 +1834,7 @@
    "dwg": "IS-0549E3",
    "hash": "652AF161",
    "look": "GEODESIC|STEPPED MAST|AXONOMETRIC|ARCTIC",
-   "edition": 55
+   "edition": 54
   },
   {
    "m": {
@@ -1894,7 +1864,7 @@
    "dwg": "IS-815C2D",
    "hash": "2F9F2CEC",
    "look": "GEODESIC|RADOME|PLAN + SECTION|ARCTIC",
-   "edition": 56
+   "edition": 55
   },
   {
    "m": {
@@ -1924,7 +1894,7 @@
    "dwg": "IS-58E288",
    "hash": "25E1F37C",
    "look": "GEODESIC|RADOME|AXONOMETRIC|DEWLINE",
-   "edition": 57
+   "edition": 56
   },
   {
    "m": {
@@ -1954,36 +1924,66 @@
    "dwg": "IS-B95E16",
    "hash": "1A33C30E",
    "look": "GEODESIC|RADOME|AXONOMETRIC|MONOCHROME",
-   "edition": 58
+   "edition": 57
   },
   {
    "m": {
-    "parts": 436,
-    "aspect": 1.27,
-    "inkLoad": 32.8,
-    "siteRatio": 0.27,
+    "parts": 346,
+    "aspect": 1.1,
+    "inkLoad": 27.1,
+    "siteRatio": 0.17,
     "zeroLegend": 0,
-    "cutFaces": 92
+    "cutFaces": 45
    },
-   "seed": 35513,
+   "seed": 31936,
    "style": "GEODESIC",
    "substyle": "EXPO SPHERE",
    "view": "PLAN + SECTION",
    "palette": "DEWLINE",
-   "site": "PLAZA DIST",
-   "paper": "ROUGH",
-   "floors": 8,
+   "site": "PARK",
+   "paper": "VINTAGE",
+   "floors": 9,
    "buildings": 2,
-   "shape": "STEPPED",
+   "shape": "CROSS",
    "type": "MAST",
    "tenets": "NA",
    "parts": "CROWDED",
-   "bits": 50.52,
+   "bits": 49,
    "rank": 0.0025,
    "tier": "LEGENDARY",
-   "dwg": "IS-D80369",
-   "hash": "733A03F7",
+   "dwg": "IS-6DE227",
+   "hash": "2054EA2A",
    "look": "GEODESIC|EXPO SPHERE|PLAN + SECTION|DEWLINE",
+   "edition": 58
+  },
+  {
+   "m": {
+    "parts": 385,
+    "aspect": 2,
+    "inkLoad": 34.7,
+    "siteRatio": 0.33,
+    "zeroLegend": 0,
+    "cutFaces": 0
+   },
+   "seed": 45867,
+   "style": "GEODESIC",
+   "substyle": "EXPO SPHERE",
+   "view": "AXONOMETRIC",
+   "palette": "ARCTIC",
+   "site": "CITY EDGE",
+   "paper": "STANDARD",
+   "floors": 7,
+   "buildings": 1,
+   "shape": "CROSS",
+   "type": "MAST",
+   "tenets": "NA",
+   "parts": "CROWDED",
+   "bits": 46.14,
+   "rank": 0.03,
+   "tier": "EPIC",
+   "dwg": "IS-202628",
+   "hash": "6CABFB06",
+   "look": "GEODESIC|EXPO SPHERE|AXONOMETRIC|ARCTIC",
    "edition": 59
   },
   {
@@ -2108,6 +2108,36 @@
   },
   {
    "m": {
+    "parts": 411,
+    "aspect": 1.52,
+    "inkLoad": 28.8,
+    "siteRatio": 0.26,
+    "zeroLegend": 0,
+    "cutFaces": 0
+   },
+   "seed": 50618,
+   "style": "GEODESIC",
+   "substyle": "DOPPEL",
+   "view": "AXONOMETRIC",
+   "palette": "ARCTIC",
+   "site": "PLAZA DIST",
+   "paper": "STANDARD",
+   "floors": 9,
+   "buildings": 2,
+   "shape": "STEPPED",
+   "type": "ARRAY",
+   "tenets": "NA",
+   "parts": "CROWDED",
+   "bits": 47.08,
+   "rank": 0.0125,
+   "tier": "EPIC",
+   "dwg": "IS-2BC57C",
+   "hash": "B99D5450",
+   "look": "GEODESIC|DOPPEL|AXONOMETRIC|ARCTIC",
+   "edition": 64
+  },
+  {
+   "m": {
     "parts": 419,
     "aspect": 1.32,
     "inkLoad": 28.8,
@@ -2134,36 +2164,6 @@
    "dwg": "IS-D05133",
    "hash": "07E011DA",
    "look": "GEODESIC|TRIAD|PLAN + SECTION|DEWLINE",
-   "edition": 64
-  },
-  {
-   "m": {
-    "parts": 405,
-    "aspect": 1.43,
-    "inkLoad": 21,
-    "siteRatio": 0.15,
-    "zeroLegend": 0,
-    "cutFaces": 30
-   },
-   "seed": 54236,
-   "style": "GEODESIC",
-   "substyle": "STEPPED MAST",
-   "view": "PLAN + SECTION",
-   "palette": "MONOCHROME",
-   "site": "PARK",
-   "paper": "STANDARD",
-   "floors": 5,
-   "buildings": 1,
-   "shape": "CROSS",
-   "type": "ARRAY",
-   "tenets": "NA",
-   "parts": "CROWDED",
-   "bits": 47.4,
-   "rank": 0.0075,
-   "tier": "LEGENDARY",
-   "dwg": "IS-6E8778",
-   "hash": "9F12D4B0",
-   "look": "GEODESIC|STEPPED MAST|PLAN + SECTION|MONOCHROME",
    "edition": 65
   },
   {
@@ -3488,6 +3488,66 @@
   },
   {
    "m": {
+    "parts": 51,
+    "aspect": 1.14,
+    "inkLoad": 32.1,
+    "siteRatio": 0.74,
+    "zeroLegend": 0,
+    "cutFaces": 0
+   },
+   "seed": 651,
+   "style": "DE STIJL",
+   "substyle": "COUNTER",
+   "view": "AXONOMETRIC",
+   "palette": "DOESBURG",
+   "site": "CITY",
+   "paper": "ROUGH",
+   "floors": 3,
+   "buildings": 1,
+   "shape": "BAR",
+   "type": "STUDIO",
+   "tenets": "5/5",
+   "parts": "SPARSE",
+   "bits": 44.66,
+   "rank": 0.0975,
+   "tier": "RARE",
+   "dwg": "IS-FBA348",
+   "hash": "1F528034",
+   "look": "DE STIJL|COUNTER|AXONOMETRIC|DOESBURG",
+   "edition": 110
+  },
+  {
+   "m": {
+    "parts": 89,
+    "aspect": 0.89,
+    "inkLoad": 30,
+    "siteRatio": 0.38,
+    "zeroLegend": 0,
+    "cutFaces": 167
+   },
+   "seed": 3421,
+   "style": "DE STIJL",
+   "substyle": "SCHRODER",
+   "view": "PLAN + SECTION",
+   "palette": "DOESBURG",
+   "site": "CITY",
+   "paper": "VINTAGE",
+   "floors": 3,
+   "buildings": 2,
+   "shape": "LSHAPE",
+   "type": "STUDIO",
+   "tenets": "5/5",
+   "parts": "MODERATE",
+   "bits": 43.23,
+   "rank": 0.205,
+   "tier": "UNCOMMON",
+   "dwg": "IS-505C8C",
+   "hash": "9F4C4812",
+   "look": "DE STIJL|SCHRODER|PLAN + SECTION|DOESBURG",
+   "edition": 111
+  },
+  {
+   "m": {
     "parts": 78,
     "aspect": 0.82,
     "inkLoad": 25.1,
@@ -3514,7 +3574,7 @@
    "dwg": "IS-C8BF65",
    "hash": "19173244",
    "look": "DE STIJL|ELEMENTARIST|PLAN + SECTION|DOESBURG",
-   "edition": 110
+   "edition": 112
   },
   {
    "m": {
@@ -3544,37 +3604,37 @@
    "dwg": "IS-446CF8",
    "hash": "797D6206",
    "look": "DE STIJL|ARTIST HOUSE|PLAN + SECTION|RIETVELD",
-   "edition": 111
+   "edition": 113
   },
   {
    "m": {
-    "parts": 52,
-    "aspect": 1.23,
-    "inkLoad": 33.8,
-    "siteRatio": 0.48,
-    "zeroLegend": 1,
+    "parts": 53,
+    "aspect": 1.07,
+    "inkLoad": 28.1,
+    "siteRatio": 0.3,
+    "zeroLegend": 0,
     "cutFaces": 0
    },
-   "seed": 14158,
+   "seed": 12441,
    "style": "DE STIJL",
-   "substyle": "ARTIST HOUSE",
+   "substyle": "COUNTER",
    "view": "AXONOMETRIC",
    "palette": "RIETVELD",
-   "site": "CITY EDGE",
-   "paper": "VINTAGE",
-   "floors": 4,
+   "site": "PLAZA DIST",
+   "paper": "ROUGH",
+   "floors": 3,
    "buildings": 1,
    "shape": "BAR",
-   "type": "STUDIO",
+   "type": "HOUSE",
    "tenets": "5/5",
    "parts": "SPARSE",
-   "bits": 42.93,
-   "rank": 0.2275,
-   "tier": "UNCOMMON",
-   "dwg": "IS-1A5E77",
-   "hash": "4869A151",
-   "look": "DE STIJL|ARTIST HOUSE|AXONOMETRIC|RIETVELD",
-   "edition": 112
+   "bits": 41.21,
+   "rank": 0.4025,
+   "tier": "COMMON",
+   "dwg": "IS-63A647",
+   "hash": "F6094C8E",
+   "look": "DE STIJL|COUNTER|AXONOMETRIC|RIETVELD",
+   "edition": 114
   },
   {
    "m": {
@@ -3604,7 +3664,7 @@
    "dwg": "IS-B77367",
    "hash": "5C9AC64B",
    "look": "DE STIJL|ELEMENTARIST|AXONOMETRIC|MONDRIAN",
-   "edition": 113
+   "edition": 115
   },
   {
    "m": {
@@ -3634,37 +3694,37 @@
    "dwg": "IS-FAD4D0",
    "hash": "BBEE11CA",
    "look": "DE STIJL|SCHRODER|AXONOMETRIC|RIETVELD",
-   "edition": 114
+   "edition": 116
   },
   {
    "m": {
-    "parts": 57,
-    "aspect": 0.93,
-    "inkLoad": 30.2,
-    "siteRatio": 0.35,
+    "parts": 39,
+    "aspect": 0.95,
+    "inkLoad": 20.5,
+    "siteRatio": 0.54,
     "zeroLegend": 0,
-    "cutFaces": 0
+    "cutFaces": 64
    },
-   "seed": 16598,
+   "seed": 16963,
    "style": "DE STIJL",
    "substyle": "ARTIST HOUSE",
-   "view": "AXONOMETRIC",
+   "view": "PLAN + SECTION",
    "palette": "MONDRIAN",
-   "site": "PLAZA DIST",
-   "paper": "STANDARD",
-   "floors": 3,
+   "site": "CITY",
+   "paper": "VINTAGE",
+   "floors": 2,
    "buildings": 1,
-   "shape": "CORNER",
+   "shape": "BAR",
    "type": "STUDIO",
    "tenets": "5/5",
    "parts": "SPARSE",
-   "bits": 44.13,
-   "rank": 0.1375,
-   "tier": "RARE",
-   "dwg": "IS-9083FC",
-   "hash": "DDA296FF",
-   "look": "DE STIJL|ARTIST HOUSE|AXONOMETRIC|MONDRIAN",
-   "edition": 115
+   "bits": 43.19,
+   "rank": 0.2075,
+   "tier": "UNCOMMON",
+   "dwg": "IS-E8220A",
+   "hash": "72008395",
+   "look": "DE STIJL|ARTIST HOUSE|PLAN + SECTION|MONDRIAN",
+   "edition": 117
   },
   {
    "m": {
@@ -3694,37 +3754,37 @@
    "dwg": "IS-7DB4C3",
    "hash": "CFF73C87",
    "look": "DE STIJL|ARTIST HOUSE|PLAN + SECTION|DOESBURG",
-   "edition": 116
+   "edition": 118
   },
   {
    "m": {
-    "parts": 67,
-    "aspect": 1.03,
-    "inkLoad": 35.1,
-    "siteRatio": 0.51,
+    "parts": 101,
+    "aspect": 0.89,
+    "inkLoad": 32.5,
+    "siteRatio": 0.21,
     "zeroLegend": 0,
     "cutFaces": 0
    },
-   "seed": 24973,
+   "seed": 20037,
    "style": "DE STIJL",
-   "substyle": "PLANAR",
+   "substyle": "ARTIST HOUSE",
    "view": "AXONOMETRIC",
-   "palette": "RIETVELD",
-   "site": "CITY EDGE",
-   "paper": "VINTAGE",
+   "palette": "MONDRIAN",
+   "site": "PARK",
+   "paper": "STANDARD",
    "floors": 3,
-   "buildings": 1,
+   "buildings": 2,
    "shape": "CORNER",
    "type": "STUDIO",
    "tenets": "5/5",
    "parts": "MODERATE",
-   "bits": 42.82,
-   "rank": 0.2375,
+   "bits": 43.85,
+   "rank": 0.1525,
    "tier": "UNCOMMON",
-   "dwg": "IS-9C599C",
-   "hash": "E2464D7F",
-   "look": "DE STIJL|PLANAR|AXONOMETRIC|RIETVELD",
-   "edition": 117
+   "dwg": "IS-8F6933",
+   "hash": "24748070",
+   "look": "DE STIJL|ARTIST HOUSE|AXONOMETRIC|MONDRIAN",
+   "edition": 119
   },
   {
    "m": {
@@ -3754,37 +3814,7 @@
    "dwg": "IS-87D796",
    "hash": "6E7CB7AA",
    "look": "DE STIJL|PLANAR|PLAN + SECTION|DOESBURG",
-   "edition": 118
-  },
-  {
-   "m": {
-    "parts": 66,
-    "aspect": 1.22,
-    "inkLoad": 37.5,
-    "siteRatio": 0.18,
-    "zeroLegend": 0,
-    "cutFaces": 73
-   },
-   "seed": 27190,
-   "style": "DE STIJL",
-   "substyle": "ELEMENTARIST",
-   "view": "PLAN + SECTION",
-   "palette": "RIETVELD",
-   "site": "CITY EDGE",
-   "paper": "STANDARD",
-   "floors": 3,
-   "buildings": 1,
-   "shape": "LSHAPE",
-   "type": "STUDIO",
-   "tenets": "5/5",
-   "parts": "MODERATE",
-   "bits": 43.12,
-   "rank": 0.2125,
-   "tier": "UNCOMMON",
-   "dwg": "IS-955DA4",
-   "hash": "D1ED5DBF",
-   "look": "DE STIJL|ELEMENTARIST|PLAN + SECTION|RIETVELD",
-   "edition": 119
+   "edition": 120
   },
   {
    "m": {
@@ -3814,7 +3844,7 @@
    "dwg": "IS-8A2983",
    "hash": "7BE3B27E",
    "look": "DE STIJL|PLANAR|AXONOMETRIC|DOESBURG",
-   "edition": 120
+   "edition": 121
   },
   {
    "m": {
@@ -3844,67 +3874,67 @@
    "dwg": "IS-627638",
    "hash": "B730012C",
    "look": "DE STIJL|COUNTER|PLAN + SECTION|DOESBURG",
-   "edition": 121
-  },
-  {
-   "m": {
-    "parts": 85,
-    "aspect": 0.88,
-    "inkLoad": 29.4,
-    "siteRatio": 0.7,
-    "zeroLegend": 0,
-    "cutFaces": 0
-   },
-   "seed": 37829,
-   "style": "DE STIJL",
-   "substyle": "COUNTER",
-   "view": "AXONOMETRIC",
-   "palette": "DOESBURG",
-   "site": "CITY",
-   "paper": "VINTAGE",
-   "floors": 3,
-   "buildings": 2,
-   "shape": "CORNER",
-   "type": "STUDIO",
-   "tenets": "5/5",
-   "parts": "MODERATE",
-   "bits": 45.63,
-   "rank": 0.0475,
-   "tier": "EPIC",
-   "dwg": "IS-0DD3A5",
-   "hash": "34F6C1E7",
-   "look": "DE STIJL|COUNTER|AXONOMETRIC|DOESBURG",
    "edition": 122
   },
   {
    "m": {
-    "parts": 58,
-    "aspect": 1.12,
-    "inkLoad": 31.8,
-    "siteRatio": 0.32,
+    "parts": 48,
+    "aspect": 1.08,
+    "inkLoad": 30.3,
+    "siteRatio": 0.19,
     "zeroLegend": 1,
-    "cutFaces": 82
+    "cutFaces": 53
    },
-   "seed": 41351,
+   "seed": 32193,
+   "style": "DE STIJL",
+   "substyle": "ELEMENTARIST",
+   "view": "PLAN + SECTION",
+   "palette": "RIETVELD",
+   "site": "CITY EDGE",
+   "paper": "STANDARD",
+   "floors": 3,
+   "buildings": 1,
+   "shape": "RECTANGLE",
+   "type": "STUDIO",
+   "tenets": "5/5",
+   "parts": "SPARSE",
+   "bits": 41.93,
+   "rank": 0.3225,
+   "tier": "UNCOMMON",
+   "dwg": "IS-E5F4E1",
+   "hash": "A4E7A800",
+   "look": "DE STIJL|ELEMENTARIST|PLAN + SECTION|RIETVELD",
+   "edition": 123
+  },
+  {
+   "m": {
+    "parts": 57,
+    "aspect": 0.92,
+    "inkLoad": 26.5,
+    "siteRatio": 0.32,
+    "zeroLegend": 0,
+    "cutFaces": 0
+   },
+   "seed": 36743,
    "style": "DE STIJL",
    "substyle": "ARTIST HOUSE",
-   "view": "PLAN + SECTION",
-   "palette": "MONDRIAN",
-   "site": "CITY",
-   "paper": "ROUGH",
-   "floors": 4,
+   "view": "AXONOMETRIC",
+   "palette": "RIETVELD",
+   "site": "CITY EDGE",
+   "paper": "VINTAGE",
+   "floors": 3,
    "buildings": 1,
    "shape": "BAR",
    "type": "HOUSE",
    "tenets": "5/5",
    "parts": "SPARSE",
-   "bits": 43.29,
-   "rank": 0.1975,
+   "bits": 42.59,
+   "rank": 0.2575,
    "tier": "UNCOMMON",
-   "dwg": "IS-85E1D5",
-   "hash": "A50D46A6",
-   "look": "DE STIJL|ARTIST HOUSE|PLAN + SECTION|MONDRIAN",
-   "edition": 123
+   "dwg": "IS-74D169",
+   "hash": "11B7844F",
+   "look": "DE STIJL|ARTIST HOUSE|AXONOMETRIC|RIETVELD",
+   "edition": 124
   },
   {
    "m": {
@@ -3934,7 +3964,7 @@
    "dwg": "IS-19E51A",
    "hash": "576977B2",
    "look": "DE STIJL|PLANAR|AXONOMETRIC|MONDRIAN",
-   "edition": 124
+   "edition": 125
   },
   {
    "m": {
@@ -3964,7 +3994,7 @@
    "dwg": "IS-7B8D9B",
    "hash": "69E8BC19",
    "look": "DE STIJL|COUNTER|AXONOMETRIC|MONDRIAN",
-   "edition": 125
+   "edition": 126
   },
   {
    "m": {
@@ -3994,7 +4024,37 @@
    "dwg": "IS-94AE4A",
    "hash": "F423D304",
    "look": "DE STIJL|ELEMENTARIST|AXONOMETRIC|RIETVELD",
-   "edition": 126
+   "edition": 127
+  },
+  {
+   "m": {
+    "parts": 102,
+    "aspect": 1.09,
+    "inkLoad": 29.8,
+    "siteRatio": 0.2,
+    "zeroLegend": 0,
+    "cutFaces": 0
+   },
+   "seed": 47048,
+   "style": "DE STIJL",
+   "substyle": "PLANAR",
+   "view": "AXONOMETRIC",
+   "palette": "RIETVELD",
+   "site": "CITY EDGE",
+   "paper": "VINTAGE",
+   "floors": 4,
+   "buildings": 2,
+   "shape": "BAR",
+   "type": "STUDIO",
+   "tenets": "5/5",
+   "parts": "MODERATE",
+   "bits": 42.4,
+   "rank": 0.2775,
+   "tier": "UNCOMMON",
+   "dwg": "IS-98C606",
+   "hash": "3D88CD7F",
+   "look": "DE STIJL|PLANAR|AXONOMETRIC|RIETVELD",
+   "edition": 128
   },
   {
    "m": {
@@ -4024,66 +4084,6 @@
    "dwg": "IS-B768CF",
    "hash": "06AEA0AD",
    "look": "DE STIJL|SCHRODER|AXONOMETRIC|MONDRIAN",
-   "edition": 127
-  },
-  {
-   "m": {
-    "parts": 52,
-    "aspect": 1.08,
-    "inkLoad": 29.6,
-    "siteRatio": 0.51,
-    "zeroLegend": 1,
-    "cutFaces": 71
-   },
-   "seed": 52078,
-   "style": "DE STIJL",
-   "substyle": "SCHRODER",
-   "view": "PLAN + SECTION",
-   "palette": "DOESBURG",
-   "site": "CITY",
-   "paper": "ROUGH",
-   "floors": 3,
-   "buildings": 1,
-   "shape": "LSHAPE",
-   "type": "HOUSE",
-   "tenets": "5/5",
-   "parts": "SPARSE",
-   "bits": 43.88,
-   "rank": 0.15,
-   "tier": "UNCOMMON",
-   "dwg": "IS-D90628",
-   "hash": "0E85F952",
-   "look": "DE STIJL|SCHRODER|PLAN + SECTION|DOESBURG",
-   "edition": 128
-  },
-  {
-   "m": {
-    "parts": 53,
-    "aspect": 0.98,
-    "inkLoad": 25,
-    "siteRatio": 0.19,
-    "zeroLegend": 0,
-    "cutFaces": 0
-   },
-   "seed": 53342,
-   "style": "DE STIJL",
-   "substyle": "COUNTER",
-   "view": "AXONOMETRIC",
-   "palette": "RIETVELD",
-   "site": "PARK",
-   "paper": "VINTAGE",
-   "floors": 2,
-   "buildings": 1,
-   "shape": "LSHAPE",
-   "type": "STUDIO",
-   "tenets": "5/5",
-   "parts": "SPARSE",
-   "bits": 42.03,
-   "rank": 0.315,
-   "tier": "UNCOMMON",
-   "dwg": "IS-E6E247",
-   "hash": "B830B4EB",
-   "look": "DE STIJL|COUNTER|AXONOMETRIC|RIETVELD",
    "edition": 129
   },
   {
@@ -4118,6 +4118,36 @@
   },
   {
    "m": {
+    "parts": 229,
+    "aspect": 1.83,
+    "inkLoad": 58.4,
+    "siteRatio": 0.95,
+    "zeroLegend": 1,
+    "cutFaces": 0
+   },
+   "seed": 5120,
+   "style": "METABOLISM",
+   "substyle": "SKY HOUSE",
+   "view": "AXONOMETRIC",
+   "palette": "NAKAGIN",
+   "site": "WATERFRONT",
+   "paper": "ROUGH",
+   "floors": 11,
+   "buildings": 2,
+   "shape": "RECTANGLE",
+   "type": "MEGASTRUCTURE",
+   "tenets": "5/5",
+   "parts": "DENSE",
+   "bits": 43.88,
+   "rank": 0.15,
+   "tier": "UNCOMMON",
+   "dwg": "IS-93DAA5",
+   "hash": "9FCFE7B0",
+   "look": "METABOLISM|SKY HOUSE|AXONOMETRIC|NAKAGIN",
+   "edition": 131
+  },
+  {
+   "m": {
     "parts": 192,
     "aspect": 1.83,
     "inkLoad": 59.9,
@@ -4144,37 +4174,37 @@
    "dwg": "IS-10E6A3",
    "hash": "AAE14222",
    "look": "METABOLISM|SKY HOUSE|PLAN + SECTION|KIKUTAKE",
-   "edition": 131
+   "edition": 132
   },
   {
    "m": {
-    "parts": 229,
-    "aspect": 1.79,
-    "inkLoad": 59.2,
-    "siteRatio": 0.15,
+    "parts": 194,
+    "aspect": 1.78,
+    "inkLoad": 50,
+    "siteRatio": 0.18,
     "zeroLegend": 1,
     "cutFaces": 0
    },
-   "seed": 6817,
+   "seed": 5306,
    "style": "METABOLISM",
-   "substyle": "NAKAGIN",
+   "substyle": "HELIX",
    "view": "AXONOMETRIC",
-   "palette": "KIKUTAKE",
+   "palette": "NAKAGIN",
    "site": "CITY EDGE",
-   "paper": "ROUGH",
-   "floors": 10,
+   "paper": "VINTAGE",
+   "floors": 9,
    "buildings": 2,
    "shape": "RECTANGLE",
    "type": "MEGASTRUCTURE",
    "tenets": "5/5",
    "parts": "DENSE",
-   "bits": 43.79,
-   "rank": 0.1575,
-   "tier": "UNCOMMON",
-   "dwg": "IS-0C6B3E",
-   "hash": "C9DE40D6",
-   "look": "METABOLISM|NAKAGIN|AXONOMETRIC|KIKUTAKE",
-   "edition": 132
+   "bits": 38.03,
+   "rank": 0.8375,
+   "tier": "COMMON",
+   "dwg": "IS-004BD0",
+   "hash": "CBB85806",
+   "look": "METABOLISM|HELIX|AXONOMETRIC|NAKAGIN",
+   "edition": 133
   },
   {
    "m": {
@@ -4204,7 +4234,7 @@
    "dwg": "IS-C7D1AC",
    "hash": "88BAB521",
    "look": "METABOLISM|NAKAGIN|PLAN + SECTION|EXPO70",
-   "edition": 133
+   "edition": 134
   },
   {
    "m": {
@@ -4234,97 +4264,97 @@
    "dwg": "IS-FB61AF",
    "hash": "E5D40485",
    "look": "METABOLISM|CLUSTER|PLAN + SECTION|EXPO70",
-   "edition": 134
-  },
-  {
-   "m": {
-    "parts": 213,
-    "aspect": 1.33,
-    "inkLoad": 52.1,
-    "siteRatio": 1.36,
-    "zeroLegend": 0,
-    "cutFaces": 0
-   },
-   "seed": 17087,
-   "style": "METABOLISM",
-   "substyle": "HELIX",
-   "view": "AXONOMETRIC",
-   "palette": "EXPO70",
-   "site": "WATERFRONT",
-   "paper": "ROUGH",
-   "floors": 7,
-   "buildings": 2,
-   "shape": "RECTANGLE",
-   "type": "PIER",
-   "tenets": "5/5",
-   "parts": "DENSE",
-   "bits": 43.83,
-   "rank": 0.1525,
-   "tier": "UNCOMMON",
-   "dwg": "IS-575846",
-   "hash": "F3386DB1",
-   "look": "METABOLISM|HELIX|AXONOMETRIC|EXPO70",
    "edition": 135
   },
   {
    "m": {
-    "parts": 153,
-    "aspect": 1.58,
-    "inkLoad": 47.1,
-    "siteRatio": 0.15,
-    "zeroLegend": 1,
-    "cutFaces": 265
+    "parts": 159,
+    "aspect": 1.82,
+    "inkLoad": 52.9,
+    "siteRatio": 0.27,
+    "zeroLegend": 0,
+    "cutFaces": 281
    },
-   "seed": 17837,
+   "seed": 14635,
    "style": "METABOLISM",
-   "substyle": "CLUSTER",
+   "substyle": "SKY HOUSE",
    "view": "PLAN + SECTION",
-   "palette": "KIKUTAKE",
-   "site": "PLAZA DIST",
-   "paper": "STANDARD",
-   "floors": 7,
-   "buildings": 2,
+   "palette": "EXPO70",
+   "site": "CITY",
+   "paper": "ROUGH",
+   "floors": 8,
+   "buildings": 1,
    "shape": "RECTANGLE",
-   "type": "TOWER",
+   "type": "PIER",
    "tenets": "5/5",
    "parts": "DENSE",
-   "bits": 41.54,
-   "rank": 0.365,
+   "bits": 41.96,
+   "rank": 0.32,
    "tier": "UNCOMMON",
-   "dwg": "IS-4E23EB",
-   "hash": "C9EA4866",
-   "look": "METABOLISM|CLUSTER|PLAN + SECTION|KIKUTAKE",
+   "dwg": "IS-4874B9",
+   "hash": "56DC1379",
+   "look": "METABOLISM|SKY HOUSE|PLAN + SECTION|EXPO70",
    "edition": 136
   },
   {
    "m": {
-    "parts": 152,
-    "aspect": 1.46,
-    "inkLoad": 45.6,
-    "siteRatio": 0.17,
+    "parts": 123,
+    "aspect": 2.01,
+    "inkLoad": 48.7,
+    "siteRatio": 0.21,
     "zeroLegend": 1,
     "cutFaces": 0
    },
-   "seed": 29860,
+   "seed": 21092,
    "style": "METABOLISM",
    "substyle": "HELIX",
    "view": "AXONOMETRIC",
-   "palette": "NAKAGIN",
-   "site": "PLAZA DIST",
-   "paper": "VINTAGE",
-   "floors": 7,
-   "buildings": 2,
+   "palette": "EXPO70",
+   "site": "CITY EDGE",
+   "paper": "STANDARD",
+   "floors": 8,
+   "buildings": 1,
    "shape": "RECTANGLE",
-   "type": "TOWER",
+   "type": "CLUSTER",
+   "tenets": "5/5",
+   "parts": "MODERATE",
+   "bits": 40.93,
+   "rank": 0.4425,
+   "tier": "COMMON",
+   "dwg": "IS-67275B",
+   "hash": "4C8F48E8",
+   "look": "METABOLISM|HELIX|AXONOMETRIC|EXPO70",
+   "edition": 137
+  },
+  {
+   "m": {
+    "parts": 214,
+    "aspect": 2.02,
+    "inkLoad": 72.3,
+    "siteRatio": 0.2,
+    "zeroLegend": 0,
+    "cutFaces": 0
+   },
+   "seed": 27520,
+   "style": "METABOLISM",
+   "substyle": "NAKAGIN",
+   "view": "AXONOMETRIC",
+   "palette": "KIKUTAKE",
+   "site": "CITY",
+   "paper": "VINTAGE",
+   "floors": 11,
+   "buildings": 1,
+   "shape": "RECTANGLE",
+   "type": "CLUSTER",
    "tenets": "5/5",
    "parts": "DENSE",
-   "bits": 38.27,
-   "rank": 0.8075,
-   "tier": "COMMON",
-   "dwg": "IS-58B1B5",
-   "hash": "73686D09",
-   "look": "METABOLISM|HELIX|AXONOMETRIC|NAKAGIN",
-   "edition": 137
+   "bits": 43.02,
+   "rank": 0.22,
+   "tier": "UNCOMMON",
+   "dwg": "IS-5C055B",
+   "hash": "8B44DD18",
+   "look": "METABOLISM|NAKAGIN|AXONOMETRIC|KIKUTAKE",
+   "edition": 138
   },
   {
    "m": {
@@ -4354,7 +4384,37 @@
    "dwg": "IS-BE4F13",
    "hash": "99420285",
    "look": "METABOLISM|NAKAGIN|AXONOMETRIC|EXPO70",
-   "edition": 138
+   "edition": 139
+  },
+  {
+   "m": {
+    "parts": 120,
+    "aspect": 1.83,
+    "inkLoad": 46.6,
+    "siteRatio": 0.35,
+    "zeroLegend": 0,
+    "cutFaces": 0
+   },
+   "seed": 32168,
+   "style": "METABOLISM",
+   "substyle": "CLUSTER",
+   "view": "AXONOMETRIC",
+   "palette": "KIKUTAKE",
+   "site": "PLAZA DIST",
+   "paper": "STANDARD",
+   "floors": 7,
+   "buildings": 1,
+   "shape": "RECTANGLE",
+   "type": "MEGASTRUCTURE",
+   "tenets": "5/5",
+   "parts": "MODERATE",
+   "bits": 37.81,
+   "rank": 0.8625,
+   "tier": "COMMON",
+   "dwg": "IS-60E8D7",
+   "hash": "AE0809D6",
+   "look": "METABOLISM|CLUSTER|AXONOMETRIC|KIKUTAKE",
+   "edition": 140
   },
   {
    "m": {
@@ -4384,7 +4444,7 @@
    "dwg": "IS-BFA3B8",
    "hash": "0FEE1A9C",
    "look": "METABOLISM|NAKAGIN|AXONOMETRIC|NAKAGIN",
-   "edition": 139
+   "edition": 141
   },
   {
    "m": {
@@ -4414,37 +4474,7 @@
    "dwg": "IS-2064FC",
    "hash": "BE47A4F0",
    "look": "METABOLISM|MARINE|AXONOMETRIC|KIKUTAKE",
-   "edition": 140
-  },
-  {
-   "m": {
-    "parts": 165,
-    "aspect": 1.84,
-    "inkLoad": 55.9,
-    "siteRatio": 0.17,
-    "zeroLegend": 0,
-    "cutFaces": 0
-   },
-   "seed": 37604,
-   "style": "METABOLISM",
-   "substyle": "CLUSTER",
-   "view": "AXONOMETRIC",
-   "palette": "KIKUTAKE",
-   "site": "CITY EDGE",
-   "paper": "ROUGH",
-   "floors": 8,
-   "buildings": 1,
-   "shape": "RECTANGLE",
-   "type": "TOWER",
-   "tenets": "5/5",
-   "parts": "DENSE",
-   "bits": 40.44,
-   "rank": 0.5,
-   "tier": "COMMON",
-   "dwg": "IS-5D3A15",
-   "hash": "1B812380",
-   "look": "METABOLISM|CLUSTER|AXONOMETRIC|KIKUTAKE",
-   "edition": 141
+   "edition": 142
   },
   {
    "m": {
@@ -4474,7 +4504,7 @@
    "dwg": "IS-1ED226",
    "hash": "3DA4F2F0",
    "look": "METABOLISM|MARINE|AXONOMETRIC|NAKAGIN",
-   "edition": 142
+   "edition": 143
   },
   {
    "m": {
@@ -4504,7 +4534,7 @@
    "dwg": "IS-0D3ADE",
    "hash": "E1C3C4FE",
    "look": "METABOLISM|CLUSTER|PLAN + SECTION|NAKAGIN",
-   "edition": 143
+   "edition": 144
   },
   {
    "m": {
@@ -4534,7 +4564,7 @@
    "dwg": "IS-3315F1",
    "hash": "CD15D812",
    "look": "METABOLISM|CLUSTER|AXONOMETRIC|NAKAGIN",
-   "edition": 144
+   "edition": 145
   },
   {
    "m": {
@@ -4564,7 +4594,37 @@
    "dwg": "IS-CFEB19",
    "hash": "DE2C3CF3",
    "look": "METABOLISM|SKY HOUSE|AXONOMETRIC|KIKUTAKE",
-   "edition": 145
+   "edition": 146
+  },
+  {
+   "m": {
+    "parts": 215,
+    "aspect": 1.38,
+    "inkLoad": 48.2,
+    "siteRatio": 0.15,
+    "zeroLegend": 0,
+    "cutFaces": 355
+   },
+   "seed": 45984,
+   "style": "METABOLISM",
+   "substyle": "MARINE",
+   "view": "PLAN + SECTION",
+   "palette": "NAKAGIN",
+   "site": "PLAZA DIST",
+   "paper": "ROUGH",
+   "floors": 8,
+   "buildings": 2,
+   "shape": "RECTANGLE",
+   "type": "TOWER",
+   "tenets": "5/5",
+   "parts": "DENSE",
+   "bits": 40.17,
+   "rank": 0.5325,
+   "tier": "COMMON",
+   "dwg": "IS-90CD8C",
+   "hash": "8003D462",
+   "look": "METABOLISM|MARINE|PLAN + SECTION|NAKAGIN",
+   "edition": 147
   },
   {
    "m": {
@@ -4594,66 +4654,6 @@
    "dwg": "IS-6C06BA",
    "hash": "D39B2588",
    "look": "METABOLISM|HELIX|AXONOMETRIC|KIKUTAKE",
-   "edition": 146
-  },
-  {
-   "m": {
-    "parts": 196,
-    "aspect": 2.01,
-    "inkLoad": 63.3,
-    "siteRatio": 0.24,
-    "zeroLegend": 0,
-    "cutFaces": 269
-   },
-   "seed": 49729,
-   "style": "METABOLISM",
-   "substyle": "MARINE",
-   "view": "PLAN + SECTION",
-   "palette": "NAKAGIN",
-   "site": "CITY",
-   "paper": "VINTAGE",
-   "floors": 9,
-   "buildings": 1,
-   "shape": "RECTANGLE",
-   "type": "CLUSTER",
-   "tenets": "5/5",
-   "parts": "DENSE",
-   "bits": 41.84,
-   "rank": 0.335,
-   "tier": "UNCOMMON",
-   "dwg": "IS-777927",
-   "hash": "0C8E4FAD",
-   "look": "METABOLISM|MARINE|PLAN + SECTION|NAKAGIN",
-   "edition": 147
-  },
-  {
-   "m": {
-    "parts": 269,
-    "aspect": 1.65,
-    "inkLoad": 62.3,
-    "siteRatio": 0.21,
-    "zeroLegend": 0,
-    "cutFaces": 569
-   },
-   "seed": 50153,
-   "style": "METABOLISM",
-   "substyle": "SKY HOUSE",
-   "view": "PLAN + SECTION",
-   "palette": "EXPO70",
-   "site": "CITY",
-   "paper": "STANDARD",
-   "floors": 9,
-   "buildings": 2,
-   "shape": "RECTANGLE",
-   "type": "CLUSTER",
-   "tenets": "5/5",
-   "parts": "DENSE",
-   "bits": 44.25,
-   "rank": 0.1275,
-   "tier": "RARE",
-   "dwg": "IS-04E7FA",
-   "hash": "B12F68C8",
-   "look": "METABOLISM|SKY HOUSE|PLAN + SECTION|EXPO70",
    "edition": 148
   },
   {
@@ -4688,6 +4688,36 @@
   },
   {
    "m": {
+    "parts": 189,
+    "aspect": 1.49,
+    "inkLoad": 49,
+    "siteRatio": 0.16,
+    "zeroLegend": 1,
+    "cutFaces": 285
+   },
+   "seed": 51174,
+   "style": "METABOLISM",
+   "substyle": "CLUSTER",
+   "view": "PLAN + SECTION",
+   "palette": "KIKUTAKE",
+   "site": "CITY",
+   "paper": "VINTAGE",
+   "floors": 8,
+   "buildings": 2,
+   "shape": "RECTANGLE",
+   "type": "MEGASTRUCTURE",
+   "tenets": "5/5",
+   "parts": "DENSE",
+   "bits": 41.55,
+   "rank": 0.365,
+   "tier": "UNCOMMON",
+   "dwg": "IS-4EBE03",
+   "hash": "7359723A",
+   "look": "METABOLISM|CLUSTER|PLAN + SECTION|KIKUTAKE",
+   "edition": 150
+  },
+  {
+   "m": {
     "parts": 268,
     "aspect": 1.63,
     "inkLoad": 60.8,
@@ -4714,36 +4744,6 @@
    "dwg": "IS-BD3244",
    "hash": "E4A388FE",
    "look": "METABOLISM|MARINE|PLAN + SECTION|EXPO70",
-   "edition": 150
-  },
-  {
-   "m": {
-    "parts": 183,
-    "aspect": 1.42,
-    "inkLoad": 44.1,
-    "siteRatio": 0.25,
-    "zeroLegend": 1,
-    "cutFaces": 0
-   },
-   "seed": 58908,
-   "style": "METABOLISM",
-   "substyle": "SKY HOUSE",
-   "view": "AXONOMETRIC",
-   "palette": "NAKAGIN",
-   "site": "CITY",
-   "paper": "VINTAGE",
-   "floors": 8,
-   "buildings": 2,
-   "shape": "RECTANGLE",
-   "type": "TOWER",
-   "tenets": "5/5",
-   "parts": "DENSE",
-   "bits": 41.43,
-   "rank": 0.3775,
-   "tier": "UNCOMMON",
-   "dwg": "IS-58E6F5",
-   "hash": "FC7A9324",
-   "look": "METABOLISM|SKY HOUSE|AXONOMETRIC|NAKAGIN",
    "edition": 151
   },
   {
@@ -4778,93 +4778,33 @@
   },
   {
    "m": {
-    "parts": 34,
-    "aspect": 0.82,
-    "inkLoad": 26.7,
-    "siteRatio": 0.26,
-    "zeroLegend": 0,
+    "parts": 23,
+    "aspect": 0.68,
+    "inkLoad": 21.6,
+    "siteRatio": 0.47,
+    "zeroLegend": 1,
     "cutFaces": 0
    },
-   "seed": 292,
+   "seed": 186,
    "style": "PALLADIAN",
-   "substyle": "EMO",
+   "substyle": "TEMPLE FRONT",
    "view": "AXONOMETRIC",
-   "palette": "PIETRA",
-   "site": "PARK",
-   "paper": "ROUGH",
-   "floors": 3,
-   "buildings": 2,
-   "shape": "COURT",
-   "type": "TEMPIETTO",
-   "tenets": "5/5",
-   "parts": "SPARSE",
-   "bits": 45.46,
-   "rank": 0.055,
-   "tier": "RARE",
-   "dwg": "IS-2FF94A",
-   "hash": "DEE8E335",
-   "look": "PALLADIAN|EMO|AXONOMETRIC|PIETRA",
-   "edition": 153
-  },
-  {
-   "m": {
-    "parts": 25,
-    "aspect": 0.62,
-    "inkLoad": 19.6,
-    "siteRatio": 0.33,
-    "zeroLegend": 0,
-    "cutFaces": 21
-   },
-   "seed": 3101,
-   "style": "PALLADIAN",
-   "substyle": "MALCONTENTA",
-   "view": "PLAN + SECTION",
    "palette": "VENETO",
    "site": "PARK",
-   "paper": "STANDARD",
+   "paper": "VINTAGE",
    "floors": 2,
    "buildings": 1,
-   "shape": "TSHAPE",
-   "type": "CASINO",
-   "tenets": "5/5",
-   "parts": "SPARSE",
-   "bits": 43.88,
-   "rank": 0.15,
-   "tier": "UNCOMMON",
-   "dwg": "IS-9DACFF",
-   "hash": "731F0CB3",
-   "look": "PALLADIAN|MALCONTENTA|PLAN + SECTION|VENETO",
-   "edition": 154
-  },
-  {
-   "m": {
-    "parts": 23,
-    "aspect": 0.74,
-    "inkLoad": 23.9,
-    "siteRatio": 0.84,
-    "zeroLegend": 1,
-    "cutFaces": 33
-   },
-   "seed": 4540,
-   "style": "PALLADIAN",
-   "substyle": "BARCHESSA",
-   "view": "PLAN + SECTION",
-   "palette": "INTONACO",
-   "site": "CITY EDGE",
-   "paper": "VINTAGE",
-   "floors": 3,
-   "buildings": 1,
    "shape": "COURT",
-   "type": "CASINO",
+   "type": "PALAZZO",
    "tenets": "5/5",
    "parts": "SPARSE",
-   "bits": 45.8,
-   "rank": 0.04,
-   "tier": "EPIC",
-   "dwg": "IS-095BDB",
-   "hash": "B26C0A5F",
-   "look": "PALLADIAN|BARCHESSA|PLAN + SECTION|INTONACO",
-   "edition": 155
+   "bits": 44.92,
+   "rank": 0.08,
+   "tier": "RARE",
+   "dwg": "IS-F51F99",
+   "hash": "7E4F6DAD",
+   "look": "PALLADIAN|TEMPLE FRONT|AXONOMETRIC|VENETO",
+   "edition": 153
   },
   {
    "m": {
@@ -4894,7 +4834,37 @@
    "dwg": "IS-64E30E",
    "hash": "67211AC9",
    "look": "PALLADIAN|EMO|PLAN + SECTION|INTONACO",
-   "edition": 156
+   "edition": 154
+  },
+  {
+   "m": {
+    "parts": 34,
+    "aspect": 0.74,
+    "inkLoad": 24.3,
+    "siteRatio": 0.63,
+    "zeroLegend": 0,
+    "cutFaces": 0
+   },
+   "seed": 9577,
+   "style": "PALLADIAN",
+   "substyle": "EMO",
+   "view": "AXONOMETRIC",
+   "palette": "PIETRA",
+   "site": "HILLSIDE",
+   "paper": "STANDARD",
+   "floors": 3,
+   "buildings": 2,
+   "shape": "COURT",
+   "type": "CASINO",
+   "tenets": "5/5",
+   "parts": "SPARSE",
+   "bits": 44.3,
+   "rank": 0.1225,
+   "tier": "RARE",
+   "dwg": "IS-724BD0",
+   "hash": "7618DE78",
+   "look": "PALLADIAN|EMO|AXONOMETRIC|PIETRA",
+   "edition": 155
   },
   {
    "m": {
@@ -4924,7 +4894,7 @@
    "dwg": "IS-FB7494",
    "hash": "1A9FC168",
    "look": "PALLADIAN|EMO|AXONOMETRIC|VENETO",
-   "edition": 157
+   "edition": 156
   },
   {
    "m": {
@@ -4954,37 +4924,37 @@
    "dwg": "IS-5DAC2F",
    "hash": "BA62045E",
    "look": "PALLADIAN|MALCONTENTA|AXONOMETRIC|PIETRA",
-   "edition": 158
+   "edition": 157
   },
   {
    "m": {
-    "parts": 37,
-    "aspect": 0.76,
-    "inkLoad": 24.1,
-    "siteRatio": 0.55,
+    "parts": 33,
+    "aspect": 0.72,
+    "inkLoad": 21.2,
+    "siteRatio": 0.45,
     "zeroLegend": 0,
-    "cutFaces": 78
+    "cutFaces": 31
    },
-   "seed": 16001,
+   "seed": 16219,
    "style": "PALLADIAN",
-   "substyle": "MALCONTENTA",
+   "substyle": "BARCHESSA",
    "view": "PLAN + SECTION",
-   "palette": "INTONACO",
-   "site": "HILLSIDE",
+   "palette": "PIETRA",
+   "site": "CITY EDGE",
    "paper": "ROUGH",
    "floors": 2,
    "buildings": 2,
-   "shape": "COURT",
-   "type": "TEMPIETTO",
+   "shape": "TSHAPE",
+   "type": "PALAZZO",
    "tenets": "5/5",
    "parts": "SPARSE",
-   "bits": 47.54,
-   "rank": 0.0075,
-   "tier": "LEGENDARY",
-   "dwg": "IS-EC75E6",
-   "hash": "09AC0A4A",
-   "look": "PALLADIAN|MALCONTENTA|PLAN + SECTION|INTONACO",
-   "edition": 159
+   "bits": 45.26,
+   "rank": 0.0625,
+   "tier": "RARE",
+   "dwg": "IS-0B4984",
+   "hash": "9F8CD2B9",
+   "look": "PALLADIAN|BARCHESSA|PLAN + SECTION|PIETRA",
+   "edition": 158
   },
   {
    "m": {
@@ -5014,7 +4984,67 @@
    "dwg": "IS-3120A2",
    "hash": "CE6B179A",
    "look": "PALLADIAN|ROTONDA|PLAN + SECTION|INTONACO",
+   "edition": 159
+  },
+  {
+   "m": {
+    "parts": 36,
+    "aspect": 0.77,
+    "inkLoad": 23.8,
+    "siteRatio": 0.27,
+    "zeroLegend": 1,
+    "cutFaces": 35
+   },
+   "seed": 19780,
+   "style": "PALLADIAN",
+   "substyle": "MALCONTENTA",
+   "view": "PLAN + SECTION",
+   "palette": "VENETO",
+   "site": "PARK",
+   "paper": "VINTAGE",
+   "floors": 2,
+   "buildings": 2,
+   "shape": "COURT",
+   "type": "CASINO",
+   "tenets": "5/5",
+   "parts": "SPARSE",
+   "bits": 44.61,
+   "rank": 0.1,
+   "tier": "RARE",
+   "dwg": "IS-78D869",
+   "hash": "F7D46CD3",
+   "look": "PALLADIAN|MALCONTENTA|PLAN + SECTION|VENETO",
    "edition": 160
+  },
+  {
+   "m": {
+    "parts": 37,
+    "aspect": 0.64,
+    "inkLoad": 25.6,
+    "siteRatio": 0.31,
+    "zeroLegend": 0,
+    "cutFaces": 103
+   },
+   "seed": 21083,
+   "style": "PALLADIAN",
+   "substyle": "BARCHESSA",
+   "view": "PLAN + SECTION",
+   "palette": "INTONACO",
+   "site": "CITY EDGE",
+   "paper": "ROUGH",
+   "floors": 2,
+   "buildings": 2,
+   "shape": "CROSS",
+   "type": "PALAZZO",
+   "tenets": "5/5",
+   "parts": "SPARSE",
+   "bits": 45.29,
+   "rank": 0.0625,
+   "tier": "RARE",
+   "dwg": "IS-66251B",
+   "hash": "559195AA",
+   "look": "PALLADIAN|BARCHESSA|PLAN + SECTION|INTONACO",
+   "edition": 161
   },
   {
    "m": {
@@ -5044,7 +5074,7 @@
    "dwg": "IS-FA0238",
    "hash": "004A9361",
    "look": "PALLADIAN|ROTONDA|AXONOMETRIC|INTONACO",
-   "edition": 161
+   "edition": 162
   },
   {
    "m": {
@@ -5074,7 +5104,7 @@
    "dwg": "IS-7B2DAB",
    "hash": "E6CC93D5",
    "look": "PALLADIAN|BARCHESSA|AXONOMETRIC|PIETRA",
-   "edition": 162
+   "edition": 163
   },
   {
    "m": {
@@ -5104,97 +5134,97 @@
    "dwg": "IS-51083E",
    "hash": "609D5727",
    "look": "PALLADIAN|TEMPLE FRONT|AXONOMETRIC|PIETRA",
-   "edition": 163
-  },
-  {
-   "m": {
-    "parts": 35,
-    "aspect": 0.75,
-    "inkLoad": 25.6,
-    "siteRatio": 0.36,
-    "zeroLegend": 0,
-    "cutFaces": 0
-   },
-   "seed": 36219,
-   "style": "PALLADIAN",
-   "substyle": "TEMPLE FRONT",
-   "view": "AXONOMETRIC",
-   "palette": "VENETO",
-   "site": "CITY EDGE",
-   "paper": "STANDARD",
-   "floors": 3,
-   "buildings": 2,
-   "shape": "COURT",
-   "type": "PALAZZO",
-   "tenets": "5/5",
-   "parts": "SPARSE",
-   "bits": 44.38,
-   "rank": 0.1175,
-   "tier": "RARE",
-   "dwg": "IS-A9CDA3",
-   "hash": "38DF04CF",
-   "look": "PALLADIAN|TEMPLE FRONT|AXONOMETRIC|VENETO",
    "edition": 164
   },
   {
    "m": {
-    "parts": 24,
-    "aspect": 0.72,
-    "inkLoad": 25.4,
-    "siteRatio": 0.39,
-    "zeroLegend": 0,
+    "parts": 22,
+    "aspect": 0.66,
+    "inkLoad": 20.9,
+    "siteRatio": 0.43,
+    "zeroLegend": 1,
     "cutFaces": 0
    },
-   "seed": 47064,
+   "seed": 34170,
    "style": "PALLADIAN",
-   "substyle": "ROTONDA",
+   "substyle": "MALCONTENTA",
    "view": "AXONOMETRIC",
-   "palette": "PIETRA",
+   "palette": "VENETO",
    "site": "PARK",
    "paper": "VINTAGE",
-   "floors": 3,
+   "floors": 2,
+   "buildings": 1,
+   "shape": "CROSS",
+   "type": "TEMPIETTO",
+   "tenets": "5/5",
+   "parts": "SPARSE",
+   "bits": 43.79,
+   "rank": 0.1575,
+   "tier": "UNCOMMON",
+   "dwg": "IS-D9BE1E",
+   "hash": "DDB6AAF5",
+   "look": "PALLADIAN|MALCONTENTA|AXONOMETRIC|VENETO",
+   "edition": 165
+  },
+  {
+   "m": {
+    "parts": 21,
+    "aspect": 0.66,
+    "inkLoad": 20.5,
+    "siteRatio": 0.6,
+    "zeroLegend": 0,
+    "cutFaces": 36
+   },
+   "seed": 37932,
+   "style": "PALLADIAN",
+   "substyle": "BARCHESSA",
+   "view": "PLAN + SECTION",
+   "palette": "VENETO",
+   "site": "CITY EDGE",
+   "paper": "VINTAGE",
+   "floors": 2,
+   "buildings": 1,
+   "shape": "COURT",
+   "type": "TEMPIETTO",
+   "tenets": "5/5",
+   "parts": "SPARSE",
+   "bits": 46.01,
+   "rank": 0.0325,
+   "tier": "EPIC",
+   "dwg": "IS-1434C1",
+   "hash": "9B83D21C",
+   "look": "PALLADIAN|BARCHESSA|PLAN + SECTION|VENETO",
+   "edition": 166
+  },
+  {
+   "m": {
+    "parts": 23,
+    "aspect": 0.63,
+    "inkLoad": 20.3,
+    "siteRatio": 0.41,
+    "zeroLegend": 1,
+    "cutFaces": 28
+   },
+   "seed": 39995,
+   "style": "PALLADIAN",
+   "substyle": "MALCONTENTA",
+   "view": "PLAN + SECTION",
+   "palette": "INTONACO",
+   "site": "PLAZA DIST",
+   "paper": "ROUGH",
+   "floors": 2,
    "buildings": 1,
    "shape": "COURT",
    "type": "CASINO",
    "tenets": "5/5",
    "parts": "SPARSE",
-   "bits": 44.81,
-   "rank": 0.0875,
-   "tier": "RARE",
-   "dwg": "IS-18CB4D",
-   "hash": "B5837A39",
-   "look": "PALLADIAN|ROTONDA|AXONOMETRIC|PIETRA",
-   "edition": 165
-  },
-  {
-   "m": {
-    "parts": 22,
-    "aspect": 0.65,
-    "inkLoad": 19.5,
-    "siteRatio": 0.77,
-    "zeroLegend": 1,
-    "cutFaces": 0
-   },
-   "seed": 47671,
-   "style": "PALLADIAN",
-   "substyle": "EMO",
-   "view": "AXONOMETRIC",
-   "palette": "INTONACO",
-   "site": "HILLSIDE",
-   "paper": "ROUGH",
-   "floors": 2,
-   "buildings": 1,
-   "shape": "COURT",
-   "type": "PALAZZO",
-   "tenets": "5/5",
-   "parts": "SPARSE",
-   "bits": 44.54,
-   "rank": 0.1075,
-   "tier": "RARE",
-   "dwg": "IS-4BA6FC",
-   "hash": "562ED14D",
-   "look": "PALLADIAN|EMO|AXONOMETRIC|INTONACO",
-   "edition": 166
+   "bits": 46.67,
+   "rank": 0.0175,
+   "tier": "EPIC",
+   "dwg": "IS-4538CF",
+   "hash": "098D99D1",
+   "look": "PALLADIAN|MALCONTENTA|PLAN + SECTION|INTONACO",
+   "edition": 167
   },
   {
    "m": {
@@ -5224,37 +5254,67 @@
    "dwg": "IS-3A2F2C",
    "hash": "CEA2281F",
    "look": "PALLADIAN|TEMPLE FRONT|PLAN + SECTION|INTONACO",
-   "edition": 167
+   "edition": 168
   },
   {
    "m": {
     "parts": 36,
-    "aspect": 0.6,
-    "inkLoad": 26.1,
-    "siteRatio": 0.27,
+    "aspect": 0.81,
+    "inkLoad": 21.6,
+    "siteRatio": 0.73,
     "zeroLegend": 0,
-    "cutFaces": 78
+    "cutFaces": 0
    },
-   "seed": 56171,
+   "seed": 49844,
    "style": "PALLADIAN",
-   "substyle": "BARCHESSA",
-   "view": "PLAN + SECTION",
-   "palette": "VENETO",
-   "site": "PLAZA DIST",
-   "paper": "VINTAGE",
-   "floors": 3,
+   "substyle": "EMO",
+   "view": "AXONOMETRIC",
+   "palette": "INTONACO",
+   "site": "HILLSIDE",
+   "paper": "STANDARD",
+   "floors": 2,
    "buildings": 2,
    "shape": "COURT",
-   "type": "CASINO",
+   "type": "TEMPIETTO",
    "tenets": "5/5",
    "parts": "SPARSE",
-   "bits": 45.26,
-   "rank": 0.0625,
+   "bits": 44.45,
+   "rank": 0.1125,
    "tier": "RARE",
-   "dwg": "IS-107D24",
-   "hash": "A99A4536",
-   "look": "PALLADIAN|BARCHESSA|PLAN + SECTION|VENETO",
-   "edition": 168
+   "dwg": "IS-AB844F",
+   "hash": "F2B46B3D",
+   "look": "PALLADIAN|EMO|AXONOMETRIC|INTONACO",
+   "edition": 169
+  },
+  {
+   "m": {
+    "parts": 35,
+    "aspect": 0.77,
+    "inkLoad": 24,
+    "siteRatio": 0.29,
+    "zeroLegend": 1,
+    "cutFaces": 25
+   },
+   "seed": 56098,
+   "style": "PALLADIAN",
+   "substyle": "TEMPLE FRONT",
+   "view": "PLAN + SECTION",
+   "palette": "PIETRA",
+   "site": "PLAZA DIST",
+   "paper": "STANDARD",
+   "floors": 3,
+   "buildings": 2,
+   "shape": "CROSS",
+   "type": "TEMPIETTO",
+   "tenets": "5/5",
+   "parts": "SPARSE",
+   "bits": 43.84,
+   "rank": 0.1525,
+   "tier": "UNCOMMON",
+   "dwg": "IS-20EF99",
+   "hash": "9927CFE8",
+   "look": "PALLADIAN|TEMPLE FRONT|PLAN + SECTION|PIETRA",
+   "edition": 170
   },
   {
    "m": {
@@ -5284,96 +5344,36 @@
    "dwg": "IS-EE2E3F",
    "hash": "0734A987",
    "look": "PALLADIAN|ROTONDA|AXONOMETRIC|VENETO",
-   "edition": 169
+   "edition": 171
   },
   {
    "m": {
     "parts": 21,
-    "aspect": 0.67,
-    "inkLoad": 22.4,
-    "siteRatio": 0.3,
+    "aspect": 0.7,
+    "inkLoad": 19.8,
+    "siteRatio": 1.05,
     "zeroLegend": 0,
-    "cutFaces": 18
+    "cutFaces": 0
    },
-   "seed": 58587,
+   "seed": 58110,
    "style": "PALLADIAN",
-   "substyle": "BARCHESSA",
-   "view": "PLAN + SECTION",
+   "substyle": "ROTONDA",
+   "view": "AXONOMETRIC",
    "palette": "PIETRA",
-   "site": "PLAZA DIST",
-   "paper": "VINTAGE",
+   "site": "HILLSIDE",
+   "paper": "STANDARD",
    "floors": 2,
    "buildings": 1,
    "shape": "COURT",
    "type": "TEMPIETTO",
    "tenets": "5/5",
    "parts": "SPARSE",
-   "bits": 45.02,
-   "rank": 0.075,
+   "bits": 45.31,
+   "rank": 0.06,
    "tier": "RARE",
-   "dwg": "IS-002C9D",
-   "hash": "26B270B5",
-   "look": "PALLADIAN|BARCHESSA|PLAN + SECTION|PIETRA",
-   "edition": 170
-  },
-  {
-   "m": {
-    "parts": 34,
-    "aspect": 0.57,
-    "inkLoad": 25.4,
-    "siteRatio": 1.82,
-    "zeroLegend": 1,
-    "cutFaces": 141
-   },
-   "seed": 58629,
-   "style": "PALLADIAN",
-   "substyle": "TEMPLE FRONT",
-   "view": "PLAN + SECTION",
-   "palette": "PIETRA",
-   "site": "WATERFRONT",
-   "paper": "VINTAGE",
-   "floors": 2,
-   "buildings": 2,
-   "shape": "TSHAPE",
-   "type": "VILLA",
-   "tenets": "5/5",
-   "parts": "SPARSE",
-   "bits": 42.71,
-   "rank": 0.2475,
-   "tier": "UNCOMMON",
-   "dwg": "IS-DFE837",
-   "hash": "6F7F6BE0",
-   "look": "PALLADIAN|TEMPLE FRONT|PLAN + SECTION|PIETRA",
-   "edition": 171
-  },
-  {
-   "m": {
-    "parts": 36,
-    "aspect": 0.55,
-    "inkLoad": 22.8,
-    "siteRatio": 0.64,
-    "zeroLegend": 0,
-    "cutFaces": 0
-   },
-   "seed": 59999,
-   "style": "PALLADIAN",
-   "substyle": "MALCONTENTA",
-   "view": "AXONOMETRIC",
-   "palette": "VENETO",
-   "site": "HILLSIDE",
-   "paper": "STANDARD",
-   "floors": 2,
-   "buildings": 2,
-   "shape": "COURT",
-   "type": "TEMPIETTO",
-   "tenets": "5/5",
-   "parts": "SPARSE",
-   "bits": 43.26,
-   "rank": 0.2,
-   "tier": "UNCOMMON",
-   "dwg": "IS-9640BB",
-   "hash": "313D3DAB",
-   "look": "PALLADIAN|MALCONTENTA|AXONOMETRIC|VENETO",
+   "dwg": "IS-51CAA2",
+   "hash": "F114982D",
+   "look": "PALLADIAN|ROTONDA|AXONOMETRIC|PIETRA",
    "edition": 172
   },
   {

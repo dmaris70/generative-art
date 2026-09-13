@@ -268,7 +268,16 @@ The **edition** is curated, not drawn: `tools/strata-select.mjs` builds a large 
 no two tokens share a look (style + substyle + view + palette), equal style quotas, and
 within a style substyles, views (about two thirds axonometric) and palettes filled
 round-robin, with the least-used site and paper winning inside a look and the rarity score
-only breaking ties. The record is `edition/edition-256.json` (pool, rules, rejections,
+only breaking ties. Two more layers make the curation objective rather than a matter of taste: **quality
+gates** computed from the generative state and banded per style over the pool (part count
+and ink load within the 10th–90th percentile, projected proportion between 0.45 and 2.2, a
+site neither barren nor dominant, at most one empty legend entry, enough geometry through a
+section cut), and a **rendered audit** (`tools/strata-audit.mjs`) that renders every
+selected token at full sheet width, measures ink coverage against the sheet's own paper,
+colour presence and the ink centroid's offset, and flags outliers against the style's
+median per view and the same palette's median. Flagged seeds go to `edition/exclusions.json`
+with their measurements; the selector replaces each by the next candidate of its look, and
+audit and select alternate until nothing is flagged. The record is `edition/edition-256.json` (pool, rules, rejections,
 distribution, every token's seed, traits, score, tier, hash) and `edition/edition-256.js`
 is what the sheet and the board load: a selected seed's schedule shows its
 **EDITION n / 256**, its metadata is named by edition number, and the board's `set=edition`
