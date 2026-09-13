@@ -123,9 +123,13 @@ the viewer must have that image drawn — alongside the portico on the axis, an
 ABA bay rhythm, wings lower than the block, and a block proportioned to one of
 Palladio's ratios. Writing it exposed a renderer defect: prism sides were culled
 by their plan normal alone, so a hipped roof's far slopes, which face upward,
-were dropped; `geom.prism` now tests the true face normal. The same pattern
-fits any dogma that states itself as rules: Archigram (nothing structural
-inside the envelope), Mies (structure as a visible grid of mullions).
+were dropped; `geom.prism` now tests the true face normal. `styles/archigram.js` inverts
+the Metabolist shaft: the envelope is a volume (the rig's footprint up to its
+height), every mast, truss and tie must lie on it, every duct, escalator and
+tank outside it, nothing but decks and pods within it, every pod resting on a
+deck or a pod, and a crane with a pod in the air — the drawing has to show the
+city changing. The same pattern fits any dogma that states itself as rules:
+Mies (structure as a visible grid of mullions), Rossi (archetypes only).
 
 ## 6. Extending it
 
