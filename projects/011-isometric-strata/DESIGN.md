@@ -132,9 +132,13 @@ city changing. `styles/mies.js` is the
 series' stress test — the one grammar that succeeds by removing parts — and its
 module tenet caught two set-out errors on the first run: column bays that were
 not whole modules, and a glass line set half a module in from the columns.
-Both are now on the module, which is what the tenet is for. The same pattern
-fits any dogma that states itself as rules: Rossi (archetypes only), the
-Cycladic vernacular (cubes stepping a slope, nothing taller than two).
+Both are now on the module, which is what the tenet is for. `styles/cycladic.js` is the
+first grammar built from a settlement rule rather than a building rule — the
+tenets are about the aggregate: no house above two storeys over its own
+ground, one connected cluster (a flood fill over the occupied cells), every
+flat roof behind a parapet, ground rising row by row, blue on doors, shutters
+and the dome only. The same pattern fits any dogma that states itself as
+rules: Rossi (archetypes only), Kahn (served and servant spaces).
 
 ## 6. Extending it
 
