@@ -308,6 +308,11 @@ requested token headlessly at 3000 × 4000 from the vendored libraries, writes t
 the token's ERC-721 metadata JSON (image file name and hash included), checks that the page
 reports the expected edition number and the frozen fingerprint, and records both files'
 SHA-256 in `export/manifest.json` (`1`, `1-12` or `all`; the export folder is not committed).
+Each token also gets its **companion drawing**, the same seed drawn through the other view
+(plan and section for an axonometric token and vice versa) by the same frozen generator —
+non-canonical, listed under the metadata's `properties.companion` and in the manifest with
+its own hash. Re-runs skip tokens whose files already match the manifest, so a long export
+can be resumed.
 
 The **portfolio board** ([`projects/011-isometric-strata/portfolio.html`](projects/011-isometric-strata/portfolio.html),
 or the ⊞ Portfolio button in the sheet's panel) lays many sheets on one board under a
