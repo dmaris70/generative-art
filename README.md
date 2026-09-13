@@ -285,6 +285,16 @@ pages through the edition twelve at a time (`page=`). Measured on 30,000 seeds, 
 generator holds about 360 distinct looks, so 256 is the size at which every token is unique
 at look level; above about 1,000 the series would eat itself.
 
+The generator is **frozen at v1.0**: `tools/strata-freeze.mjs freeze` fingerprints every
+file that can change a drawing (the engine, styles, token layer, stroke font, harness, the
+vendored p5 and lil-gui, the sketch and page) and records the fingerprint, the git commit and
+the hashes of the rarity table and the edition in `edition/freeze-1.0.json`; the pages load
+`lib/freeze.js` so every schedule prints the fingerprint the sheet was drawn under, and
+`verify` fails if anything has moved. The freeze was checked three ways: the rarity sampler
+and the selector reproduce the committed table and edition byte for byte, and three edition
+seeds rendered three times each gave identical PNG hashes. Nothing in the drawing path may
+change without a new version, a new rarity table and a new selection.
+
 The **portfolio board** ([`projects/011-isometric-strata/portfolio.html`](projects/011-isometric-strata/portfolio.html),
 or the ⊞ Portfolio button in the sheet's panel) lays many sheets on one board under a
 shared title strip: one sheet per style at a fixed seed (`?set=styles`), one style across
