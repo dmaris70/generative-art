@@ -249,6 +249,20 @@ half drawn as elevation over a heavy ground line and hatched earth. Both views s
 scale, the legend and tenets are unchanged (the scene is the same data), and the floor
 scale up the margin keys to the section's ground line.
 
+Every sheet is also a **token record**. A schedule column on the right of the drawing
+carries the series, token number (the seed), DWG id, generator version and hash; the
+seventeen **traits** (style, substyle, type, view, site, paper, grid, ink, palette,
+detail, density, shape, floors, buildings, scale, tenets, parts) each with its measured
+frequency and tier; the information **score** in bits, the token's **rank** in the sampled
+population and its overall tier; the variables used (floor height, building height, plot,
+plan cut, palette with hex codes); the tenets with PASS / FAIL; and the legend counts.
+Rarity is measured, not declared: `tools/strata-rarity.mjs` builds thousands of seeds
+through the engine in Node (the build is p5-free), tallies every trait value, and writes
+`lib/rarity.js`; re-run it and bump `Strata.VERSION` after any generator change. **M**
+(or the panel button) copies the token's ERC-721 metadata JSON — name, description,
+attributes with rarity and tier, and properties with the seed, hash, variables, legend
+and tenets. The column can be switched off with the `schedule` parameter.
+
 The **portfolio board** ([`projects/011-isometric-strata/portfolio.html`](projects/011-isometric-strata/portfolio.html),
 or the ⊞ Portfolio button in the sheet's panel) lays many sheets on one board under a
 shared title strip: one sheet per style at a fixed seed (`?set=styles`), one style across

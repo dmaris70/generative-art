@@ -172,7 +172,21 @@ each into its own graphics buffer one per frame, and lays the buffers on a board
 under a shared title strip with captions. Nothing in the styles or the site knows
 which client is calling.
 
-## 8. Extending it
+## 8. The token layer
+
+`lib/traits.js` makes each sheet self-describing for a minted series. Seventeen
+traits are read off the state (never off the drawing). Their rarity is measured:
+`tools/strata-rarity.mjs` runs `Strata.build` for thousands of seeds in Node —
+the build never touches p5 — tallies every value's frequency, computes each
+sample's information score (the sum of −log2 p over its traits) and writes a
+thinned quantile ladder of those scores to `lib/rarity.js`. A token's score is
+placed on that ladder to give its rank ("TOP 12%") and overall tier; each trait
+carries its own frequency and tier. The schedule column draws all of it in the
+chrome's idiom, and `Strata.metadata` emits the same as ERC-721 JSON. Because
+the table is empirical, a generator change that moves the distribution means a
+re-run and a version bump; the sheet prints the basis it was ranked against.
+
+## 9. Extending it
 
 - **A new style** is one file in `lib/styles/` exporting `{ key, header, titles,
   substyles, types, palettes, sites, shapes, floors, legend, size(), build(ctx) }`.
