@@ -6,7 +6,7 @@
 // are tallied from the geometry actually drawn, a scale bar, and the sheet's
 // specification. The building is one of four styles — the Mexican-modern
 // patio mat, the deconstructivist crystalline tower, the geodesic expo mast,
-// the brutalist mosaic block, the Five Points villa — each a vocabulary of
+// the brutalist mosaic block, the Five Points villa, the De Stijl house — each a vocabulary of
 // parts recombined by the seed, standing on one of six site types.
 //
 // Pipeline: seed → spec (style, site, paper, palette, detail…) → Scene of 3-D
@@ -35,12 +35,15 @@ const PALETTES = {
   PURIST: { colors: [[238, 234, 224], [214, 208, 192], [124, 152, 176], [214, 160, 60], [60, 62, 66]], water: [110, 136, 160] },
   SAVOYE: { colors: [[240, 237, 228], [222, 216, 200], [130, 156, 178], [90, 116, 92], [220, 150, 140]], water: [110, 136, 160] },
   POLYCHROMIE: { colors: [[236, 232, 222], [206, 198, 180], [140, 164, 186], [196, 96, 64], [86, 132, 170]], water: [110, 136, 160] },
+  RIETVELD: { colors: [[240, 238, 232], [200, 40, 40], [40, 70, 160], [236, 196, 30], [40, 42, 46], [150, 152, 156]], water: [110, 136, 160] },
+  MONDRIAN: { colors: [[244, 242, 238], [214, 34, 32], [24, 60, 140], [246, 208, 42], [30, 30, 34], [200, 200, 198]], water: [110, 136, 160] },
+  DOESBURG: { colors: [[236, 234, 228], [190, 60, 50], [60, 90, 150], [220, 180, 60], [50, 52, 56], [128, 132, 138]], water: [110, 136, 160] },
   EARTH: { colors: [[192, 96, 58], [75, 125, 138], [210, 161, 58], [111, 154, 90], [156, 107, 74]] },
   CONCRETE: { colors: [[120, 118, 112], [156, 152, 144], [192, 96, 58], [98, 110, 118], [180, 176, 166]] },
   RUSTED: { colors: [[176, 84, 48], [140, 66, 40], [210, 161, 58], [92, 96, 100], [200, 140, 100]] },
 };
 
-const STYLE_KEYS = ['mexican', 'decon', 'geodesic', 'brutalist', 'corbusier'];
+const STYLE_KEYS = ['mexican', 'decon', 'geodesic', 'brutalist', 'corbusier', 'destijl'];
 
 function setup() {
   fitCanvas();
@@ -48,7 +51,7 @@ function setup() {
   G = GenArt.create({
     title: 'Isometric Strata',
     params: {
-      mode: { value: 0, min: 0, max: 5, step: 1, label: 'style (0 auto, 1 mex, 2 decon, 3 geo, 4 brut, 5 corb)' },
+      mode: { value: 0, min: 0, max: 6, step: 1, label: 'style (0 auto, 1 mex, 2 decon, 3 geo, 4 brut, 5 corb, 6 stijl)' },
       floors: { value: 0, min: 0, max: 10, step: 1, label: 'floors (0 auto)' },
       detail: { value: 0, min: 0, max: 3, step: 1, label: 'detail (0 auto)' },
       density: { value: 0, min: 0, max: 3, step: 1, label: 'site density (0 auto)' },

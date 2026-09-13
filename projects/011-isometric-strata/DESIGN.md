@@ -107,10 +107,13 @@ the finished scene — no wall below the first floor, partitions off the column
 grid, a façade standing clear of the columns, ribbon glazing over most of the
 façade length, a planted roof behind a parapet — and returns `TENETS n/5` for
 the specification box. The count comes from what was drawn (items are tagged
-as they are placed), so a sheet that fails a tenet says so. The same pattern
-fits any dogma that states itself as rules: De Stijl (no two planes meet at a
-corner), Palladio (mirror symmetry), Metabolism (capsules attach only to the
-spine).
+as they are placed), so a sheet that fails a tenet says so. `styles/destijl.js` does the same
+for Van Doesburg's plastic architecture: every tagged face axis-aligned, no plan
+corner closed by two planes at one level, no mirror axis (a plane counts as
+mirrored when its reflection is also a plane), no primary-coloured face larger
+than a door, every slab overrunning the volume. The same pattern fits any dogma
+that states itself as rules: Palladio (mirror symmetry), Metabolism (capsules
+attach only to the spine).
 
 ## 6. Extending it
 
