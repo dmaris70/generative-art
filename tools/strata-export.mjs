@@ -32,6 +32,10 @@ const arg = process.argv[2] || '1';
 const verify = execSync(`node ${path.join(here, 'strata-freeze.mjs')} verify`, { cwd: root }).toString().trim();
 const freeze = JSON.parse(fs.readFileSync(path.join(proj, 'edition', 'freeze-1.0.json'), 'utf8'));
 const edition = JSON.parse(fs.readFileSync(path.join(proj, 'edition', 'edition-256.json'), 'utf8'));
+const decisionsFile = path.join(proj, 'edition', 'decisions.json');
+const decisions = fs.existsSync(decisionsFile) ? JSON.parse(fs.readFileSync(decisionsFile, 'utf8')) : null;
+const reservesFile = path.join(proj, 'edition', 'reserves-256.json');
+const reserves = fs.existsSync(reservesFile) ? JSON.parse(fs.readFileSync(reservesFile, 'utf8')) : null;
 
 // 2. which tokens
 let wanted;
@@ -46,7 +50,8 @@ const manifestFile = path.join(outDir, 'manifest.json');
 const manifest = fs.existsSync(manifestFile) ? JSON.parse(fs.readFileSync(manifestFile, 'utf8')) : { tokens: {} };
 Object.assign(manifest, {
   series: edition.series, generator: { version: freeze.version, fingerprint: freeze.fingerprint, commit: freeze.commit, verified: verify },
-  edition: { size: edition.size, record_sha256: freeze.edition }, export: { width: W, height: H, format: 'image/png', renderer: 'Chromium headless, vendored p5 1.9.4, deviceScaleFactor 1' },
+  edition: { size: edition.size, record_sha256: freeze.edition, reserved: reserves ? reserves.reserved : 0, offered: reserves ? reserves.offered : edition.size },
+  decisions: decisions ? { platform: decisions.platform.choice, chain: decisions.chain.choice, licence: decisions.licence, title: decisions.title.choice, artist: decisions.artist.choice } : null, export: { width: W, height: H, format: 'image/png', renderer: 'Chromium headless, vendored p5 1.9.4, deviceScaleFactor 1' },
   updatedAt: new Date().toISOString(),
 });
 const sha = (buf) => crypto.createHash('sha256').update(buf).digest('hex');
@@ -82,6 +87,18 @@ try {
     fs.writeFileSync(path.join(outDir, imageFile), png);
     meta.image = imageFile; // replace with the content URI once uploaded
     meta.image_sha256 = imageHash;
+    if (decisions) {
+      meta.artist = decisions.artist.choice;
+      meta.license = decisions.licence.image;
+      meta.properties.artist = decisions.artist.choice;
+      meta.properties.licence = { image: decisions.licence.image, code: decisions.licence.code };
+      meta.properties.platform = { platform: decisions.platform.choice, chain: decisions.chain.choice };
+    }
+    if (reserves) {
+      const r = reserves.reserves.find((q) => q.edition === t.edition);
+      meta.properties.reserve = r ? { kind: r.kind, rule: r.rule } : null;
+      if (r) meta.attributes.push({ trait_type: 'Reserve', value: r.kind });
+    }
     const metaBuf = Buffer.from(JSON.stringify(meta, null, 2) + '\n');
     fs.writeFileSync(path.join(outDir, metaFile), metaBuf);
     manifest.tokens[String(t.edition)] = {
