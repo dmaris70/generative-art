@@ -219,7 +219,7 @@ specification. Nothing on the sheet is decorative text — the legend's counts a
 from the geometry actually drawn (`MURO(43)` means forty-three walls were placed), and the
 specification lists the choices the seed made.
 
-The building is one of nine **styles**, each a vocabulary of parts recombined by the seed:
+The building is one of ten **styles**, each a vocabulary of parts recombined by the seed:
 
 | style | parts |
 |---|---|
@@ -231,6 +231,7 @@ The building is one of nine **styles**, each a vocabulary of parts recombined by
 | **Metabolism** — the capsule tower | a permanent service shaft with pipes running its height · capsules plugged onto its faces in a staggered spiral, each with a porthole, four bolts and a service branch · vacant slots left as room to grow · cantilevered decks · trussed bridges between two shafts · a helical stair. Tenets: permanent spine, discrete capsules, growth reserve, staggered, serviced, checked over the drawn scene as `TENETS n/5` |
 | **Palladian** — the villa on its axis | a raised, mirror-symmetric block with hipped roofs · a temple front on the axis (giant-order columns, entablature, pediment) with a broad flight of steps · windows in an ABA rhythm with little pediments · lower wings joined by colonnaded arms and hollowed with niches · a drum and dome over the hall · parterres and an avenue mirrored about the axis. Tenets: symmetry (every drawn face whose mirror would be visible has it), portico on axis, ABA rhythm, hierarchy, harmonic ratio, checked as `TENETS n/5` |
 | **Archigram** — the plug-in rig | an exoskeleton of latticed masts and trusses on the envelope with cable ties across its faces · every service outside it: ducts in pop colours, escalator tubes up the flanks, tanks on brackets · inside only open decks and the pods plugged onto them, stacked pod on pod · tower cranes on the corner masts lifting one more pod in. Tenets: exo-structure, exo-services, pods only within, plugged in, in transit, checked as `TENETS n/5` |
+| **Miesian** — the glass box on its plinth | a travertine plinth with paving joints, a flight of steps and a reflecting pool · a regular grid of steel columns standing one module outside the glass · a glazed skin ruled by mullions on the module, spandrels and slabs on the taller boxes · a thin roof plane overhanging all round · one free-standing core and a few free-standing stone planes. Tenets: less is more (a part budget), on the module (every set-out coordinate a multiple), structure expressed, raised on a plinth, free plan, checked as `TENETS n/5` |
 | **Five Points** — the purist villa | pilotis and air at ground level · a free plan of partitions off the grid · a free façade set outside the columns · ribbon windows · a roof garden with planters and a solarium wall · a ramp and a spiral-stair core. Each of Le Corbusier's five tenets is also a predicate run over the drawn scene, reported as `TENETS n/5` |
 
 standing on one of six **sites** (city, city edge, plaza district, hillside, park,

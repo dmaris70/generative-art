@@ -128,8 +128,13 @@ the Metabolist shaft: the envelope is a volume (the rig's footprint up to its
 height), every mast, truss and tie must lie on it, every duct, escalator and
 tank outside it, nothing but decks and pods within it, every pod resting on a
 deck or a pod, and a crane with a pod in the air — the drawing has to show the
-city changing. The same pattern fits any dogma that states itself as rules:
-Mies (structure as a visible grid of mullions), Rossi (archetypes only).
+city changing. `styles/mies.js` is the
+series' stress test — the one grammar that succeeds by removing parts — and its
+module tenet caught two set-out errors on the first run: column bays that were
+not whole modules, and a glass line set half a module in from the columns.
+Both are now on the module, which is what the tenet is for. The same pattern
+fits any dogma that states itself as rules: Rossi (archetypes only), the
+Cycladic vernacular (cubes stepping a slope, nothing taller than two).
 
 ## 6. Extending it
 
