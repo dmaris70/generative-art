@@ -295,6 +295,14 @@ and the selector reproduce the committed table and edition byte for byte, and th
 seeds rendered three times each gave identical PNG hashes. Nothing in the drawing path may
 change without a new version, a new rarity table and a new selection.
 
+**Launch decisions** are recorded in `edition/decisions.json` (platform: own ERC-721 via
+Manifold; chain: Ethereum mainnet; licence: CC BY-NC 4.0 images, source-available code;
+title: Isometric Strata; artist: pseudonym pending) and the **reserves** in
+`edition/reserves-256.json`, picked by rule with `tools/strata-reserve.mjs`: two per
+style, the highest-scoring token as artist proof and the lowest-numbered plan-and-section
+as institutional reserve, 24 held and 232 offered. The export tool merges artist, licence,
+platform and reserve status into every token's metadata.
+
 **Assets** come from `tools/strata-export.mjs`: it verifies the freeze, renders each
 requested token headlessly at 3000 × 4000 from the vendored libraries, writes the PNG and
 the token's ERC-721 metadata JSON (image file name and hash included), checks that the page
