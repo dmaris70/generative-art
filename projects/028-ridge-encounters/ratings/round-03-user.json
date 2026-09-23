@@ -1,0 +1,277 @@
+{
+ "round": 3,
+ "by": "Dimitris",
+ "saved": "2026-09-21T20:27:25.330Z",
+ "ratings": [
+  {
+   "id": "besseggen-51029",
+   "claude": 3,
+   "user": 3,
+   "note": ""
+  },
+  {
+   "id": "besseggen-52942",
+   "claude": 4,
+   "user": 4,
+   "note": ""
+  },
+  {
+   "id": "besseggen-54855",
+   "claude": 3,
+   "user": 2,
+   "note": ""
+  },
+  {
+   "id": "castillo-51130",
+   "claude": 4,
+   "user": 4,
+   "note": ""
+  },
+  {
+   "id": "castillo-53043",
+   "claude": 3,
+   "user": 3,
+   "note": ""
+  },
+  {
+   "id": "castillo-54956",
+   "claude": 4,
+   "user": 4,
+   "note": ""
+  },
+  {
+   "id": "cinto-51231",
+   "claude": 4,
+   "user": 4,
+   "note": ""
+  },
+  {
+   "id": "cinto-53144",
+   "claude": 3,
+   "user": 3,
+   "note": ""
+  },
+  {
+   "id": "cinto-55057",
+   "claude": 4,
+   "user": 4,
+   "note": ""
+  },
+  {
+   "id": "denali-51332",
+   "claude": 3,
+   "user": 3,
+   "note": ""
+  },
+  {
+   "id": "denali-53245",
+   "claude": 3,
+   "user": 3,
+   "note": ""
+  },
+  {
+   "id": "denali-55158",
+   "claude": 3,
+   "user": 2,
+   "note": ""
+  },
+  {
+   "id": "drakensberg-51433",
+   "claude": 3,
+   "user": 3,
+   "note": ""
+  },
+  {
+   "id": "drakensberg-53346",
+   "claude": 2,
+   "user": 2,
+   "note": ""
+  },
+  {
+   "id": "drakensberg-55259",
+   "claude": 4,
+   "user": 3,
+   "note": ""
+  },
+  {
+   "id": "huayhuash-51534",
+   "claude": 3,
+   "user": 3,
+   "note": ""
+  },
+  {
+   "id": "huayhuash-53447",
+   "claude": 4,
+   "user": 4,
+   "note": ""
+  },
+  {
+   "id": "huayhuash-55360",
+   "claude": 4,
+   "user": 4,
+   "note": ""
+  },
+  {
+   "id": "jorasses-51635",
+   "claude": 3,
+   "user": 2,
+   "note": ""
+  },
+  {
+   "id": "jorasses-53548",
+   "claude": 4,
+   "user": 4,
+   "note": ""
+  },
+  {
+   "id": "jorasses-55461",
+   "claude": 3,
+   "user": 3,
+   "note": "the right is nice"
+  },
+  {
+   "id": "kinabalu-51736",
+   "claude": 5,
+   "user": 5,
+   "note": ""
+  },
+  {
+   "id": "kinabalu-53649",
+   "claude": 4,
+   "user": 4,
+   "note": ""
+  },
+  {
+   "id": "kinabalu-55562",
+   "claude": 3,
+   "user": 3,
+   "note": ""
+  },
+  {
+   "id": "machapuchare-51837",
+   "claude": 3,
+   "user": 3,
+   "note": ""
+  },
+  {
+   "id": "machapuchare-53750",
+   "claude": 3,
+   "user": 2,
+   "note": ""
+  },
+  {
+   "id": "machapuchare-55663",
+   "claude": 4,
+   "user": 4,
+   "note": ""
+  },
+  {
+   "id": "meije-51938",
+   "claude": 3,
+   "user": 3,
+   "note": ""
+  },
+  {
+   "id": "meije-53851",
+   "claude": 2,
+   "user": 2,
+   "note": ""
+  },
+  {
+   "id": "meije-55764",
+   "claude": 4,
+   "user": 4,
+   "note": ""
+  },
+  {
+   "id": "simien-52039",
+   "claude": 4,
+   "user": 5,
+   "note": ""
+  },
+  {
+   "id": "simien-53952",
+   "claude": 4,
+   "user": 3,
+   "note": ""
+  },
+  {
+   "id": "simien-55865",
+   "claude": 2,
+   "user": 3,
+   "note": ""
+  },
+  {
+   "id": "tetons-52140",
+   "claude": 3,
+   "user": 3,
+   "note": ""
+  },
+  {
+   "id": "tetons-54053",
+   "claude": 3,
+   "user": 4,
+   "note": ""
+  },
+  {
+   "id": "tetons-55966",
+   "claude": 3,
+   "user": 3,
+   "note": ""
+  },
+  {
+   "id": "toubkal-52241",
+   "claude": 4,
+   "user": 3,
+   "note": ""
+  },
+  {
+   "id": "toubkal-54154",
+   "claude": 2,
+   "user": 3,
+   "note": ""
+  },
+  {
+   "id": "toubkal-56067",
+   "claude": 4,
+   "user": 4,
+   "note": ""
+  },
+  {
+   "id": "trango-52342",
+   "claude": 4,
+   "user": 3,
+   "note": ""
+  },
+  {
+   "id": "trango-54255",
+   "claude": 3,
+   "user": 3,
+   "note": ""
+  },
+  {
+   "id": "trango-56168",
+   "claude": 3,
+   "user": 3,
+   "note": ""
+  },
+  {
+   "id": "ushba-52443",
+   "claude": 3,
+   "user": 2,
+   "note": ""
+  },
+  {
+   "id": "ushba-54356",
+   "claude": 3,
+   "user": 2,
+   "note": ""
+  },
+  {
+   "id": "ushba-56269",
+   "claude": 5,
+   "user": 5,
+   "note": ""
+  }
+ ]
+}

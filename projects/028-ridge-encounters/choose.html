@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Ridge, encounters — choosing</title>
+  <style>
+    :root { --room: #0e0e10; --rule: #2a2a2f; --ink: #deded8; --mute: #8b8b86; --dim: #5d5d5a; --mat: #f7f7f5;
+      --mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace; --sans: ui-sans-serif, system-ui, -apple-system, "Helvetica Neue", sans-serif; }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; background: var(--room); color: var(--ink); font: 13px/1.5 var(--sans); }
+    a { color: inherit; }
+    header { position: sticky; top: 0; z-index: 5; background: rgba(14,14,16,.94); backdrop-filter: blur(6px); border-bottom: 1px solid var(--rule); padding: 12px 20px; display: flex; flex-wrap: wrap; gap: 8px 18px; align-items: center; }
+    header h1 { font-size: 14px; font-weight: 600; margin: 0; }
+    .stat { font: 11.5px var(--mono); color: var(--mute); } .grow { flex: 1; }
+    button, select { font: inherit; color: var(--ink); background: transparent; border: 1px solid var(--rule); border-radius: 3px; padding: 6px 10px; cursor: pointer; }
+    button:hover { border-color: var(--mute); }
+    button:focus-visible, textarea:focus-visible, select:focus-visible { outline: 1px solid var(--mat); outline-offset: 2px; }
+    button.primary { background: var(--mat); color: #111; border-color: var(--mat); font-weight: 600; }
+    main { max-width: 1240px; margin: 0 auto; padding: 8px 20px 80px; }
+    .intro { color: var(--mute); max-width: 74ch; margin: 14px 0 6px; }
+    .match { border-top: 1px solid var(--rule); margin-top: 24px; padding-top: 14px; }
+    .match h2 { font: 11px var(--mono); color: var(--mute); font-weight: 400; margin: 0 0 10px; }
+    .duo { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+    .opt { padding: 0; border: 2px solid transparent; border-radius: 2px; background: #0b0b0b; display: block; width: 100%; }
+    .opt img { display: block; width: 100%; height: auto; }
+    .opt:hover { border-color: var(--dim); }
+    .opt[aria-pressed="true"] { border-color: var(--mat); }
+    .under { display: grid; grid-template-columns: 1fr auto; gap: 10px; align-items: start; margin-top: 8px; }
+    .under .tie { font-size: 12px; color: var(--mute); }
+    .under .tie[aria-pressed="true"] { background: var(--mat); color: #111; border-color: var(--mat); }
+    textarea { width: 100%; min-height: 36px; resize: vertical; font: 12.5px var(--sans); color: var(--ink); background: #0f0f12; border: 1px solid var(--rule); border-radius: 3px; padding: 7px 9px; }
+    textarea::placeholder { color: var(--dim); }
+    .reveal { font-size: 12.5px; margin-top: 8px; min-height: 1.4em; color: var(--mute); } .reveal b { font: 600 12px var(--mono); color: var(--mat); }
+    .match.done .opt:not([aria-pressed="true"]) img { opacity: .5; }
+    @media (max-width: 760px) { .duo { grid-template-columns: 1fr; } header { padding: 10px 16px; } main { padding: 4px 16px 80px; } }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Ridge, encounters — choosing</h1>
+    <select id="set" aria-label="Set"></select>
+    <span class="stat" id="stat" role="status" aria-live="polite"></span>
+    <span class="grow"></span>
+    <a href="rate.html" style="font-size:12px;color:var(--mute)">ratings</a>
+    <a href="./" style="font-size:12px;color:var(--mute)">the piece</a>
+    <button id="copy">Copy my choices</button>
+    <button id="save" class="primary">Download choices</button>
+  </header>
+  <main>
+    <p class="intro" id="intro"></p>
+    <div id="list"></div>
+  </main>
+
+  <script>
+  (function () {
+    'use strict';
+    const SETS = ['choices-01', 'choices-02'];                       // add new sets here
+    const $ = id => document.getElementById(id), el = (t, c, txt) => { const e = document.createElement(t); if (c) e.className = c; if (txt != null) e.textContent = txt; return e; };
+    let set = new URL(location.href).searchParams.get('set') || SETS[SETS.length - 1], data = null, mine = {};
+    const key = () => 'ridge-choices-' + set;
+    const store = () => { try { localStorage.setItem(key(), JSON.stringify(mine)); } catch (e) {} stats(); };
+    const exportObj = () => ({ set: data.set, by: 'Dimitris', saved: new Date().toISOString(), choices: data.matchups.filter(m => mine[m.n] && mine[m.n].pick).map(m => ({ n: m.n, a: m.a.id, b: m.b.id, claude: m.claude, user: mine[m.n].pick, note: mine[m.n].note || '' })) });
+    window.ridgeChoices = () => exportObj();          // so Claude can read the choices from the Browser pane
+
+    function stats() {
+      const done = data.matchups.filter(m => mine[m.n] && mine[m.n].pick), decided = done.filter(m => mine[m.n].pick !== 'tie'), hit = decided.filter(m => mine[m.n].pick === m.claude).length;
+      $('stat').textContent = done.length + ' / ' + data.matchups.length + ' chosen' + (decided.length ? ' · Claude predicted ' + hit + ' of ' + decided.length : '');
+    }
+    function match(m) {
+      const s = el('section', 'match'), duo = el('div', 'duo'), under = el('div', 'under'), rev = el('div', 'reveal'), note = el('textarea'), tie = el('button', 'tie', 'no preference');
+      s.append(el('h2', null, 'Matchup ' + m.n + ' — which of the two pairs would you rather keep?'));
+      const btn = {}; ['A', 'B'].forEach(k => { const o = m[k.toLowerCase()], b = el('button', 'opt'), img = el('img'); img.src = 'ratings/' + o.img; img.alt = 'Pair ' + k; img.loading = 'lazy'; b.setAttribute('aria-label', 'Choose the ' + (k === 'A' ? 'left' : 'right') + ' pair'); b.append(img); b.onclick = () => pick(k); btn[k] = b; duo.append(b); });
+      note.placeholder = 'Why? (a few words — optional)'; note.setAttribute('aria-label', 'Note on matchup ' + m.n);
+      note.value = (mine[m.n] && mine[m.n].note) || ''; note.oninput = () => { mine[m.n] = Object.assign(mine[m.n] || {}, { note: note.value }); store(); };
+      tie.onclick = () => pick('tie');
+      const paint = () => { const p = mine[m.n] && mine[m.n].pick; btn.A.setAttribute('aria-pressed', p === 'A'); btn.B.setAttribute('aria-pressed', p === 'B'); tie.setAttribute('aria-pressed', p === 'tie'); s.classList.toggle('done', p === 'A' || p === 'B');
+        rev.textContent = ''; if (p) { const b = el('b', null, 'Claude predicted the ' + (m.claude === 'A' ? 'left' : 'right') + ' pair'); rev.append(b, ' — ' + m.why + '. ' + (p === 'tie' ? '' : p === m.claude ? 'Same as you.' : 'You chose the other.')); } };
+      const pick = k => { mine[m.n] = Object.assign(mine[m.n] || {}, { pick: mine[m.n] && mine[m.n].pick === k ? '' : k }); paint(); store(); };
+      under.append(note, tie); s.append(duo, under, rev); paint(); return s;
+    }
+    function render() {
+      $('intro').textContent = 'Two pairs at a time: click the one you would rather keep (or “no preference”). Claude has already predicted each choice; its prediction and reason appear only after you choose, so they cannot steer you. Choices are kept in this browser as you go; “Download choices” saves them for the project.';
+      const list = $('list'); list.textContent = ''; data.matchups.forEach(m => list.append(match(m))); stats();
+    }
+    SETS.forEach(r => { const o = el('option', null, r); o.value = r; $('set').append(o); }); $('set').value = set;
+    $('set').onchange = () => { set = $('set').value; start(); };
+    $('save').onclick = () => { const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([JSON.stringify(exportObj(), null, 1)], { type: 'application/json' })); a.download = set + '-user.json'; a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 4000); };
+    $('copy').onclick = () => { const t = JSON.stringify(exportObj()); (navigator.clipboard ? navigator.clipboard.writeText(t) : Promise.reject()).then(() => $('copy').textContent = 'Copied', () => prompt('Choices', t)); setTimeout(() => $('copy').textContent = 'Copy my choices', 1400); };
+    function start() { try { mine = JSON.parse(localStorage.getItem(key()) || '{}'); } catch (e) { mine = {}; } fetch('ratings/' + set + '.json?t=' + Date.now()).then(r => r.json()).then(d => { data = d; render(); }).catch(e => { $('list').textContent = 'Could not load ' + set + ': ' + e.message; }); }
+    start();
+  })();
+  </script>
+</body>
+</html>

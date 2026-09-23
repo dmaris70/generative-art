@@ -1,0 +1,247 @@
+{
+ "set": 1,
+ "by": "Dimitris",
+ "saved": "2026-09-21T21:39:06.288Z",
+ "choices": [
+  {
+   "n": 1,
+   "a": "matterhorn-124222",
+   "b": "eiger-87246",
+   "claude": "A",
+   "user": "A",
+   "note": ""
+  },
+  {
+   "n": 2,
+   "a": "invented-152703",
+   "b": "darrans-163509",
+   "claude": "B",
+   "user": "B",
+   "note": ""
+  },
+  {
+   "n": 3,
+   "a": "lyskamm-89557",
+   "b": "denali-127707",
+   "claude": "B",
+   "user": "B",
+   "note": ""
+  },
+  {
+   "n": 4,
+   "a": "aoraki-61051",
+   "b": "alpamayo-108960",
+   "claude": "A",
+   "user": "A",
+   "note": ""
+  },
+  {
+   "n": 5,
+   "a": "nevis-121458",
+   "b": "invented-129790",
+   "claude": "B",
+   "user": "B",
+   "note": ""
+  },
+  {
+   "n": 6,
+   "a": "badile-133466",
+   "b": "drakensberg-128844",
+   "claude": "A",
+   "user": "A",
+   "note": ""
+  },
+  {
+   "n": 7,
+   "a": "invented-101112",
+   "b": "darrans-156869",
+   "claude": "B",
+   "user": "B",
+   "note": ""
+  },
+  {
+   "n": 8,
+   "a": "trango-154786",
+   "b": "brenta-90213",
+   "claude": "A",
+   "user": "A",
+   "note": ""
+  },
+  {
+   "n": 9,
+   "a": "napali-100628",
+   "b": "cinto-131155",
+   "claude": "A",
+   "user": "B",
+   "note": ""
+  },
+  {
+   "n": 10,
+   "a": "alpamayo-78002",
+   "b": "robson-65217",
+   "claude": "B",
+   "user": "B",
+   "note": ""
+  },
+  {
+   "n": 11,
+   "a": "stetind-138122",
+   "b": "invented-80313",
+   "claude": "A",
+   "user": "B",
+   "note": ""
+  },
+  {
+   "n": 12,
+   "a": "urriellu-125624",
+   "b": "eiger-111043",
+   "claude": "B",
+   "user": "B",
+   "note": ""
+  },
+  {
+   "n": 13,
+   "a": "taygetos-146454",
+   "b": "olympus-150620",
+   "claude": "A",
+   "user": "A",
+   "note": ""
+  },
+  {
+   "n": 14,
+   "a": "invented-168131",
+   "b": "invented-119375",
+   "claude": "B",
+   "user": "B",
+   "note": ""
+  },
+  {
+   "n": 15,
+   "a": "invented-142288",
+   "b": "cinto-91868",
+   "claude": "B",
+   "user": "A",
+   "note": ""
+  },
+  {
+   "n": 16,
+   "a": "invented-179686",
+   "b": "drakensberg-92296",
+   "claude": "B",
+   "user": "B",
+   "note": ""
+  },
+  {
+   "n": 17,
+   "a": "urriellu-175064",
+   "b": "watzmann-170442",
+   "claude": "B",
+   "user": "B",
+   "note": ""
+  },
+  {
+   "n": 18,
+   "a": "triglav-165820",
+   "b": "machapuchare-140399",
+   "claude": "B",
+   "user": "B",
+   "note": ""
+  },
+  {
+   "n": 19,
+   "a": "invented-113126",
+   "b": "meije-86047",
+   "claude": "A",
+   "user": "A",
+   "note": ""
+  },
+  {
+   "n": 20,
+   "a": "aoraki-126533",
+   "b": "fitzroy-147332",
+   "claude": "A",
+   "user": "A",
+   "note": ""
+  },
+  {
+   "n": 21,
+   "a": "machapuchare-105734",
+   "b": "invented-94179",
+   "claude": "B",
+   "user": "B",
+   "note": ""
+  },
+  {
+   "n": 22,
+   "a": "fitzroy-131873",
+   "b": "invented-161198",
+   "claude": "B",
+   "user": "A",
+   "note": ""
+  },
+  {
+   "n": 23,
+   "a": "alpamayo-110356",
+   "b": "cinto-114978",
+   "claude": "B",
+   "user": "B",
+   "note": ""
+  },
+  {
+   "n": 24,
+   "a": "napali-75691",
+   "b": "liathach-103423",
+   "claude": "A",
+   "user": "A",
+   "note": ""
+  },
+  {
+   "n": 25,
+   "a": "invented-82624",
+   "b": "meije-102711",
+   "claude": "B",
+   "user": "B",
+   "note": ""
+  },
+  {
+   "n": 26,
+   "a": "badile-154265",
+   "b": "machapuchare-73380",
+   "claude": "A",
+   "user": "A",
+   "note": ""
+  },
+  {
+   "n": 27,
+   "a": "huayhuash-112667",
+   "b": "darrans-71466",
+   "claude": "B",
+   "user": "B",
+   "note": ""
+  },
+  {
+   "n": 28,
+   "a": "olympus-142710",
+   "b": "napali-71069",
+   "claude": "B",
+   "user": "B",
+   "note": ""
+  },
+  {
+   "n": 29,
+   "a": "toubkal-145021",
+   "b": "meije-104794",
+   "claude": "A",
+   "user": "A",
+   "note": ""
+  },
+  {
+   "n": 30,
+   "a": "invented-73549",
+   "b": "meije-133956",
+   "claude": "A",
+   "user": "B",
+   "note": ""
+  }
+ ]
+}

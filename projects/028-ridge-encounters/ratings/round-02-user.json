@@ -1,0 +1,295 @@
+{
+ "round": 2,
+ "by": "Dimitris",
+ "saved": "2026-09-21T20:18:42.169Z",
+ "ratings": [
+  {
+   "id": "alpamayo-41017",
+   "claude": 3,
+   "user": 4,
+   "note": ""
+  },
+  {
+   "id": "alpamayo-42794",
+   "claude": 4,
+   "user": 4,
+   "note": ""
+  },
+  {
+   "id": "alpamayo-44571",
+   "claude": 3,
+   "user": 3,
+   "note": ""
+  },
+  {
+   "id": "amadablam-41118",
+   "claude": 4,
+   "user": 4,
+   "note": ""
+  },
+  {
+   "id": "amadablam-42895",
+   "claude": 2,
+   "user": 4,
+   "note": "very poetic"
+  },
+  {
+   "id": "amadablam-44672",
+   "claude": 3,
+   "user": 3,
+   "note": ""
+  },
+  {
+   "id": "arthurs-41219",
+   "claude": 4,
+   "user": 4,
+   "note": ""
+  },
+  {
+   "id": "arthurs-42996",
+   "claude": 3,
+   "user": 2,
+   "note": ""
+  },
+  {
+   "id": "arthurs-44773",
+   "claude": 4,
+   "user": 3,
+   "note": ""
+  },
+  {
+   "id": "badile-41320",
+   "claude": 4,
+   "user": 4,
+   "note": ""
+  },
+  {
+   "id": "badile-43097",
+   "claude": 4,
+   "user": 5,
+   "note": ""
+  },
+  {
+   "id": "badile-44874",
+   "claude": 3,
+   "user": 4,
+   "note": ""
+  },
+  {
+   "id": "civetta-41421",
+   "claude": 3,
+   "user": 4,
+   "note": ""
+  },
+  {
+   "id": "civetta-43198",
+   "claude": 3,
+   "user": 4,
+   "note": ""
+  },
+  {
+   "id": "civetta-44975",
+   "claude": 3,
+   "user": 3,
+   "note": ""
+  },
+  {
+   "id": "cuillin-41522",
+   "claude": 4,
+   "user": 4,
+   "note": ""
+  },
+  {
+   "id": "cuillin-43299",
+   "claude": 3,
+   "user": 3,
+   "note": ""
+  },
+  {
+   "id": "cuillin-45076",
+   "claude": 3,
+   "user": 4,
+   "note": ""
+  },
+  {
+   "id": "fitzroy-41623",
+   "claude": 4,
+   "user": 4,
+   "note": ""
+  },
+  {
+   "id": "fitzroy-43400",
+   "claude": 2,
+   "user": 3,
+   "note": ""
+  },
+  {
+   "id": "fitzroy-45177",
+   "claude": 4,
+   "user": 4,
+   "note": ""
+  },
+  {
+   "id": "hotaka-41724",
+   "claude": 3,
+   "user": 3,
+   "note": ""
+  },
+  {
+   "id": "hotaka-43501",
+   "claude": 4,
+   "user": 3,
+   "note": ""
+  },
+  {
+   "id": "hotaka-45278",
+   "claude": 4,
+   "user": 3,
+   "note": ""
+  },
+  {
+   "id": "huashan-41825",
+   "claude": 4,
+   "user": 3,
+   "note": ""
+  },
+  {
+   "id": "huashan-43602",
+   "claude": 2,
+   "user": 2,
+   "note": ""
+  },
+  {
+   "id": "huashan-45379",
+   "claude": 3,
+   "user": 3,
+   "note": ""
+  },
+  {
+   "id": "lyskamm-41926",
+   "claude": 4,
+   "user": 4,
+   "note": ""
+  },
+  {
+   "id": "lyskamm-43703",
+   "claude": 3,
+   "user": 3,
+   "note": ""
+  },
+  {
+   "id": "lyskamm-45480",
+   "claude": 3,
+   "user": 3,
+   "note": ""
+  },
+  {
+   "id": "matterhorn-42027",
+   "claude": 3,
+   "user": 3,
+   "note": ""
+  },
+  {
+   "id": "matterhorn-43804",
+   "claude": 3,
+   "user": 3,
+   "note": ""
+  },
+  {
+   "id": "matterhorn-45581",
+   "claude": 4,
+   "user": 4,
+   "note": ""
+  },
+  {
+   "id": "napali-42128",
+   "claude": 3,
+   "user": 3,
+   "note": ""
+  },
+  {
+   "id": "napali-43905",
+   "claude": 3,
+   "user": 4,
+   "note": "i like the right a lot "
+  },
+  {
+   "id": "napali-45682",
+   "claude": 4,
+   "user": 3,
+   "note": ""
+  },
+  {
+   "id": "perdido-42229",
+   "claude": 2,
+   "user": 3,
+   "note": ""
+  },
+  {
+   "id": "perdido-44006",
+   "claude": 3,
+   "user": 3,
+   "note": ""
+  },
+  {
+   "id": "perdido-45783",
+   "claude": 4,
+   "user": 4,
+   "note": ""
+  },
+  {
+   "id": "prokletije-42330",
+   "claude": 2,
+   "user": 2,
+   "note": ""
+  },
+  {
+   "id": "prokletije-44107",
+   "claude": 2,
+   "user": 2,
+   "note": ""
+  },
+  {
+   "id": "prokletije-45884",
+   "claude": 2,
+   "user": 2,
+   "note": ""
+  },
+  {
+   "id": "triglav-42431",
+   "claude": 3,
+   "user": 3,
+   "note": ""
+  },
+  {
+   "id": "triglav-44208",
+   "claude": 3,
+   "user": 3,
+   "note": ""
+  },
+  {
+   "id": "triglav-45985",
+   "claude": 4,
+   "user": 5,
+   "note": ""
+  },
+  {
+   "id": "urriellu-42532",
+   "claude": 4,
+   "user": 4,
+   "note": ""
+  },
+  {
+   "id": "urriellu-44309",
+   "claude": 3,
+   "user": 3,
+   "note": ""
+  },
+  {
+   "id": "urriellu-46086",
+   "claude": 4,
+   "user": 4,
+   "note": ""
+  }
+ ]
+}

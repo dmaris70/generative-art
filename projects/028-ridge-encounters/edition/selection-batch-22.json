@@ -1,0 +1,80 @@
+{
+ "batch": 22,
+ "by": "Dimitris",
+ "saved": "2026-09-23T20:37:06.520Z",
+ "kept": [
+  {
+   "seed": 24514508,
+   "place": "robson",
+   "register": "clearing",
+   "rescued": false
+  },
+  {
+   "seed": 24701721,
+   "place": "napali",
+   "register": "clearing",
+   "rescued": false
+  },
+  {
+   "seed": 24816929,
+   "place": "darrans",
+   "register": "clearing",
+   "rescued": false
+  },
+  {
+   "seed": 24975340,
+   "place": "taygetos",
+   "register": "exposure",
+   "rescued": false
+  },
+  {
+   "seed": 25133751,
+   "place": "civetta",
+   "register": "exposure",
+   "rescued": false
+  },
+  {
+   "seed": 25464974,
+   "place": "invented",
+   "register": "clearing",
+   "rescued": false
+  },
+  {
+   "seed": 25508177,
+   "place": "invented",
+   "register": "clearing",
+   "rescued": false
+  },
+  {
+   "seed": 25637786,
+   "place": "urriellu",
+   "register": "clearing",
+   "rescued": false
+  },
+  {
+   "seed": 25767395,
+   "place": "aoraki",
+   "register": "clearing",
+   "rescued": false
+  }
+ ],
+ "culled_by_claude": [
+  24528909,
+  24557711,
+  24586513,
+  24672919,
+  24687320,
+  24759325,
+  24802528,
+  24860132,
+  25104949,
+  25119350,
+  25364167,
+  25450573,
+  25594583,
+  25680989,
+  25738593,
+  25781796,
+  25853801
+ ]
+}

@@ -1,0 +1,138 @@
+{
+ "batch": 3,
+ "by": "Dimitris",
+ "saved": "2026-09-22T20:31:28.946Z",
+ "kept": [
+  {
+   "seed": 1305106,
+   "place": "trecime",
+   "register": "clearing",
+   "rescued": false
+  },
+  {
+   "seed": 1320403,
+   "place": "brenta",
+   "register": "clearing",
+   "rescued": false
+  },
+  {
+   "seed": 1366294,
+   "place": "invented",
+   "register": "exposure",
+   "rescued": false
+  },
+  {
+   "seed": 1412185,
+   "place": "invented",
+   "register": "exposure",
+   "rescued": false
+  },
+  {
+   "seed": 1432581,
+   "place": "invented",
+   "register": "exposure",
+   "rescued": false
+  },
+  {
+   "seed": 1458076,
+   "place": "taygetos",
+   "register": "exposure",
+   "rescued": false
+  },
+  {
+   "seed": 1468274,
+   "place": "urriellu",
+   "register": "passage",
+   "rescued": false
+  },
+  {
+   "seed": 1493769,
+   "place": "stetind",
+   "register": "clearing",
+   "rescued": false
+  },
+  {
+   "seed": 1554957,
+   "place": "astraka",
+   "register": "exposure",
+   "rescued": false
+  },
+  {
+   "seed": 1565155,
+   "place": "invented",
+   "register": "clearing",
+   "rescued": false
+  },
+  {
+   "seed": 1585551,
+   "place": "alpamayo",
+   "register": "passage",
+   "rescued": false
+  },
+  {
+   "seed": 1611046,
+   "place": "trango",
+   "register": "passage",
+   "rescued": false
+  },
+  {
+   "seed": 1621244,
+   "place": "castillo",
+   "register": "clearing",
+   "rescued": false
+  },
+  {
+   "seed": 1646739,
+   "place": "napali",
+   "register": "exposure",
+   "rescued": false
+  },
+  {
+   "seed": 1677333,
+   "place": "drakensberg",
+   "register": "exposure",
+   "rescued": false
+  },
+  {
+   "seed": 1718125,
+   "place": "astraka",
+   "register": "whiteout",
+   "rescued": false
+  },
+  {
+   "seed": 1743620,
+   "place": "invented",
+   "register": "clearing",
+   "rescued": false
+  },
+  {
+   "seed": 1764016,
+   "place": "badile",
+   "register": "clearing",
+   "rescued": false
+  },
+  {
+   "seed": 1784412,
+   "place": "cinto",
+   "register": "clearing",
+   "rescued": false
+  }
+ ],
+ "culled_by_claude": [
+  1325502,
+  1330601,
+  1361195,
+  1371393,
+  1391789,
+  1396888,
+  1427482,
+  1488670,
+  1560056,
+  1575353,
+  1626343,
+  1697729,
+  1733422,
+  1753818,
+  1779313
+ ]
+}

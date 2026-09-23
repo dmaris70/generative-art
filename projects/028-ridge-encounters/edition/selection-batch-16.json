@@ -1,0 +1,62 @@
+{
+ "batch": 16,
+ "by": "Dimitris",
+ "saved": "2026-09-23T17:21:35.560Z",
+ "kept": [
+  {
+   "seed": 17141107,
+   "place": "triglav",
+   "register": "clearing",
+   "rescued": false
+  },
+  {
+   "seed": 17153358,
+   "place": "invented",
+   "register": "passage",
+   "rescued": false
+  },
+  {
+   "seed": 17447382,
+   "place": "meije",
+   "register": "passage",
+   "rescued": false
+  },
+  {
+   "seed": 17545390,
+   "place": "trecime",
+   "register": "passage",
+   "rescued": false
+  },
+  {
+   "seed": 17569892,
+   "place": "amadablam",
+   "register": "clearing",
+   "rescued": false
+  },
+  {
+   "seed": 17814912,
+   "place": "taygetos",
+   "register": "clearing",
+   "rescued": false
+  }
+ ],
+ "culled_by_claude": [
+  16700071,
+  16736824,
+  16798079,
+  16945091,
+  16994095,
+  17006346,
+  17030848,
+  17043099,
+  17092103,
+  17226864,
+  17239115,
+  17386127,
+  17398378,
+  17606645,
+  17692402,
+  17802661,
+  17827163
+ ]
+}

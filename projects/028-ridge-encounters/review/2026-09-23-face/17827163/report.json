@@ -1,0 +1,123 @@
+{
+ "byPlace": {
+  "meije": {
+   "n": 1,
+   "clean": 1,
+   "p02": 39,
+   "p50": 108,
+   "black": 0.245,
+   "flags": {}
+  }
+ },
+ "made": "2026-09-23T17:23:34.732Z",
+ "args": {
+  "n": 1,
+  "start": 17827163,
+  "step": 7919,
+  "place": 0,
+  "regime": 0
+ },
+ "summary": {
+  "n": 1,
+  "clean": 1,
+  "TIMID": 0,
+  "FLAT": 0,
+  "EMPTY": 0,
+  "HORN": 0,
+  "WEDGE": 0,
+  "TWIN": 0,
+  "reachBlack": 1,
+  "median": {
+   "p02": 39,
+   "p50": 108,
+   "p98": 217,
+   "black": 0.245
+  },
+  "source": {
+   "p02": 56,
+   "p50": 141,
+   "p98": 208,
+   "black": 0.067
+  }
+ },
+ "results": [
+  {
+   "seed": 17827163,
+   "register": "passage",
+   "place": "meije",
+   "light": "side",
+   "key": "low",
+   "weather": "spindrift+pouring",
+   "pair": "panorama",
+   "event": "none",
+   "temper": {
+    "reveal": 0.97,
+    "drama": 1.14,
+    "smear": 0.27,
+    "bristle": 0.93,
+    "streak": 1.59,
+    "grain": 0.91
+   },
+   "light2": "side",
+   "p02": 39,
+   "p50": 108,
+   "p98": 217,
+   "black": 0.245,
+   "landL": 1,
+   "landR": 1,
+   "slope": 0,
+   "flags": [],
+   "ms": 3540,
+   "skyline": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+   ]
+  }
+ ]
+}

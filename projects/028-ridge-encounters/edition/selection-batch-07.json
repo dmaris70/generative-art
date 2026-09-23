@@ -1,0 +1,92 @@
+{
+ "batch": 7,
+ "by": "Dimitris",
+ "saved": "2026-09-23T16:21:31.041Z",
+ "kept": [
+  {
+   "seed": 5500031,
+   "place": "matterhorn",
+   "register": "clearing",
+   "rescued": false
+  },
+  {
+   "seed": 5508708,
+   "place": "olympus",
+   "register": "exposure",
+   "rescued": false
+  },
+  {
+   "seed": 5534739,
+   "place": "watzmann",
+   "register": "passage",
+   "rescued": false
+  },
+  {
+   "seed": 5595478,
+   "place": "perdido",
+   "register": "whiteout",
+   "rescued": false
+  },
+  {
+   "seed": 5612832,
+   "place": "perdido",
+   "register": "clearing",
+   "rescued": false
+  },
+  {
+   "seed": 5630186,
+   "place": "invented",
+   "register": "clearing",
+   "rescued": false
+  },
+  {
+   "seed": 5795049,
+   "place": "liathach",
+   "register": "clearing",
+   "rescued": false
+  },
+  {
+   "seed": 5847111,
+   "place": "trecime",
+   "register": "exposure",
+   "rescued": false
+  },
+  {
+   "seed": 5890496,
+   "place": "denali",
+   "register": "clearing",
+   "rescued": false
+  },
+  {
+   "seed": 5925204,
+   "place": "lyskamm",
+   "register": "clearing",
+   "rescued": false
+  },
+  {
+   "seed": 6098744,
+   "place": "ushba",
+   "register": "clearing",
+   "rescued": false
+  },
+  {
+   "seed": 6194191,
+   "place": "arthurs",
+   "register": "clearing",
+   "rescued": false
+  }
+ ],
+ "culled_by_claude": [
+  5526062,
+  5569447,
+  5656217,
+  5708279,
+  5760341,
+  5855788,
+  5977266,
+  6046682,
+  6176837,
+  6228899,
+  6298315
+ ]
+}

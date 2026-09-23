@@ -1,0 +1,286 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Ridge, recomposed — Generative Art</title>
+  <style>
+    :root {
+      --room: #0e0e10; --panel: #151518; --rule: #2a2a2f; --ink: #deded8; --mute: #8b8b86; --dim: #5d5d5a;
+      --mat: #f7f7f5; --mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace; --sans: ui-sans-serif, system-ui, -apple-system, "Helvetica Neue", sans-serif;
+    }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; height: 100%; background: var(--room); color: var(--ink); font: 13px/1.45 var(--sans); }
+    body { display: grid; grid-template-columns: minmax(0, 1fr) 340px; }
+    a { color: inherit; }
+
+    /* ── the wall ── */
+    #stage { position: relative; display: flex; align-items: center; justify-content: center; gap: 2.2%; padding: 28px; min-height: 0; height: 100vh; }
+    #stage canvas { display: block; height: auto; width: auto; max-height: 100%; max-width: 47.5%; background: var(--mat); box-shadow: 0 18px 50px rgba(0,0,0,.55); transition: opacity .25s; }
+    #stage.busy canvas { opacity: .55; }
+    .back { position: absolute; top: 14px; left: 18px; font-size: 12px; color: var(--mute); text-decoration: none; }
+    .back:hover { color: var(--ink); }
+    #status { position: absolute; bottom: 12px; left: 18px; font: 11px var(--mono); color: var(--dim); letter-spacing: .02em; }
+    #stage.busy #status { color: var(--ink); }
+    #stage.busy #status::before { content: ""; display: inline-block; width: 6px; height: 6px; margin-right: 8px; border-radius: 50%; background: var(--mat); animation: pulse 1s infinite; }
+    @keyframes pulse { 50% { opacity: .15; } }
+
+    /* ── the desk ── */
+    #panel { background: var(--panel); border-left: 1px solid var(--rule); height: 100vh; overflow-y: auto; padding: 22px 22px 28px; }
+    h1 { font-size: 15px; font-weight: 600; letter-spacing: .01em; margin: 0; }
+    .cat { font: 11px var(--mono); color: var(--mute); margin: 4px 0 0; }
+    section { border-top: 1px solid var(--rule); margin-top: 20px; padding-top: 16px; }
+    h2 { font-size: 10.5px; font-weight: 600; letter-spacing: .14em; text-transform: uppercase; color: var(--mute); margin: 0 0 12px; display: flex; justify-content: space-between; align-items: baseline; }
+    h2 small { font: 10.5px var(--mono); letter-spacing: 0; text-transform: none; color: var(--dim); }
+
+    button { font: inherit; color: var(--ink); background: transparent; border: 1px solid var(--rule); border-radius: 3px; padding: 7px 10px; cursor: pointer; }
+    button:hover { border-color: var(--mute); }
+    button:focus-visible, input:focus-visible { outline: 1px solid var(--mat); outline-offset: 2px; }
+    button.primary { background: var(--mat); color: #111; border-color: var(--mat); font-weight: 600; }
+    button.primary:hover { background: #fff; }
+
+    #seedNow { font: 500 27px/1.1 var(--mono); letter-spacing: -.01em; word-spacing: -.18em; color: var(--mat); margin: 0 0 3px; }
+    #regimeNow { font: 11px var(--mono); color: var(--mute); margin: 0 0 14px; }
+    .seedrow { display: grid; grid-template-columns: 40px 1fr 40px; gap: 6px; }
+    .seedrow button { padding: 9px 0; }
+    #jump { display: grid; grid-template-columns: 1fr auto; gap: 6px; margin-top: 8px; }
+    #jump input { font: 12px var(--mono); color: var(--ink); background: #0f0f12; border: 1px solid var(--rule); border-radius: 3px; padding: 7px 9px; min-width: 0; }
+    #jump input::placeholder { color: var(--dim); }
+    .hint { font-size: 11px; color: var(--dim); margin: 8px 0 0; }
+
+    #deal { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px; margin-top: 10px; }
+    #deal button { padding: 0; border-color: transparent; background: #0f0f12; overflow: hidden; text-align: left; }
+    #deal button:hover { border-color: var(--mat); }
+    #deal canvas { display: block; width: 100%; height: auto; }
+    #deal span { display: block; font: 9.5px var(--mono); color: var(--mute); padding: 3px 5px 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+    #history { display: flex; flex-wrap: wrap; gap: 5px; }
+    #history button { font: 10.5px var(--mono); padding: 3px 7px; color: var(--mute); }
+    #history button.on { color: #111; background: var(--mat); border-color: var(--mat); }
+
+    .seg { display: grid; grid-template-columns: repeat(3, 1fr); gap: 5px; }
+    .seg button { padding: 6px 0; font-size: 11.5px; color: var(--mute); }
+    .seg button[aria-pressed="true"] { color: #111; background: var(--mat); border-color: var(--mat); }
+
+    .ctl { margin-top: 12px; }
+    .ctl label { display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 3px; }
+    .ctl output { font: 11.5px var(--mono); color: var(--mute); }
+    input[type=range] { -webkit-appearance: none; appearance: none; width: 100%; height: 18px; background: transparent; margin: 0; }
+    input[type=range]::-webkit-slider-runnable-track { height: 1px; background: var(--dim); }
+    input[type=range]::-moz-range-track { height: 1px; background: var(--dim); }
+    input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 11px; height: 11px; margin-top: -5px; border-radius: 50%; background: var(--mat); border: 0; }
+    input[type=range]::-moz-range-thumb { width: 11px; height: 11px; border-radius: 50%; background: var(--mat); border: 0; }
+
+    .actions { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+    .actions .wide { grid-column: 1 / -1; }
+    kbd { font: 10px var(--mono); color: var(--mute); border: 1px solid var(--rule); border-radius: 2px; padding: 0 4px; }
+    .keys { font-size: 11px; color: var(--dim); margin-top: 14px; line-height: 1.9; }
+
+    @media (max-width: 860px) {
+      body { display: block; }
+      #stage { height: auto; padding: 44px 16px 36px; }
+      #stage canvas { max-height: none; }
+      #panel { height: auto; border-left: 0; border-top: 1px solid var(--rule); }
+    }
+  </style>
+</head>
+<body>
+  <main id="stage" aria-label="The two sheets">
+    <a class="back" href="../../">← gallery</a>
+    <canvas id="sheetL" width="1080" height="1350" aria-label="left sheet"></canvas>
+    <canvas id="sheetR" width="1080" height="1350" aria-label="right sheet"></canvas>
+    <div id="status" role="status" aria-live="polite"></div>
+  </main>
+
+  <aside id="panel">
+    <h1>Ridge, recomposed</h1>
+    <p class="cat">026 · diptych · parts of 024 / 025</p>
+
+    <section aria-labelledby="hSeed">
+      <h2 id="hSeed">Seed</h2>
+      <p id="seedNow" aria-live="polite">—</p>
+      <p id="regimeNow">&nbsp;</p>
+      <div class="seedrow">
+        <button id="prev" aria-label="Previous seed" title="Previous seed (←)">‹</button>
+        <button id="random" class="primary" title="Random seed (R or space)">Random seed</button>
+        <button id="next" aria-label="Next seed" title="Next seed (→)">›</button>
+      </div>
+      <form id="jump" autocomplete="off">
+        <input id="jumpIn" aria-label="Jump to seed: a number or any word" placeholder="number or word — e.g. 1953, kairos" />
+        <button type="submit">Go</button>
+      </form>
+      <p class="hint">A word is hashed (FNV-1a) to its seed, so a name always returns the same landscape.</p>
+    </section>
+
+    <section aria-labelledby="hDeal">
+      <h2 id="hDeal">Deal six <small>unpainted sketches</small></h2>
+      <button id="dealBtn" style="width:100%">Deal six random seeds</button>
+      <div id="deal"></div>
+    </section>
+
+    <section aria-labelledby="hHist">
+      <h2 id="hHist">Visited</h2>
+      <div id="history"></div>
+    </section>
+
+    <section aria-labelledby="hReg">
+      <h2 id="hReg">Regime</h2>
+      <div class="seg" id="regimes" role="group" aria-labelledby="hReg"></div>
+    </section>
+
+    <section aria-labelledby="hPar">
+      <h2 id="hPar">Composition</h2>
+      <div id="ctlCompose"></div>
+      <h2 style="margin-top:20px">Hand</h2>
+      <div id="ctlHand"></div>
+    </section>
+
+    <section>
+      <div class="actions">
+        <button id="reset">Reset</button>
+        <button id="link">Copy link</button>
+        <button id="save" class="wide primary">Download both sheets · PNG 2×</button>
+      </div>
+      <p class="keys"><kbd>R</kbd> / <kbd>space</kbd> random · <kbd>←</kbd> <kbd>→</kbd> step · <kbd>D</kbd> deal six · <kbd>S</kbd> download</p>
+    </section>
+  </aside>
+
+  <script>
+  (function () {
+    'use strict';
+    const REGIMES = ['by seed', 'massif', 'range', 'inversion', 'pass', 'wall'];
+    const SPEC = {
+      recompose: { v: 1, min: 0, max: 1, step: 0.05, label: 'Recompose', hint: '0 = source arrangement', group: 'ctlCompose' },
+      drama: { v: 1.2, min: 0.5, max: 1.8, step: 0.05, label: 'Drama (depth of the darks)', group: 'ctlCompose' },
+      fog: { v: 1, min: 0, max: 2, step: 0.05, label: 'Fog tongues', group: 'ctlCompose' },
+      smear: { v: 1, min: 0, max: 2.5, step: 0.05, label: 'Movement smear', group: 'ctlCompose' },
+      bristle: { v: 1, min: 0, max: 2.5, step: 0.1, label: 'Dry bristle', group: 'ctlHand' },
+      streak: { v: 1, min: 0, max: 2.5, step: 0.1, label: 'Dry drag on the rock', group: 'ctlHand' },
+      grain: { v: 1, min: 0, max: 2, step: 0.05, label: 'Grain', group: 'ctlHand' },
+    };
+    const $ = id => document.getElementById(id);
+    const hashStr = s => { let h = 2166136261 >>> 0; for (let i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 16777619); } return h >>> 0; };
+    const coerce = raw => { const s = String(raw).trim(); if (!s) return null; return /^\d+$/.test(s) ? Number(s) >>> 0 : hashStr(s); };
+    const fresh = () => { const a = new Uint32Array(1); (self.crypto || {}).getRandomValues ? crypto.getRandomValues(a) : (a[0] = Math.random() * 4294967296); return a[0] >>> 0; };
+    const group = n => String(n).replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
+
+    // ── state ← URL (?seed=…&p_name=…, the gallery's convention)
+    const state = { seed: null, regime: 0, p: {} }, visited = [];
+    for (const k in SPEC) state.p[k] = SPEC[k].v;
+    try {
+      const u = new URL(location.href);
+      state.seed = coerce(u.searchParams.get('seed') || '');
+      for (const [k, v] of u.searchParams) if (k.indexOf('p_') === 0) { const n = k.slice(2), f = parseFloat(v); if (n === 'regime') state.regime = f | 0; else if (SPEC[n] && isFinite(f)) state.p[n] = f; }
+    } catch (e) {}
+    if (state.seed === null) state.seed = fresh();
+
+    function shareURL() {
+      const u = new URL(location.href); u.search = ''; u.searchParams.set('seed', state.seed);
+      if (state.regime) u.searchParams.set('p_regime', state.regime);
+      for (const k in SPEC) if (state.p[k] !== SPEC[k].v) u.searchParams.set('p_' + k, state.p[k]);
+      return u;
+    }
+
+    // ── worker, one job in flight, the newest request wins
+    const worker = new Worker('worker.js');
+    let job = 0, busy = false, queued = null, dealJob = 0;
+    const params = () => Object.assign({ regime: state.regime }, state.p);
+    function request(purpose) {
+      const msg = { type: 'paint', job: ++job, purpose, seed: state.seed, params: params(), scale: purpose === 'save' ? 2 : 1 };
+      if (busy) { queued = msg; return; }
+      busy = true; $('stage').classList.add('busy');
+      $('status').textContent = purpose === 'save' ? 'painting both sheets at 2× for download…' : 'painting…';
+      worker.postMessage(msg);
+    }
+    worker.onmessage = e => {
+      const m = e.data;
+      if (m.type === 'thumb') { if (m.job === dealJob) addThumb(m); return; }
+      busy = false;
+      if (queued) { const q = queued; queued = null; busy = true; worker.postMessage(q); if (m.purpose !== 'save') return; }
+      if (m.purpose === 'save') download(m); else show(m);
+      if (!busy) $('stage').classList.remove('busy');
+    };
+    function show(m) {
+      [$('sheetL'), $('sheetR')].forEach((c, i) => { const s = m.sheets[i]; c.width = s.w; c.height = s.h; c.getContext('2d').putImageData(new ImageData(s.rgba, s.w, s.h), 0, 0); });
+      $('regimeNow').textContent = 'regime · ' + m.regime + (state.regime ? ' (chosen)' : ' (by seed)');
+      $('status').textContent = group(m.strokes) + ' strokes · ' + (m.ms / 1000).toFixed(1) + ' s · seed ' + m.seed;
+    }
+    function download(m) {
+      m.sheets.forEach((s, i) => {
+        const c = document.createElement('canvas'); c.width = s.w; c.height = s.h;
+        c.getContext('2d').putImageData(new ImageData(s.rgba, s.w, s.h), 0, 0);
+        c.toBlob(b => { const a = document.createElement('a'); a.href = URL.createObjectURL(b); a.download = 'ridge-recomposed-' + m.seed + (i ? '-right' : '-left') + '.png'; a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 4000); });
+      });
+      $('status').textContent = 'saved seed ' + m.seed + ' · two PNGs, ' + m.sheets[0].w + ' × ' + m.sheets[0].h;
+    }
+
+    // ── seed
+    function setSeed(n, keepHistory) {
+      state.seed = n >>> 0;
+      $('seedNow').textContent = group(state.seed);
+      if (!keepHistory) { const i = visited.indexOf(state.seed); if (i >= 0) visited.splice(i, 1); visited.unshift(state.seed); visited.length = Math.min(visited.length, 12); }
+      drawHistory(); sync(); request('view');
+    }
+    function drawHistory() {
+      const box = $('history'); box.textContent = '';
+      visited.forEach(s => { const b = document.createElement('button'); b.textContent = group(s); if (s === state.seed) b.className = 'on'; b.onclick = () => setSeed(s, true); box.appendChild(b); });
+    }
+    function sync() { try { history.replaceState(null, '', shareURL()); } catch (e) {} }
+
+    $('random').onclick = () => setSeed(fresh());
+    $('prev').onclick = () => setSeed(state.seed - 1);
+    $('next').onclick = () => setSeed(state.seed + 1);
+    $('jump').onsubmit = e => { e.preventDefault(); const n = coerce($('jumpIn').value); if (n !== null) { setSeed(n); $('jumpIn').value = ''; $('jumpIn').blur(); } };
+
+    // ── deal six
+    function deal() {
+      const seeds = Array.from({ length: 6 }, fresh); $('deal').textContent = ''; dealJob = ++job;
+      worker.postMessage({ type: 'deal', job: dealJob, seeds, params: params() });
+    }
+    function addThumb(m) {
+      const b = document.createElement('button'), c = document.createElement('canvas'), s = document.createElement('span');
+      c.width = m.w; c.height = m.h; c.getContext('2d').putImageData(new ImageData(m.rgba, m.w, m.h), 0, 0);
+      s.textContent = m.regime + ' · ' + group(m.seed); b.title = 'Paint seed ' + m.seed; b.setAttribute('aria-label', 'Paint seed ' + m.seed + ', ' + m.regime);
+      b.append(c, s); b.onclick = () => setSeed(m.seed); $('deal').appendChild(b);
+    }
+    $('dealBtn').onclick = deal;
+
+    // ── regime + sliders
+    REGIMES.forEach((name, i) => {
+      const b = document.createElement('button'); b.textContent = name; b.setAttribute('aria-pressed', i === state.regime);
+      b.onclick = () => { state.regime = i; [...$('regimes').children].forEach((x, j) => x.setAttribute('aria-pressed', j === i)); sync(); request('view'); };
+      $('regimes').appendChild(b);
+    });
+    let debounce;
+    const sliders = {};
+    for (const k in SPEC) {
+      const d = SPEC[k], wrap = document.createElement('div'), lab = document.createElement('label'), out = document.createElement('output'), inp = document.createElement('input');
+      wrap.className = 'ctl'; inp.type = 'range'; inp.id = 'p_' + k; inp.min = d.min; inp.max = d.max; inp.step = d.step; inp.value = state.p[k];
+      lab.htmlFor = inp.id; lab.append(d.label + (d.hint ? ' — ' + d.hint : ''), out); out.textContent = (+state.p[k]).toFixed(2);
+      inp.oninput = () => { state.p[k] = parseFloat(inp.value); out.textContent = state.p[k].toFixed(2); clearTimeout(debounce); debounce = setTimeout(() => { sync(); request('view'); }, 220); };
+      wrap.append(lab, inp); $(d.group).appendChild(wrap); sliders[k] = { inp, out };
+    }
+    $('reset').onclick = () => {
+      for (const k in SPEC) { state.p[k] = SPEC[k].v; sliders[k].inp.value = SPEC[k].v; sliders[k].out.textContent = SPEC[k].v.toFixed(2); }
+      state.regime = 0; [...$('regimes').children].forEach((x, j) => x.setAttribute('aria-pressed', j === 0)); sync(); request('view');
+    };
+    $('link').onclick = () => { const t = shareURL().toString(); (navigator.clipboard ? navigator.clipboard.writeText(t) : Promise.reject()).then(() => $('link').textContent = 'Copied', () => prompt('Link', t)); setTimeout(() => $('link').textContent = 'Copy link', 1400); };
+    $('save').onclick = () => request('save');
+
+    addEventListener('keydown', e => {
+      if (e.target.tagName === 'INPUT' && e.target.type !== 'range') return;
+      if (e.metaKey || e.ctrlKey || e.altKey) return;
+      const k = e.key.toLowerCase();
+      if (k === 'r' || (k === ' ' && e.target.tagName !== 'BUTTON')) { e.preventDefault(); setSeed(fresh()); }
+      else if (e.target.type === 'range') return;
+      else if (k === 'arrowleft') setSeed(state.seed - 1);
+      else if (k === 'arrowright') setSeed(state.seed + 1);
+      else if (k === 'd') deal();
+      else if (k === 's') request('save');
+    });
+
+    setSeed(state.seed);
+  })();
+  </script>
+</body>
+</html>

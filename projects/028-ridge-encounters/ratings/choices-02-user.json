@@ -1,0 +1,327 @@
+{
+ "set": 2,
+ "by": "Dimitris",
+ "saved": "2026-09-21T21:45:31.973Z",
+ "choices": [
+  {
+   "n": 1,
+   "a": "cuillin-41522",
+   "b": "badile-44874",
+   "claude": "A",
+   "user": "B",
+   "note": ""
+  },
+  {
+   "n": 2,
+   "a": "kinabalu-53649",
+   "b": "arthurs-41219",
+   "claude": "A",
+   "user": "B",
+   "note": ""
+  },
+  {
+   "n": 3,
+   "a": "simien-151954",
+   "b": "taygetos-33863",
+   "claude": "B",
+   "user": "B",
+   "note": ""
+  },
+  {
+   "n": 4,
+   "a": "urriellu-46086",
+   "b": "nevis-31815",
+   "claude": "A",
+   "user": "B",
+   "note": ""
+  },
+  {
+   "n": 5,
+   "a": "robson-149643",
+   "b": "fitzroy-41623",
+   "claude": "A",
+   "user": "A",
+   "note": ""
+  },
+  {
+   "n": 6,
+   "a": "kinabalu-55562",
+   "b": "machapuchare-51837",
+   "claude": "A",
+   "user": "B",
+   "note": ""
+  },
+  {
+   "n": 7,
+   "a": "eiger-34598",
+   "b": "invented-108045",
+   "claude": "B",
+   "user": "B",
+   "note": ""
+  },
+  {
+   "n": 8,
+   "a": "invented-88130",
+   "b": "watzmann-34065",
+   "claude": "A",
+   "user": "B",
+   "note": ""
+  },
+  {
+   "n": 9,
+   "a": "alpamayo-83964",
+   "b": "huashan-41825",
+   "claude": "A",
+   "user": "A",
+   "note": ""
+  },
+  {
+   "n": 10,
+   "a": "castillo-77715",
+   "b": "invented-32550",
+   "claude": "B",
+   "user": "A",
+   "note": ""
+  },
+  {
+   "n": 11,
+   "a": "cinto-53144",
+   "b": "fitzroy-43400",
+   "claude": "A",
+   "user": "B",
+   "note": ""
+  },
+  {
+   "n": 12,
+   "a": "besseggen-52942",
+   "b": "machapuchare-55663",
+   "claude": "A",
+   "user": "A",
+   "note": ""
+  },
+  {
+   "n": 13,
+   "a": "aoraki-34194",
+   "b": "trango-54255",
+   "claude": "A",
+   "user": "A",
+   "note": ""
+  },
+  {
+   "n": 14,
+   "a": "aoraki-32651",
+   "b": "tetons-54053",
+   "claude": "B",
+   "user": "A",
+   "note": ""
+  },
+  {
+   "n": 15,
+   "a": "roraima-33661",
+   "b": "perdido-44006",
+   "claude": "B",
+   "user": "B",
+   "note": ""
+  },
+  {
+   "n": 16,
+   "a": "urriellu-42532",
+   "b": "arthurs-98545",
+   "claude": "B",
+   "user": "A",
+   "note": ""
+  },
+  {
+   "n": 17,
+   "a": "olympus-35002",
+   "b": "castillo-53043",
+   "claude": "A",
+   "user": "B",
+   "note": ""
+  },
+  {
+   "n": 18,
+   "a": "perdido-45783",
+   "b": "cuillin-45076",
+   "claude": "A",
+   "user": "B",
+   "note": ""
+  },
+  {
+   "n": 19,
+   "a": "hotaka-41724",
+   "b": "amadablam-44672",
+   "claude": "B",
+   "user": "B",
+   "note": ""
+  },
+  {
+   "n": 20,
+   "a": "triglav-98801",
+   "b": "jorasses-53548",
+   "claude": "B",
+   "user": "A",
+   "note": ""
+  },
+  {
+   "n": 21,
+   "a": "watzmann-35608",
+   "b": "eiger-69383",
+   "claude": "A",
+   "user": "B",
+   "note": ""
+  },
+  {
+   "n": 22,
+   "a": "trango-52342",
+   "b": "huayhuash-51534",
+   "claude": "A",
+   "user": "B",
+   "note": ""
+  },
+  {
+   "n": 23,
+   "a": "nevis-34901",
+   "b": "castillo-54956",
+   "claude": "A",
+   "user": "B",
+   "note": ""
+  },
+  {
+   "n": 24,
+   "a": "k2-34699",
+   "b": "triglav-42431",
+   "claude": "A",
+   "user": "A",
+   "note": ""
+  },
+  {
+   "n": 25,
+   "a": "denali-51332",
+   "b": "hotaka-45278",
+   "claude": "B",
+   "user": "B",
+   "note": ""
+  },
+  {
+   "n": 26,
+   "a": "astraka-34295",
+   "b": "k2-33156",
+   "claude": "A",
+   "user": "A",
+   "note": ""
+  },
+  {
+   "n": 27,
+   "a": "matterhorn-43804",
+   "b": "besseggen-51029",
+   "claude": "A",
+   "user": "A",
+   "note": ""
+  },
+  {
+   "n": 28,
+   "a": "olympus-31916",
+   "b": "liathach-31714",
+   "claude": "B",
+   "user": "A",
+   "note": ""
+  },
+  {
+   "n": 29,
+   "a": "hotaka-43501",
+   "b": "trango-56168",
+   "claude": "A",
+   "user": "A",
+   "note": ""
+  },
+  {
+   "n": 30,
+   "a": "napali-43905",
+   "b": "civetta-41421",
+   "claude": "A",
+   "user": "A",
+   "note": ""
+  },
+  {
+   "n": 31,
+   "a": "toubkal-52241",
+   "b": "drakensberg-55259",
+   "claude": "A",
+   "user": "B",
+   "note": ""
+  },
+  {
+   "n": 32,
+   "a": "badile-41320",
+   "b": "amadablam-41118",
+   "claude": "A",
+   "user": "B",
+   "note": ""
+  },
+  {
+   "n": 33,
+   "a": "perdido-42229",
+   "b": "simien-53952",
+   "claude": "B",
+   "user": "A",
+   "note": ""
+  },
+  {
+   "n": 34,
+   "a": "cinto-55057",
+   "b": "robson-32017",
+   "claude": "B",
+   "user": "B",
+   "note": ""
+  },
+  {
+   "n": 35,
+   "a": "alpamayo-41017",
+   "b": "liathach-33257",
+   "claude": "A",
+   "user": "A",
+   "note": ""
+  },
+  {
+   "n": 36,
+   "a": "brenta-31310",
+   "b": "roraima-32118",
+   "claude": "A",
+   "user": "A",
+   "note": ""
+  },
+  {
+   "n": 37,
+   "a": "amadablam-42895",
+   "b": "watzmann-136039",
+   "claude": "A",
+   "user": "A",
+   "note": ""
+  },
+  {
+   "n": 38,
+   "a": "drakensberg-51433",
+   "b": "jorasses-55461",
+   "claude": "A",
+   "user": "A",
+   "note": ""
+  },
+  {
+   "n": 39,
+   "a": "castillo-51130",
+   "b": "liathach-34800",
+   "claude": "A",
+   "user": "B",
+   "note": ""
+  },
+  {
+   "n": 40,
+   "a": "k2-31613",
+   "b": "prokletije-75632",
+   "claude": "B",
+   "user": "B",
+   "note": ""
+  }
+ ]
+}

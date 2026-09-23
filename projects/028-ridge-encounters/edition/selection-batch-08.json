@@ -1,0 +1,98 @@
+{
+ "batch": 8,
+ "by": "Dimitris",
+ "saved": "2026-09-23T16:22:28.668Z",
+ "kept": [
+  {
+   "seed": 6609378,
+   "place": "besseggen",
+   "register": "passage",
+   "rescued": false
+  },
+  {
+   "seed": 6618719,
+   "place": "invented",
+   "register": "passage",
+   "rescued": false
+  },
+  {
+   "seed": 6637401,
+   "place": "jorasses",
+   "register": "exposure",
+   "rescued": false
+  },
+  {
+   "seed": 6842903,
+   "place": "invented",
+   "register": "clearing",
+   "rescued": false
+  },
+  {
+   "seed": 6880267,
+   "place": "invented",
+   "register": "clearing",
+   "rescued": false
+  },
+  {
+   "seed": 7057746,
+   "place": "besseggen",
+   "register": "clearing",
+   "rescued": false
+  },
+  {
+   "seed": 7113792,
+   "place": "urriellu",
+   "register": "clearing",
+   "rescued": false
+  },
+  {
+   "seed": 7216543,
+   "place": "lyskamm",
+   "register": "clearing",
+   "rescued": false
+  },
+  {
+   "seed": 7235225,
+   "place": "invented",
+   "register": "exposure",
+   "rescued": false
+  },
+  {
+   "seed": 7253907,
+   "place": "toubkal",
+   "register": "passage",
+   "rescued": false
+  },
+  {
+   "seed": 7347317,
+   "place": "liathach",
+   "register": "clearing",
+   "rescued": false
+  },
+  {
+   "seed": 7403363,
+   "place": "invented",
+   "register": "whiteout",
+   "rescued": false
+  },
+  {
+   "seed": 7487432,
+   "place": "trollveggen",
+   "register": "clearing",
+   "rescued": false
+  }
+ ],
+ "culled_by_claude": [
+  6628060,
+  6712129,
+  6814880,
+  6824221,
+  6870926,
+  6945654,
+  7132474,
+  7160497,
+  7328635,
+  7422045,
+  7440727
+ ]
+}

@@ -1,0 +1,164 @@
+{
+ "batch": 18,
+ "by": "Dimitris",
+ "saved": "2026-09-23T19:08:50.794Z",
+ "kept": [
+  {
+   "seed": 19213050,
+   "place": "huashan",
+   "register": "clearing",
+   "rescued": false
+  },
+  {
+   "seed": 19226017,
+   "place": "meije",
+   "register": "clearing",
+   "rescued": false
+  },
+  {
+   "seed": 19264918,
+   "place": "machapuchare",
+   "register": "clearing",
+   "rescued": false
+  },
+  {
+   "seed": 19394588,
+   "place": "toubkal",
+   "register": "clearing",
+   "rescued": false
+  },
+  {
+   "seed": 19446456,
+   "place": "taygetos",
+   "register": "clearing",
+   "rescued": false
+  },
+  {
+   "seed": 19511291,
+   "place": "trollveggen",
+   "register": "clearing",
+   "rescued": false
+  },
+  {
+   "seed": 19537225,
+   "place": "denali",
+   "register": "clearing",
+   "rescued": false
+  },
+  {
+   "seed": 19731730,
+   "place": "jorasses",
+   "register": "clearing",
+   "rescued": false
+  },
+  {
+   "seed": 19757664,
+   "place": "tetons",
+   "register": "passage",
+   "rescued": false
+  },
+  {
+   "seed": 19770631,
+   "place": "trecime",
+   "register": "passage",
+   "rescued": false
+  },
+  {
+   "seed": 19809532,
+   "place": "jorasses",
+   "register": "clearing",
+   "rescued": false
+  },
+  {
+   "seed": 19822499,
+   "place": "besseggen",
+   "register": "passage",
+   "rescued": false
+  },
+  {
+   "seed": 19874367,
+   "place": "astraka",
+   "register": "clearing",
+   "rescued": false
+  },
+  {
+   "seed": 19887334,
+   "place": "watzmann",
+   "register": "clearing",
+   "rescued": false
+  },
+  {
+   "seed": 19900301,
+   "place": "invented",
+   "register": "clearing",
+   "rescued": false
+  },
+  {
+   "seed": 19939202,
+   "place": "triglav",
+   "register": "clearing",
+   "rescued": false
+  },
+  {
+   "seed": 19952169,
+   "place": "cinto",
+   "register": "clearing",
+   "rescued": false
+  },
+  {
+   "seed": 19991070,
+   "place": "napali",
+   "register": "clearing",
+   "rescued": false
+  },
+  {
+   "seed": 20017004,
+   "place": "brenta",
+   "register": "clearing",
+   "rescued": false
+  },
+  {
+   "seed": 20237443,
+   "place": "invented",
+   "register": "exposure",
+   "rescued": false
+  },
+  {
+   "seed": 20341179,
+   "place": "invented",
+   "register": "clearing",
+   "rescued": false
+  },
+  {
+   "seed": 20418981,
+   "place": "huayhuash",
+   "register": "passage",
+   "rescued": false
+  },
+  {
+   "seed": 20431948,
+   "place": "olympus",
+   "register": "clearing",
+   "rescued": false
+  }
+ ],
+ "culled_by_claude": [
+  19238984,
+  19277885,
+  19290852,
+  19303819,
+  19355687,
+  19407555,
+  19589093,
+  19653928,
+  19744697,
+  19913268,
+  20042938,
+  20094806,
+  20172608,
+  20328212,
+  20354146,
+  20367113,
+  20380080
+ ]
+}

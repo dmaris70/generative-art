@@ -1,0 +1,1928 @@
+{
+ "batch": 14,
+ "made": "2026-09-23",
+ "version": "1.0",
+ "note": "96 fresh seeds under the frozen generator v1.0; everything by seed (events on). Claude culled by eye only what it recognises reliably \u2014 pattern, murk, dead black, nothing there, rendering faults.",
+ "items": [
+  {
+   "seed": 13300061,
+   "place": "invented",
+   "img": "edition/batch-14/pairs/13300061.png",
+   "register": "passage",
+   "light": "against",
+   "key": "low",
+   "weather": "spindrift+pouring",
+   "pair": "turn",
+   "event": "none",
+   "temper": {
+    "reveal": 1.08,
+    "drama": 0.99,
+    "smear": 0.63,
+    "bristle": 1.66,
+    "streak": 1.13,
+    "grain": 1.11
+   },
+   "culled": null
+  },
+  {
+   "seed": 13311372,
+   "place": "brenta",
+   "img": "edition/batch-14/pairs/13311372.png",
+   "register": "clearing",
+   "light": "side",
+   "key": "low",
+   "weather": "pouring",
+   "pair": "panorama",
+   "event": "none",
+   "temper": {
+    "reveal": 1.29,
+    "drama": 1.29,
+    "smear": 0.67,
+    "bristle": 1.31,
+    "streak": 1.25,
+    "grain": 1
+   },
+   "culled": null
+  },
+  {
+   "seed": 13322683,
+   "place": "toubkal",
+   "img": "edition/batch-14/pairs/13322683.png",
+   "register": "exposure",
+   "light": "moon",
+   "key": "full",
+   "weather": "pouring",
+   "pair": "back",
+   "event": "moon",
+   "temper": {
+    "reveal": 1.1,
+    "drama": 1.21,
+    "smear": 0.48,
+    "bristle": 1.38,
+    "streak": 0.98,
+    "grain": 0.96
+   },
+   "culled": "blurred smear beside a dark ridge"
+  },
+  {
+   "seed": 13333994,
+   "place": "nevis",
+   "img": "edition/batch-14/pairs/13333994.png",
+   "register": "exposure",
+   "light": "against",
+   "key": "low",
+   "weather": "spindrift",
+   "pair": "turn",
+   "event": "none",
+   "temper": {
+    "reveal": 0.88,
+    "drama": 1.23,
+    "smear": 0.89,
+    "bristle": 1.45,
+    "streak": 0.82,
+    "grain": 0.94
+   },
+   "culled": null
+  },
+  {
+   "seed": 13345305,
+   "place": "cuillin",
+   "img": "edition/batch-14/pairs/13345305.png",
+   "register": "clearing",
+   "light": "against",
+   "key": "full",
+   "weather": "spindrift",
+   "pair": "later",
+   "event": "none",
+   "temper": {
+    "reveal": 1.15,
+    "drama": 1.19,
+    "smear": 0.48,
+    "bristle": 1.27,
+    "streak": 1.19,
+    "grain": 1.02
+   },
+   "culled": null
+  },
+  {
+   "seed": 13356616,
+   "place": "alpamayo",
+   "img": "edition/batch-14/pairs/13356616.png",
+   "register": "passage",
+   "light": "against",
+   "key": "low",
+   "weather": "spindrift+pouring",
+   "pair": "panorama",
+   "event": "none",
+   "temper": {
+    "reveal": 1.16,
+    "drama": 1.15,
+    "smear": 1.01,
+    "bristle": 1.27,
+    "streak": 0.69,
+    "grain": 1.06
+   },
+   "culled": null
+  },
+  {
+   "seed": 13367927,
+   "place": "toubkal",
+   "img": "edition/batch-14/pairs/13367927.png",
+   "register": "exposure",
+   "light": "side",
+   "key": "low",
+   "weather": "spindrift+pouring",
+   "pair": "turn",
+   "event": "none",
+   "temper": {
+    "reveal": 0.78,
+    "drama": 0.82,
+    "smear": 0.8,
+    "bristle": 1.02,
+    "streak": 1.01,
+    "grain": 1.04
+   },
+   "culled": null
+  },
+  {
+   "seed": 13379238,
+   "place": "napali",
+   "img": "edition/batch-14/pairs/13379238.png",
+   "register": "exposure",
+   "light": "against",
+   "key": "low",
+   "weather": "spindrift",
+   "pair": "turn",
+   "event": "bird",
+   "temper": {
+    "reveal": 0.94,
+    "drama": 1.02,
+    "smear": 0.39,
+    "bristle": 0.73,
+    "streak": 1.11,
+    "grain": 0.84
+   },
+   "culled": null
+  },
+  {
+   "seed": 13390549,
+   "place": "trollveggen",
+   "img": "edition/batch-14/pairs/13390549.png",
+   "register": "clearing",
+   "light": "against",
+   "key": "low",
+   "weather": "still",
+   "pair": "down",
+   "event": "none",
+   "temper": {
+    "reveal": 1.27,
+    "drama": 1.19,
+    "smear": 0.46,
+    "bristle": 1.16,
+    "streak": 1.33,
+    "grain": 1.16
+   },
+   "culled": "a striped scratched slab: rendering fault"
+  },
+  {
+   "seed": 13401860,
+   "place": "aoraki",
+   "img": "edition/batch-14/pairs/13401860.png",
+   "register": "passage",
+   "light": "against",
+   "key": "low",
+   "weather": "spindrift+pouring",
+   "pair": "turn",
+   "event": "none",
+   "temper": {
+    "reveal": 1.21,
+    "drama": 1.17,
+    "smear": 0.48,
+    "bristle": 0.92,
+    "streak": 0.75,
+    "grain": 1.03
+   },
+   "culled": null
+  },
+  {
+   "seed": 13413171,
+   "place": "matterhorn",
+   "img": "edition/batch-14/pairs/13413171.png",
+   "register": "clearing",
+   "light": "against",
+   "key": "low",
+   "weather": "spindrift",
+   "pair": "panorama",
+   "event": "none",
+   "temper": {
+    "reveal": 1.23,
+    "drama": 1.02,
+    "smear": 0.41,
+    "bristle": 1.83,
+    "streak": 1.01,
+    "grain": 0.99
+   },
+   "culled": null
+  },
+  {
+   "seed": 13424482,
+   "place": "prokletije",
+   "img": "edition/batch-14/pairs/13424482.png",
+   "register": "exposure",
+   "light": "moon",
+   "key": "full",
+   "weather": "still",
+   "pair": "turn",
+   "event": "moon",
+   "temper": {
+    "reveal": 1.05,
+    "drama": 1.15,
+    "smear": 0.79,
+    "bristle": 1.38,
+    "streak": 0.67,
+    "grain": 0.92
+   },
+   "culled": null
+  },
+  {
+   "seed": 13435793,
+   "place": "kinabalu",
+   "img": "edition/batch-14/pairs/13435793.png",
+   "register": "passage",
+   "light": "side",
+   "key": "low",
+   "weather": "pouring",
+   "pair": "turn",
+   "event": "none",
+   "temper": {
+    "reveal": 0.97,
+    "drama": 1.12,
+    "smear": 0.42,
+    "bristle": 0.8,
+    "streak": 1.17,
+    "grain": 1.04
+   },
+   "culled": null
+  },
+  {
+   "seed": 13447104,
+   "place": "invented",
+   "img": "edition/batch-14/pairs/13447104.png",
+   "register": "exposure",
+   "light": "against",
+   "key": "full",
+   "weather": "spindrift",
+   "pair": "later",
+   "event": "none",
+   "temper": {
+    "reveal": 1.07,
+    "drama": 1.03,
+    "smear": 0.59,
+    "bristle": 1.23,
+    "streak": 0.5,
+    "grain": 1.01
+   },
+   "culled": null
+  },
+  {
+   "seed": 13458415,
+   "place": "invented",
+   "img": "edition/batch-14/pairs/13458415.png",
+   "register": "passage",
+   "light": "moon",
+   "key": "full",
+   "weather": "pouring",
+   "pair": "down",
+   "event": "moon",
+   "temper": {
+    "reveal": 1.01,
+    "drama": 1.2,
+    "smear": 0.66,
+    "bristle": 1.18,
+    "streak": 0.97,
+    "grain": 0.93
+   },
+   "culled": "mottled blur, twice"
+  },
+  {
+   "seed": 13469726,
+   "place": "trecime",
+   "img": "edition/batch-14/pairs/13469726.png",
+   "register": "exposure",
+   "light": "against",
+   "key": "full",
+   "weather": "pouring",
+   "pair": "panorama",
+   "event": "none",
+   "temper": {
+    "reveal": 1.08,
+    "drama": 1.2,
+    "smear": 0.6,
+    "bristle": 0.78,
+    "streak": 1.02,
+    "grain": 0.87
+   },
+   "culled": "marbled rock pattern"
+  },
+  {
+   "seed": 13481037,
+   "place": "cinto",
+   "img": "edition/batch-14/pairs/13481037.png",
+   "register": "passage",
+   "light": "side",
+   "key": "low",
+   "weather": "spindrift+pouring",
+   "pair": "down",
+   "event": "bird",
+   "temper": {
+    "reveal": 1.14,
+    "drama": 0.89,
+    "smear": 0.41,
+    "bristle": 1.16,
+    "streak": 1.29,
+    "grain": 1.1
+   },
+   "culled": "white drips and a striped ridge: rendering fault"
+  },
+  {
+   "seed": 13492348,
+   "place": "kinabalu",
+   "img": "edition/batch-14/pairs/13492348.png",
+   "register": "exposure",
+   "light": "against",
+   "key": "low",
+   "weather": "still",
+   "pair": "turn",
+   "event": "none",
+   "temper": {
+    "reveal": 1.2,
+    "drama": 1.27,
+    "smear": 0.71,
+    "bristle": 1.34,
+    "streak": 1.44,
+    "grain": 1.08
+   },
+   "culled": null
+  },
+  {
+   "seed": 13503659,
+   "place": "invented",
+   "img": "edition/batch-14/pairs/13503659.png",
+   "register": "passage",
+   "light": "side",
+   "key": "low",
+   "weather": "pouring",
+   "pair": "turn",
+   "event": "none",
+   "temper": {
+    "reveal": 1.31,
+    "drama": 1.16,
+    "smear": 0.42,
+    "bristle": 1.17,
+    "streak": 0.98,
+    "grain": 0.84
+   },
+   "culled": null
+  },
+  {
+   "seed": 13514970,
+   "place": "robson",
+   "img": "edition/batch-14/pairs/13514970.png",
+   "register": "clearing",
+   "light": "overcast",
+   "key": "high",
+   "weather": "spindrift",
+   "pair": "later",
+   "event": "none",
+   "temper": {
+    "reveal": 1.23,
+    "drama": 1.12,
+    "smear": 0.58,
+    "bristle": 0.83,
+    "streak": 0.98,
+    "grain": 1.14
+   },
+   "culled": null
+  },
+  {
+   "seed": 13526281,
+   "place": "taygetos",
+   "img": "edition/batch-14/pairs/13526281.png",
+   "register": "clearing",
+   "light": "against",
+   "key": "low",
+   "weather": "spindrift",
+   "pair": "back",
+   "event": "none",
+   "temper": {
+    "reveal": 1.34,
+    "drama": 1.06,
+    "smear": 0.72,
+    "bristle": 1.16,
+    "streak": 1.05,
+    "grain": 0.92
+   },
+   "culled": null
+  },
+  {
+   "seed": 13537592,
+   "place": "matterhorn",
+   "img": "edition/batch-14/pairs/13537592.png",
+   "register": "exposure",
+   "light": "side",
+   "key": "full",
+   "weather": "pouring",
+   "pair": "panorama",
+   "event": "none",
+   "temper": {
+    "reveal": 1.26,
+    "drama": 0.95,
+    "smear": 0.82,
+    "bristle": 1.58,
+    "streak": 1.42,
+    "grain": 1.01
+   },
+   "culled": null
+  },
+  {
+   "seed": 13548903,
+   "place": "denali",
+   "img": "edition/batch-14/pairs/13548903.png",
+   "register": "whiteout",
+   "light": "overcast",
+   "key": "high",
+   "weather": "pouring",
+   "pair": "later",
+   "event": "none",
+   "temper": {
+    "reveal": 1.07,
+    "drama": 1.22,
+    "smear": 0.5,
+    "bristle": 0.87,
+    "streak": 1.16,
+    "grain": 1.08
+   },
+   "culled": "glossy blurred dome"
+  },
+  {
+   "seed": 13560214,
+   "place": "taygetos",
+   "img": "edition/batch-14/pairs/13560214.png",
+   "register": "passage",
+   "light": "side",
+   "key": "full",
+   "weather": "spindrift+pouring",
+   "pair": "turn",
+   "event": "none",
+   "temper": {
+    "reveal": 1.19,
+    "drama": 1,
+    "smear": 0.54,
+    "bristle": 0.91,
+    "streak": 1.32,
+    "grain": 1.09
+   },
+   "culled": null
+  },
+  {
+   "seed": 13571525,
+   "place": "lyskamm",
+   "img": "edition/batch-14/pairs/13571525.png",
+   "register": "clearing",
+   "light": "front",
+   "key": "low",
+   "weather": "pouring",
+   "pair": "turn",
+   "event": "none",
+   "temper": {
+    "reveal": 1.33,
+    "drama": 1.23,
+    "smear": 0.56,
+    "bristle": 1.35,
+    "streak": 1.2,
+    "grain": 1.03
+   },
+   "culled": null
+  },
+  {
+   "seed": 13582836,
+   "place": "hotaka",
+   "img": "edition/batch-14/pairs/13582836.png",
+   "register": "exposure",
+   "light": "front",
+   "key": "low",
+   "weather": "spindrift+pouring",
+   "pair": "turn",
+   "event": "none",
+   "temper": {
+    "reveal": 0.94,
+    "drama": 1.35,
+    "smear": 0.75,
+    "bristle": 0.7,
+    "streak": 1.35,
+    "grain": 1.02
+   },
+   "culled": null
+  },
+  {
+   "seed": 13594147,
+   "place": "invented",
+   "img": "edition/batch-14/pairs/13594147.png",
+   "register": "passage",
+   "light": "side",
+   "key": "full",
+   "weather": "spindrift+pouring",
+   "pair": "turn",
+   "event": "none",
+   "temper": {
+    "reveal": 0.95,
+    "drama": 1.15,
+    "smear": 0.49,
+    "bristle": 1.33,
+    "streak": 1.27,
+    "grain": 0.94
+   },
+   "culled": null
+  },
+  {
+   "seed": 13605458,
+   "place": "meije",
+   "img": "edition/batch-14/pairs/13605458.png",
+   "register": "clearing",
+   "light": "against",
+   "key": "low",
+   "weather": "pouring",
+   "pair": "turn",
+   "event": "none",
+   "temper": {
+    "reveal": 1.38,
+    "drama": 1.04,
+    "smear": 0.62,
+    "bristle": 1.17,
+    "streak": 1.6,
+    "grain": 1.02
+   },
+   "culled": null
+  },
+  {
+   "seed": 13616769,
+   "place": "meije",
+   "img": "edition/batch-14/pairs/13616769.png",
+   "register": "passage",
+   "light": "against",
+   "key": "full",
+   "weather": "pouring",
+   "pair": "turn",
+   "event": "none",
+   "temper": {
+    "reveal": 1.3,
+    "drama": 1.26,
+    "smear": 0.49,
+    "bristle": 0.77,
+    "streak": 1,
+    "grain": 0.99
+   },
+   "culled": null
+  },
+  {
+   "seed": 13628080,
+   "place": "napali",
+   "img": "edition/batch-14/pairs/13628080.png",
+   "register": "exposure",
+   "light": "side",
+   "key": "full",
+   "weather": "still",
+   "pair": "panorama",
+   "event": "none",
+   "temper": {
+    "reveal": 1.13,
+    "drama": 1.28,
+    "smear": 0.43,
+    "bristle": 1.13,
+    "streak": 1.15,
+    "grain": 1.1
+   },
+   "culled": "stepped terraces like contour lines: rendering fault"
+  },
+  {
+   "seed": 13639391,
+   "place": "prokletije",
+   "img": "edition/batch-14/pairs/13639391.png",
+   "register": "exposure",
+   "light": "against",
+   "key": "low",
+   "weather": "still",
+   "pair": "panorama",
+   "event": "none",
+   "temper": {
+    "reveal": 1.06,
+    "drama": 1.31,
+    "smear": 0.51,
+    "bristle": 1.01,
+    "streak": 0.99,
+    "grain": 0.83
+   },
+   "culled": null
+  },
+  {
+   "seed": 13650702,
+   "place": "urriellu",
+   "img": "edition/batch-14/pairs/13650702.png",
+   "register": "passage",
+   "light": "against",
+   "key": "low",
+   "weather": "pouring",
+   "pair": "panorama",
+   "event": "none",
+   "temper": {
+    "reveal": 1.17,
+    "drama": 1.2,
+    "smear": 0.47,
+    "bristle": 1.35,
+    "streak": 0.76,
+    "grain": 0.96
+   },
+   "culled": null
+  },
+  {
+   "seed": 13662013,
+   "place": "ushba",
+   "img": "edition/batch-14/pairs/13662013.png",
+   "register": "clearing",
+   "light": "side",
+   "key": "full",
+   "weather": "pouring",
+   "pair": "later",
+   "event": "none",
+   "temper": {
+    "reveal": 0.97,
+    "drama": 1.33,
+    "smear": 0.46,
+    "bristle": 1.34,
+    "streak": 0.66,
+    "grain": 0.99
+   },
+   "culled": null
+  },
+  {
+   "seed": 13673324,
+   "place": "astraka",
+   "img": "edition/batch-14/pairs/13673324.png",
+   "register": "passage",
+   "light": "against",
+   "key": "low",
+   "weather": "pouring",
+   "pair": "later",
+   "event": "none",
+   "temper": {
+    "reveal": 1.26,
+    "drama": 1.22,
+    "smear": 0.83,
+    "bristle": 0.65,
+    "streak": 0.87,
+    "grain": 1.12
+   },
+   "culled": null
+  },
+  {
+   "seed": 13684635,
+   "place": "machapuchare",
+   "img": "edition/batch-14/pairs/13684635.png",
+   "register": "exposure",
+   "light": "side",
+   "key": "full",
+   "weather": "spindrift",
+   "pair": "turn",
+   "event": "hut",
+   "temper": {
+    "reveal": 1.09,
+    "drama": 1.17,
+    "smear": 0.61,
+    "bristle": 0.83,
+    "streak": 0.93,
+    "grain": 0.93
+   },
+   "culled": null
+  },
+  {
+   "seed": 13695946,
+   "place": "invented",
+   "img": "edition/batch-14/pairs/13695946.png",
+   "register": "clearing",
+   "light": "against",
+   "key": "low",
+   "weather": "still",
+   "pair": "panorama",
+   "event": "none",
+   "temper": {
+    "reveal": 1.06,
+    "drama": 1.16,
+    "smear": 0.61,
+    "bristle": 0.77,
+    "streak": 1.06,
+    "grain": 0.89
+   },
+   "culled": null
+  },
+  {
+   "seed": 13707257,
+   "place": "triglav",
+   "img": "edition/batch-14/pairs/13707257.png",
+   "register": "exposure",
+   "light": "against",
+   "key": "low",
+   "weather": "pouring",
+   "pair": "panorama",
+   "event": "none",
+   "temper": {
+    "reveal": 0.99,
+    "drama": 1.38,
+    "smear": 0.82,
+    "bristle": 1.09,
+    "streak": 0.93,
+    "grain": 0.87
+   },
+   "culled": null
+  },
+  {
+   "seed": 13718568,
+   "place": "astraka",
+   "img": "edition/batch-14/pairs/13718568.png",
+   "register": "exposure",
+   "light": "against",
+   "key": "full",
+   "weather": "spindrift+pouring",
+   "pair": "later",
+   "event": "none",
+   "temper": {
+    "reveal": 1.19,
+    "drama": 1.17,
+    "smear": 0.54,
+    "bristle": 0.64,
+    "streak": 1.43,
+    "grain": 0.88
+   },
+   "culled": null
+  },
+  {
+   "seed": 13729879,
+   "place": "robson",
+   "img": "edition/batch-14/pairs/13729879.png",
+   "register": "exposure",
+   "light": "against",
+   "key": "low",
+   "weather": "pouring",
+   "pair": "panorama",
+   "event": "none",
+   "temper": {
+    "reveal": 1,
+    "drama": 1.05,
+    "smear": 0.69,
+    "bristle": 1.08,
+    "streak": 0.76,
+    "grain": 1.1
+   },
+   "culled": null
+  },
+  {
+   "seed": 13741190,
+   "place": "k2",
+   "img": "edition/batch-14/pairs/13741190.png",
+   "register": "passage",
+   "light": "moon",
+   "key": "full",
+   "weather": "spindrift+pouring",
+   "pair": "panorama",
+   "event": "moon",
+   "temper": {
+    "reveal": 1.25,
+    "drama": 1.03,
+    "smear": 0.55,
+    "bristle": 1.06,
+    "streak": 1.67,
+    "grain": 0.95
+   },
+   "culled": null
+  },
+  {
+   "seed": 13752501,
+   "place": "nevis",
+   "img": "edition/batch-14/pairs/13752501.png",
+   "register": "clearing",
+   "light": "against",
+   "key": "low",
+   "weather": "pouring",
+   "pair": "panorama",
+   "event": "none",
+   "temper": {
+    "reveal": 1.1,
+    "drama": 1.15,
+    "smear": 0.51,
+    "bristle": 1.05,
+    "streak": 1.31,
+    "grain": 1.01
+   },
+   "culled": null
+  },
+  {
+   "seed": 13763812,
+   "place": "castillo",
+   "img": "edition/batch-14/pairs/13763812.png",
+   "register": "whiteout",
+   "light": "overcast",
+   "key": "high",
+   "weather": "pouring",
+   "pair": "later",
+   "event": "none",
+   "temper": {
+    "reveal": 1.33,
+    "drama": 0.95,
+    "smear": 0.28,
+    "bristle": 0.85,
+    "streak": 1.24,
+    "grain": 0.99
+   },
+   "culled": null
+  },
+  {
+   "seed": 13775123,
+   "place": "perdido",
+   "img": "edition/batch-14/pairs/13775123.png",
+   "register": "clearing",
+   "light": "side",
+   "key": "low",
+   "weather": "spindrift",
+   "pair": "turn",
+   "event": "none",
+   "temper": {
+    "reveal": 1.14,
+    "drama": 0.97,
+    "smear": 0.24,
+    "bristle": 1.08,
+    "streak": 0.88,
+    "grain": 0.92
+   },
+   "culled": null
+  },
+  {
+   "seed": 13786434,
+   "place": "stetind",
+   "img": "edition/batch-14/pairs/13786434.png",
+   "register": "passage",
+   "light": "side",
+   "key": "full",
+   "weather": "pouring",
+   "pair": "down",
+   "event": "none",
+   "temper": {
+    "reveal": 0.97,
+    "drama": 1.14,
+    "smear": 0.44,
+    "bristle": 1.37,
+    "streak": 0.45,
+    "grain": 1
+   },
+   "culled": null
+  },
+  {
+   "seed": 13797745,
+   "place": "robson",
+   "img": "edition/batch-14/pairs/13797745.png",
+   "register": "clearing",
+   "light": "front",
+   "key": "full",
+   "weather": "spindrift",
+   "pair": "turn",
+   "event": "none",
+   "temper": {
+    "reveal": 1.29,
+    "drama": 1.02,
+    "smear": 0.6,
+    "bristle": 1.14,
+    "streak": 0.93,
+    "grain": 1.14
+   },
+   "culled": null
+  },
+  {
+   "seed": 13809056,
+   "place": "invented",
+   "img": "edition/batch-14/pairs/13809056.png",
+   "register": "clearing",
+   "light": "side",
+   "key": "full",
+   "weather": "spindrift",
+   "pair": "down",
+   "event": "none",
+   "temper": {
+    "reveal": 1.18,
+    "drama": 0.95,
+    "smear": 0.73,
+    "bristle": 1.58,
+    "streak": 0.93,
+    "grain": 1
+   },
+   "culled": null
+  },
+  {
+   "seed": 13820367,
+   "place": "robson",
+   "img": "edition/batch-14/pairs/13820367.png",
+   "register": "exposure",
+   "light": "against",
+   "key": "low",
+   "weather": "spindrift+pouring",
+   "pair": "turn",
+   "event": "bird",
+   "temper": {
+    "reveal": 1.03,
+    "drama": 1.05,
+    "smear": 0.84,
+    "bristle": 1.05,
+    "streak": 1.06,
+    "grain": 1
+   },
+   "culled": null
+  },
+  {
+   "seed": 13831678,
+   "place": "drakensberg",
+   "img": "edition/batch-14/pairs/13831678.png",
+   "register": "passage",
+   "light": "side",
+   "key": "full",
+   "weather": "pouring",
+   "pair": "turn",
+   "event": "none",
+   "temper": {
+    "reveal": 1.08,
+    "drama": 1,
+    "smear": 0.44,
+    "bristle": 0.99,
+    "streak": 0.8,
+    "grain": 0.94
+   },
+   "culled": null
+  },
+  {
+   "seed": 13842989,
+   "place": "k2",
+   "img": "edition/batch-14/pairs/13842989.png",
+   "register": "passage",
+   "light": "side",
+   "key": "full",
+   "weather": "pouring",
+   "pair": "turn",
+   "event": "none",
+   "temper": {
+    "reveal": 1.23,
+    "drama": 1.23,
+    "smear": 0.68,
+    "bristle": 1.31,
+    "streak": 0.95,
+    "grain": 0.96
+   },
+   "culled": null
+  },
+  {
+   "seed": 13854300,
+   "place": "badile",
+   "img": "edition/batch-14/pairs/13854300.png",
+   "register": "passage",
+   "light": "side",
+   "key": "full",
+   "weather": "pouring",
+   "pair": "panorama",
+   "event": "none",
+   "temper": {
+    "reveal": 1.05,
+    "drama": 1.19,
+    "smear": 0.74,
+    "bristle": 1.14,
+    "streak": 1.79,
+    "grain": 0.98
+   },
+   "culled": null
+  },
+  {
+   "seed": 13865611,
+   "place": "prokletije",
+   "img": "edition/batch-14/pairs/13865611.png",
+   "register": "clearing",
+   "light": "side",
+   "key": "full",
+   "weather": "still",
+   "pair": "turn",
+   "event": "none",
+   "temper": {
+    "reveal": 0.97,
+    "drama": 1.09,
+    "smear": 0.62,
+    "bristle": 1.13,
+    "streak": 1.23,
+    "grain": 1.06
+   },
+   "culled": null
+  },
+  {
+   "seed": 13876922,
+   "place": "watzmann",
+   "img": "edition/batch-14/pairs/13876922.png",
+   "register": "clearing",
+   "light": "against",
+   "key": "low",
+   "weather": "spindrift+pouring",
+   "pair": "back",
+   "event": "bird",
+   "temper": {
+    "reveal": 1.09,
+    "drama": 1.21,
+    "smear": 0.65,
+    "bristle": 1.47,
+    "streak": 1.45,
+    "grain": 1.02
+   },
+   "culled": "blurred smear and a blank sheet"
+  },
+  {
+   "seed": 13888233,
+   "place": "darrans",
+   "img": "edition/batch-14/pairs/13888233.png",
+   "register": "passage",
+   "light": "side",
+   "key": "full",
+   "weather": "pouring",
+   "pair": "panorama",
+   "event": "none",
+   "temper": {
+    "reveal": 1.14,
+    "drama": 1.1,
+    "smear": 0.91,
+    "bristle": 1.3,
+    "streak": 1.5,
+    "grain": 0.89
+   },
+   "culled": null
+  },
+  {
+   "seed": 13899544,
+   "place": "denali",
+   "img": "edition/batch-14/pairs/13899544.png",
+   "register": "passage",
+   "light": "side",
+   "key": "full",
+   "weather": "spindrift+pouring",
+   "pair": "panorama",
+   "event": "none",
+   "temper": {
+    "reveal": 1.23,
+    "drama": 1.1,
+    "smear": 0.51,
+    "bristle": 1.07,
+    "streak": 1.05,
+    "grain": 0.96
+   },
+   "culled": "ribbed striped slope: rendering fault"
+  },
+  {
+   "seed": 13910855,
+   "place": "triglav",
+   "img": "edition/batch-14/pairs/13910855.png",
+   "register": "clearing",
+   "light": "side",
+   "key": "full",
+   "weather": "still",
+   "pair": "panorama",
+   "event": "none",
+   "temper": {
+    "reveal": 0.92,
+    "drama": 1.17,
+    "smear": 0.51,
+    "bristle": 1.56,
+    "streak": 1.17,
+    "grain": 0.98
+   },
+   "culled": null
+  },
+  {
+   "seed": 13922166,
+   "place": "invented",
+   "img": "edition/batch-14/pairs/13922166.png",
+   "register": "passage",
+   "light": "against",
+   "key": "low",
+   "weather": "spindrift+pouring",
+   "pair": "turn",
+   "event": "none",
+   "temper": {
+    "reveal": 1.04,
+    "drama": 1.33,
+    "smear": 0.73,
+    "bristle": 1.34,
+    "streak": 1.19,
+    "grain": 1.03
+   },
+   "culled": null
+  },
+  {
+   "seed": 13933477,
+   "place": "cuillin",
+   "img": "edition/batch-14/pairs/13933477.png",
+   "register": "clearing",
+   "light": "against",
+   "key": "low",
+   "weather": "spindrift+pouring",
+   "pair": "turn",
+   "event": "none",
+   "temper": {
+    "reveal": 1.19,
+    "drama": 0.96,
+    "smear": 0.74,
+    "bristle": 1.17,
+    "streak": 1.16,
+    "grain": 0.95
+   },
+   "culled": null
+  },
+  {
+   "seed": 13944788,
+   "place": "cinto",
+   "img": "edition/batch-14/pairs/13944788.png",
+   "register": "whiteout",
+   "light": "overcast",
+   "key": "high",
+   "weather": "spindrift",
+   "pair": "later",
+   "event": "bird",
+   "temper": {
+    "reveal": 1.25,
+    "drama": 0.97,
+    "smear": 0.88,
+    "bristle": 1.19,
+    "streak": 1.45,
+    "grain": 0.9
+   },
+   "culled": null
+  },
+  {
+   "seed": 13956099,
+   "place": "astraka",
+   "img": "edition/batch-14/pairs/13956099.png",
+   "register": "passage",
+   "light": "moon",
+   "key": "full",
+   "weather": "spindrift+pouring",
+   "pair": "down",
+   "event": "moon",
+   "temper": {
+    "reveal": 1.08,
+    "drama": 1.26,
+    "smear": 0.38,
+    "bristle": 1.6,
+    "streak": 0.74,
+    "grain": 1.16
+   },
+   "culled": null
+  },
+  {
+   "seed": 13967410,
+   "place": "besseggen",
+   "img": "edition/batch-14/pairs/13967410.png",
+   "register": "passage",
+   "light": "side",
+   "key": "full",
+   "weather": "pouring",
+   "pair": "later",
+   "event": "none",
+   "temper": {
+    "reveal": 0.84,
+    "drama": 1.33,
+    "smear": 0.86,
+    "bristle": 1.26,
+    "streak": 1.18,
+    "grain": 0.92
+   },
+   "culled": "white drips on the far face: rendering fault"
+  },
+  {
+   "seed": 13978721,
+   "place": "k2",
+   "img": "edition/batch-14/pairs/13978721.png",
+   "register": "passage",
+   "light": "side",
+   "key": "low",
+   "weather": "spindrift+pouring",
+   "pair": "panorama",
+   "event": "none",
+   "temper": {
+    "reveal": 1.24,
+    "drama": 1.08,
+    "smear": 0.64,
+    "bristle": 0.94,
+    "streak": 1.13,
+    "grain": 0.98
+   },
+   "culled": null
+  },
+  {
+   "seed": 13990032,
+   "place": "brenta",
+   "img": "edition/batch-14/pairs/13990032.png",
+   "register": "exposure",
+   "light": "side",
+   "key": "full",
+   "weather": "still",
+   "pair": "turn",
+   "event": "hut",
+   "temper": {
+    "reveal": 1.13,
+    "drama": 1.07,
+    "smear": 0.6,
+    "bristle": 1.32,
+    "streak": 1.45,
+    "grain": 1.11
+   },
+   "culled": null
+  },
+  {
+   "seed": 14001343,
+   "place": "trango",
+   "img": "edition/batch-14/pairs/14001343.png",
+   "register": "clearing",
+   "light": "against",
+   "key": "full",
+   "weather": "spindrift",
+   "pair": "later",
+   "event": "none",
+   "temper": {
+    "reveal": 1.3,
+    "drama": 0.87,
+    "smear": 0.57,
+    "bristle": 0.96,
+    "streak": 1.51,
+    "grain": 0.86
+   },
+   "culled": null
+  },
+  {
+   "seed": 14012654,
+   "place": "huayhuash",
+   "img": "edition/batch-14/pairs/14012654.png",
+   "register": "passage",
+   "light": "side",
+   "key": "full",
+   "weather": "pouring",
+   "pair": "turn",
+   "event": "none",
+   "temper": {
+    "reveal": 1.03,
+    "drama": 1.23,
+    "smear": 0.29,
+    "bristle": 1.64,
+    "streak": 1.53,
+    "grain": 0.98
+   },
+   "culled": null
+  },
+  {
+   "seed": 14023965,
+   "place": "aoraki",
+   "img": "edition/batch-14/pairs/14023965.png",
+   "register": "exposure",
+   "light": "against",
+   "key": "low",
+   "weather": "still",
+   "pair": "panorama",
+   "event": "none",
+   "temper": {
+    "reveal": 1.35,
+    "drama": 0.98,
+    "smear": 0.61,
+    "bristle": 1.3,
+    "streak": 0.5,
+    "grain": 0.95
+   },
+   "culled": null
+  },
+  {
+   "seed": 14035276,
+   "place": "huashan",
+   "img": "edition/batch-14/pairs/14035276.png",
+   "register": "exposure",
+   "light": "side",
+   "key": "low",
+   "weather": "pouring",
+   "pair": "turn",
+   "event": "none",
+   "temper": {
+    "reveal": 1.44,
+    "drama": 0.86,
+    "smear": 0.52,
+    "bristle": 1.06,
+    "streak": 1.17,
+    "grain": 1.01
+   },
+   "culled": null
+  },
+  {
+   "seed": 14046587,
+   "place": "tetons",
+   "img": "edition/batch-14/pairs/14046587.png",
+   "register": "passage",
+   "light": "against",
+   "key": "low",
+   "weather": "spindrift+pouring",
+   "pair": "back",
+   "event": "none",
+   "temper": {
+    "reveal": 1.02,
+    "drama": 0.87,
+    "smear": 0.86,
+    "bristle": 1.8,
+    "streak": 1.2,
+    "grain": 0.88
+   },
+   "culled": null
+  },
+  {
+   "seed": 14057898,
+   "place": "taygetos",
+   "img": "edition/batch-14/pairs/14057898.png",
+   "register": "exposure",
+   "light": "against",
+   "key": "low",
+   "weather": "spindrift",
+   "pair": "turn",
+   "event": "none",
+   "temper": {
+    "reveal": 1.32,
+    "drama": 1.24,
+    "smear": 0.26,
+    "bristle": 1.11,
+    "streak": 1.39,
+    "grain": 0.95
+   },
+   "culled": null
+  },
+  {
+   "seed": 14069209,
+   "place": "trango",
+   "img": "edition/batch-14/pairs/14069209.png",
+   "register": "passage",
+   "light": "moon",
+   "key": "full",
+   "weather": "pouring",
+   "pair": "panorama",
+   "event": "moon",
+   "temper": {
+    "reveal": 1.18,
+    "drama": 1.19,
+    "smear": 0.55,
+    "bristle": 1.3,
+    "streak": 1.63,
+    "grain": 0.96
+   },
+   "culled": null
+  },
+  {
+   "seed": 14080520,
+   "place": "invented",
+   "img": "edition/batch-14/pairs/14080520.png",
+   "register": "passage",
+   "light": "against",
+   "key": "low",
+   "weather": "pouring",
+   "pair": "panorama",
+   "event": "none",
+   "temper": {
+    "reveal": 1.07,
+    "drama": 1.32,
+    "smear": 0.65,
+    "bristle": 1.18,
+    "streak": 1.67,
+    "grain": 0.86
+   },
+   "culled": null
+  },
+  {
+   "seed": 14091831,
+   "place": "invented",
+   "img": "edition/batch-14/pairs/14091831.png",
+   "register": "exposure",
+   "light": "against",
+   "key": "low",
+   "weather": "spindrift",
+   "pair": "later",
+   "event": "none",
+   "temper": {
+    "reveal": 0.87,
+    "drama": 1.13,
+    "smear": 0.73,
+    "bristle": 0.93,
+    "streak": 1.55,
+    "grain": 1
+   },
+   "culled": null
+  },
+  {
+   "seed": 14103142,
+   "place": "invented",
+   "img": "edition/batch-14/pairs/14103142.png",
+   "register": "clearing",
+   "light": "against",
+   "key": "low",
+   "weather": "spindrift",
+   "pair": "turn",
+   "event": "none",
+   "temper": {
+    "reveal": 1.31,
+    "drama": 1.3,
+    "smear": 0.63,
+    "bristle": 1.01,
+    "streak": 0.82,
+    "grain": 1.14
+   },
+   "culled": null
+  },
+  {
+   "seed": 14114453,
+   "place": "trecime",
+   "img": "edition/batch-14/pairs/14114453.png",
+   "register": "exposure",
+   "light": "front",
+   "key": "full",
+   "weather": "spindrift+pouring",
+   "pair": "turn",
+   "event": "none",
+   "temper": {
+    "reveal": 1.16,
+    "drama": 1.36,
+    "smear": 0.21,
+    "bristle": 1.43,
+    "streak": 1.25,
+    "grain": 1.01
+   },
+   "culled": null
+  },
+  {
+   "seed": 14125764,
+   "place": "invented",
+   "img": "edition/batch-14/pairs/14125764.png",
+   "register": "exposure",
+   "light": "front",
+   "key": "full",
+   "weather": "still",
+   "pair": "panorama",
+   "event": "none",
+   "temper": {
+    "reveal": 1.02,
+    "drama": 0.91,
+    "smear": 0.69,
+    "bristle": 1.12,
+    "streak": 1.66,
+    "grain": 1.03
+   },
+   "culled": null
+  },
+  {
+   "seed": 14137075,
+   "place": "prokletije",
+   "img": "edition/batch-14/pairs/14137075.png",
+   "register": "passage",
+   "light": "side",
+   "key": "high",
+   "weather": "pouring",
+   "pair": "turn",
+   "event": "none",
+   "temper": {
+    "reveal": 1.36,
+    "drama": 1.15,
+    "smear": 0.53,
+    "bristle": 1.08,
+    "streak": 1.29,
+    "grain": 0.92
+   },
+   "culled": "mottled pattern filling the left sheet"
+  },
+  {
+   "seed": 14148386,
+   "place": "invented",
+   "img": "edition/batch-14/pairs/14148386.png",
+   "register": "whiteout",
+   "light": "overcast",
+   "key": "high",
+   "weather": "spindrift+pouring",
+   "pair": "later",
+   "event": "none",
+   "temper": {
+    "reveal": 0.99,
+    "drama": 1.35,
+    "smear": 0.56,
+    "bristle": 0.94,
+    "streak": 1.38,
+    "grain": 1.04
+   },
+   "culled": null
+  },
+  {
+   "seed": 14159697,
+   "place": "civetta",
+   "img": "edition/batch-14/pairs/14159697.png",
+   "register": "exposure",
+   "light": "side",
+   "key": "full",
+   "weather": "spindrift",
+   "pair": "turn",
+   "event": "none",
+   "temper": {
+    "reveal": 1.33,
+    "drama": 1.34,
+    "smear": 0.65,
+    "bristle": 1.8,
+    "streak": 1.45,
+    "grain": 1.03
+   },
+   "culled": null
+  },
+  {
+   "seed": 14171008,
+   "place": "toubkal",
+   "img": "edition/batch-14/pairs/14171008.png",
+   "register": "clearing",
+   "light": "front",
+   "key": "low",
+   "weather": "spindrift",
+   "pair": "turn",
+   "event": "none",
+   "temper": {
+    "reveal": 1.27,
+    "drama": 1.14,
+    "smear": 0.28,
+    "bristle": 1.15,
+    "streak": 0.89,
+    "grain": 0.95
+   },
+   "culled": null
+  },
+  {
+   "seed": 14182319,
+   "place": "aoraki",
+   "img": "edition/batch-14/pairs/14182319.png",
+   "register": "passage",
+   "light": "side",
+   "key": "full",
+   "weather": "spindrift+pouring",
+   "pair": "panorama",
+   "event": "none",
+   "temper": {
+    "reveal": 1.26,
+    "drama": 0.9,
+    "smear": 0.82,
+    "bristle": 1.6,
+    "streak": 0.45,
+    "grain": 1.09
+   },
+   "culled": "glossy blurred dome"
+  },
+  {
+   "seed": 14193630,
+   "place": "invented",
+   "img": "edition/batch-14/pairs/14193630.png",
+   "register": "exposure",
+   "light": "side",
+   "key": "full",
+   "weather": "still",
+   "pair": "turn",
+   "event": "none",
+   "temper": {
+    "reveal": 1.02,
+    "drama": 1.24,
+    "smear": 1.08,
+    "bristle": 1.18,
+    "streak": 0.99,
+    "grain": 1.14
+   },
+   "culled": null
+  },
+  {
+   "seed": 14204941,
+   "place": "invented",
+   "img": "edition/batch-14/pairs/14204941.png",
+   "register": "exposure",
+   "light": "against",
+   "key": "low",
+   "weather": "spindrift",
+   "pair": "panorama",
+   "event": "bird",
+   "temper": {
+    "reveal": 1.33,
+    "drama": 1.1,
+    "smear": 0.76,
+    "bristle": 1.73,
+    "streak": 1.11,
+    "grain": 0.97
+   },
+   "culled": null
+  },
+  {
+   "seed": 14216252,
+   "place": "perdido",
+   "img": "edition/batch-14/pairs/14216252.png",
+   "register": "exposure",
+   "light": "against",
+   "key": "low",
+   "weather": "pouring",
+   "pair": "later",
+   "event": "none",
+   "temper": {
+    "reveal": 1.29,
+    "drama": 0.97,
+    "smear": 0.44,
+    "bristle": 1.38,
+    "streak": 1.18,
+    "grain": 0.99
+   },
+   "culled": null
+  },
+  {
+   "seed": 14227563,
+   "place": "lyskamm",
+   "img": "edition/batch-14/pairs/14227563.png",
+   "register": "clearing",
+   "light": "against",
+   "key": "full",
+   "weather": "spindrift+pouring",
+   "pair": "turn",
+   "event": "none",
+   "temper": {
+    "reveal": 1.02,
+    "drama": 1.32,
+    "smear": 0.88,
+    "bristle": 1.1,
+    "streak": 1.04,
+    "grain": 0.98
+   },
+   "culled": null
+  },
+  {
+   "seed": 14238874,
+   "place": "machapuchare",
+   "img": "edition/batch-14/pairs/14238874.png",
+   "register": "exposure",
+   "light": "side",
+   "key": "low",
+   "weather": "pouring",
+   "pair": "panorama",
+   "event": "none",
+   "temper": {
+    "reveal": 1.18,
+    "drama": 1.26,
+    "smear": 0.58,
+    "bristle": 1.3,
+    "streak": 0.81,
+    "grain": 0.88
+   },
+   "culled": null
+  },
+  {
+   "seed": 14250185,
+   "place": "liathach",
+   "img": "edition/batch-14/pairs/14250185.png",
+   "register": "passage",
+   "light": "side",
+   "key": "low",
+   "weather": "pouring",
+   "pair": "panorama",
+   "event": "none",
+   "temper": {
+    "reveal": 0.98,
+    "drama": 1.16,
+    "smear": 0.59,
+    "bristle": 1.02,
+    "streak": 1.5,
+    "grain": 0.99
+   },
+   "culled": "white drips beside a blank sheet: rendering fault"
+  },
+  {
+   "seed": 14261496,
+   "place": "invented",
+   "img": "edition/batch-14/pairs/14261496.png",
+   "register": "passage",
+   "light": "against",
+   "key": "low",
+   "weather": "spindrift+pouring",
+   "pair": "turn",
+   "event": "none",
+   "temper": {
+    "reveal": 1.35,
+    "drama": 0.95,
+    "smear": 0.56,
+    "bristle": 1.31,
+    "streak": 0.44,
+    "grain": 0.91
+   },
+   "culled": null
+  },
+  {
+   "seed": 14272807,
+   "place": "roraima",
+   "img": "edition/batch-14/pairs/14272807.png",
+   "register": "passage",
+   "light": "side",
+   "key": "low",
+   "weather": "pouring",
+   "pair": "turn",
+   "event": "none",
+   "temper": {
+    "reveal": 1.09,
+    "drama": 1.17,
+    "smear": 0.44,
+    "bristle": 1.66,
+    "streak": 1.23,
+    "grain": 0.85
+   },
+   "culled": null
+  },
+  {
+   "seed": 14284118,
+   "place": "simien",
+   "img": "edition/batch-14/pairs/14284118.png",
+   "register": "exposure",
+   "light": "side",
+   "key": "high",
+   "weather": "still",
+   "pair": "turn",
+   "event": "none",
+   "temper": {
+    "reveal": 1.36,
+    "drama": 1.1,
+    "smear": 0.97,
+    "bristle": 1.18,
+    "streak": 1.49,
+    "grain": 0.84
+   },
+   "culled": null
+  },
+  {
+   "seed": 14295429,
+   "place": "simien",
+   "img": "edition/batch-14/pairs/14295429.png",
+   "register": "exposure",
+   "light": "side",
+   "key": "low",
+   "weather": "pouring",
+   "pair": "panorama",
+   "event": "none",
+   "temper": {
+    "reveal": 1.13,
+    "drama": 1.19,
+    "smear": 0.16,
+    "bristle": 1.32,
+    "streak": 1.09,
+    "grain": 0.83
+   },
+   "culled": null
+  },
+  {
+   "seed": 14306740,
+   "place": "astraka",
+   "img": "edition/batch-14/pairs/14306740.png",
+   "register": "exposure",
+   "light": "side",
+   "key": "full",
+   "weather": "pouring",
+   "pair": "panorama",
+   "event": "none",
+   "temper": {
+    "reveal": 1.22,
+    "drama": 0.92,
+    "smear": 0.63,
+    "bristle": 1.51,
+    "streak": 1.14,
+    "grain": 1.02
+   },
+   "culled": null
+  },
+  {
+   "seed": 14318051,
+   "place": "lyskamm",
+   "img": "edition/batch-14/pairs/14318051.png",
+   "register": "exposure",
+   "light": "side",
+   "key": "low",
+   "weather": "spindrift",
+   "pair": "turn",
+   "event": "bird",
+   "temper": {
+    "reveal": 0.86,
+    "drama": 1.14,
+    "smear": 0.99,
+    "bristle": 1.42,
+    "streak": 1.49,
+    "grain": 1.03
+   },
+   "culled": null
+  },
+  {
+   "seed": 14329362,
+   "place": "invented",
+   "img": "edition/batch-14/pairs/14329362.png",
+   "register": "passage",
+   "light": "side",
+   "key": "full",
+   "weather": "spindrift+pouring",
+   "pair": "turn",
+   "event": "none",
+   "temper": {
+    "reveal": 0.97,
+    "drama": 0.97,
+    "smear": 0.76,
+    "bristle": 0.96,
+    "streak": 1.3,
+    "grain": 0.95
+   },
+   "culled": null
+  },
+  {
+   "seed": 14340673,
+   "place": "machapuchare",
+   "img": "edition/batch-14/pairs/14340673.png",
+   "register": "clearing",
+   "light": "side",
+   "key": "full",
+   "weather": "still",
+   "pair": "panorama",
+   "event": "none",
+   "temper": {
+    "reveal": 1.13,
+    "drama": 1.2,
+    "smear": 0.77,
+    "bristle": 1.66,
+    "streak": 0.64,
+    "grain": 0.99
+   },
+   "culled": null
+  },
+  {
+   "seed": 14351984,
+   "place": "invented",
+   "img": "edition/batch-14/pairs/14351984.png",
+   "register": "exposure",
+   "light": "side",
+   "key": "full",
+   "weather": "spindrift",
+   "pair": "panorama",
+   "event": "none",
+   "temper": {
+    "reveal": 1.36,
+    "drama": 1.17,
+    "smear": 0.2,
+    "bristle": 1.52,
+    "streak": 1.47,
+    "grain": 1
+   },
+   "culled": null
+  },
+  {
+   "seed": 14363295,
+   "place": "tetons",
+   "img": "edition/batch-14/pairs/14363295.png",
+   "register": "exposure",
+   "light": "moon",
+   "key": "full",
+   "weather": "still",
+   "pair": "turn",
+   "event": "moon",
+   "temper": {
+    "reveal": 1.01,
+    "drama": 1.09,
+    "smear": 0.33,
+    "bristle": 1.58,
+    "streak": 0.85,
+    "grain": 1.04
+   },
+   "culled": "one sheet is a dead dark rectangle"
+  },
+  {
+   "seed": 14374606,
+   "place": "hotaka",
+   "img": "edition/batch-14/pairs/14374606.png",
+   "register": "passage",
+   "light": "against",
+   "key": "full",
+   "weather": "pouring",
+   "pair": "panorama",
+   "event": "none",
+   "temper": {
+    "reveal": 1.11,
+    "drama": 1.23,
+    "smear": 0.38,
+    "bristle": 1.49,
+    "streak": 0.79,
+    "grain": 1.12
+   },
+   "culled": null
+  }
+ ]
+}

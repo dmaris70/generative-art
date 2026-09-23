@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Ridge, encounters — selecting</title>
+  <style>
+    :root { --room: #0e0e10; --rule: #2a2a2f; --ink: #deded8; --mute: #8b8b86; --dim: #5d5d5a; --mat: #f7f7f5;
+      --mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace; --sans: ui-sans-serif, system-ui, -apple-system, "Helvetica Neue", sans-serif; }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; background: var(--room); color: var(--ink); font: 13px/1.5 var(--sans); }
+    a { color: inherit; }
+    header { position: sticky; top: 0; z-index: 5; background: rgba(14,14,16,.94); backdrop-filter: blur(6px); border-bottom: 1px solid var(--rule); padding: 12px 20px; display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: center; }
+    header h1 { font-size: 14px; font-weight: 600; margin: 0; }
+    .stat { font: 11.5px var(--mono); color: var(--mute); } .grow { flex: 1; }
+    button, select { font: inherit; color: var(--ink); background: transparent; border: 1px solid var(--rule); border-radius: 3px; padding: 6px 10px; cursor: pointer; }
+    button:hover { border-color: var(--mute); }
+    button:focus-visible, select:focus-visible { outline: 1px solid var(--mat); outline-offset: 2px; }
+    button.primary { background: var(--mat); color: #111; border-color: var(--mat); font-weight: 600; }
+    button[aria-pressed="true"].filter { background: var(--mat); color: #111; border-color: var(--mat); }
+    main { max-width: 1500px; margin: 0 auto; padding: 8px 20px 80px; }
+    .intro { color: var(--mute); max-width: 78ch; margin: 14px 0 14px; }
+    h2 { font-size: 10.5px; font-weight: 600; letter-spacing: .14em; text-transform: uppercase; color: var(--mute); margin: 30px 0 10px; border-top: 1px solid var(--rule); padding-top: 16px; }
+    .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 14px; }
+    .tile { position: relative; padding: 0; border: 2px solid transparent; border-radius: 2px; background: #0b0b0b; text-align: left; display: block; width: 100%; }
+    .tile img { display: block; width: 100%; height: auto; }
+    .tile:hover { border-color: var(--dim); }
+    .tile[aria-pressed="true"] { border-color: var(--mat); }
+    .tile[aria-pressed="true"]::after { content: "kept"; position: absolute; top: 8px; right: 8px; font: 600 10.5px var(--mono); letter-spacing: .08em; color: #111; background: var(--mat); padding: 2px 7px; border-radius: 2px; }
+    .cap { display: flex; justify-content: space-between; gap: 8px; font: 10.5px var(--mono); color: var(--mute); padding: 4px 6px 5px; }
+    .cap a { color: var(--mute); }
+    .why { font: 11.5px var(--sans); color: var(--mute); padding: 0 6px 6px; }
+    .culled .tile img { opacity: .6; } .culled .tile[aria-pressed="true"] img { opacity: 1; }
+    body.kept-only .tile[aria-pressed="false"] { display: none; }
+    dialog { border: 0; padding: 0; background: #000; max-width: 96vw; max-height: 96vh; } dialog::backdrop { background: rgba(0,0,0,.88); } dialog img { display: block; max-width: 96vw; max-height: 92vh; }
+    @media (max-width: 760px) { .grid { grid-template-columns: 1fr; } header { padding: 10px 16px; } main { padding: 4px 16px 80px; } }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Ridge, encounters — selecting</h1>
+    <select id="batch" aria-label="Batch"></select>
+    <span class="stat" id="stat" role="status" aria-live="polite"></span>
+    <span class="grow"></span>
+    <button id="only" class="filter" aria-pressed="false">Show kept only</button>
+    <a href="./" style="font-size:12px;color:var(--mute)">the piece</a>
+    <button id="copy">Copy selection</button>
+    <button id="save" class="primary">Download selection</button>
+  </header>
+  <main>
+    <p class="intro" id="intro"></p>
+    <h2 id="hS"></h2><div class="grid" id="survivors"></div>
+    <h2 id="hC"></h2><div class="grid culled" id="culled"></div>
+  </main>
+  <dialog id="zoom"><img alt="" /></dialog>
+
+  <script>
+  (function () {
+    'use strict';
+    const BATCHES = ['batch-01', 'batch-02', 'batch-03', 'batch-04', 'batch-05', 'batch-06', 'batch-07', 'batch-08', 'batch-09', 'batch-10', 'batch-11', 'batch-12', 'batch-13', 'batch-14', 'batch-15', 'batch-16', 'batch-17', 'batch-18', 'batch-19', 'batch-20', 'batch-21', 'batch-22'];                      // add new batches here
+    const $ = id => document.getElementById(id), el = (t, c, txt) => { const e = document.createElement(t); if (c) e.className = c; if (txt != null) e.textContent = txt; return e; };
+    let batch = new URL(location.href).searchParams.get('batch') || BATCHES[BATCHES.length - 1], data = null, kept = {};
+    const key = () => 'ridge-selection-' + batch;
+    const store = () => { try { localStorage.setItem(key(), JSON.stringify(kept)); } catch (e) {} stats(); };
+    const link = i => './?seed=' + i.seed;            // by seed: the piece re-derives place, mood, weather, hand
+    const exportObj = () => ({ batch: data.batch, by: 'Dimitris', saved: new Date().toISOString(), kept: data.items.filter(i => kept[i.seed]).map(i => ({ seed: i.seed, place: i.place, register: i.register, rescued: !!i.culled })), culled_by_claude: data.items.filter(i => i.culled).map(i => i.seed) });
+    window.ridgeSelection = () => exportObj();        // so Claude can read the selection from the Browser pane
+
+    function stats() { const k = data.items.filter(i => kept[i.seed]), r = k.filter(i => i.culled).length; $('stat').textContent = k.length + ' kept of ' + data.items.length + (r ? ' · ' + r + ' rescued from the cull' : ''); }
+    function tile(i) {
+      const wrap = el('div'), b = el('button', 'tile'), img = el('img'), cap = el('div', 'cap'), a = el('a', null, 'open'), z = el('a', null, 'enlarge');
+      img.src = i.img; img.alt = 'Seed ' + i.seed; img.loading = 'lazy'; b.append(img); b.setAttribute('aria-pressed', !!kept[i.seed]); b.setAttribute('aria-label', 'Keep seed ' + i.seed);
+      b.onclick = () => { kept[i.seed] = !kept[i.seed]; b.setAttribute('aria-pressed', !!kept[i.seed]); store(); };
+      a.href = link(i); a.target = '_blank'; a.rel = 'noopener'; z.href = '#'; z.onclick = e => { e.preventDefault(); $('zoom').firstElementChild.src = i.img; $('zoom').showModal(); };
+      const right = el('span'); right.append(z, ' · ', a);
+      cap.append(el('span', null, i.seed + ' · ' + i.place + ' · ' + i.register + (i.event !== 'none' ? ' · ' + i.event : '')), right); wrap.append(b, cap);
+      if (i.culled) wrap.append(el('div', 'why', 'Culled: ' + i.culled + '.'));
+      return wrap;
+    }
+    function render() {
+      const S = data.items.filter(i => !i.culled), C = data.items.filter(i => i.culled);
+      $('intro').textContent = 'Click a pair to keep it; click again to let it go. ' + data.note + ' The culled pairs are at the bottom with the reason for each — click one to rescue it, which also tells Claude its cull was wrong. “Open” paints the seed in the piece. Your selection is kept in this browser; “Download selection” saves it for the project.';
+      $('hS').textContent = S.length + ' pairs to choose from'; $('hC').textContent = C.length + ' culled by Claude';
+      $('survivors').textContent = ''; $('culled').textContent = ''; S.forEach(i => $('survivors').append(tile(i))); C.forEach(i => $('culled').append(tile(i))); stats();
+    }
+    BATCHES.forEach(r => { const o = el('option', null, r); o.value = r; $('batch').append(o); }); $('batch').value = batch;
+    $('batch').onchange = () => { batch = $('batch').value; start(); };
+    $('only').onclick = () => { const on = document.body.classList.toggle('kept-only'); $('only').setAttribute('aria-pressed', on); };
+    $('zoom').onclick = () => $('zoom').close();
+    $('save').onclick = () => { const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([JSON.stringify(exportObj(), null, 1)], { type: 'application/json' })); a.download = 'selection-' + batch + '.json'; a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 4000); };
+    $('copy').onclick = () => { const t = JSON.stringify(exportObj()); (navigator.clipboard ? navigator.clipboard.writeText(t) : Promise.reject()).then(() => $('copy').textContent = 'Copied', () => prompt('Selection', t)); setTimeout(() => $('copy').textContent = 'Copy selection', 1400); };
+    function start() { try { kept = JSON.parse(localStorage.getItem(key()) || '{}'); } catch (e) { kept = {}; } fetch('edition/' + batch + '.json?t=' + Date.now()).then(r => r.json()).then(d => { data = d; render(); }).catch(e => { $('survivors').textContent = 'Could not load ' + batch + ': ' + e.message; }); }
+    start();
+  })();
+  </script>
+</body>
+</html>

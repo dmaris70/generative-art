@@ -1,0 +1,40 @@
+{
+ "batch": 10,
+ "by": "Dimitris",
+ "saved": "2026-09-23T16:24:15.638Z",
+ "kept": [
+  {
+   "seed": 8830064,
+   "place": "astraka",
+   "register": "clearing",
+   "rescued": false
+  },
+  {
+   "seed": 9510540,
+   "place": "invented",
+   "register": "exposure",
+   "rescued": false
+  },
+  {
+   "seed": 9690666,
+   "place": "darrans",
+   "register": "clearing",
+   "rescued": false
+  }
+ ],
+ "culled_by_claude": [
+  8860085,
+  8890106,
+  8980169,
+  9080239,
+  9130274,
+  9210330,
+  9240351,
+  9260365,
+  9370442,
+  9580589,
+  9630624,
+  9710680,
+  9750708
+ ]
+}

@@ -3,6 +3,65 @@
   "author": "dmaris70",
   "projects": [
     {
+      "slug": "016-load-paths",
+      "title": "Load Paths — beyond the founder",
+      "year": 2026,
+      "tools": [
+        "p5.js",
+        "plotter",
+        "structural"
+      ],
+      "description": "Cover drawing for the essay “Beyond the Founder”, built on the author's own image: strength lies in systems that remain unseen — how weight is distributed, how elements depend on one another. A uniform load enters along the top edge and has to reach the ground. Catchments follow a power law, so one support answers for a third of the field and compresses its paths twenty times over into a black root, while the many small supports to the right keep almost their full width and the load descends plumb. No tone is drawn: every grey in the plate is accumulated line density, and the voids are what the concentration costs. Stroke-only, black on white; press V for plotter-ready SVG.",
+      "thumb": ""
+    },
+    {
+      "slug": "015-score-wall",
+      "title": "Score Wall — sign→sound (UPIC / Oramics)",
+      "year": 2026,
+      "tools": [
+        "canvas",
+        "graphic-score"
+      ],
+      "description": "The drawing is a playable graphic score: arcs on a time × frequency plane, generated from the seed, with a read-head that sweeps left to right and inks each arc as it passes — the sign→sound reading mechanism itself. Closes the loop with the image half: UPIC and Oramics turn drawings into sound; this turns sound-rules into a score. Drives DMCF Radio's score grammar (SYS-011).",
+      "thumb": ""
+    },
+    {
+      "slug": "014-program-wall",
+      "title": "Program Wall — executed code",
+      "year": 2026,
+      "tools": [
+        "canvas",
+        "algorithmic",
+        "cellular-automaton"
+      ],
+      "description": "The executed program is the drawing. A code-native listing (sc140, where the title is the program) is tokenised into a byte stream — or, for data-driven works, seeded — and run as a per-row cellular automaton whose rule bytes come from the listing itself. Every cell is plotted in execution order; in the radio's live view the program executes at the pace of the recording. Drives DMCF Radio's program grammar (SYS-005 / SYS-014).",
+      "thumb": ""
+    },
+    {
+      "slug": "013-phase-wall",
+      "title": "Phase Wall — Reich process",
+      "year": 2026,
+      "tools": [
+        "canvas",
+        "phase",
+        "asemic"
+      ],
+      "description": "Enacts the tape-phase rule: two identical asemic loops laid down pass by pass, one advancing slightly faster so it drifts out of phase — unison at the top, interference below. The moire is computed by running two clocks at different rates, not drawn. Drives DMCF Radio's live phase view for Reich's Come Out / It's Gonna Rain (phase offset bound to the playhead).",
+      "thumb": ""
+    },
+    {
+      "slug": "012-ductus-wall",
+      "title": "Ductus Wall — Praktika",
+      "year": 2026,
+      "tools": [
+        "p5.js",
+        "asemic",
+        "finite-pen"
+      ],
+      "description": "The law of «Πρακτικά»: a single seed is the sole organ — it draws the format, the hand, the weather, the rests and the breaks of an asemic manuscript, then a finite pen writes until the ink runs dry, unsigned and unfinished. The same engine drives DMCF Radio's live ductus view (seed = hash of the airing record).",
+      "thumb": ""
+    },
+    {
       "slug": "010-plotter-interrupt",
       "title": "Plotter Interrupt",
       "year": 2026,

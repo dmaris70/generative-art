@@ -1,0 +1,50 @@
+place          clean  p02  p50  black  flags
+invented       10/10   50   110  0.189  
+amadablam      9/10   63   139  0.106  WEDGE×1
+aoraki         9/10   65   147  0.123  WEDGE×1
+badile         9/10   61   130  0.136  WEDGE×1 TWIN×1
+darrans        9/10   71   137  0.08   TIMID×1 WEDGE×1
+liathach       9/10   52   134  0.155  TIMID×1
+prokletije     9/10   49   136  0.151  TWIN×1
+roraima        9/10   74   159  0.058  WEDGE×1
+alpamayo       8/10   55   134  0.164  WEDGE×2
+arthurs        8/10   73   133  0.096  TIMID×2 WEDGE×1
+astraka        8/10   77   132  0.115  TIMID×2 TWIN×1
+civetta        8/10   64   132  0.09   WEDGE×2
+eiger          8/10   63   138  0.1    TIMID×1 TWIN×1
+fitzroy        8/10   78   148  0.041  TIMID×2 WEDGE×2
+hotaka         8/10   70   137  0.112  TIMID×2
+huashan        8/10   61   128  0.135  TWIN×2 TIMID×1
+lyskamm        8/10   71   136  0.073  TIMID×1 TWIN×1
+matterhorn     8/10   63   146  0.095  WEDGE×2 TWIN×1
+napali         8/10   61   132  0.19   WEDGE×1 TWIN×1
+nevis          8/10   56   127  0.175  WEDGE×2 TWIN×1
+paine          8/10   59   135  0.102  TWIN×1 TIMID×1
+brenta         7/10   74   139  0.054  TWIN×1 TIMID×2
+castillo       7/10   78   151  0.081  TIMID×3
+cuillin        7/10   67   137  0.088  TIMID×3 WEDGE×1
+drakensberg    7/10   67   152  0.102  WEDGE×1 TWIN×2
+huayhuash      7/10   69   135  0.122  TIMID×2 TWIN×1
+machapuchare   7/10   62   132  0.124  WEDGE×2 TWIN×1
+olympus        7/10   52   121  0.203  TWIN×2 WEDGE×1
+perdido        7/10   68   134  0.1    WEDGE×2 TIMID×1 HORN×1
+trecime        7/10   51   130  0.145  TWIN×2 TIMID×1
+jorasses       6/10   80   156  0.052  WEDGE×4
+kinabalu       6/10   66   130  0.111  WEDGE×2 TIMID×1 TWIN×1
+stetind        6/10   59   138  0.162  WEDGE×2 HORN×1 TIMID×1
+toubkal        6/10   59   111  0.21   TWIN×3 TIMID×1
+triglav        6/10   63   122  0.09   TIMID×1 TWIN×1 WEDGE×1 HORN×1
+urriellu       6/10   63   134  0.07   TIMID×1 TWIN×1 WEDGE×2
+besseggen      5/10   57   137  0.127  WEDGE×3 TWIN×1 TIMID×1
+cinto          5/10   71   144  0.074  TWIN×2 WEDGE×2 TIMID×1
+denali         5/10   68   143  0.06   WEDGE×4 TIMID×1
+k2             5/10   67   133  0.099  WEDGE×3 TIMID×3
+simien         5/10   80   147  0.092  WEDGE×1 TWIN×3 TIMID×1
+tetons         5/10   53   119  0.224  WEDGE×2 TWIN×2 HORN×1 TIMID×1
+trango         5/10   55   115  0.154  WEDGE×2 TWIN×5 TIMID×1
+trollveggen    5/10   60   111  0.159  WEDGE×3 TIMID×2
+ushba          5/10   74   133  0.098  WEDGE×3 TWIN×2 TIMID×1
+meije          4/10   58   142  0.129  TIMID×1 WEDGE×4 TWIN×3
+robson         4/10   66   140  0.077  TIMID×3 WEDGE×3 TWIN×2
+taygetos       4/10   75   152  0.104  WEDGE×2 TWIN×4 TIMID×1
+watzmann       3/10   65   143  0.118  TIMID×1 WEDGE×4 TWIN×3

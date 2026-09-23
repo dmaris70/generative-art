@@ -1,0 +1,608 @@
+{
+ "set": 2,
+ "made": "2026-09-21",
+ "rubric": "v6 + hypothesis",
+ "note": "40 matchups, every one between two pairs Dimitris had scored the SAME (20 at 3, 20 at 4), drawn and shuffled by script; looming and set-1 pairs excluded. Predictions made from anonymous sheets without looking up his scores. light_held_by_dark records, in advance, which pair (if either) has a small lit thing held by darkness.",
+ "matchups": [
+  {
+   "n": 1,
+   "a": {
+    "id": "cuillin-41522",
+    "img": "round-02/pairs/cuillin-41522.png"
+   },
+   "b": {
+    "id": "badile-44874",
+    "img": "round-02/pairs/badile-44874.png"
+   },
+   "claude": "A",
+   "why": "black dome against white snow: the stronger pair",
+   "light_held_by_dark": "none",
+   "tier": 4
+  },
+  {
+   "n": 2,
+   "a": {
+    "id": "kinabalu-53649",
+    "img": "round-03/pairs/kinabalu-53649.png"
+   },
+   "b": {
+    "id": "arthurs-41219",
+    "img": "round-02/pairs/arthurs-41219.png"
+   },
+   "claude": "A",
+   "why": "a lit summit held in a veiled dark massif",
+   "light_held_by_dark": "A",
+   "tier": 4
+  },
+  {
+   "n": 3,
+   "a": {
+    "id": "simien-151954",
+    "img": "round-05/pairs/151954.png"
+   },
+   "b": {
+    "id": "taygetos-33863",
+    "img": "round-01/pairs/taygetos-33863.png"
+   },
+   "claude": "B",
+   "why": "dark pyramid with a small lit distance",
+   "light_held_by_dark": "B",
+   "tier": 3
+  },
+  {
+   "n": 4,
+   "a": {
+    "id": "urriellu-46086",
+    "img": "round-02/pairs/urriellu-46086.png"
+   },
+   "b": {
+    "id": "nevis-31815",
+    "img": "round-01/pairs/nevis-31815.png"
+   },
+   "claude": "A",
+   "why": "ridges and mist over a cairn dome",
+   "light_held_by_dark": "none",
+   "tier": 4
+  },
+  {
+   "n": 5,
+   "a": {
+    "id": "robson-149643",
+    "img": "round-05/pairs/149643.png"
+   },
+   "b": {
+    "id": "fitzroy-41623",
+    "img": "round-02/pairs/fitzroy-41623.png"
+   },
+   "claude": "A",
+   "why": "one small lit peak in a grey field",
+   "light_held_by_dark": "A",
+   "tier": 4
+  },
+  {
+   "n": 6,
+   "a": {
+    "id": "kinabalu-55562",
+    "img": "round-03/pairs/kinabalu-55562.png"
+   },
+   "b": {
+    "id": "machapuchare-51837",
+    "img": "round-03/pairs/machapuchare-51837.png"
+   },
+   "claude": "A",
+   "why": "dark diagonal, cloud, a lit far range",
+   "light_held_by_dark": "A",
+   "tier": 3
+  },
+  {
+   "n": 7,
+   "a": {
+    "id": "eiger-34598",
+    "img": "round-01/pairs/eiger-34598.png"
+   },
+   "b": {
+    "id": "invented-108045",
+    "img": "round-05/pairs/108045.png"
+   },
+   "claude": "B",
+   "why": "a lit bedded summit inside a veiled dark massif",
+   "light_held_by_dark": "B",
+   "tier": 4
+  },
+  {
+   "n": 8,
+   "a": {
+    "id": "invented-88130",
+    "img": "round-04/pairs/88130.png"
+   },
+   "b": {
+    "id": "watzmann-34065",
+    "img": "round-01/pairs/watzmann-34065.png"
+   },
+   "claude": "A",
+   "why": "the needle in cloud",
+   "light_held_by_dark": "none",
+   "tier": 4
+  },
+  {
+   "n": 9,
+   "a": {
+    "id": "alpamayo-83964",
+    "img": "round-04/pairs/83964.png"
+   },
+   "b": {
+    "id": "huashan-41825",
+    "img": "round-02/pairs/huashan-41825.png"
+   },
+   "claude": "A",
+   "why": "one lit far peak among dark textured slopes",
+   "light_held_by_dark": "A",
+   "tier": 3
+  },
+  {
+   "n": 10,
+   "a": {
+    "id": "castillo-77715",
+    "img": "round-04/pairs/77715.png"
+   },
+   "b": {
+    "id": "invented-32550",
+    "img": "round-01/pairs/invented-32550.png"
+   },
+   "claude": "B",
+   "why": "black ridge with a lit snow crest",
+   "light_held_by_dark": "B",
+   "tier": 3
+  },
+  {
+   "n": 11,
+   "a": {
+    "id": "cinto-53144",
+    "img": "round-03/pairs/cinto-53144.png"
+   },
+   "b": {
+    "id": "fitzroy-43400",
+    "img": "round-02/pairs/fitzroy-43400.png"
+   },
+   "claude": "A",
+   "why": "a range and a quiet grey sheet over blur",
+   "light_held_by_dark": "none",
+   "tier": 3
+  },
+  {
+   "n": 12,
+   "a": {
+    "id": "besseggen-52942",
+    "img": "round-03/pairs/besseggen-52942.png"
+   },
+   "b": {
+    "id": "machapuchare-55663",
+    "img": "round-03/pairs/machapuchare-55663.png"
+   },
+   "claude": "A",
+   "why": "pale veiled lake with one dark shore",
+   "light_held_by_dark": "none",
+   "tier": 4
+  },
+  {
+   "n": 13,
+   "a": {
+    "id": "aoraki-34194",
+    "img": "round-01/pairs/aoraki-34194.png"
+   },
+   "b": {
+    "id": "trango-54255",
+    "img": "round-03/pairs/trango-54255.png"
+   },
+   "claude": "A",
+   "why": "a far bedded ridge over a pale dome",
+   "light_held_by_dark": "none",
+   "tier": 3
+  },
+  {
+   "n": 14,
+   "a": {
+    "id": "aoraki-32651",
+    "img": "round-01/pairs/aoraki-32651.png"
+   },
+   "b": {
+    "id": "tetons-54053",
+    "img": "round-03/pairs/tetons-54053.png"
+   },
+   "claude": "B",
+   "why": "the wide calm plateau",
+   "light_held_by_dark": "none",
+   "tier": 4
+  },
+  {
+   "n": 15,
+   "a": {
+    "id": "roraima-33661",
+    "img": "round-01/pairs/roraima-33661.png"
+   },
+   "b": {
+    "id": "perdido-44006",
+    "img": "round-02/pairs/perdido-44006.png"
+   },
+   "claude": "B",
+   "why": "blade and peak in cloud over rounded towers",
+   "light_held_by_dark": "none",
+   "tier": 3
+  },
+  {
+   "n": 16,
+   "a": {
+    "id": "urriellu-42532",
+    "img": "round-02/pairs/urriellu-42532.png"
+   },
+   "b": {
+    "id": "arthurs-98545",
+    "img": "round-04/pairs/98545.png"
+   },
+   "claude": "B",
+   "why": "white snow with a few dark strokes: air",
+   "light_held_by_dark": "none",
+   "tier": 4
+  },
+  {
+   "n": 17,
+   "a": {
+    "id": "olympus-35002",
+    "img": "round-01/pairs/olympus-35002.png"
+   },
+   "b": {
+    "id": "castillo-53043",
+    "img": "round-03/pairs/castillo-53043.png"
+   },
+   "claude": "A",
+   "why": "snow-streaked flank under a dark cloud knot",
+   "light_held_by_dark": "A",
+   "tier": 3
+  },
+  {
+   "n": 18,
+   "a": {
+    "id": "perdido-45783",
+    "img": "round-02/pairs/perdido-45783.png"
+   },
+   "b": {
+    "id": "cuillin-45076",
+    "img": "round-02/pairs/cuillin-45076.png"
+   },
+   "claude": "A",
+   "why": "snow and rock up close, veiled lit peak beyond",
+   "light_held_by_dark": "none",
+   "tier": 4
+  },
+  {
+   "n": 19,
+   "a": {
+    "id": "hotaka-41724",
+    "img": "round-02/pairs/hotaka-41724.png"
+   },
+   "b": {
+    "id": "amadablam-44672",
+    "img": "round-02/pairs/amadablam-44672.png"
+   },
+   "claude": "B",
+   "why": "veil and a dark slab over crisp ridges",
+   "light_held_by_dark": "none",
+   "tier": 3
+  },
+  {
+   "n": 20,
+   "a": {
+    "id": "triglav-98801",
+    "img": "round-05/pairs/98801.png"
+   },
+   "b": {
+    "id": "jorasses-53548",
+    "img": "round-03/pairs/jorasses-53548.png"
+   },
+   "claude": "B",
+   "why": "dark massif with cloud pouring below it",
+   "light_held_by_dark": "none",
+   "tier": 4
+  },
+  {
+   "n": 21,
+   "a": {
+    "id": "watzmann-35608",
+    "img": "round-01/pairs/watzmann-35608.png"
+   },
+   "b": {
+    "id": "eiger-69383",
+    "img": "round-04/pairs/69383.png"
+   },
+   "claude": "A",
+   "why": "dark flank with small lit peaks far beyond",
+   "light_held_by_dark": "A",
+   "tier": 3
+  },
+  {
+   "n": 22,
+   "a": {
+    "id": "trango-52342",
+    "img": "round-03/pairs/trango-52342.png"
+   },
+   "b": {
+    "id": "huayhuash-51534",
+    "img": "round-03/pairs/huayhuash-51534.png"
+   },
+   "claude": "A",
+   "why": "black mass against lit towers",
+   "light_held_by_dark": "none",
+   "tier": 3
+  },
+  {
+   "n": 23,
+   "a": {
+    "id": "nevis-34901",
+    "img": "round-01/pairs/nevis-34901.png"
+   },
+   "b": {
+    "id": "castillo-54956",
+    "img": "round-03/pairs/castillo-54956.png"
+   },
+   "claude": "A",
+   "why": "dark ridges receding to one snow peak",
+   "light_held_by_dark": "A",
+   "tier": 4
+  },
+  {
+   "n": 24,
+   "a": {
+    "id": "k2-34699",
+    "img": "round-01/pairs/k2-34699.png"
+   },
+   "b": {
+    "id": "triglav-42431",
+    "img": "round-02/pairs/triglav-42431.png"
+   },
+   "claude": "A",
+   "why": "the cairn on a pale dome over a flecked dark slope",
+   "light_held_by_dark": "none",
+   "tier": 3
+  },
+  {
+   "n": 25,
+   "a": {
+    "id": "denali-51332",
+    "img": "round-03/pairs/denali-51332.png"
+   },
+   "b": {
+    "id": "hotaka-45278",
+    "img": "round-02/pairs/hotaka-45278.png"
+   },
+   "claude": "B",
+   "why": "ridges fading into haze",
+   "light_held_by_dark": "none",
+   "tier": 3
+  },
+  {
+   "n": 26,
+   "a": {
+    "id": "astraka-34295",
+    "img": "round-01/pairs/astraka-34295.png"
+   },
+   "b": {
+    "id": "k2-33156",
+    "img": "round-01/pairs/k2-33156.png"
+   },
+   "claude": "A",
+   "why": "veiled range with one lit outcrop",
+   "light_held_by_dark": "none",
+   "tier": 4
+  },
+  {
+   "n": 27,
+   "a": {
+    "id": "matterhorn-43804",
+    "img": "round-02/pairs/matterhorn-43804.png"
+   },
+   "b": {
+    "id": "besseggen-51029",
+    "img": "round-03/pairs/besseggen-51029.png"
+   },
+   "claude": "A",
+   "why": "veiled hill over a stony dome",
+   "light_held_by_dark": "none",
+   "tier": 3
+  },
+  {
+   "n": 28,
+   "a": {
+    "id": "olympus-31916",
+    "img": "round-01/pairs/olympus-31916.png"
+   },
+   "b": {
+    "id": "liathach-31714",
+    "img": "round-01/pairs/liathach-31714.png"
+   },
+   "claude": "B",
+   "why": "dark flank, cloud, and a lit slope under a dark band",
+   "light_held_by_dark": "B",
+   "tier": 4
+  },
+  {
+   "n": 29,
+   "a": {
+    "id": "hotaka-43501",
+    "img": "round-02/pairs/hotaka-43501.png"
+   },
+   "b": {
+    "id": "trango-56168",
+    "img": "round-03/pairs/trango-56168.png"
+   },
+   "claude": "A",
+   "why": "the way along a snow crest",
+   "light_held_by_dark": "none",
+   "tier": 3
+  },
+  {
+   "n": 30,
+   "a": {
+    "id": "napali-43905",
+    "img": "round-02/pairs/napali-43905.png"
+   },
+   "b": {
+    "id": "civetta-41421",
+    "img": "round-02/pairs/civetta-41421.png"
+   },
+   "claude": "A",
+   "why": "the pale slope with one faint mark",
+   "light_held_by_dark": "none",
+   "tier": 4
+  },
+  {
+   "n": 31,
+   "a": {
+    "id": "toubkal-52241",
+    "img": "round-03/pairs/toubkal-52241.png"
+   },
+   "b": {
+    "id": "drakensberg-55259",
+    "img": "round-03/pairs/drakensberg-55259.png"
+   },
+   "claude": "A",
+   "why": "dark layered ridges under a graded sky",
+   "light_held_by_dark": "none",
+   "tier": 3
+  },
+  {
+   "n": 32,
+   "a": {
+    "id": "badile-41320",
+    "img": "round-02/pairs/badile-41320.png"
+   },
+   "b": {
+    "id": "amadablam-41118",
+    "img": "round-02/pairs/amadablam-41118.png"
+   },
+   "claude": "A",
+   "why": "a wide dark range with one lit cone",
+   "light_held_by_dark": "A",
+   "tier": 4
+  },
+  {
+   "n": 33,
+   "a": {
+    "id": "perdido-42229",
+    "img": "round-02/pairs/perdido-42229.png"
+   },
+   "b": {
+    "id": "simien-53952",
+    "img": "round-03/pairs/simien-53952.png"
+   },
+   "claude": "B",
+   "why": "a lit peak in veil beside a dark pillar, over near-blank",
+   "light_held_by_dark": "B",
+   "tier": 3
+  },
+  {
+   "n": 34,
+   "a": {
+    "id": "cinto-55057",
+    "img": "round-03/pairs/cinto-55057.png"
+   },
+   "b": {
+    "id": "robson-32017",
+    "img": "round-01/pairs/robson-32017.png"
+   },
+   "claude": "B",
+   "why": "a peak out of cloud over a dark flank, with a glint below",
+   "light_held_by_dark": "B",
+   "tier": 4
+  },
+  {
+   "n": 35,
+   "a": {
+    "id": "alpamayo-41017",
+    "img": "round-02/pairs/alpamayo-41017.png"
+   },
+   "b": {
+    "id": "liathach-33257",
+    "img": "round-01/pairs/liathach-33257.png"
+   },
+   "claude": "A",
+   "why": "dark ground and one small lit peak in cloud",
+   "light_held_by_dark": "A",
+   "tier": 4
+  },
+  {
+   "n": 36,
+   "a": {
+    "id": "brenta-31310",
+    "img": "round-01/pairs/brenta-31310.png"
+   },
+   "b": {
+    "id": "roraima-32118",
+    "img": "round-01/pairs/roraima-32118.png"
+   },
+   "claude": "A",
+   "why": "range, lake and dark cloud over flat pinnacles",
+   "light_held_by_dark": "none",
+   "tier": 3
+  },
+  {
+   "n": 37,
+   "a": {
+    "id": "amadablam-42895",
+    "img": "round-02/pairs/amadablam-42895.png"
+   },
+   "b": {
+    "id": "watzmann-136039",
+    "img": "round-04/pairs/136039.png"
+   },
+   "claude": "A",
+   "why": "the grey slab beside a pale veil",
+   "light_held_by_dark": "none",
+   "tier": 4
+  },
+  {
+   "n": 38,
+   "a": {
+    "id": "drakensberg-51433",
+    "img": "round-03/pairs/drakensberg-51433.png"
+   },
+   "b": {
+    "id": "jorasses-55461",
+    "img": "round-03/pairs/jorasses-55461.png"
+   },
+   "claude": "A",
+   "why": "blurred dome and veiled cairn",
+   "light_held_by_dark": "none",
+   "tier": 3
+  },
+  {
+   "n": 39,
+   "a": {
+    "id": "castillo-51130",
+    "img": "round-03/pairs/castillo-51130.png"
+   },
+   "b": {
+    "id": "liathach-34800",
+    "img": "round-01/pairs/liathach-34800.png"
+   },
+   "claude": "A",
+   "why": "a far pale peak against one dark dome",
+   "light_held_by_dark": "A",
+   "tier": 4
+  },
+  {
+   "n": 40,
+   "a": {
+    "id": "k2-31613",
+    "img": "round-01/pairs/k2-31613.png"
+   },
+   "b": {
+    "id": "prokletije-75632",
+    "img": "round-04/pairs/75632.png"
+   },
+   "claude": "B",
+   "why": "lit crags under dark cloud",
+   "light_held_by_dark": "none",
+   "tier": 3
+  }
+ ]
+}

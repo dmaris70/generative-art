@@ -1,0 +1,143 @@
+{
+ "batch": 21,
+ "by": "Dimitris",
+ "saved": "2026-09-23T20:18:44.708Z",
+ "kept": [
+  {
+   "seed": 23184601,
+   "place": "trango",
+   "register": "passage",
+   "rescued": false
+  },
+  {
+   "seed": 23226850,
+   "place": "badile",
+   "register": "clearing",
+   "rescued": false
+  },
+  {
+   "seed": 23283182,
+   "place": "fitzroy",
+   "register": "clearing",
+   "rescued": false
+  },
+  {
+   "seed": 23409929,
+   "place": "jorasses",
+   "register": "clearing",
+   "rescued": false
+  },
+  {
+   "seed": 23536676,
+   "place": "toubkal",
+   "register": "clearing",
+   "rescued": false
+  },
+  {
+   "seed": 23607091,
+   "place": "simien",
+   "register": "clearing",
+   "rescued": false
+  },
+  {
+   "seed": 23663423,
+   "place": "urriellu",
+   "register": "passage",
+   "rescued": false
+  },
+  {
+   "seed": 23677506,
+   "place": "arthurs",
+   "register": "clearing",
+   "rescued": false
+  },
+  {
+   "seed": 23691589,
+   "place": "astraka",
+   "register": "clearing",
+   "rescued": false
+  },
+  {
+   "seed": 23747921,
+   "place": "invented",
+   "register": "clearing",
+   "rescued": false
+  },
+  {
+   "seed": 23832419,
+   "place": "invented",
+   "register": "clearing",
+   "rescued": false
+  },
+  {
+   "seed": 23902834,
+   "place": "taygetos",
+   "register": "clearing",
+   "rescued": false
+  },
+  {
+   "seed": 23973249,
+   "place": "trollveggen",
+   "register": "passage",
+   "rescued": false
+  },
+  {
+   "seed": 23987332,
+   "place": "robson",
+   "register": "clearing",
+   "rescued": false
+  },
+  {
+   "seed": 24170411,
+   "place": "trecime",
+   "register": "exposure",
+   "rescued": false
+  },
+  {
+   "seed": 24198577,
+   "place": "trango",
+   "register": "passage",
+   "rescued": false
+  },
+  {
+   "seed": 24254909,
+   "place": "cinto",
+   "register": "passage",
+   "rescued": false
+  },
+  {
+   "seed": 24409822,
+   "place": "invented",
+   "register": "clearing",
+   "rescued": false
+  },
+  {
+   "seed": 24423905,
+   "place": "robson",
+   "register": "clearing",
+   "rescued": false
+  },
+  {
+   "seed": 24437988,
+   "place": "civetta",
+   "register": "clearing",
+   "rescued": false
+  }
+ ],
+ "culled_by_claude": [
+  23142352,
+  23170518,
+  23198684,
+  23240933,
+  23339514,
+  23381763,
+  23550759,
+  23945083,
+  24015498,
+  24099996,
+  24156328,
+  24184494,
+  24226743,
+  24283075
+ ]
+}

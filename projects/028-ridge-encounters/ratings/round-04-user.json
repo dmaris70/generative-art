@@ -1,0 +1,295 @@
+{
+ "round": 4,
+ "by": "Dimitris",
+ "saved": "2026-09-21T21:12:43.724Z",
+ "ratings": [
+  {
+   "id": "aoraki-61051",
+   "claude": 4,
+   "user": 4,
+   "note": ""
+  },
+  {
+   "id": "ushba-63134",
+   "claude": 4,
+   "user": 3,
+   "note": ""
+  },
+  {
+   "id": "robson-65217",
+   "claude": 3,
+   "user": 3,
+   "note": ""
+  },
+  {
+   "id": "brenta-67300",
+   "claude": 3,
+   "user": 3,
+   "note": ""
+  },
+  {
+   "id": "eiger-69383",
+   "claude": 3,
+   "user": 3,
+   "note": ""
+  },
+  {
+   "id": "darrans-71466",
+   "claude": 4,
+   "user": 4,
+   "note": ""
+  },
+  {
+   "id": "invented-73549",
+   "claude": 5,
+   "user": 4,
+   "note": ""
+  },
+  {
+   "id": "prokletije-75632",
+   "claude": 3,
+   "user": 3,
+   "note": ""
+  },
+  {
+   "id": "castillo-77715",
+   "claude": 3,
+   "user": 3,
+   "note": ""
+  },
+  {
+   "id": "invented-79798",
+   "claude": 4,
+   "user": 5,
+   "note": ""
+  },
+  {
+   "id": "k2-81881",
+   "claude": 2,
+   "user": 2,
+   "note": ""
+  },
+  {
+   "id": "alpamayo-83964",
+   "claude": 3,
+   "user": 3,
+   "note": ""
+  },
+  {
+   "id": "meije-86047",
+   "claude": 4,
+   "user": 3,
+   "note": ""
+  },
+  {
+   "id": "invented-88130",
+   "claude": 4,
+   "user": 4,
+   "note": ""
+  },
+  {
+   "id": "brenta-90213",
+   "claude": 3,
+   "user": 3,
+   "note": ""
+  },
+  {
+   "id": "drakensberg-92296",
+   "claude": 4,
+   "user": 3,
+   "note": ""
+  },
+  {
+   "id": "alpamayo-94379",
+   "claude": 3,
+   "user": 3,
+   "note": ""
+  },
+  {
+   "id": "invented-96462",
+   "claude": 2,
+   "user": 3,
+   "note": ""
+  },
+  {
+   "id": "arthurs-98545",
+   "claude": 3,
+   "user": 4,
+   "note": ""
+  },
+  {
+   "id": "napali-100628",
+   "claude": 4,
+   "user": 4,
+   "note": ""
+  },
+  {
+   "id": "meije-102711",
+   "claude": 4,
+   "user": 4,
+   "note": ""
+  },
+  {
+   "id": "meije-104794",
+   "claude": 3,
+   "user": 3,
+   "note": ""
+  },
+  {
+   "id": "ushba-106877",
+   "claude": 3,
+   "user": 4,
+   "note": ""
+  },
+  {
+   "id": "alpamayo-108960",
+   "claude": 3,
+   "user": 3,
+   "note": ""
+  },
+  {
+   "id": "eiger-111043",
+   "claude": 3,
+   "user": 4,
+   "note": ""
+  },
+  {
+   "id": "invented-113126",
+   "claude": 4,
+   "user": 4,
+   "note": ""
+  },
+  {
+   "id": "astraka-115209",
+   "claude": 3,
+   "user": 3,
+   "note": ""
+  },
+  {
+   "id": "machapuchare-117292",
+   "claude": 3,
+   "user": 3,
+   "note": ""
+  },
+  {
+   "id": "invented-119375",
+   "claude": 3,
+   "user": 3,
+   "note": ""
+  },
+  {
+   "id": "nevis-121458",
+   "claude": 4,
+   "user": 3,
+   "note": ""
+  },
+  {
+   "id": "tetons-123541",
+   "claude": 1,
+   "user": 2,
+   "note": ""
+  },
+  {
+   "id": "urriellu-125624",
+   "claude": 3,
+   "user": 3,
+   "note": ""
+  },
+  {
+   "id": "denali-127707",
+   "claude": 5,
+   "user": 4,
+   "note": ""
+  },
+  {
+   "id": "invented-129790",
+   "claude": 3,
+   "user": 4,
+   "note": ""
+  },
+  {
+   "id": "fitzroy-131873",
+   "claude": 4,
+   "user": 3,
+   "note": ""
+  },
+  {
+   "id": "meije-133956",
+   "claude": 4,
+   "user": 4,
+   "note": ""
+  },
+  {
+   "id": "watzmann-136039",
+   "claude": 3,
+   "user": 4,
+   "note": ""
+  },
+  {
+   "id": "stetind-138122",
+   "claude": 3,
+   "user": 3,
+   "note": ""
+  },
+  {
+   "id": "castillo-140205",
+   "claude": 2,
+   "user": 2,
+   "note": ""
+  },
+  {
+   "id": "invented-142288",
+   "claude": 4,
+   "user": 4,
+   "note": ""
+  },
+  {
+   "id": "jorasses-144371",
+   "claude": 5,
+   "user": 5,
+   "note": ""
+  },
+  {
+   "id": "taygetos-146454",
+   "claude": 4,
+   "user": 4,
+   "note": ""
+  },
+  {
+   "id": "trango-148537",
+   "claude": 3,
+   "user": 2,
+   "note": ""
+  },
+  {
+   "id": "olympus-150620",
+   "claude": 4,
+   "user": 4,
+   "note": ""
+  },
+  {
+   "id": "invented-152703",
+   "claude": 3,
+   "user": 3,
+   "note": ""
+  },
+  {
+   "id": "trango-154786",
+   "claude": 3,
+   "user": 3,
+   "note": ""
+  },
+  {
+   "id": "darrans-156869",
+   "claude": 4,
+   "user": 4,
+   "note": ""
+  },
+  {
+   "id": "napali-158952",
+   "claude": 3,
+   "user": 3,
+   "note": ""
+  }
+ ]
+}

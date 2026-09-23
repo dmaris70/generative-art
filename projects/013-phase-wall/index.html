@@ -1,0 +1,178 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Phase Wall — Reich process</title>
+<style>
+  :root{--bg:#0b0b0e;--fg:#ececef;--muted:#8b8b96;--border:#26262e;--accent:#d8b4fe;}
+  *{box-sizing:border-box}html,body{margin:0;height:100%}
+  body{background:var(--bg);color:var(--fg);overflow:hidden;
+    font:13px/1.55 ui-sans-serif,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    display:flex;flex-direction:column;align-items:center;justify-content:center;height:100vh;gap:14px;padding:18px}
+  #stage{line-height:0;box-shadow:0 20px 60px rgba(0,0,0,.55);border-radius:4px;overflow:hidden}
+  #art{background:#f4f1e8;display:block}
+  #cap{width:100%;max-width:640px}
+  #cap .t{font-family:Georgia,serif;font-size:15px;color:#e7e2d6;margin-bottom:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  #cap .m{font-family:"SF Mono",ui-monospace,Menlo,monospace;font-size:11px;color:var(--muted);letter-spacing:.04em}
+  #cap .p{font-family:"SF Mono",ui-monospace,Menlo,monospace;font-size:10.5px;color:#5f5c54;margin-top:6px;letter-spacing:.08em}
+  #cap .p a{color:var(--accent);text-decoration:none;cursor:pointer}
+  .controls{display:flex;gap:8px;align-items:center;margin-top:8px}
+  .controls input,.controls button{font:inherit;font-size:12px;color:var(--fg);background:#16161b;border:1px solid var(--border);border-radius:7px;padding:5px 9px;cursor:pointer}
+  .controls input{width:110px}
+  #neutral{position:fixed;inset:0;display:none;align-items:center;justify-content:center;padding:8%;text-align:center;
+    background:rgba(13,13,16,.93);color:#b7b2a6;font:13px/1.7 ui-serif,Georgia,serif;z-index:9998}
+  #status{position:fixed;left:0;right:0;bottom:0;padding:6px 12px;background:#111;color:#cfcabb;
+    font:11px/1.45 ui-monospace,Menlo,monospace;z-index:9999;white-space:pre-wrap;border-top:1px solid #333;display:none}
+</style>
+</head>
+<body>
+  <div id="stage"><canvas id="art" width="900" height="1120"></canvas></div>
+  <div id="cap">
+    <div class="t" id="cap-t">Phase Wall — Reich process</div>
+    <div class="m" id="cap-m">two identical loops, one slightly faster — the drawing is their interference</div>
+    <div class="p"><span id="cap-stats"></span> · <a id="cap-png">save PNG ↓</a></div>
+    <div class="controls" id="controls">
+      <input id="seed" type="number" value="1" min="1"/>
+      <button id="prev">← prev</button><button id="next">next →</button><button id="rand">↻ random</button>
+    </div>
+  </div>
+  <div id="neutral"></div>
+  <div id="status"></div>
+<script>
+/* PHASE GRAMMAR — enacts the tape-phase rule (Reich, Come Out / It's Gonna Rain).
+   Two identical loops of asemic marks are laid down pass by pass down the sheet
+   (time = top -> bottom). Voice A is the reference; voice B is the SAME loop
+   advanced by an accumulating offset (a second clock running slightly faster),
+   so B drifts out of phase with A. Where the two coincide their low-alpha ink
+   overlaps and darkens (reinforcement); where they part, the mark doubles (echo).
+   The moire is COMPUTED by running two clocks at different rates — it is not a
+   drawing OF phasing. seed = hash(id) fixes the loop. In follow mode the phase
+   offset is bound to the playhead: unison at the top, drifting as the piece plays.
+   AMEND-023 (the sibling-drawing law), method v1.22. Admitted grammar 'phase'. */
+function hash32(s){let h=2166136261;for(let i=0;i<s.length;i++){h^=s.charCodeAt(i);h=Math.imul(h,16777619);}return h>>>0;}
+function mulberry32(a){return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;};}
+var el=function(id){return document.getElementById(id);};
+var cv=el('art'), ctx=cv.getContext('2d');
+var PAPER='#f4f1e8', INK=[26,25,23];
+var D=null;
+
+// the loop and its drift, derived deterministically from the seed
+function design(seed){
+  var r=mulberry32(seed>>>0);
+  var N=18+Math.floor(r()*14);            // slots in the loop (18..31)
+  var density=0.40+r()*0.30;              // fraction of slots carrying a mark
+  var pattern=[]; for(var i=0;i<N;i++) pattern.push(r()<density);
+  if(!pattern.some(Boolean)) pattern[0]=true;
+  var rows=48+Math.floor(r()*42);         // passes down the page (48..89)
+  var eps=0.05+r()*0.13;                  // slots of drift per row (the phase rate)
+  var jitter=0.12+r()*0.45;               // slight per-mark unsteadiness
+  return {N:N, pattern:pattern, rows:rows, eps:eps, jitter:jitter, seed:seed>>>0};
+}
+
+function strokeTick(x,y,len,alpha){
+  ctx.strokeStyle='rgba('+INK[0]+','+INK[1]+','+INK[2]+','+alpha+')';
+  ctx.lineWidth=Math.max(1, cv.width/620);
+  ctx.beginPath(); ctx.moveTo(x, y-len/2); ctx.lineTo(x, y+len/2); ctx.stroke();
+}
+
+// draw the first `frac` of the passes — the score fills as the piece plays,
+// the two voices drifting apart as more passes accumulate
+function render(frac){
+  var W=cv.width, H=cv.height;
+  ctx.clearRect(0,0,W,H); ctx.fillStyle=PAPER; ctx.fillRect(0,0,W,H);
+  if(!D) return;
+  var mx=W*0.08, my=H*0.06, innerW=W-2*mx, innerH=H-2*my;
+  var slotW=innerW/(D.N-1), rowH=innerH/D.rows, tick=rowH*0.62;
+  var revealed=Math.max(1, Math.ceil(D.rows*Math.min(1, Math.max(0, frac))));
+  var rj=mulberry32((D.seed^0x51ed2701)>>>0);   // stable jitter stream, re-seeded each render
+  ctx.lineCap='round';
+  for(var row=0; row<revealed; row++){
+    var y=my+row*rowH;
+    var drift=row*D.eps;                          // accumulated phase offset, in slots
+    for(var i=0;i<D.N;i++){
+      if(!D.pattern[i]) continue;
+      var jx=(rj()-0.5)*D.jitter*slotW, jy=(rj()-0.5)*D.jitter*rowH;
+      // voice A — the reference loop
+      strokeTick(mx+i*slotW+jx, y+jy, tick, 0.42);
+      // voice B — the same loop, advanced (drifts and wraps within the loop)
+      var ib=((i+drift)%D.N+D.N)%D.N;
+      strokeTick(mx+ib*slotW+jx*0.6, y+jy, tick, 0.42);
+    }
+  }
+}
+
+function fit(){
+  var availH=Math.max(240, window.innerHeight-200), availW=Math.max(240, window.innerWidth-40);
+  var ar=cv.width/cv.height, h=availH, w=h*ar; if(w>availW){w=availW; h=w/ar;}
+  cv.style.width=Math.round(w)+'px'; cv.style.height=Math.round(h)+'px';
+}
+window.addEventListener('resize', fit); fit();
+
+function setStatus(t){var s=el('status'); s.style.display=''; s.textContent=t;}
+function neutral(show,html){var n=el('neutral'); n.style.display=show?'flex':'none'; if(show&&html!=null) n.innerHTML=html;}
+function esc(x){return String(x==null?'':x).replace(/[&<>]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;'}[c];});}
+function setSeed(seed){ D=design(seed>>>0||1); el('seed').value=D.seed; }
+function stats(frac){
+  el('cap-stats').textContent='seed '+D.seed+' · loop '+D.N+' slots · drift '+D.eps.toFixed(3)
+    +' slot/pass · phase '+Math.round(Math.min(1,frac)*100)+'%';
+}
+
+// standalone controls (hidden in follow mode)
+el('seed').addEventListener('change',function(){setSeed(parseInt(el('seed').value,10)||1); render(1); stats(1);});
+el('prev').addEventListener('click',function(){setSeed(Math.max(1,D.seed-1)); render(1); stats(1);});
+el('next').addEventListener('click',function(){setSeed(D.seed+1); render(1); stats(1);});
+el('rand').addEventListener('click',function(){setSeed(Math.floor(Math.random()*999999)+1); render(1); stats(1);});
+el('cap-png').addEventListener('click',function(){render(1); var a=document.createElement('a'); a.download='phase-'+D.seed+'.png'; a.href=cv.toDataURL('image/png'); a.click();});
+
+// entry: ?seed=N static · ?follow=1 live from the radio (phase offset = playhead) · ?force=1 study override
+(function(){
+  var q=new URLSearchParams(location.search);
+  var sp=parseInt(q.get('seed'),10);
+  setSeed(sp&&sp>0?sp:1);
+  var follow=q.get('follow')==='1', force=q.get('force')==='1', anim=q.get('anim')==='1';
+  if(!follow){
+    if(anim){                                   // self-contained ~30s clock: play the unison -> drift progression
+      var PERIOD=30000, t0=performance.now();
+      (function loop(){ var f=((performance.now()-t0)%PERIOD)/PERIOD; render(f); stats(f); requestAnimationFrame(loop); })();
+    } else { render(1); stats(1); }             // static: the finished sheet
+    return;
+  }
+  document.title='DMCF Radio — live phase';
+  el('controls').style.display='none';
+  var lastId=null;
+  (function tick(){
+    try{
+      if(!window.opener||window.opener.closed||!window.opener.DMCFArt){
+        neutral(true,'<div>Player window closed — open DMCF-Radio-page.html and press <b>Phase ↗</b>.</div>');
+      } else {
+        var info=window.opener.DMCFArt.now();
+        if(info){
+          var admitted=(info.grammar==='phase')||force;
+          if(admitted){
+            neutral(false);
+            if(info.id!==lastId){ lastId=info.id; setSeed(info.seed); }
+            render(info.frac);
+            el('cap-t').textContent=(info.title||'')+'  —  '+(info.credit||'');
+            el('cap-m').textContent=info.id+' · '+info.system+(info.sysName?' '+info.sysName:'')+(info.year?' · '+info.year:'');
+            stats(info.frac);
+            setStatus(info.id+'  ·  '+info.system+'  ·  phase '+Math.round(Math.min(1,info.frac)*100)+'%  ·  seed = hash(id) = '+(info.seed>>>0)
+              + ((force&&info.grammar!=='phase')?'\n[STUDY OVERRIDE — not an admitted record; phase shown for verification only]':''));
+          } else {
+            neutral(true,
+              '<div><div style="font-size:15px;color:#e7e2d6;margin-bottom:10px">Not admitted to the phase grammar</div>'
+              +'<div style="max-width:34em">Phase is the sibling of <b>tape-phase process</b> works — two identical loops drifting out of alignment '
+              +'(Reich, <i>Come Out</i>; <i>It\'s Gonna Rain</i>). Per <b>AMEND-023</b>, a record draws phase only when admitted per-record '
+              +'(feed flag grammar=&#39;phase&#39;). '+esc(info.id)+' ('+esc(info.system)+(info.sysName?' '+esc(info.sysName):'')+') draws <b>neutral</b> — '
+              +'its canon drawing is on <b>Canon art ↗</b>.</div></div>');
+            setStatus(esc(info.id)+'  ·  '+esc(info.system)+'  —  neutral (not admitted to phase)');
+          }
+        }
+      }
+    }catch(e){}
+    requestAnimationFrame(tick);
+  })();
+})();
+</script>
+</body>
+</html>

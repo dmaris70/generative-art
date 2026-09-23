@@ -1,0 +1,151 @@
+{
+ "frozen": "2026-09-23T17:50:32.017Z",
+ "version": "1.3",
+ "files": {
+  "compose.js": "0ff0a13df310368e",
+  "parts.js": "1ac09d4a46a7f223",
+  "worker.js": "d435ae385b116ea9",
+  "index.html": "28a3ee99fb00d28a",
+  "../../assets/drybrush.js": "99acd7b3eb8e3850"
+ },
+ "dems": {
+  "cuillin": "5bfd9b08a295d761",
+  "trecime": "ee7e0be93d58da94",
+  "fitzroy": "f9ae634bc051ecff",
+  "trollveggen": "356d6ee7aa2a38c7",
+  "astraka": "8d7880b0866d34bc",
+  "liathach": "c27aa2fef1dc85a4",
+  "matterhorn": "dc7abd96129e5f98",
+  "jorasses": "b7fd0e944506c1b2",
+  "badile": "6c38fccbf76b3c87",
+  "triglav": "414855d05bc6f8ec",
+  "urriellu": "61849470aaa10f2b",
+  "olympus": "290cbd6d21b72ed5",
+  "stetind": "5ffaf126ced180b1",
+  "trango": "3c5e824bb20b1010",
+  "amadablam": "bd5f7df101af885b",
+  "alpamayo": "ea016f469a62cbf6",
+  "aoraki": "9d30fcbe09d29218",
+  "drakensberg": "c58bc9872fce01e9",
+  "nevis": "51a4c541401085ff",
+  "lyskamm": "7bf25c8dc233e444",
+  "meije": "bd372dc17fa74270",
+  "watzmann": "1c2244075fd43e96",
+  "brenta": "ebd797adf3ece0f9",
+  "civetta": "110ee6b5191222c7",
+  "perdido": "aa04067b1dd552fa",
+  "cinto": "81bf5500728e616b",
+  "taygetos": "251a61052783035e",
+  "besseggen": "97f2e371acc9c350",
+  "ushba": "f701a3ba052b5584",
+  "huashan": "b6f34dcf167cfe93",
+  "kinabalu": "56ba51a31e7419b8",
+  "k2": "b89f6e622e95bf6a",
+  "machapuchare": "02d09a1215eaf539",
+  "hotaka": "a9ec59c2beca8ee9",
+  "tetons": "76d1a15114b25677",
+  "robson": "d2ef1635ebbdc855",
+  "denali": "7a6945da733d3736",
+  "huayhuash": "067797fa671c8187",
+  "castillo": "2bca2cabf40797ea",
+  "napali": "30e337dc1d013821",
+  "simien": "0e01a964d34d9615",
+  "toubkal": "4ff83ea15695cb5c",
+  "darrans": "a7df67a797ac586e",
+  "arthurs": "10d0d1af0acf030a"
+ },
+ "places": [
+  "cuillin",
+  "trecime",
+  "fitzroy",
+  "trollveggen",
+  "astraka",
+  "liathach",
+  "matterhorn",
+  "jorasses",
+  "badile",
+  "triglav",
+  "urriellu",
+  "olympus",
+  "stetind",
+  "trango",
+  "amadablam",
+  "alpamayo",
+  "aoraki",
+  "drakensberg",
+  "nevis",
+  "lyskamm",
+  "meije",
+  "watzmann",
+  "brenta",
+  "civetta",
+  "perdido",
+  "cinto",
+  "taygetos",
+  "besseggen",
+  "ushba",
+  "huashan",
+  "kinabalu",
+  "k2",
+  "machapuchare",
+  "hotaka",
+  "tetons",
+  "robson",
+  "denali",
+  "huayhuash",
+  "castillo",
+  "napali",
+  "simien",
+  "toubkal",
+  "darrans",
+  "arthurs"
+ ],
+ "witnesses": {
+  "221429": {
+   "place": "urriellu",
+   "register": "clearing",
+   "pixels": "4938c1bb69673fe2"
+  },
+  "636848": {
+   "place": "civetta",
+   "register": "clearing",
+   "pixels": "718dc929f468358f"
+  },
+  "1320403": {
+   "place": "taygetos",
+   "register": "clearing",
+   "pixels": "d0c3b5b999aca155"
+  },
+  "1718125": {
+   "place": "besseggen",
+   "register": "whiteout",
+   "pixels": "c869d65e03e2104e"
+  },
+  "2130774": {
+   "place": "darrans",
+   "register": "clearing",
+   "pixels": "f4d98063a74c887f"
+  },
+  "2555193": {
+   "place": "invented",
+   "register": "clearing",
+   "pixels": "603a592a72a6f184"
+  },
+  "3300023": {
+   "place": "castillo",
+   "register": "clearing",
+   "pixels": "eafa3f7c5d515cde"
+  },
+  "3928425": {
+   "place": "trango",
+   "register": "passage",
+   "pixels": "e54b9b9456fc7a1e"
+  }
+ },
+ "deal": {
+  "moods": "(m => m < 20 ? 'exposure' : m < 40 ? 'passage' : m < 92 ? 'clearing' : 'whiteout')",
+  "events": "er < 0.05 ? 'none' : er < 0.09 ? 'hut' : er < 0.15 ? 'bird' : er < 0.21 ? 'moon' : 'none';",
+  "pairs": "",
+  "temper": "const TEMPER = { reveal: [0.7, 1.5], drama: [0.8, 1.45], smear: [0.1, 1.1], bristle: [0.5, 1.9], streak: [0.4, 1.9], grain: [0.8, 1.2] }"
+ }
+}

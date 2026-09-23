@@ -1,0 +1,127 @@
+{
+ "byPlace": {
+  "trollveggen": {
+   "n": 1,
+   "clean": 0,
+   "p02": 49,
+   "p50": 142,
+   "black": 0.093,
+   "flags": {
+    "WEDGE": 1
+   }
+  }
+ },
+ "made": "2026-09-23T17:45:35.863Z",
+ "args": {
+  "n": 1,
+  "start": 17398378,
+  "step": 7919,
+  "place": 0,
+  "regime": 0
+ },
+ "summary": {
+  "n": 1,
+  "clean": 0,
+  "TIMID": 0,
+  "FLAT": 0,
+  "EMPTY": 0,
+  "HORN": 0,
+  "WEDGE": 1,
+  "TWIN": 0,
+  "reachBlack": 1,
+  "median": {
+   "p02": 49,
+   "p50": 142,
+   "p98": 207,
+   "black": 0.093
+  },
+  "source": {
+   "p02": 56,
+   "p50": 141,
+   "p98": 208,
+   "black": 0.067
+  }
+ },
+ "results": [
+  {
+   "seed": 17398378,
+   "register": "passage",
+   "place": "trollveggen",
+   "light": "side",
+   "key": "full",
+   "weather": "pouring",
+   "pair": "later",
+   "event": "none",
+   "temper": {
+    "reveal": 0.81,
+    "drama": 1.3,
+    "smear": 0.64,
+    "bristle": 1.48,
+    "streak": 0.96,
+    "grain": 0.87
+   },
+   "light2": "side",
+   "p02": 49,
+   "p50": 142,
+   "p98": 207,
+   "black": 0.093,
+   "landL": 0.78,
+   "landR": 0.71,
+   "slope": -1.13,
+   "flags": [
+    "WEDGE"
+   ],
+   "ms": 3511,
+   "skyline": [
+    0.863,
+    0.844,
+    0.829,
+    0.809,
+    0.797,
+    0.719,
+    0.405,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0.868,
+    0.858,
+    0.844,
+    0.829,
+    0.812,
+    0.796,
+    0.784,
+    0.675,
+    0.457,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+   ]
+  }
+ ]
+}

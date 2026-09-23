@@ -1,0 +1,182 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Score Wall — sign→sound (UPIC)</title>
+<style>
+  :root{--bg:#0b0b0e;--fg:#ececef;--muted:#8b8b96;--border:#26262e;--accent:#c99a4a;}
+  *{box-sizing:border-box}html,body{margin:0;height:100%}
+  body{background:var(--bg);color:var(--fg);overflow:hidden;
+    font:13px/1.55 ui-sans-serif,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    display:flex;flex-direction:column;align-items:center;justify-content:center;height:100vh;gap:14px;padding:18px}
+  #stage{line-height:0;box-shadow:0 20px 60px rgba(0,0,0,.55);border-radius:4px;overflow:hidden}
+  #art{background:#f2efe8;display:block}
+  #cap{width:100%;max-width:680px}
+  #cap .t{font-family:Georgia,serif;font-size:15px;color:#e7e2d6;margin-bottom:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  #cap .m{font-family:"SF Mono",ui-monospace,Menlo,monospace;font-size:11px;color:var(--muted);letter-spacing:.04em}
+  #cap .p{font-family:"SF Mono",ui-monospace,Menlo,monospace;font-size:10.5px;color:#5f5c54;margin-top:6px;letter-spacing:.06em}
+  #cap .p a{color:var(--accent);text-decoration:none;cursor:pointer}
+  .controls{display:flex;gap:8px;align-items:center;margin-top:8px}
+  .controls input,.controls button{font:inherit;font-size:12px;color:var(--fg);background:#16161b;border:1px solid var(--border);border-radius:7px;padding:5px 9px;cursor:pointer}
+  .controls input{width:110px}
+  #neutral{position:fixed;inset:0;display:none;align-items:center;justify-content:center;padding:8%;text-align:center;
+    background:rgba(11,11,14,.93);color:#b7b2a6;font:13px/1.7 ui-serif,Georgia,serif;z-index:9998}
+  #status{position:fixed;left:0;right:0;bottom:0;padding:6px 12px;background:#111;color:#cfcabb;
+    font:11px/1.45 ui-monospace,Menlo,monospace;z-index:9999;white-space:pre-wrap;border-top:1px solid #333;display:none}
+</style>
+</head>
+<body>
+  <div id="stage"><canvas id="art" width="1120" height="760"></canvas></div>
+  <div id="cap">
+    <div class="t" id="cap-t">Score Wall — the drawing is a graphic score, read as sound</div>
+    <div class="m" id="cap-m">arcs on a time × frequency plane; a read-head scans them as the piece plays</div>
+    <div class="p"><span id="cap-stats"></span> · <a id="cap-png">save PNG ↓</a></div>
+    <div class="controls" id="controls">
+      <input id="seed" type="number" value="1" min="1"/>
+      <button id="prev">← prev</button><button id="next">next →</button><button id="rand">↻ random</button>
+    </div>
+  </div>
+  <div id="neutral"></div>
+  <div id="status"></div>
+<script>
+/* SCORE GRAMMAR — enacts SYS-011 (graphic sign→sound translation: a drawn sign-system
+   mechanically mapped to sound — Xenakis's UPIC, McLaren's optical soundtrack, IanniX).
+   These pieces run image -> sound; the image half runs sound-rule -> image, so the
+   sibling here is the object the rule OPERATES ON: a playable graphic score. The engine
+   generates arcs (glissandi/gestures) on a time (x) × frequency (y) plane from hash(id),
+   then a READ-HEAD sweeps left->right, bound to the playhead — the reading mechanism —
+   inking the arcs it has passed (sounding) while the un-read score stays faint. The
+   drawing is produced by a curve-generating rule and is literally a score that could be
+   read back as sound: generation, not depiction (AMEND-023). AMEND-028, grammar 'score'. */
+function hash32(s){let h=2166136261;for(let i=0;i<s.length;i++){h^=s.charCodeAt(i);h=Math.imul(h,16777619);}return h>>>0;}
+function mulberry32(a){return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;};}
+var el=function(id){return document.getElementById(id);};
+var cv=el('art'), ctx=cv.getContext('2d');
+var PAPER='#f2efe8', INK=[26,26,32], FAINT=[176,172,160], HEAD=[201,154,74];
+var D=null;
+
+// generate the graphic score: arcs on the time×frequency plane, from the seed
+function design(seed){
+  var r=mulberry32(seed>>>0);
+  var n=10+Math.floor(r()*15);              // 10..24 arcs
+  var arcs=[];
+  for(var i=0;i<n;i++){
+    var t0=r()*0.85, dur=0.08+r()*0.52, t1=Math.min(0.98,t0+dur);
+    var y0=0.08+r()*0.84, kind=Math.floor(r()*4), amp=(r()-0.5)*0.7, freq=1+Math.floor(r()*3);
+    var K=8+Math.floor(dur*44), pts=[];
+    for(var k=0;k<=K;k++){
+      var tt=k/K, t=t0+(t1-t0)*tt, y;
+      if(kind===0) y=y0;                                   // held tone
+      else if(kind===1) y=y0-amp*tt;                       // rising glissando
+      else if(kind===2) y=y0+amp*tt;                       // falling glissando
+      else y=y0+0.13*Math.sin(tt*Math.PI*2*freq);          // vibrato / wave
+      pts.push({x:t, y:Math.max(0.035,Math.min(0.965,y))});
+    }
+    arcs.push({pts:pts, w:0.6+r()*2.6});
+  }
+  return {arcs:arcs, n:n, seed:(seed>>>0)};
+}
+
+function drawArc(a, x0,y0,W,H, rgb, alpha, clipX){
+  ctx.strokeStyle='rgba('+rgb[0]+','+rgb[1]+','+rgb[2]+','+alpha+')';
+  ctx.lineWidth=Math.max(0.8, a.w*(W/1000)); ctx.lineCap='round'; ctx.lineJoin='round';
+  var started=false;
+  ctx.beginPath();
+  for(var k=0;k<a.pts.length;k++){
+    var px=x0+a.pts[k].x*W, py=y0+a.pts[k].y*H;
+    if(clipX!=null && px>clipX){ if(started) ctx.stroke(); return; }   // stop at the read-head
+    if(!started){ ctx.moveTo(px,py); started=true; } else ctx.lineTo(px,py);
+  }
+  ctx.stroke();
+}
+
+// draw the score; the read-head at frac inks what it has passed
+function render(frac){
+  var W=cv.width, H=cv.height;
+  ctx.clearRect(0,0,W,H); ctx.fillStyle=PAPER; ctx.fillRect(0,0,W,H);
+  if(!D) return;
+  var mx=W*0.06, my=H*0.07, iW=W-2*mx, iH=H-2*my;
+  // faint time/frequency grid
+  ctx.strokeStyle='rgba(120,116,104,0.16)'; ctx.lineWidth=1;
+  for(var gy=0; gy<=8; gy++){ var y=my+gy/8*iH; ctx.beginPath(); ctx.moveTo(mx,y); ctx.lineTo(mx+iW,y); ctx.stroke(); }
+  for(var gx=0; gx<=12; gx++){ var x=mx+gx/12*iW; ctx.beginPath(); ctx.moveTo(x,my); ctx.lineTo(x,my+iH); ctx.stroke(); }
+  var readX=mx+Math.min(1,Math.max(0,frac))*iW;
+  // 1) the latent score, faint (the drawn signs, not yet read)
+  for(var i=0;i<D.arcs.length;i++) drawArc(D.arcs[i], mx,my,iW,iH, FAINT, 0.5, null);
+  // 2) the read portion, inked (sounding) — up to the read-head
+  for(var j=0;j<D.arcs.length;j++) drawArc(D.arcs[j], mx,my,iW,iH, INK, 0.9, readX);
+  // 3) the read-head
+  ctx.strokeStyle='rgba('+HEAD[0]+','+HEAD[1]+','+HEAD[2]+',0.85)'; ctx.lineWidth=Math.max(1.5,W/560);
+  ctx.beginPath(); ctx.moveTo(readX,my); ctx.lineTo(readX,my+iH); ctx.stroke();
+}
+
+function fit(){
+  var availH=Math.max(220, window.innerHeight-210), availW=Math.max(240, window.innerWidth-40);
+  var ar=cv.width/cv.height, w=availW, h=w/ar; if(h>availH){h=availH; w=h*ar;}
+  cv.style.width=Math.round(w)+'px'; cv.style.height=Math.round(h)+'px';
+}
+window.addEventListener('resize', fit); fit();
+
+function setStatus(t){var s=el('status'); s.style.display=''; s.textContent=t;}
+function neutral(show,html){var n=el('neutral'); n.style.display=show?'flex':'none'; if(show&&html!=null) n.innerHTML=html;}
+function esc(x){return String(x==null?'':x).replace(/[&<>]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;'}[c];});}
+function setSeed(seed){ D=design(seed>>>0||1); el('seed').value=D.seed; }
+function stats(frac){ el('cap-stats').textContent='seed '+D.seed+' · '+D.n+' arcs · read '+Math.round(Math.min(1,frac)*100)+'%'; }
+
+el('seed').addEventListener('change',function(){setSeed(parseInt(el('seed').value,10)||1); render(1); stats(1);});
+el('prev').addEventListener('click',function(){setSeed(Math.max(1,D.seed-1)); render(1); stats(1);});
+el('next').addEventListener('click',function(){setSeed(D.seed+1); render(1); stats(1);});
+el('rand').addEventListener('click',function(){setSeed(Math.floor(Math.random()*999999)+1); render(1); stats(1);});
+el('cap-png').addEventListener('click',function(){render(1); var a=document.createElement('a'); a.download='score-'+D.seed+'.png'; a.href=cv.toDataURL('image/png'); a.click();});
+
+/* ?seed=N · ?anim=1 self-clock (read-head sweep) · ?follow=1 live (read-head = playhead) · ?force=1 override */
+(function(){
+  var q=new URLSearchParams(location.search);
+  var sp=parseInt(q.get('seed'),10);
+  setSeed(sp&&sp>0?sp:1);
+  var follow=q.get('follow')==='1', force=q.get('force')==='1', anim=q.get('anim')==='1';
+  if(!follow){
+    if(anim){ var PERIOD=30000, t0=performance.now();
+      (function loop(){ var f=((performance.now()-t0)%PERIOD)/PERIOD; render(f); stats(f); requestAnimationFrame(loop); })(); }
+    else { render(1); stats(1); }
+    return;
+  }
+  document.title='DMCF Radio — live score';
+  el('controls').style.display='none';
+  var lastId=null;
+  (function tick(){
+    try{
+      if(!window.opener||window.opener.closed||!window.opener.DMCFArt){
+        neutral(true,'<div>Player window closed — open DMCF-Radio-page.html and press <b>Score ↗</b>.</div>');
+      } else {
+        var info=window.opener.DMCFArt.now();
+        if(info){
+          var admitted=(info.grammar==='score')||force;
+          if(admitted){
+            neutral(false);
+            if(info.id!==lastId){ lastId=info.id; setSeed(info.seed); }
+            render(info.frac);
+            el('cap-t').textContent=(info.title||'')+'  —  '+(info.credit||'');
+            el('cap-m').textContent=info.id+' · '+info.system+(info.sysName?' '+info.sysName:'')+(info.year?' · '+info.year:'');
+            stats(info.frac);
+            setStatus(info.id+'  ·  '+info.system+'  ·  read-head '+Math.round(Math.min(1,info.frac)*100)+'%  ·  seed = hash(id) = '+(info.seed>>>0)
+              + ((force&&info.grammar!=='score')?'\n[STUDY OVERRIDE — not an admitted record; score shown for verification only]':''));
+          } else {
+            neutral(true,
+              '<div><div style="font-size:15px;color:#e7e2d6;margin-bottom:10px">Not admitted to the score grammar</div>'
+              +'<div style="max-width:34em">The <b>score</b> grammar draws <b>graphic sign→sound</b> works — a drawn sign-system mechanically mapped to sound '
+              +'(Xenakis, <i>UPIC</i>; McLaren, optical soundtrack; IanniX). Per <b>AMEND-023/028</b>, a record draws score only when admitted per-record '
+              +'(feed flag grammar=&#39;score&#39;). '+esc(info.id)+' ('+esc(info.system)+(info.sysName?' '+esc(info.sysName):'')+') draws <b>neutral</b> — '
+              +'its canon drawing is on <b>Canon art ↗</b>.</div></div>');
+            setStatus(esc(info.id)+'  ·  '+esc(info.system)+'  —  neutral (not admitted to score)');
+          }
+        }
+      }
+    }catch(e){}
+    requestAnimationFrame(tick);
+  })();
+})();
+</script>
+</body>
+</html>

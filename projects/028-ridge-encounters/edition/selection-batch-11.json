@@ -1,0 +1,158 @@
+{
+ "batch": 11,
+ "by": "Dimitris",
+ "saved": "2026-09-23T16:28:12.184Z",
+ "kept": [
+  {
+   "seed": 9910306,
+   "place": "alpamayo",
+   "register": "clearing",
+   "rescued": false
+  },
+  {
+   "seed": 9941083,
+   "place": "alpamayo",
+   "register": "passage",
+   "rescued": false
+  },
+  {
+   "seed": 9961601,
+   "place": "watzmann",
+   "register": "clearing",
+   "rescued": false
+  },
+  {
+   "seed": 9971860,
+   "place": "invented",
+   "register": "clearing",
+   "rescued": false
+  },
+  {
+   "seed": 9982119,
+   "place": "arthurs",
+   "register": "passage",
+   "rescued": false
+  },
+  {
+   "seed": 10002637,
+   "place": "invented",
+   "register": "exposure",
+   "rescued": false
+  },
+  {
+   "seed": 10023155,
+   "place": "darrans",
+   "register": "passage",
+   "rescued": false
+  },
+  {
+   "seed": 10043673,
+   "place": "brenta",
+   "register": "clearing",
+   "rescued": false
+  },
+  {
+   "seed": 10053932,
+   "place": "amadablam",
+   "register": "clearing",
+   "rescued": false
+  },
+  {
+   "seed": 10064191,
+   "place": "invented",
+   "register": "clearing",
+   "rescued": false
+  },
+  {
+   "seed": 10074450,
+   "place": "arthurs",
+   "register": "exposure",
+   "rescued": false
+  },
+  {
+   "seed": 10115486,
+   "place": "darrans",
+   "register": "clearing",
+   "rescued": false
+  },
+  {
+   "seed": 10187299,
+   "place": "invented",
+   "register": "clearing",
+   "rescued": false
+  },
+  {
+   "seed": 10207817,
+   "place": "matterhorn",
+   "register": "clearing",
+   "rescued": false
+  },
+  {
+   "seed": 10228335,
+   "place": "urriellu",
+   "register": "clearing",
+   "rescued": false
+  },
+  {
+   "seed": 10269371,
+   "place": "kinabalu",
+   "register": "clearing",
+   "rescued": false
+  },
+  {
+   "seed": 10495069,
+   "place": "denali",
+   "register": "clearing",
+   "rescued": false
+  },
+  {
+   "seed": 10505328,
+   "place": "tetons",
+   "register": "clearing",
+   "rescued": false
+  },
+  {
+   "seed": 10515587,
+   "place": "watzmann",
+   "register": "whiteout",
+   "rescued": false
+  },
+  {
+   "seed": 10659213,
+   "place": "arthurs",
+   "register": "clearing",
+   "rescued": false
+  },
+  {
+   "seed": 10669472,
+   "place": "besseggen",
+   "register": "clearing",
+   "rescued": false
+  },
+  {
+   "seed": 10689990,
+   "place": "astraka",
+   "register": "exposure",
+   "rescued": false
+  },
+  {
+   "seed": 10823357,
+   "place": "napali",
+   "register": "clearing",
+   "rescued": false
+  }
+ ],
+ "culled_by_claude": [
+  10125745,
+  10259112,
+  10330925,
+  10361702,
+  10382220,
+  10577141,
+  10607918,
+  10638695,
+  10761803,
+  10854134,
+  10874652
+ ]
+}

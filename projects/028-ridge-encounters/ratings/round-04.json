@@ -1,0 +1,1381 @@
+{
+ "round": 4,
+ "made": "2026-09-21",
+ "rubric": "v4",
+ "generator": "after the six rating-driven changes",
+ "scale": "1 discard \u00b7 2 weak \u00b7 3 acceptable \u00b7 4 good \u00b7 5 keep: could hang",
+ "items": [
+  {
+   "id": "aoraki-61051",
+   "place": "aoraki",
+   "seed": 61051,
+   "img": "round-04/pairs/61051.png",
+   "register": "clearing",
+   "light": "against",
+   "key": "low",
+   "weather": "spindrift+pouring",
+   "pair": "turn",
+   "temper": {
+    "reveal": 1.27,
+    "drama": 1.02,
+    "smear": 0.54,
+    "bristle": 0.8,
+    "streak": 1.1,
+    "grain": 0.9
+   },
+   "metrics": {
+    "p02": 43,
+    "p50": 136,
+    "p98": 173,
+    "black": 0.071,
+    "flags": []
+   },
+   "claude": 4,
+   "why": "Veiled ranges behind a dark near rim, one lit outcrop. A place, quietly."
+  },
+  {
+   "id": "ushba-63134",
+   "place": "ushba",
+   "seed": 63134,
+   "img": "round-04/pairs/63134.png",
+   "register": "looming",
+   "light": "against",
+   "key": "low",
+   "weather": "pouring",
+   "pair": "turn",
+   "temper": {
+    "reveal": 1.12,
+    "drama": 1.12,
+    "smear": 0.58,
+    "bristle": 1.73,
+    "streak": 1.3,
+    "grain": 0.93
+   },
+   "metrics": {
+    "p02": 50,
+    "p50": 78,
+    "p98": 201,
+    "black": 0.322,
+    "flags": [
+     "WEDGE"
+    ]
+   },
+   "claude": 4,
+   "why": "Dark streaked wall with cloud lying at its foot, against a dark diagonal and pale sky."
+  },
+  {
+   "id": "robson-65217",
+   "place": "robson",
+   "seed": 65217,
+   "img": "round-04/pairs/65217.png",
+   "register": "whiteout",
+   "light": "overcast",
+   "key": "high",
+   "weather": "spindrift",
+   "pair": "panorama",
+   "temper": {
+    "reveal": 1.16,
+    "drama": 1.23,
+    "smear": 0.44,
+    "bristle": 1.45,
+    "streak": 1.28,
+    "grain": 0.93
+   },
+   "metrics": {
+    "p02": 93,
+    "p50": 121,
+    "p98": 204,
+    "black": 0,
+    "flags": []
+   },
+   "claude": 3,
+   "why": "A grey field crossed by one soft curve; almost nothing, but soft."
+  },
+  {
+   "id": "brenta-67300",
+   "place": "brenta",
+   "seed": 67300,
+   "img": "round-04/pairs/67300.png",
+   "register": "looming",
+   "light": "against",
+   "key": "low",
+   "weather": "still",
+   "pair": "turn",
+   "temper": {
+    "reveal": 1.14,
+    "drama": 1.07,
+    "smear": 0.31,
+    "bristle": 1.33,
+    "streak": 1.12,
+    "grain": 0.99
+   },
+   "metrics": {
+    "p02": 43,
+    "p50": 73,
+    "p98": 187,
+    "black": 0.435,
+    "flags": []
+   },
+   "claude": 3,
+   "why": "Dark walls and a far ridge; solid, no single gesture."
+  },
+  {
+   "id": "eiger-69383",
+   "place": "eiger",
+   "seed": 69383,
+   "img": "round-04/pairs/69383.png",
+   "register": "clearing",
+   "light": "against",
+   "key": "full",
+   "weather": "still",
+   "pair": "turn",
+   "temper": {
+    "reveal": 1.13,
+    "drama": 1.11,
+    "smear": 0.62,
+    "bristle": 0.72,
+    "streak": 1.56,
+    "grain": 0.82
+   },
+   "metrics": {
+    "p02": 55,
+    "p50": 139,
+    "p98": 193,
+    "black": 0.124,
+    "flags": []
+   },
+   "claude": 3,
+   "why": "Dark cloud and a streaked slope split by one dark blade; busy with streaks."
+  },
+  {
+   "id": "darrans-71466",
+   "place": "darrans",
+   "seed": 71466,
+   "img": "round-04/pairs/71466.png",
+   "register": "exposure",
+   "light": "side",
+   "key": "full",
+   "weather": "pouring",
+   "pair": "turn",
+   "temper": {
+    "reveal": 0.93,
+    "drama": 1,
+    "smear": 0.37,
+    "bristle": 1.4,
+    "streak": 1.05,
+    "grain": 1.12
+   },
+   "metrics": {
+    "p02": 43,
+    "p50": 92,
+    "p98": 211,
+    "black": 0.287,
+    "flags": []
+   },
+   "claude": 4,
+   "why": "A dark dome close by, with a range and tiny far spires beyond it."
+  },
+  {
+   "id": "invented-73549",
+   "place": "invented",
+   "seed": 73549,
+   "img": "round-04/pairs/73549.png",
+   "register": "passage",
+   "light": "against",
+   "key": "low",
+   "weather": "pouring",
+   "pair": "turn",
+   "temper": {
+    "reveal": 1.09,
+    "drama": 1.18,
+    "smear": 0.88,
+    "bristle": 1.26,
+    "streak": 1,
+    "grain": 0.82
+   },
+   "metrics": {
+    "p02": 42,
+    "p50": 128,
+    "p98": 211,
+    "black": 0.314,
+    "flags": [
+     "WEDGE"
+    ]
+   },
+   "claude": 5,
+   "why": "A calm veiled valley, and one black wall rising the full height of the right sheet."
+  },
+  {
+   "id": "prokletije-75632",
+   "place": "prokletije",
+   "seed": 75632,
+   "img": "round-04/pairs/75632.png",
+   "register": "passage",
+   "light": "side",
+   "key": "high",
+   "weather": "spindrift+pouring",
+   "pair": "later",
+   "temper": {
+    "reveal": 0.98,
+    "drama": 0.88,
+    "smear": 0.75,
+    "bristle": 1.14,
+    "streak": 1.07,
+    "grain": 1.08
+   },
+   "metrics": {
+    "p02": 45,
+    "p50": 132,
+    "p98": 214,
+    "black": 0.151,
+    "flags": [
+     "WEDGE"
+    ]
+   },
+   "claude": 3,
+   "why": "Lit crags under dark cloud, rather described."
+  },
+  {
+   "id": "castillo-77715",
+   "place": "castillo",
+   "seed": 77715,
+   "img": "round-04/pairs/77715.png",
+   "register": "passage",
+   "light": "against",
+   "key": "full",
+   "weather": "spindrift+pouring",
+   "pair": "turn",
+   "temper": {
+    "reveal": 1.32,
+    "drama": 1.21,
+    "smear": 0.58,
+    "bristle": 1.08,
+    "streak": 1.06,
+    "grain": 1.03
+   },
+   "metrics": {
+    "p02": 53,
+    "p50": 92,
+    "p98": 199,
+    "black": 0.178,
+    "flags": []
+   },
+   "claude": 3,
+   "why": "Two dark bulks in haze; heavy and plain."
+  },
+  {
+   "id": "invented-79798",
+   "place": "invented",
+   "seed": 79798,
+   "img": "round-04/pairs/79798.png",
+   "register": "clearing",
+   "light": "against",
+   "key": "full",
+   "weather": "pouring+curtains",
+   "pair": "turn",
+   "temper": {
+    "reveal": 1.23,
+    "drama": 1.08,
+    "smear": 0.53,
+    "bristle": 0.87,
+    "streak": 1.39,
+    "grain": 1.05
+   },
+   "metrics": {
+    "p02": 50,
+    "p50": 159,
+    "p98": 209,
+    "black": 0.113,
+    "flags": []
+   },
+   "claude": 4,
+   "why": "Far spires in veil with one grey peak rising across the cut."
+  },
+  {
+   "id": "k2-81881",
+   "place": "k2",
+   "seed": 81881,
+   "img": "round-04/pairs/81881.png",
+   "register": "looming",
+   "light": "side",
+   "key": "full",
+   "weather": "pouring",
+   "pair": "turn",
+   "temper": {
+    "reveal": 1.28,
+    "drama": 1.06,
+    "smear": 0.58,
+    "bristle": 0.72,
+    "streak": 1.3,
+    "grain": 1.15
+   },
+   "metrics": {
+    "p02": 55,
+    "p50": 106,
+    "p98": 219,
+    "black": 0.099,
+    "flags": []
+   },
+   "claude": 2,
+   "why": "Patterned rock face and a plain peak."
+  },
+  {
+   "id": "alpamayo-83964",
+   "place": "alpamayo",
+   "seed": 83964,
+   "img": "round-04/pairs/83964.png",
+   "register": "exposure",
+   "light": "against",
+   "key": "full",
+   "weather": "spindrift+pouring",
+   "pair": "turn",
+   "temper": {
+    "reveal": 1.11,
+    "drama": 1.09,
+    "smear": 1,
+    "bristle": 0.72,
+    "streak": 1.15,
+    "grain": 1.15
+   },
+   "metrics": {
+    "p02": 41,
+    "p50": 106,
+    "p98": 216,
+    "black": 0.221,
+    "flags": []
+   },
+   "claude": 3,
+   "why": "Streaked textured slopes with one lit far peak; detailed."
+  },
+  {
+   "id": "meije-86047",
+   "place": "meije",
+   "seed": 86047,
+   "img": "round-04/pairs/86047.png",
+   "register": "passage",
+   "light": "side",
+   "key": "full",
+   "weather": "spindrift+pouring",
+   "pair": "panorama",
+   "temper": {
+    "reveal": 1.27,
+    "drama": 1.31,
+    "smear": 0.68,
+    "bristle": 1.14,
+    "streak": 1.56,
+    "grain": 1
+   },
+   "metrics": {
+    "p02": 48,
+    "p50": 100,
+    "p98": 205,
+    "black": 0.161,
+    "flags": [
+     "WEDGE"
+    ]
+   },
+   "claude": 4,
+   "why": "Pale veiled valley against one great dark diagonal."
+  },
+  {
+   "id": "invented-88130",
+   "place": "invented",
+   "seed": 88130,
+   "img": "round-04/pairs/88130.png",
+   "register": "clearing",
+   "light": "side",
+   "key": "full",
+   "weather": "spindrift",
+   "pair": "later",
+   "temper": {
+    "reveal": 1.25,
+    "drama": 1.13,
+    "smear": 0.23,
+    "bristle": 1.64,
+    "streak": 0.56,
+    "grain": 0.91
+   },
+   "metrics": {
+    "p02": 80,
+    "p50": 188,
+    "p98": 215,
+    "black": 0.013,
+    "flags": []
+   },
+   "claude": 4,
+   "why": "A needle in cloud behind a lit snow edge; pale and airy."
+  },
+  {
+   "id": "brenta-90213",
+   "place": "brenta",
+   "seed": 90213,
+   "img": "round-04/pairs/90213.png",
+   "register": "clearing",
+   "light": "against",
+   "key": "full",
+   "weather": "pouring",
+   "pair": "turn",
+   "temper": {
+    "reveal": 0.89,
+    "drama": 0.96,
+    "smear": 0.83,
+    "bristle": 1.27,
+    "streak": 1.18,
+    "grain": 0.88
+   },
+   "metrics": {
+    "p02": 90,
+    "p50": 147,
+    "p98": 208,
+    "black": 0.011,
+    "flags": [
+     "TIMID"
+    ]
+   },
+   "claude": 3,
+   "why": "Veiled massifs; the tear shows a speckled patch."
+  },
+  {
+   "id": "drakensberg-92296",
+   "place": "drakensberg",
+   "seed": 92296,
+   "img": "round-04/pairs/92296.png",
+   "register": "clearing",
+   "light": "overcast",
+   "key": "high",
+   "weather": "spindrift+pouring",
+   "pair": "panorama",
+   "temper": {
+    "reveal": 0.92,
+    "drama": 1.13,
+    "smear": 0.76,
+    "bristle": 1.01,
+    "streak": 1.54,
+    "grain": 1.16
+   },
+   "metrics": {
+    "p02": 110,
+    "p50": 163,
+    "p98": 210,
+    "black": 0,
+    "flags": [
+     "TIMID"
+    ]
+   },
+   "claude": 4,
+   "why": "A veiled face dissolving into a nearly empty sheet."
+  },
+  {
+   "id": "alpamayo-94379",
+   "place": "alpamayo",
+   "seed": 94379,
+   "img": "round-04/pairs/94379.png",
+   "register": "looming",
+   "light": "overcast",
+   "key": "full",
+   "weather": "pouring",
+   "pair": "turn",
+   "temper": {
+    "reveal": 0.88,
+    "drama": 1.09,
+    "smear": 0.45,
+    "bristle": 1.39,
+    "streak": 1.72,
+    "grain": 1
+   },
+   "metrics": {
+    "p02": 54,
+    "p50": 150,
+    "p98": 217,
+    "black": 0.078,
+    "flags": []
+   },
+   "claude": 3,
+   "why": "Lit snowy wall and a far valley; described, decent depth."
+  },
+  {
+   "id": "invented-96462",
+   "place": "invented",
+   "seed": 96462,
+   "img": "round-04/pairs/96462.png",
+   "register": "looming",
+   "light": "side",
+   "key": "low",
+   "weather": "spindrift",
+   "pair": "back",
+   "temper": {
+    "reveal": 0.92,
+    "drama": 1.28,
+    "smear": 0.67,
+    "bristle": 1.27,
+    "streak": 1.27,
+    "grain": 1.03
+   },
+   "metrics": {
+    "p02": 43,
+    "p50": 92,
+    "p98": 209,
+    "black": 0.268,
+    "flags": []
+   },
+   "claude": 2,
+   "why": "Textured ridge beside a dark blurred sheet with no edge."
+  },
+  {
+   "id": "arthurs-98545",
+   "place": "arthurs",
+   "seed": 98545,
+   "img": "round-04/pairs/98545.png",
+   "register": "passage",
+   "light": "front",
+   "key": "full",
+   "weather": "spindrift+pouring",
+   "pair": "panorama",
+   "temper": {
+    "reveal": 1.24,
+    "drama": 1.21,
+    "smear": 0.74,
+    "bristle": 1.26,
+    "streak": 1.2,
+    "grain": 1.05
+   },
+   "metrics": {
+    "p02": 99,
+    "p50": 201,
+    "p98": 222,
+    "black": 0.003,
+    "flags": [
+     "TIMID"
+    ]
+   },
+   "claude": 3,
+   "why": "White snow with blurred dark strokes; light and gestural, a little smeared."
+  },
+  {
+   "id": "napali-100628",
+   "place": "napali",
+   "seed": 100628,
+   "img": "round-04/pairs/100628.png",
+   "register": "clearing",
+   "light": "against",
+   "key": "low",
+   "weather": "pouring",
+   "pair": "turn",
+   "temper": {
+    "reveal": 1.16,
+    "drama": 0.97,
+    "smear": 0.33,
+    "bristle": 1.44,
+    "streak": 1.81,
+    "grain": 0.98
+   },
+   "metrics": {
+    "p02": 59,
+    "p50": 120,
+    "p98": 204,
+    "black": 0.07,
+    "flags": []
+   },
+   "claude": 4,
+   "why": "Dark cloud over a stony plain, and a dark shoulder against veiled peaks."
+  },
+  {
+   "id": "meije-102711",
+   "place": "meije",
+   "seed": 102711,
+   "img": "round-04/pairs/102711.png",
+   "register": "passage",
+   "light": "front",
+   "key": "high",
+   "weather": "pouring",
+   "pair": "panorama",
+   "temper": {
+    "reveal": 0.95,
+    "drama": 1.03,
+    "smear": 0.56,
+    "bristle": 1.35,
+    "streak": 1.27,
+    "grain": 1.03
+   },
+   "metrics": {
+    "p02": 45,
+    "p50": 89,
+    "p98": 205,
+    "black": 0.327,
+    "flags": [
+     "WEDGE"
+    ]
+   },
+   "claude": 4,
+   "why": "Veiled hills, and one huge dark diagonal filling the right sheet."
+  },
+  {
+   "id": "meije-104794",
+   "place": "meije",
+   "seed": 104794,
+   "img": "round-04/pairs/104794.png",
+   "register": "passage",
+   "light": "against",
+   "key": "full",
+   "weather": "pouring",
+   "pair": "turn",
+   "temper": {
+    "reveal": 1.12,
+    "drama": 1.06,
+    "smear": 0.5,
+    "bristle": 0.82,
+    "streak": 0.96,
+    "grain": 0.89
+   },
+   "metrics": {
+    "p02": 60,
+    "p50": 117,
+    "p98": 208,
+    "black": 0.081,
+    "flags": []
+   },
+   "claude": 3,
+   "why": "Valley and a dark dome with a cloud knot; fine."
+  },
+  {
+   "id": "ushba-106877",
+   "place": "ushba",
+   "seed": 106877,
+   "img": "round-04/pairs/106877.png",
+   "register": "looming",
+   "light": "side",
+   "key": "full",
+   "weather": "pouring",
+   "pair": "panorama",
+   "temper": {
+    "reveal": 0.92,
+    "drama": 1.26,
+    "smear": 0.32,
+    "bristle": 0.71,
+    "streak": 1.01,
+    "grain": 1.07
+   },
+   "metrics": {
+    "p02": 36,
+    "p50": 95,
+    "p98": 212,
+    "black": 0.304,
+    "flags": [
+     "WEDGE"
+    ]
+   },
+   "claude": 3,
+   "why": "A dark gorge and a lit edge; heavy."
+  },
+  {
+   "id": "alpamayo-108960",
+   "place": "alpamayo",
+   "seed": 108960,
+   "img": "round-04/pairs/108960.png",
+   "register": "exposure",
+   "light": "against",
+   "key": "full",
+   "weather": "spindrift+pouring",
+   "pair": "turn",
+   "temper": {
+    "reveal": 1.02,
+    "drama": 1.24,
+    "smear": 0.6,
+    "bristle": 1.34,
+    "streak": 0.55,
+    "grain": 0.92
+   },
+   "metrics": {
+    "p02": 32,
+    "p50": 128,
+    "p98": 212,
+    "black": 0.303,
+    "flags": []
+   },
+   "claude": 3,
+   "why": "Snowy range across both sheets over a dark foreground; described."
+  },
+  {
+   "id": "eiger-111043",
+   "place": "eiger",
+   "seed": 111043,
+   "img": "round-04/pairs/111043.png",
+   "register": "clearing",
+   "light": "against",
+   "key": "low",
+   "weather": "spindrift",
+   "pair": "turn",
+   "temper": {
+    "reveal": 1.35,
+    "drama": 1.06,
+    "smear": 0.42,
+    "bristle": 1.44,
+    "streak": 0.84,
+    "grain": 0.92
+   },
+   "metrics": {
+    "p02": 71,
+    "p50": 138,
+    "p98": 212,
+    "black": 0.016,
+    "flags": []
+   },
+   "claude": 3,
+   "why": "A handsome detailed range: terrain more than weather."
+  },
+  {
+   "id": "invented-113126",
+   "place": "invented",
+   "seed": 113126,
+   "img": "round-04/pairs/113126.png",
+   "register": "whiteout",
+   "light": "overcast",
+   "key": "high",
+   "weather": "pouring",
+   "pair": "later",
+   "temper": {
+    "reveal": 1.19,
+    "drama": 1.1,
+    "smear": 0.61,
+    "bristle": 1.14,
+    "streak": 1.12,
+    "grain": 0.99
+   },
+   "metrics": {
+    "p02": 87,
+    "p50": 198,
+    "p98": 216,
+    "black": 0.004,
+    "flags": []
+   },
+   "claude": 4,
+   "why": "Whiteout: two pale pillars in an empty field, the second darker and nearer."
+  },
+  {
+   "id": "astraka-115209",
+   "place": "astraka",
+   "seed": 115209,
+   "img": "round-04/pairs/115209.png",
+   "register": "looming",
+   "light": "side",
+   "key": "low",
+   "weather": "still",
+   "pair": "turn",
+   "temper": {
+    "reveal": 1.42,
+    "drama": 1.12,
+    "smear": 0.64,
+    "bristle": 1.88,
+    "streak": 1.31,
+    "grain": 0.98
+   },
+   "metrics": {
+    "p02": 36,
+    "p50": 196,
+    "p98": 219,
+    "black": 0.09,
+    "flags": []
+   },
+   "claude": 3,
+   "why": "Lit snow ridge against a described far range."
+  },
+  {
+   "id": "machapuchare-117292",
+   "place": "machapuchare",
+   "seed": 117292,
+   "img": "round-04/pairs/117292.png",
+   "register": "exposure",
+   "light": "against",
+   "key": "low",
+   "weather": "spindrift",
+   "pair": "turn",
+   "temper": {
+    "reveal": 1.11,
+    "drama": 1.23,
+    "smear": 0.54,
+    "bristle": 1.5,
+    "streak": 0.87,
+    "grain": 1.02
+   },
+   "metrics": {
+    "p02": 50,
+    "p50": 112,
+    "p98": 202,
+    "black": 0.145,
+    "flags": []
+   },
+   "claude": 3,
+   "why": "Snowy massif under a dark sky band beside a dark flank; strong but described."
+  },
+  {
+   "id": "invented-119375",
+   "place": "invented",
+   "seed": 119375,
+   "img": "round-04/pairs/119375.png",
+   "register": "exposure",
+   "light": "against",
+   "key": "full",
+   "weather": "pouring",
+   "pair": "turn",
+   "temper": {
+    "reveal": 1.25,
+    "drama": 1.29,
+    "smear": 0.25,
+    "bristle": 1.34,
+    "streak": 1.67,
+    "grain": 0.94
+   },
+   "metrics": {
+    "p02": 47,
+    "p50": 85,
+    "p98": 166,
+    "black": 0.275,
+    "flags": []
+   },
+   "claude": 3,
+   "why": "Near rounded slope with far spires behind; the near surface is glassy."
+  },
+  {
+   "id": "nevis-121458",
+   "place": "nevis",
+   "seed": 121458,
+   "img": "round-04/pairs/121458.png",
+   "register": "passage",
+   "light": "side",
+   "key": "low",
+   "weather": "pouring",
+   "pair": "panorama",
+   "temper": {
+    "reveal": 1.31,
+    "drama": 1.34,
+    "smear": 0.46,
+    "bristle": 1.43,
+    "streak": 0.71,
+    "grain": 1.01
+   },
+   "metrics": {
+    "p02": 35,
+    "p50": 113,
+    "p98": 211,
+    "black": 0.208,
+    "flags": [
+     "WEDGE"
+    ]
+   },
+   "claude": 4,
+   "why": "Dark band of sky, a dark ridge, light breaking through at the col."
+  },
+  {
+   "id": "tetons-123541",
+   "place": "tetons",
+   "seed": 123541,
+   "img": "round-04/pairs/123541.png",
+   "register": "whiteout",
+   "light": "overcast",
+   "key": "high",
+   "weather": "spindrift+pouring",
+   "pair": "panorama",
+   "temper": {
+    "reveal": 1.36,
+    "drama": 1.28,
+    "smear": 0.34,
+    "bristle": 1.45,
+    "streak": 1.3,
+    "grain": 1.01
+   },
+   "metrics": {
+    "p02": 44,
+    "p50": 74,
+    "p98": 110,
+    "black": 0.388,
+    "flags": []
+   },
+   "claude": 1,
+   "why": "Dark glassy blur in both sheets."
+  },
+  {
+   "id": "urriellu-125624",
+   "place": "urriellu",
+   "seed": 125624,
+   "img": "round-04/pairs/125624.png",
+   "register": "passage",
+   "light": "side",
+   "key": "full",
+   "weather": "pouring",
+   "pair": "later",
+   "temper": {
+    "reveal": 1.16,
+    "drama": 1.15,
+    "smear": 0.7,
+    "bristle": 1.68,
+    "streak": 1.45,
+    "grain": 0.95
+   },
+   "metrics": {
+    "p02": 32,
+    "p50": 112,
+    "p98": 215,
+    "black": 0.242,
+    "flags": []
+   },
+   "claude": 3,
+   "why": "Patterned rock face, twice."
+  },
+  {
+   "id": "denali-127707",
+   "place": "denali",
+   "seed": 127707,
+   "img": "round-04/pairs/127707.png",
+   "register": "exposure",
+   "light": "against",
+   "key": "low",
+   "weather": "spindrift",
+   "pair": "later",
+   "temper": {
+    "reveal": 1.39,
+    "drama": 1.25,
+    "smear": 1.01,
+    "bristle": 1.41,
+    "streak": 0.83,
+    "grain": 1.18
+   },
+   "metrics": {
+    "p02": 32,
+    "p50": 148,
+    "p98": 210,
+    "black": 0.26,
+    "flags": []
+   },
+   "claude": 5,
+   "why": "A black diagonal, a cloud-filled valley with far spires, and a dark flank answering it."
+  },
+  {
+   "id": "invented-129790",
+   "place": "invented",
+   "seed": 129790,
+   "img": "round-04/pairs/129790.png",
+   "register": "passage",
+   "light": "side",
+   "key": "low",
+   "weather": "spindrift+pouring",
+   "pair": "turn",
+   "temper": {
+    "reveal": 1.06,
+    "drama": 1.09,
+    "smear": 0.88,
+    "bristle": 1.18,
+    "streak": 1.61,
+    "grain": 1.07
+   },
+   "metrics": {
+    "p02": 70,
+    "p50": 146,
+    "p98": 213,
+    "black": 0.018,
+    "flags": []
+   },
+   "claude": 3,
+   "why": "Rolling dark ground to far peaks, and a blurred snowy shoulder."
+  },
+  {
+   "id": "fitzroy-131873",
+   "place": "fitzroy",
+   "seed": 131873,
+   "img": "round-04/pairs/131873.png",
+   "register": "clearing",
+   "light": "side",
+   "key": "full",
+   "weather": "pouring",
+   "pair": "later",
+   "temper": {
+    "reveal": 1.05,
+    "drama": 1.18,
+    "smear": 0.64,
+    "bristle": 0.95,
+    "streak": 0.85,
+    "grain": 0.98
+   },
+   "metrics": {
+    "p02": 31,
+    "p50": 168,
+    "p98": 214,
+    "black": 0.186,
+    "flags": []
+   },
+   "claude": 4,
+   "why": "A black blade across the left sheet; cloud sea and a far tower on the right."
+  },
+  {
+   "id": "meije-133956",
+   "place": "meije",
+   "seed": 133956,
+   "img": "round-04/pairs/133956.png",
+   "register": "exposure",
+   "light": "side",
+   "key": "full",
+   "weather": "spindrift",
+   "pair": "turn",
+   "temper": {
+    "reveal": 1.19,
+    "drama": 1.37,
+    "smear": 0.69,
+    "bristle": 0.66,
+    "streak": 1.19,
+    "grain": 0.99
+   },
+   "metrics": {
+    "p02": 28,
+    "p50": 139,
+    "p98": 206,
+    "black": 0.263,
+    "flags": []
+   },
+   "claude": 4,
+   "why": "One dark peak centred across the cut, a lit summit far behind."
+  },
+  {
+   "id": "watzmann-136039",
+   "place": "watzmann",
+   "seed": 136039,
+   "img": "round-04/pairs/136039.png",
+   "register": "passage",
+   "light": "side",
+   "key": "full",
+   "weather": "spindrift+pouring",
+   "pair": "turn",
+   "temper": {
+    "reveal": 0.98,
+    "drama": 1.22,
+    "smear": 0.3,
+    "bristle": 0.91,
+    "streak": 1.25,
+    "grain": 1.05
+   },
+   "metrics": {
+    "p02": 82,
+    "p50": 180,
+    "p98": 214,
+    "black": 0.006,
+    "flags": [
+     "WEDGE"
+    ]
+   },
+   "claude": 3,
+   "why": "A striped snow face; the stripes read as pattern."
+  },
+  {
+   "id": "stetind-138122",
+   "place": "stetind",
+   "seed": 138122,
+   "img": "round-04/pairs/138122.png",
+   "register": "exposure",
+   "light": "against",
+   "key": "full",
+   "weather": "spindrift+curtains",
+   "pair": "later",
+   "temper": {
+    "reveal": 1.06,
+    "drama": 1.13,
+    "smear": 0.55,
+    "bristle": 1.04,
+    "streak": 1.12,
+    "grain": 1.04
+   },
+   "metrics": {
+    "p02": 60,
+    "p50": 142,
+    "p98": 217,
+    "black": 0.059,
+    "flags": []
+   },
+   "claude": 3,
+   "why": "Wide described valley with small lakes, twice."
+  },
+  {
+   "id": "castillo-140205",
+   "place": "castillo",
+   "seed": 140205,
+   "img": "round-04/pairs/140205.png",
+   "register": "clearing",
+   "light": "side",
+   "key": "low",
+   "weather": "spindrift+pouring",
+   "pair": "later",
+   "temper": {
+    "reveal": 1.35,
+    "drama": 0.95,
+    "smear": 0.82,
+    "bristle": 0.9,
+    "streak": 1.68,
+    "grain": 1
+   },
+   "metrics": {
+    "p02": 105,
+    "p50": 177,
+    "p98": 213,
+    "black": 0,
+    "flags": [
+     "TIMID"
+    ]
+   },
+   "claude": 2,
+   "why": "Pale mottled texture dissolving; no place."
+  },
+  {
+   "id": "invented-142288",
+   "place": "invented",
+   "seed": 142288,
+   "img": "round-04/pairs/142288.png",
+   "register": "passage",
+   "light": "against",
+   "key": "low",
+   "weather": "spindrift+pouring",
+   "pair": "panorama",
+   "temper": {
+    "reveal": 1.09,
+    "drama": 0.93,
+    "smear": 0.46,
+    "bristle": 1.26,
+    "streak": 1.3,
+    "grain": 0.96
+   },
+   "metrics": {
+    "p02": 43,
+    "p50": 123,
+    "p98": 213,
+    "black": 0.177,
+    "flags": [
+     "WEDGE"
+    ]
+   },
+   "claude": 4,
+   "why": "Dark ridges rising out of pale mist."
+  },
+  {
+   "id": "jorasses-144371",
+   "place": "jorasses",
+   "seed": 144371,
+   "img": "round-04/pairs/144371.png",
+   "register": "passage",
+   "light": "against",
+   "key": "full",
+   "weather": "pouring",
+   "pair": "turn",
+   "temper": {
+    "reveal": 1.19,
+    "drama": 1.14,
+    "smear": 0.54,
+    "bristle": 1.45,
+    "streak": 1.05,
+    "grain": 1
+   },
+   "metrics": {
+    "p02": 46,
+    "p50": 115,
+    "p98": 211,
+    "black": 0.289,
+    "flags": []
+   },
+   "claude": 5,
+   "why": "One dark wall falling across the left sheet; a veiled dark range answering on the right. Calm, two gestures, nothing else."
+  },
+  {
+   "id": "taygetos-146454",
+   "place": "taygetos",
+   "seed": 146454,
+   "img": "round-04/pairs/146454.png",
+   "register": "passage",
+   "light": "against",
+   "key": "low",
+   "weather": "pouring",
+   "pair": "turn",
+   "temper": {
+    "reveal": 0.82,
+    "drama": 1.03,
+    "smear": 0.8,
+    "bristle": 0.87,
+    "streak": 1.55,
+    "grain": 1.1
+   },
+   "metrics": {
+    "p02": 49,
+    "p50": 122,
+    "p98": 209,
+    "black": 0.129,
+    "flags": []
+   },
+   "claude": 4,
+   "why": "A dark slope into mist, layered veiled ridges beyond."
+  },
+  {
+   "id": "trango-148537",
+   "place": "trango",
+   "seed": 148537,
+   "img": "round-04/pairs/148537.png",
+   "register": "clearing",
+   "light": "side",
+   "key": "low",
+   "weather": "still",
+   "pair": "later",
+   "temper": {
+    "reveal": 0.92,
+    "drama": 1.18,
+    "smear": 0.52,
+    "bristle": 0.73,
+    "streak": 0.48,
+    "grain": 0.92
+   },
+   "metrics": {
+    "p02": 55,
+    "p50": 144,
+    "p98": 203,
+    "black": 0.085,
+    "flags": []
+   },
+   "claude": 3,
+   "why": "Soft flowing ribs beside textured rock; painterly."
+  },
+  {
+   "id": "olympus-150620",
+   "place": "olympus",
+   "seed": 150620,
+   "img": "round-04/pairs/150620.png",
+   "register": "whiteout",
+   "light": "overcast",
+   "key": "high",
+   "weather": "spindrift",
+   "pair": "later",
+   "temper": {
+    "reveal": 1.03,
+    "drama": 1.34,
+    "smear": 0.88,
+    "bristle": 1.67,
+    "streak": 1.43,
+    "grain": 1.02
+   },
+   "metrics": {
+    "p02": 128,
+    "p50": 198,
+    "p98": 218,
+    "black": 0.003,
+    "flags": []
+   },
+   "claude": 4,
+   "why": "Whiteout: an empty sheet, and a pale dome with one small dark stone at its edge."
+  },
+  {
+   "id": "invented-152703",
+   "place": "invented",
+   "seed": 152703,
+   "img": "round-04/pairs/152703.png",
+   "register": "exposure",
+   "light": "front",
+   "key": "full",
+   "weather": "spindrift+pouring",
+   "pair": "turn",
+   "temper": {
+    "reveal": 1.19,
+    "drama": 1.09,
+    "smear": 0.6,
+    "bristle": 1.41,
+    "streak": 1.06,
+    "grain": 0.97
+   },
+   "metrics": {
+    "p02": 47,
+    "p50": 92,
+    "p98": 211,
+    "black": 0.24,
+    "flags": []
+   },
+   "claude": 3,
+   "why": "A textured mesa and a described range."
+  },
+  {
+   "id": "trango-154786",
+   "place": "trango",
+   "seed": 154786,
+   "img": "round-04/pairs/154786.png",
+   "register": "clearing",
+   "light": "against",
+   "key": "full",
+   "weather": "spindrift",
+   "pair": "turn",
+   "temper": {
+    "reveal": 0.86,
+    "drama": 1.04,
+    "smear": 0.6,
+    "bristle": 1.4,
+    "streak": 1.23,
+    "grain": 0.88
+   },
+   "metrics": {
+    "p02": 109,
+    "p50": 156,
+    "p98": 208,
+    "black": 0,
+    "flags": [
+     "TIMID"
+    ]
+   },
+   "claude": 3,
+   "why": "Pale veils with a faint wall; very soft, no anchor."
+  },
+  {
+   "id": "darrans-156869",
+   "place": "darrans",
+   "seed": 156869,
+   "img": "round-04/pairs/156869.png",
+   "register": "clearing",
+   "light": "front",
+   "key": "full",
+   "weather": "spindrift+pouring",
+   "pair": "turn",
+   "temper": {
+    "reveal": 0.91,
+    "drama": 1.2,
+    "smear": 0.75,
+    "bristle": 1.54,
+    "streak": 1.29,
+    "grain": 0.99
+   },
+   "metrics": {
+    "p02": 54,
+    "p50": 150,
+    "p98": 210,
+    "black": 0.096,
+    "flags": []
+   },
+   "claude": 4,
+   "why": "A veiled peak, and cloud with one lit edge."
+  },
+  {
+   "id": "napali-158952",
+   "place": "napali",
+   "seed": 158952,
+   "img": "round-04/pairs/158952.png",
+   "register": "looming",
+   "light": "against",
+   "key": "full",
+   "weather": "still",
+   "pair": "turn",
+   "temper": {
+    "reveal": 1.16,
+    "drama": 1.16,
+    "smear": 0.97,
+    "bristle": 1.51,
+    "streak": 0.97,
+    "grain": 1.03
+   },
+   "metrics": {
+    "p02": 52,
+    "p50": 110,
+    "p98": 193,
+    "black": 0.164,
+    "flags": []
+   },
+   "claude": 3,
+   "why": "A dark ridge above cloud beside a patterned slope."
+  }
+ ]
+}
