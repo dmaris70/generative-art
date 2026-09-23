@@ -209,6 +209,153 @@ Captions carry the system's principle, the research note, and the last-known sou
 link. Exports stroke-only SVG in two colour groups — these plot as **white/metallic gel
 pen on black stock** (guide §8).
 
+## Isometric Strata — the drawing sheets
+
+[`projects/011-isometric-strata/`](projects/011-isometric-strata/) turns every seed into a
+complete architectural working drawing: a title block, a north arrow, the palette's own
+swatches, a framed hand-drawn axonometric of a building on its site with the floor levels
+scaled up the margin, and a footer carrying a legend, a scale bar and the sheet's
+specification. Nothing on the sheet is decorative text — the legend's counts are tallied
+from the geometry actually drawn (`MURO(43)` means forty-three walls were placed), and the
+specification lists the choices the seed made.
+
+The building is one of twelve **styles**, each a vocabulary of parts recombined by the seed:
+
+| style | parts |
+|---|---|
+| **Mexican modern** — the patio mat | walls on a cell grid as tall coloured planes, some running past the plan as freestanding screens · patios · pools · openings (vano) and light slits (luz) · slabs with a roof mesh · a tower · stairs · stone plinths · a lattice screen · solid masses |
+| **Deconstructivist** — the crystalline tower | a sheared prism hatched along its shear · a column bundle · a spine of tilted planes and screens · ramps · cantilevers · braced frames · leaning shards · dashed floor plates |
+| **Geodesic** — the expo mast | stepped mast clusters · geodesic hemispheres strut by strut with hubs in the accent ink · rings and bracing · hexagonal decks with shelters · footings · ground patterns · dimension notes at TECHNICAL detail |
+| **Brutalist** — the mosaic block | slabs following an L, T or stepped outline · parapets, reveals, brise-soleil · braced cores · walkways · a field of pilotis · a mosaic of hundreds of unit cubes stacked to a noise field |
+| **De Stijl** — the sliding planes | at every corner one plane runs on and the other stops short, leaving a void or a pane of glass · slabs overrun the volume · free posts rising past the roof · balconies, rails and black joints carrying the primaries · counter-construction planes floating off the volume. Van Doesburg's tenets (elementary, anti-cubic, asymmetric, colour as element, overrun) are checked over the drawn scene as `TENETS n/5` |
+| **Metabolism** — the capsule tower | a permanent service shaft with pipes running its height · capsules plugged onto its faces in a staggered spiral, each with a porthole, four bolts and a service branch · vacant slots left as room to grow · cantilevered decks · trussed bridges between two shafts · a helical stair. Tenets: permanent spine, discrete capsules, growth reserve, staggered, serviced, checked over the drawn scene as `TENETS n/5` |
+| **Palladian** — the villa on its axis | a raised, mirror-symmetric block with hipped roofs · a temple front on the axis (giant-order columns, entablature, pediment) with a broad flight of steps · windows in an ABA rhythm with little pediments · lower wings joined by colonnaded arms and hollowed with niches · a drum and dome over the hall · parterres and an avenue mirrored about the axis. Tenets: symmetry (every drawn face whose mirror would be visible has it), portico on axis, ABA rhythm, hierarchy, harmonic ratio, checked as `TENETS n/5` |
+| **Archigram** — the plug-in rig | an exoskeleton of latticed masts and trusses on the envelope with cable ties across its faces · every service outside it: ducts in pop colours, escalator tubes up the flanks, tanks on brackets · inside only open decks and the pods plugged onto them, stacked pod on pod · tower cranes on the corner masts lifting one more pod in. Tenets: exo-structure, exo-services, pods only within, plugged in, in transit, checked as `TENETS n/5` |
+| **Miesian** — the glass box on its plinth | a travertine plinth with paving joints, a flight of steps and a reflecting pool · a regular grid of steel columns standing one module outside the glass · a glazed skin ruled by mullions on the module, spandrels and slabs on the taller boxes · a thin roof plane overhanging all round · one free-standing core and a few free-standing stone planes. Tenets: less is more (a part budget), on the module (every set-out coordinate a multiple), structure expressed, raised on a plinth, free plan, checked as `TENETS n/5` |
+| **Cycladic** — the white village | terraces stepping up the slope behind stone retaining walls · a contiguous cluster of whitewashed cubes, one or two storeys, every flat roof a terrace behind a parapet with pergolas and chimneys · external stairs up the flanks · walled courts with a tree · a chapel with a blue dome and a bell wall of arched openings · barrel vaults · arches over the lanes · a windmill on the ridge · blue only on doors, shutters and the dome. Tenets: low-rise, contiguous, roof as terrace, stepped, blue on openings, checked as `TENETS n/5` |
+| **Rossian** — the analogous city | a court enclosed by a long colonnade bar on plain square piers · inside it only archetypes: a red cube, a cylinder on a cube crowned with a cone, a gabled bar, a free cone · square, identical windows in silent rows centred on every face · every solid casting a hatched shadow from one sun · a row of trees along the open side. Tenets: archetypes, square windows, silent façades (a small window share of every wall), asymmetric whole, one sun, checked as `TENETS n/5` |
+| **Five Points** — the purist villa | pilotis and air at ground level · a free plan of partitions off the grid · a free façade set outside the columns · ribbon windows · a roof garden with planters and a solarium wall · a ramp and a spiral-stair core. Each of Le Corbusier's five tenets is also a predicate run over the drawn scene, reported as `TENETS n/5` |
+
+standing on one of six **sites** (city, city edge, plaza district, hillside, park,
+waterfront) built from kerbs and dashed roads, paving grids, plaza panels, street trees,
+neighbouring blocks with window rows, an escarpment, a quay and water.
+
+Every sheet comes in two **views**. The axonometric is the default; about a third of
+seeds (or `view` = 2 in the panel) draw the same scene as a **plan and section** sheet:
+the plan is the scene cut a little above the building's own ground floor and seen from
+above, with the cut edges drawn heavy and a section line A-A marked across it; the
+section is the scene cut at the plot's centre line and seen from the front, with the far
+half drawn as elevation over a heavy ground line and hatched earth. Both views share one
+scale, the legend and tenets are unchanged (the scene is the same data), and the floor
+scale up the margin keys to the section's ground line.
+
+Every sheet is also a **token record**. A schedule column on the right of the drawing
+carries the series, token number (the seed), DWG id, generator version and hash; the
+seventeen **traits** (style, substyle, type, view, site, paper, grid, ink, palette,
+detail, density, shape, floors, buildings, scale, tenets, parts) each with its measured
+frequency and tier; the information **score** in bits, the token's **rank** in the sampled
+population and its overall tier; the variables used (floor height, building height, plot,
+plan cut, palette with hex codes); the tenets with PASS / FAIL; and the legend counts.
+Rarity is measured, not declared: `tools/strata-rarity.mjs` builds thousands of seeds
+through the engine in Node (the build is p5-free), tallies every trait value, and writes
+`lib/rarity.js`; re-run it and bump `Strata.VERSION` after any generator change. **M**
+(or the panel button) copies the token's ERC-721 metadata JSON — name, description,
+attributes with rarity and tier, and properties with the seed, hash, variables, legend
+and tenets. The column can be switched off with the `schedule` parameter.
+
+The **edition** is curated, not drawn: `tools/strata-select.mjs` builds a large seed pool
+(60,000 seeds by default) and selects under explicit rules — tenets must pass in full,
+no two tokens share a look (style + substyle + view + palette), equal style quotas, and
+within a style substyles, views (about two thirds axonometric) and palettes filled
+round-robin, with the least-used site and paper winning inside a look and the rarity score
+only breaking ties. Two more layers make the curation objective rather than a matter of taste: **quality
+gates** computed from the generative state and banded per style over the pool (part count
+and ink load within the 10th–90th percentile, projected proportion between 0.45 and 2.2, a
+site neither barren nor dominant, at most one empty legend entry, enough geometry through a
+section cut), and a **rendered audit** (`tools/strata-audit.mjs`) that renders every
+selected token at full sheet width, measures ink coverage against the sheet's own paper,
+colour presence and the ink centroid's offset, and flags outliers against the style's
+median per view and the same palette's median. Flagged seeds go to `edition/exclusions.json`
+with their measurements; the selector replaces each by the next candidate of its look, and
+audit and select alternate until nothing is flagged. The record is `edition/edition-256.json` (pool, rules, rejections,
+distribution, every token's seed, traits, score, tier, hash) and `edition/edition-256.js`
+is what the sheet and the board load: a selected seed's schedule shows its
+**EDITION n / 256**, its metadata is named by edition number, and the board's `set=edition`
+pages through the edition twelve at a time (`page=`). Measured on 30,000 seeds, the
+generator holds about 360 distinct looks, so 256 is the size at which every token is unique
+at look level; above about 1,000 the series would eat itself.
+
+The generator is **frozen at v1.0**: `tools/strata-freeze.mjs freeze` fingerprints every
+file that can change a drawing (the engine, styles, token layer, stroke font, harness, the
+vendored p5 and lil-gui, the sketch and page) and records the fingerprint, the git commit and
+the hashes of the rarity table and the edition in `edition/freeze-1.0.json`; the pages load
+`lib/freeze.js` so every schedule prints the fingerprint the sheet was drawn under, and
+`verify` fails if anything has moved. The freeze was checked three ways: the rarity sampler
+and the selector reproduce the committed table and edition byte for byte, and three edition
+seeds rendered three times each gave identical PNG hashes. Nothing in the drawing path may
+change without a new version, a new rarity table and a new selection.
+
+**Launch decisions** are recorded in `edition/decisions.json` (platform: own ERC-721 via
+Manifold; chain: Ethereum mainnet; licence: CC BY-NC 4.0 images, source-available code;
+title: Isometric Strata; artist: 668 349, the isopsephy of the artist's name) and the **reserves** in
+`edition/reserves-256.json`, picked by rule with `tools/strata-reserve.mjs`: two per
+style, the highest-scoring token as artist proof and the lowest-numbered plan-and-section
+as institutional reserve, 24 held and 232 offered. The export tool merges artist, licence,
+platform and reserve status into every token's metadata.
+
+**Assets** come from `tools/strata-export.mjs`: it verifies the freeze, renders each
+requested token headlessly at 3000 × 4000 from the vendored libraries, writes the PNG and
+the token's ERC-721 metadata JSON (image file name and hash included), checks that the page
+reports the expected edition number and the frozen fingerprint, and records both files'
+SHA-256 in `export/manifest.json` (`1`, `1-12` or `all`; the export folder is not committed).
+Each token also gets its **companion drawing**, the same seed drawn through the other view
+(plan and section for an axonometric token and vice versa) by the same frozen generator —
+non-canonical, listed under the metadata's `properties.companion` and in the manifest with
+its own hash. Re-runs skip tokens whose files already match the manifest, so a long export
+can be resumed. The full edition renders in about 43 minutes of drawing time (10 s a token,
+two drawings each) to 768 files and 6.5 GB, every hash re-verified after the run.
+
+To regenerate the edition on any machine (Node 22, a checkout of the repo):
+
+```
+npm i playwright@1.56.1 && npx playwright install chromium
+STRATA_EXPORT_DIR=/Volumes/SANDISK/isometric-strata node tools/strata-export.mjs all
+```
+
+The tool verifies the freeze first and refuses to run on a modified generator. The same
+Playwright version gives the same Chromium build, so the files come out byte-identical to
+the recorded manifest; a different Chromium may rasterise differently, in which case the
+run is still a valid edition of the frozen generator, but its hashes are its own.
+
+**Content storage** is Arweave (`edition/decisions.json` records why). Once the PNGs are
+uploaded, `tools/strata-publish.mjs uris.json` binds the metadata to them: it rewrites `image`
+and `properties.companion.image` to the `ar://` URIs, records the storage with the SHA-256 of
+the bytes at each URI under `properties.storage`, and writes the bound metadata and
+`manifest-published.json` to `export/published/`. It refuses to run if any file in the
+manifest has no URI or any local file no longer matches its recorded hash, so the binding
+cannot silently point at the wrong bytes. The bound metadata files are what get uploaded as
+the token URIs at mint.
+
+The **portfolio board** ([`projects/011-isometric-strata/portfolio.html`](projects/011-isometric-strata/portfolio.html),
+or the ⊞ Portfolio button in the sheet's panel) lays many sheets on one board under a
+shared title strip: one sheet per style at a fixed seed (`?set=styles`), one style across
+the six sites (`set=sites`), one style across the three papers in both views
+(`set=papers`), or one style across twelve seeds (`set=seeds`); `style=1..12` picks the
+style, `seed` the seed. Each tile is a full sheet built and painted by the engine into its
+own buffer, captioned with its style, site, paper, view, seed and tenets score. Sheets
+draw one per frame; **S** saves the board as a PNG.
+
+The pipeline is `seed → spec → scene → sort → hand`: the seed fixes a specification
+(style, site, paper, palette, detail, density, floors…); the style and site generators
+emit 3-D primitives into a scene; the scene is depth-sorted and drawn by a renderer that
+lays every stroke down like a pencil — wobble, overshoot, a second pass that doesn't quite
+register — with clipped fills that read as coloured pencil or ruled hatching on mottled
+graph paper. The engine lives in the project's `lib/` (core, plan, render, paper, sheet,
+site, one file per style, and `strata.js`, the facade whose `build(opts)` and
+`paint(g, state)` both the sheet and the portfolio board call); [`DESIGN.md`](projects/011-isometric-strata/DESIGN.md)
+records the analysis the design came from. Parameters force a style, floor count, detail,
+site density or building count; **R** reseeds.
+
 ## Contact sheet
 
 `variations.html` renders one piece across many seeds as a grid of live tiles — the

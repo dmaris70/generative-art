@@ -1,0 +1,74 @@
+{
+  "series": "ISOMETRIC STRATA",
+  "decidedAt": "2026-09-13",
+  "platform": {
+    "choice": "Own ERC-721 contract via Manifold",
+    "rationale": "The edition is curated (specific seeds); random-at-mint launchpads would discard the selection. Artist-owned contract, batch mint of predetermined tokens with pinned images, generator archived."
+  },
+  "chain": {
+    "choice": "Ethereum mainnet",
+    "rationale": "Strongest provenance and collector expectation for a 256-piece curated edition; gas accepted."
+  },
+  "reserves": {
+    "choice": "24 reserved, 2 per style, by rule",
+    "record": "edition/reserves-256.json",
+    "offered": 232,
+    "rationale": "12 artist proofs (highest score per style) and 12 institutional reserves (lowest-numbered plan-and-section per style); auditable like the selection."
+  },
+  "licence": {
+    "image": "CC BY-NC 4.0",
+    "code": "source-available, no derivative mints",
+    "rationale": "Holders and the public may share and display with attribution; commercial rights and the series identity stay with the artist; the repository stays public for verification."
+  },
+  "title": {
+    "choice": "Isometric Strata",
+    "rationale": "Already frozen into every sheet's schedule and DWG ids; no re-freeze needed."
+  },
+  "artist": {
+    "choice": "668 349",
+    "status": "decided",
+    "derivation": "Isopsephy (the Milesian letter-number system) of the artist's name: Δημήτρης = Δ4 η8 μ40 ή8 τ300 ρ100 η8 ς200 = 668; Μάρης = Μ40 ά1 ρ100 η8 ς200 = 349. Attic acrophonic: ΗΗΗΗΗΗΔΔΔΔΔΔΠΙΙΙ and ΗΗΗΔΔΔΔΠΙΙΙΙ.",
+    "note": "Appears in metadata and on the collection page only, never on the frozen sheets. DA-MA-TE (Demeter's Linear B form) was excluded for name collisions."
+  },
+  "open": [
+    "mint price and mechanics",
+    "launch date"
+  ],
+  "archive": {
+    "status": "verified",
+    "date": "2026-09-13",
+    "medium": "external drive, offline",
+    "form": "256 zips (one per token: canonical PNG, companion PNG, metadata JSON) + SHA256SUMS.zips + manifest.json + verify.sh",
+    "bytes": 6973394186,
+    "manifest_sha256": "2a725cfce5ff55ce7dfd1526b1a7915285276cd56b04505d40fb5e595cd505c5",
+    "verification": "verify.sh on the drive: 256 zip hashes OK, 769 entries extracted, all 768 files match manifest.json",
+    "regeneration": "byte-identical from the frozen generator with tools/strata-export.mjs and Playwright 1.56.1 (see README)"
+  },
+  "storage": {
+    "choice": "Arweave",
+    "decidedAt": "2026-09-13",
+    "scope": "canonical PNG and companion PNG of every token; metadata JSON bound to ar:// URIs by tools/strata-publish.mjs after upload",
+    "reasons": [
+      "permanence: one payment, data replicated by the network rather than kept alive by a pinning contract",
+      "fit with the platform decision: Manifold Studio stores media on Arweave by default",
+      "verifiability: each metadata file carries the SHA-256 of the bytes at its URI, so the on-sheet record, the manifest and the stored file can be checked against each other by anyone"
+    ],
+    "rejected": {
+      "IPFS": "content-addressed but only as durable as its pinning; the edition would depend on a pinning service staying paid and alive"
+    },
+    "procedure": [
+      "upload the 512 PNGs from the verified archive (any Arweave uploader; a bundler service is fine, the transaction ids are what matter)",
+      "convert the upload receipt to uris.json: { \"<file>\": \"ar://<txid>\" } for every file",
+      "node tools/strata-publish.mjs uris.json — refuses if any file is unmapped or any local file drifted from the manifest",
+      "spot-check: fetch a few URIs, hash the bytes, compare with the sha256 in the bound metadata",
+      "upload export/published/*.json (the bound metadata) and use those URIs as the token URIs at mint"
+    ]
+  },
+  "release": {
+    "tag": "v1.0",
+    "commit": "68afafbb00fad4b267e15537fc27eaf981916d2b",
+    "fingerprintedTree": "719dbbea267a6eca781ed8fe2f57b9e978a32751",
+    "url": "https://github.com/dmaris70/generative-art/releases/tag/v1.0",
+    "publishedAt": "2026-09-13T19:35:39Z"
+  }
+}

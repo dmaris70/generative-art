@@ -14,3 +14,6 @@ dist/
 
 # Local server / logs
 *.log
+
+# Isometric Strata rendered assets (produced by tools/strata-export.mjs; large)
+projects/011-isometric-strata/export/

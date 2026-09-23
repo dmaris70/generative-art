@@ -1,0 +1,204 @@
+{
+ "size": 256,
+ "reserved": 24,
+ "offered": 232,
+ "rules": [
+  "two per style",
+  "artist proof: highest score in style, lower seed on ties",
+  "institutional: lowest-numbered plan-and-section token in style not already the artist proof"
+ ],
+ "reserves": [
+  {
+   "edition": 2,
+   "seed": 3866,
+   "style": "MEXICAN MODERN",
+   "kind": "INSTITUTIONAL",
+   "rule": "lowest-numbered plan and section in style",
+   "bits": 47.5
+  },
+  {
+   "edition": 3,
+   "seed": 9846,
+   "style": "MEXICAN MODERN",
+   "kind": "ARTIST PROOF",
+   "rule": "highest score in style",
+   "bits": 49.03
+  },
+  {
+   "edition": 31,
+   "seed": 20477,
+   "style": "DECON",
+   "kind": "INSTITUTIONAL",
+   "rule": "lowest-numbered plan and section in style",
+   "bits": 46.77
+  },
+  {
+   "edition": 38,
+   "seed": 39096,
+   "style": "DECON",
+   "kind": "ARTIST PROOF",
+   "rule": "highest score in style",
+   "bits": 48.62
+  },
+  {
+   "edition": 46,
+   "seed": 11113,
+   "style": "GEODESIC",
+   "kind": "INSTITUTIONAL",
+   "rule": "lowest-numbered plan and section in style",
+   "bits": 45.02
+  },
+  {
+   "edition": 61,
+   "seed": 48950,
+   "style": "GEODESIC",
+   "kind": "ARTIST PROOF",
+   "rule": "highest score in style",
+   "bits": 49.17
+  },
+  {
+   "edition": 67,
+   "seed": 214,
+   "style": "BRUTALIST",
+   "kind": "INSTITUTIONAL",
+   "rule": "lowest-numbered plan and section in style",
+   "bits": 46.83
+  },
+  {
+   "edition": 80,
+   "seed": 40944,
+   "style": "BRUTALIST",
+   "kind": "ARTIST PROOF",
+   "rule": "highest score in style",
+   "bits": 48.67
+  },
+  {
+   "edition": 92,
+   "seed": 16917,
+   "style": "FIVE POINTS",
+   "kind": "INSTITUTIONAL",
+   "rule": "lowest-numbered plan and section in style",
+   "bits": 45.2
+  },
+  {
+   "edition": 105,
+   "seed": 45768,
+   "style": "FIVE POINTS",
+   "kind": "ARTIST PROOF",
+   "rule": "highest score in style",
+   "bits": 45.71
+  },
+  {
+   "edition": 111,
+   "seed": 3421,
+   "style": "DE STIJL",
+   "kind": "INSTITUTIONAL",
+   "rule": "lowest-numbered plan and section in style",
+   "bits": 43.23
+  },
+  {
+   "edition": 112,
+   "seed": 7711,
+   "style": "DE STIJL",
+   "kind": "ARTIST PROOF",
+   "rule": "highest score in style",
+   "bits": 45.59
+  },
+  {
+   "edition": 132,
+   "seed": 5153,
+   "style": "METABOLISM",
+   "kind": "INSTITUTIONAL",
+   "rule": "lowest-numbered plan and section in style",
+   "bits": 41.96
+  },
+  {
+   "edition": 135,
+   "seed": 10727,
+   "style": "METABOLISM",
+   "kind": "ARTIST PROOF",
+   "rule": "highest score in style",
+   "bits": 46.36
+  },
+  {
+   "edition": 154,
+   "seed": 5408,
+   "style": "PALLADIAN",
+   "kind": "INSTITUTIONAL",
+   "rule": "lowest-numbered plan and section in style",
+   "bits": 44.88
+  },
+  {
+   "edition": 167,
+   "seed": 39995,
+   "style": "PALLADIAN",
+   "kind": "ARTIST PROOF",
+   "rule": "highest score in style",
+   "bits": 46.67
+  },
+  {
+   "edition": 175,
+   "seed": 14030,
+   "style": "ARCHIGRAM",
+   "kind": "INSTITUTIONAL",
+   "rule": "lowest-numbered plan and section in style",
+   "bits": 41.97
+  },
+  {
+   "edition": 177,
+   "seed": 25938,
+   "style": "ARCHIGRAM",
+   "kind": "ARTIST PROOF",
+   "rule": "highest score in style",
+   "bits": 43.45
+  },
+  {
+   "edition": 194,
+   "seed": 7713,
+   "style": "MIESIAN",
+   "kind": "INSTITUTIONAL",
+   "rule": "lowest-numbered plan and section in style",
+   "bits": 46.12
+  },
+  {
+   "edition": 196,
+   "seed": 13670,
+   "style": "MIESIAN",
+   "kind": "ARTIST PROOF",
+   "rule": "highest score in style",
+   "bits": 47.85
+  },
+  {
+   "edition": 221,
+   "seed": 13610,
+   "style": "CYCLADIC",
+   "kind": "INSTITUTIONAL",
+   "rule": "lowest-numbered plan and section in style",
+   "bits": 42.41
+  },
+  {
+   "edition": 225,
+   "seed": 18604,
+   "style": "CYCLADIC",
+   "kind": "ARTIST PROOF",
+   "rule": "highest score in style",
+   "bits": 43.2
+  },
+  {
+   "edition": 236,
+   "seed": 2790,
+   "style": "ROSSIAN",
+   "kind": "INSTITUTIONAL",
+   "rule": "lowest-numbered plan and section in style",
+   "bits": 42.63
+  },
+  {
+   "edition": 242,
+   "seed": 25981,
+   "style": "ROSSIAN",
+   "kind": "ARTIST PROOF",
+   "rule": "highest score in style",
+   "bits": 43.27
+  }
+ ]
+}
