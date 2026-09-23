@@ -1,0 +1,154 @@
+{
+ "batch": 17,
+ "by": "Dimitris",
+ "saved": "2026-09-23T17:43:52.440Z",
+ "kept": [
+  {
+   "seed": 17925301,
+   "place": "castillo",
+   "register": "passage",
+   "rescued": false
+  },
+  {
+   "seed": 17950523,
+   "place": "invented",
+   "register": "clearing",
+   "rescued": false
+  },
+  {
+   "seed": 17963134,
+   "place": "invented",
+   "register": "clearing",
+   "rescued": false
+  },
+  {
+   "seed": 17975745,
+   "place": "aoraki",
+   "register": "clearing",
+   "rescued": false
+  },
+  {
+   "seed": 17988356,
+   "place": "darrans",
+   "register": "clearing",
+   "rescued": false
+  },
+  {
+   "seed": 18000967,
+   "place": "k2",
+   "register": "clearing",
+   "rescued": false
+  },
+  {
+   "seed": 18013578,
+   "place": "k2",
+   "register": "clearing",
+   "rescued": false
+  },
+  {
+   "seed": 18051411,
+   "place": "castillo",
+   "register": "clearing",
+   "rescued": false
+  },
+  {
+   "seed": 18064022,
+   "place": "kinabalu",
+   "register": "clearing",
+   "rescued": false
+  },
+  {
+   "seed": 18114466,
+   "place": "astraka",
+   "register": "clearing",
+   "rescued": false
+  },
+  {
+   "seed": 18139688,
+   "place": "napali",
+   "register": "passage",
+   "rescued": false
+  },
+  {
+   "seed": 18177521,
+   "place": "lyskamm",
+   "register": "clearing",
+   "rescued": false
+  },
+  {
+   "seed": 18278409,
+   "place": "huashan",
+   "register": "clearing",
+   "rescued": false
+  },
+  {
+   "seed": 18391908,
+   "place": "olympus",
+   "register": "clearing",
+   "rescued": false
+  },
+  {
+   "seed": 18669350,
+   "place": "invented",
+   "register": "clearing",
+   "rescued": false
+  },
+  {
+   "seed": 18782849,
+   "place": "civetta",
+   "register": "clearing",
+   "rescued": false
+  },
+  {
+   "seed": 18833293,
+   "place": "aoraki",
+   "register": "exposure",
+   "rescued": false
+  },
+  {
+   "seed": 18883737,
+   "place": "stetind",
+   "register": "clearing",
+   "rescued": false
+  },
+  {
+   "seed": 18908959,
+   "place": "perdido",
+   "register": "clearing",
+   "rescued": false
+  },
+  {
+   "seed": 18934181,
+   "place": "ushba",
+   "register": "exposure",
+   "rescued": false
+  },
+  {
+   "seed": 18997236,
+   "place": "invented",
+   "register": "passage",
+   "rescued": false
+  }
+ ],
+ "culled_by_claude": [
+  17912690,
+  17937912,
+  18101855,
+  18190132,
+  18227965,
+  18316242,
+  18341464,
+  18404519,
+  18442352,
+  18454963,
+  18555851,
+  18581073,
+  18707183,
+  18757627,
+  18770238,
+  18871126,
+  18984625,
+  19047680,
+  19060291
+ ]
+}

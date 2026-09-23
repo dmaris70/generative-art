@@ -1,0 +1,116 @@
+{
+ "batch": 6,
+ "by": "Dimitris",
+ "saved": "2026-09-23T16:20:37.560Z",
+ "kept": [
+  {
+   "seed": 4408036,
+   "place": "taygetos",
+   "register": "clearing",
+   "rescued": false
+  },
+  {
+   "seed": 4432063,
+   "place": "besseggen",
+   "register": "exposure",
+   "rescued": false
+  },
+  {
+   "seed": 4440072,
+   "place": "taygetos",
+   "register": "clearing",
+   "rescued": false
+  },
+  {
+   "seed": 4504144,
+   "place": "triglav",
+   "register": "exposure",
+   "rescued": false
+  },
+  {
+   "seed": 4512153,
+   "place": "machapuchare",
+   "register": "clearing",
+   "rescued": false
+  },
+  {
+   "seed": 4568216,
+   "place": "cinto",
+   "register": "clearing",
+   "rescued": false
+  },
+  {
+   "seed": 4608261,
+   "place": "hotaka",
+   "register": "clearing",
+   "rescued": false
+  },
+  {
+   "seed": 4632288,
+   "place": "jorasses",
+   "register": "clearing",
+   "rescued": false
+  },
+  {
+   "seed": 4680342,
+   "place": "arthurs",
+   "register": "whiteout",
+   "rescued": false
+  },
+  {
+   "seed": 4744414,
+   "place": "trango",
+   "register": "exposure",
+   "rescued": false
+  },
+  {
+   "seed": 4848531,
+   "place": "huayhuash",
+   "register": "clearing",
+   "rescued": false
+  },
+  {
+   "seed": 4872558,
+   "place": "invented",
+   "register": "passage",
+   "rescued": false
+  },
+  {
+   "seed": 4952648,
+   "place": "huayhuash",
+   "register": "clearing",
+   "rescued": false
+  },
+  {
+   "seed": 5080792,
+   "place": "stetind",
+   "register": "exposure",
+   "rescued": false
+  },
+  {
+   "seed": 5128846,
+   "place": "invented",
+   "register": "clearing",
+   "rescued": false
+  },
+  {
+   "seed": 5152873,
+   "place": "huashan",
+   "register": "clearing",
+   "rescued": false
+  }
+ ],
+ "culled_by_claude": [
+  4400027,
+  4424054,
+  4560207,
+  4592243,
+  4712378,
+  4792468,
+  4808486,
+  4960657,
+  5104819,
+  5120837,
+  5144864
+ ]
+}

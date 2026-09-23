@@ -1,0 +1,1374 @@
+{
+ "round": 2,
+ "made": "2026-09-21",
+ "rubric": "v2",
+ "scale": "1 discard \u00b7 2 weak \u00b7 3 acceptable \u00b7 4 good \u00b7 5 keep: could hang",
+ "items": [
+  {
+   "id": "alpamayo-41017",
+   "place": "alpamayo",
+   "seed": 41017,
+   "img": "round-02/pairs/alpamayo-41017.png",
+   "register": "passage",
+   "light": "against",
+   "key": "low",
+   "weather": "spindrift+pouring",
+   "pair": "later",
+   "temper": {
+    "reveal": 1.35,
+    "drama": 1.1,
+    "smear": 1.41,
+    "bristle": 1.32,
+    "streak": 0.92,
+    "grain": 0.95
+   },
+   "metrics": {
+    "p02": 47,
+    "p50": 134,
+    "p98": 206,
+    "black": 0.28,
+    "flags": []
+   },
+   "claude": 3,
+   "why": "Dark ground, one small lit peak in cloud: good mood, but the two sheets are the same picture."
+  },
+  {
+   "id": "alpamayo-42794",
+   "place": "alpamayo",
+   "seed": 42794,
+   "img": "round-02/pairs/alpamayo-42794.png",
+   "register": "looming",
+   "light": "side",
+   "key": "full",
+   "weather": "spindrift+curtains",
+   "pair": "turn",
+   "temper": {
+    "reveal": 1.35,
+    "drama": 1.15,
+    "smear": 1.22,
+    "bristle": 1.49,
+    "streak": 1.01,
+    "grain": 1.04
+   },
+   "metrics": {
+    "p02": 38,
+    "p50": 92,
+    "p98": 209,
+    "black": 0.304,
+    "flags": []
+   },
+   "claude": 4,
+   "why": "Dark textured masses up close, a lit far slope between them. Texture and depth."
+  },
+  {
+   "id": "alpamayo-44571",
+   "place": "alpamayo",
+   "seed": 44571,
+   "img": "round-02/pairs/alpamayo-44571.png",
+   "register": "looming",
+   "light": "side",
+   "key": "full",
+   "weather": "spindrift",
+   "pair": "turn",
+   "temper": {
+    "reveal": 1.05,
+    "drama": 1.23,
+    "smear": 1.35,
+    "bristle": 1.59,
+    "streak": 1.29,
+    "grain": 1.18
+   },
+   "metrics": {
+    "p02": 22,
+    "p50": 83,
+    "p98": 208,
+    "black": 0.432,
+    "flags": []
+   },
+   "claude": 3,
+   "why": "Striped snow flutes against a dark silent sheet: real antithesis, though the stripes verge on pattern."
+  },
+  {
+   "id": "amadablam-41118",
+   "place": "amadablam",
+   "seed": 41118,
+   "img": "round-02/pairs/amadablam-41118.png",
+   "register": "clearing",
+   "light": "against",
+   "key": "low",
+   "weather": "spindrift+pouring",
+   "pair": "turn",
+   "temper": {
+    "reveal": 1.11,
+    "drama": 1.29,
+    "smear": 0.88,
+    "bristle": 1.08,
+    "streak": 1.31,
+    "grain": 1.14
+   },
+   "metrics": {
+    "p02": 56,
+    "p50": 145,
+    "p98": 210,
+    "black": 0.052,
+    "flags": []
+   },
+   "claude": 4,
+   "why": "Veiled and soft, one small lit patch far off. Quiet, holds together."
+  },
+  {
+   "id": "amadablam-42895",
+   "place": "amadablam",
+   "seed": 42895,
+   "img": "round-02/pairs/amadablam-42895.png",
+   "register": "whiteout",
+   "light": "overcast",
+   "key": "high",
+   "weather": "spindrift+pouring",
+   "pair": "later",
+   "temper": {
+    "reveal": 0.85,
+    "drama": 1.15,
+    "smear": 0.52,
+    "bristle": 1.3,
+    "streak": 1.07,
+    "grain": 0.87
+   },
+   "metrics": {
+    "p02": 106,
+    "p50": 167,
+    "p98": 214,
+    "black": 0,
+    "flags": []
+   },
+   "claude": 2,
+   "why": "The right sheet is a blank grey slab."
+  },
+  {
+   "id": "amadablam-44672",
+   "place": "amadablam",
+   "seed": 44672,
+   "img": "round-02/pairs/amadablam-44672.png",
+   "register": "clearing",
+   "light": "side",
+   "key": "high",
+   "weather": "still",
+   "pair": "turn",
+   "temper": {
+    "reveal": 1.23,
+    "drama": 0.99,
+    "smear": 1.01,
+    "bristle": 1.42,
+    "streak": 1.14,
+    "grain": 1.01
+   },
+   "metrics": {
+    "p02": 59,
+    "p50": 156,
+    "p98": 210,
+    "black": 0.051,
+    "flags": []
+   },
+   "claude": 3,
+   "why": "Veiled range against a dark upright slab close by: unlike sheets that belong together; the slab is a bit empty."
+  },
+  {
+   "id": "arthurs-41219",
+   "place": "arthurs",
+   "seed": 41219,
+   "img": "round-02/pairs/arthurs-41219.png",
+   "register": "exposure",
+   "light": "against",
+   "key": "full",
+   "weather": "spindrift",
+   "pair": "later",
+   "temper": {
+    "reveal": 1.13,
+    "drama": 1.22,
+    "smear": 1.31,
+    "bristle": 1.7,
+    "streak": 0.83,
+    "grain": 0.83
+   },
+   "metrics": {
+    "p02": 52,
+    "p50": 172,
+    "p98": 216,
+    "black": 0.13,
+    "flags": []
+   },
+   "claude": 4,
+   "why": "Pale cloud sea with a far range, against dark textured ground. Opposed and calm."
+  },
+  {
+   "id": "arthurs-42996",
+   "place": "arthurs",
+   "seed": 42996,
+   "img": "round-02/pairs/arthurs-42996.png",
+   "register": "whiteout",
+   "light": "overcast",
+   "key": "high",
+   "weather": "still",
+   "pair": "later",
+   "temper": {
+    "reveal": 1,
+    "drama": 1.17,
+    "smear": 1.35,
+    "bristle": 1.23,
+    "streak": 1.03,
+    "grain": 0.92
+   },
+   "metrics": {
+    "p02": 80,
+    "p50": 144,
+    "p98": 211,
+    "black": 0.013,
+    "flags": []
+   },
+   "claude": 3,
+   "why": "Stony whiteout dome with cairns; legible, modest."
+  },
+  {
+   "id": "arthurs-44773",
+   "place": "arthurs",
+   "seed": 44773,
+   "img": "round-02/pairs/arthurs-44773.png",
+   "register": "looming",
+   "light": "against",
+   "key": "full",
+   "weather": "spindrift",
+   "pair": "turn",
+   "temper": {
+    "reveal": 0.99,
+    "drama": 1.09,
+    "smear": 0.7,
+    "bristle": 0.84,
+    "streak": 1.04,
+    "grain": 0.87
+   },
+   "metrics": {
+    "p02": 41,
+    "p50": 140,
+    "p98": 184,
+    "black": 0.197,
+    "flags": []
+   },
+   "claude": 4,
+   "why": "Low-key dark flank, a little cloud caught on the ridge. Restrained."
+  },
+  {
+   "id": "badile-41320",
+   "place": "badile",
+   "seed": 41320,
+   "img": "round-02/pairs/badile-41320.png",
+   "register": "exposure",
+   "light": "overcast",
+   "key": "low",
+   "weather": "curtains",
+   "pair": "turn",
+   "temper": {
+    "reveal": 0.79,
+    "drama": 1.23,
+    "smear": 1.52,
+    "bristle": 1.05,
+    "streak": 0.59,
+    "grain": 1.07
+   },
+   "metrics": {
+    "p02": 49,
+    "p50": 117,
+    "p98": 208,
+    "black": 0.094,
+    "flags": []
+   },
+   "claude": 4,
+   "why": "Dark ranges receding into haze; suggestion rather than description."
+  },
+  {
+   "id": "badile-43097",
+   "place": "badile",
+   "seed": 43097,
+   "img": "round-02/pairs/badile-43097.png",
+   "register": "whiteout",
+   "light": "overcast",
+   "key": "high",
+   "weather": "spindrift+pouring",
+   "pair": "panorama",
+   "temper": {
+    "reveal": 1.14,
+    "drama": 0.94,
+    "smear": 0.67,
+    "bristle": 1.54,
+    "streak": 1.15,
+    "grain": 1.17
+   },
+   "metrics": {
+    "p02": 117,
+    "p50": 176,
+    "p98": 214,
+    "black": 0.001,
+    "flags": []
+   },
+   "claude": 4,
+   "why": "Whiteout: the way as a dark line toward a pale peak. Very quiet, coherent."
+  },
+  {
+   "id": "badile-44874",
+   "place": "badile",
+   "seed": 44874,
+   "img": "round-02/pairs/badile-44874.png",
+   "register": "exposure",
+   "light": "side",
+   "key": "full",
+   "weather": "spindrift+curtains",
+   "pair": "panorama",
+   "temper": {
+    "reveal": 1.29,
+    "drama": 1.39,
+    "smear": 1.34,
+    "bristle": 1.6,
+    "streak": 1.05,
+    "grain": 0.99
+   },
+   "metrics": {
+    "p02": 43,
+    "p50": 107,
+    "p98": 207,
+    "black": 0.245,
+    "flags": []
+   },
+   "claude": 3,
+   "why": "Snow-streaked range, rather described; good diagonal on the right."
+  },
+  {
+   "id": "civetta-41421",
+   "place": "civetta",
+   "seed": 41421,
+   "img": "round-02/pairs/civetta-41421.png",
+   "register": "whiteout",
+   "light": "overcast",
+   "key": "high",
+   "weather": "still",
+   "pair": "panorama",
+   "temper": {
+    "reveal": 0.99,
+    "drama": 1.14,
+    "smear": 1.46,
+    "bristle": 0.83,
+    "streak": 1.11,
+    "grain": 1.04
+   },
+   "metrics": {
+    "p02": 80,
+    "p50": 187,
+    "p98": 216,
+    "black": 0.006,
+    "flags": []
+   },
+   "claude": 3,
+   "why": "Cairn on a soft dome; fine, slight."
+  },
+  {
+   "id": "civetta-43198",
+   "place": "civetta",
+   "seed": 43198,
+   "img": "round-02/pairs/civetta-43198.png",
+   "register": "exposure",
+   "light": "front",
+   "key": "high",
+   "weather": "spindrift+pouring",
+   "pair": "later",
+   "temper": {
+    "reveal": 0.76,
+    "drama": 1.25,
+    "smear": 0.63,
+    "bristle": 1.38,
+    "streak": 1.44,
+    "grain": 1.05
+   },
+   "metrics": {
+    "p02": 97,
+    "p50": 180,
+    "p98": 213,
+    "black": 0.001,
+    "flags": [
+     "TIMID"
+    ]
+   },
+   "claude": 3,
+   "why": "A handsome pale peak, twice: the sheets barely differ."
+  },
+  {
+   "id": "civetta-44975",
+   "place": "civetta",
+   "seed": 44975,
+   "img": "round-02/pairs/civetta-44975.png",
+   "register": "passage",
+   "light": "overcast",
+   "key": "full",
+   "weather": "spindrift+pouring",
+   "pair": "turn",
+   "temper": {
+    "reveal": 1.13,
+    "drama": 1.37,
+    "smear": 1.23,
+    "bristle": 1.12,
+    "streak": 1.68,
+    "grain": 0.96
+   },
+   "metrics": {
+    "p02": 50,
+    "p50": 120,
+    "p98": 210,
+    "black": 0.159,
+    "flags": []
+   },
+   "claude": 3,
+   "why": "Snowy flank over a dark lower sheet; decent weight, little event."
+  },
+  {
+   "id": "cuillin-41522",
+   "place": "cuillin",
+   "seed": 41522,
+   "img": "round-02/pairs/cuillin-41522.png",
+   "register": "exposure",
+   "light": "side",
+   "key": "full",
+   "weather": "curtains",
+   "pair": "turn",
+   "temper": {
+    "reveal": 1.24,
+    "drama": 1.06,
+    "smear": 0.35,
+    "bristle": 1.43,
+    "streak": 1.07,
+    "grain": 0.95
+   },
+   "metrics": {
+    "p02": 41,
+    "p50": 178,
+    "p98": 219,
+    "black": 0.19,
+    "flags": []
+   },
+   "claude": 4,
+   "why": "Black dome against a white snow slope: strong antithesis, full range."
+  },
+  {
+   "id": "cuillin-43299",
+   "place": "cuillin",
+   "seed": 43299,
+   "img": "round-02/pairs/cuillin-43299.png",
+   "register": "looming",
+   "light": "side",
+   "key": "full",
+   "weather": "spindrift+pouring",
+   "pair": "turn",
+   "temper": {
+    "reveal": 1.35,
+    "drama": 1.25,
+    "smear": 0.85,
+    "bristle": 1.47,
+    "streak": 0.64,
+    "grain": 0.89
+   },
+   "metrics": {
+    "p02": 41,
+    "p50": 141,
+    "p98": 212,
+    "black": 0.193,
+    "flags": []
+   },
+   "claude": 3,
+   "why": "Snow detail on the left, dune-like dark pattern on the right."
+  },
+  {
+   "id": "cuillin-45076",
+   "place": "cuillin",
+   "seed": 45076,
+   "img": "round-02/pairs/cuillin-45076.png",
+   "register": "passage",
+   "light": "against",
+   "key": "low",
+   "weather": "pouring",
+   "pair": "panorama",
+   "temper": {
+    "reveal": 1.07,
+    "drama": 1,
+    "smear": 0.89,
+    "bristle": 1.08,
+    "streak": 1.25,
+    "grain": 1.04
+   },
+   "metrics": {
+    "p02": 36,
+    "p50": 67,
+    "p98": 213,
+    "black": 0.525,
+    "flags": [
+     "WEDGE"
+    ]
+   },
+   "claude": 3,
+   "why": "One huge black diagonal across both sheets and a small veiled hill. Bold and graphic, but the black is flat."
+  },
+  {
+   "id": "fitzroy-41623",
+   "place": "fitzroy",
+   "seed": 41623,
+   "img": "round-02/pairs/fitzroy-41623.png",
+   "register": "passage",
+   "light": "side",
+   "key": "full",
+   "weather": "spindrift+pouring",
+   "pair": "panorama",
+   "temper": {
+    "reveal": 0.99,
+    "drama": 1.34,
+    "smear": 1.33,
+    "bristle": 1.04,
+    "streak": 1.14,
+    "grain": 1
+   },
+   "metrics": {
+    "p02": 52,
+    "p50": 112,
+    "p98": 211,
+    "black": 0.096,
+    "flags": []
+   },
+   "claude": 4,
+   "why": "Blurred dark flank, cloud lying in the col. Close to the source's structure."
+  },
+  {
+   "id": "fitzroy-43400",
+   "place": "fitzroy",
+   "seed": 43400,
+   "img": "round-02/pairs/fitzroy-43400.png",
+   "register": "passage",
+   "light": "side",
+   "key": "low",
+   "weather": "pouring",
+   "pair": "panorama",
+   "temper": {
+    "reveal": 1,
+    "drama": 1.12,
+    "smear": 0.89,
+    "bristle": 0.76,
+    "streak": 0.79,
+    "grain": 0.88
+   },
+   "metrics": {
+    "p02": 76,
+    "p50": 129,
+    "p98": 179,
+    "black": 0.006,
+    "flags": []
+   },
+   "claude": 2,
+   "why": "Mid-grey blur, no anchor."
+  },
+  {
+   "id": "fitzroy-45177",
+   "place": "fitzroy",
+   "seed": 45177,
+   "img": "round-02/pairs/fitzroy-45177.png",
+   "register": "passage",
+   "light": "side",
+   "key": "full",
+   "weather": "spindrift+pouring+curtains",
+   "pair": "turn",
+   "temper": {
+    "reveal": 1.19,
+    "drama": 1.22,
+    "smear": 0.55,
+    "bristle": 1.22,
+    "streak": 1.34,
+    "grain": 0.94
+   },
+   "metrics": {
+    "p02": 50,
+    "p50": 121,
+    "p98": 206,
+    "black": 0.134,
+    "flags": []
+   },
+   "claude": 4,
+   "why": "Valley floor with the way running in, dark cloud, a streaked flank."
+  },
+  {
+   "id": "hotaka-41724",
+   "place": "hotaka",
+   "seed": 41724,
+   "img": "round-02/pairs/hotaka-41724.png",
+   "register": "exposure",
+   "light": "against",
+   "key": "low",
+   "weather": "spindrift",
+   "pair": "turn",
+   "temper": {
+    "reveal": 1.27,
+    "drama": 0.98,
+    "smear": 1.1,
+    "bristle": 1.12,
+    "streak": 0.61,
+    "grain": 1.03
+   },
+   "metrics": {
+    "p02": 56,
+    "p50": 120,
+    "p98": 213,
+    "black": 0.115,
+    "flags": []
+   },
+   "claude": 3,
+   "why": "Crisp ridged texture in both sheets: handsome but too described."
+  },
+  {
+   "id": "hotaka-43501",
+   "place": "hotaka",
+   "seed": 43501,
+   "img": "round-02/pairs/hotaka-43501.png",
+   "register": "whiteout",
+   "light": "overcast",
+   "key": "high",
+   "weather": "still",
+   "pair": "later",
+   "temper": {
+    "reveal": 1.09,
+    "drama": 0.83,
+    "smear": 0.79,
+    "bristle": 1.1,
+    "streak": 0.92,
+    "grain": 1.04
+   },
+   "metrics": {
+    "p02": 97,
+    "p50": 170,
+    "p98": 213,
+    "black": 0.004,
+    "flags": [
+     "TWIN-44571"
+    ]
+   },
+   "claude": 4,
+   "why": "The way along a snow crest to a cairn, in whiteout. Clean and quiet."
+  },
+  {
+   "id": "hotaka-45278",
+   "place": "hotaka",
+   "seed": 45278,
+   "img": "round-02/pairs/hotaka-45278.png",
+   "register": "clearing",
+   "light": "against",
+   "key": "low",
+   "weather": "curtains",
+   "pair": "later",
+   "temper": {
+    "reveal": 1.15,
+    "drama": 1.31,
+    "smear": 1.34,
+    "bristle": 1.11,
+    "streak": 1.69,
+    "grain": 1.09
+   },
+   "metrics": {
+    "p02": 47,
+    "p50": 124,
+    "p98": 212,
+    "black": 0.116,
+    "flags": []
+   },
+   "claude": 4,
+   "why": "Dark textured slope, ridges fading into haze beyond."
+  },
+  {
+   "id": "huashan-41825",
+   "place": "huashan",
+   "seed": 41825,
+   "img": "round-02/pairs/huashan-41825.png",
+   "register": "passage",
+   "light": "side",
+   "key": "low",
+   "weather": "pouring+curtains",
+   "pair": "turn",
+   "temper": {
+    "reveal": 1.01,
+    "drama": 1.16,
+    "smear": 0.76,
+    "bristle": 1.45,
+    "streak": 1.01,
+    "grain": 1.02
+   },
+   "metrics": {
+    "p02": 34,
+    "p50": 130,
+    "p98": 214,
+    "black": 0.244,
+    "flags": []
+   },
+   "claude": 4,
+   "why": "Smooth dark wall against a lit snow couloir: antithesis that works."
+  },
+  {
+   "id": "huashan-43602",
+   "place": "huashan",
+   "seed": 43602,
+   "img": "round-02/pairs/huashan-43602.png",
+   "register": "whiteout",
+   "light": "overcast",
+   "key": "high",
+   "weather": "spindrift",
+   "pair": "later",
+   "temper": {
+    "reveal": 0.83,
+    "drama": 1.21,
+    "smear": 1.32,
+    "bristle": 1.33,
+    "streak": 1.21,
+    "grain": 0.96
+   },
+   "metrics": {
+    "p02": 110,
+    "p50": 197,
+    "p98": 216,
+    "black": 0,
+    "flags": []
+   },
+   "claude": 2,
+   "why": "Left sheet is blank; the right is a plain dome."
+  },
+  {
+   "id": "huashan-45379",
+   "place": "huashan",
+   "seed": 45379,
+   "img": "round-02/pairs/huashan-45379.png",
+   "register": "exposure",
+   "light": "against",
+   "key": "low",
+   "weather": "pouring+curtains",
+   "pair": "turn",
+   "temper": {
+    "reveal": 1.1,
+    "drama": 1.01,
+    "smear": 0.39,
+    "bristle": 1.16,
+    "streak": 1.31,
+    "grain": 0.9
+   },
+   "metrics": {
+    "p02": 49,
+    "p50": 86,
+    "p98": 197,
+    "black": 0.257,
+    "flags": []
+   },
+   "claude": 3,
+   "why": "Sharp detailed range beside a dark smooth sheet; the left is too described."
+  },
+  {
+   "id": "lyskamm-41926",
+   "place": "lyskamm",
+   "seed": 41926,
+   "img": "round-02/pairs/lyskamm-41926.png",
+   "register": "looming",
+   "light": "against",
+   "key": "low",
+   "weather": "pouring",
+   "pair": "turn",
+   "temper": {
+    "reveal": 1.47,
+    "drama": 1.08,
+    "smear": 0.9,
+    "bristle": 1.14,
+    "streak": 1.02,
+    "grain": 0.98
+   },
+   "metrics": {
+    "p02": 36,
+    "p50": 159,
+    "p98": 208,
+    "black": 0.25,
+    "flags": []
+   },
+   "claude": 4,
+   "why": "Lit bedded snow ridge under a dark band of sky, against a dark silhouette."
+  },
+  {
+   "id": "lyskamm-43703",
+   "place": "lyskamm",
+   "seed": 43703,
+   "img": "round-02/pairs/lyskamm-43703.png",
+   "register": "looming",
+   "light": "side",
+   "key": "low",
+   "weather": "still",
+   "pair": "turn",
+   "temper": {
+    "reveal": 1.2,
+    "drama": 1.22,
+    "smear": 1.24,
+    "bristle": 1.34,
+    "streak": 1.61,
+    "grain": 1.07
+   },
+   "metrics": {
+    "p02": 40,
+    "p50": 113,
+    "p98": 213,
+    "black": 0.207,
+    "flags": []
+   },
+   "claude": 3,
+   "why": "Detailed basin and textured flank; more terrain than weather."
+  },
+  {
+   "id": "lyskamm-45480",
+   "place": "lyskamm",
+   "seed": 45480,
+   "img": "round-02/pairs/lyskamm-45480.png",
+   "register": "passage",
+   "light": "against",
+   "key": "full",
+   "weather": "pouring",
+   "pair": "turn",
+   "temper": {
+    "reveal": 1.1,
+    "drama": 0.91,
+    "smear": 0.52,
+    "bristle": 1.32,
+    "streak": 0.73,
+    "grain": 1.05
+   },
+   "metrics": {
+    "p02": 46,
+    "p50": 118,
+    "p98": 186,
+    "black": 0.176,
+    "flags": [
+     "WEDGE"
+    ]
+   },
+   "claude": 3,
+   "why": "Soft wall with a pale streak; murky but has presence."
+  },
+  {
+   "id": "matterhorn-42027",
+   "place": "matterhorn",
+   "seed": 42027,
+   "img": "round-02/pairs/matterhorn-42027.png",
+   "register": "looming",
+   "light": "overcast",
+   "key": "full",
+   "weather": "spindrift+curtains",
+   "pair": "panorama",
+   "temper": {
+    "reveal": 1.26,
+    "drama": 1.24,
+    "smear": 0.77,
+    "bristle": 1.27,
+    "streak": 1.19,
+    "grain": 0.98
+   },
+   "metrics": {
+    "p02": 61,
+    "p50": 160,
+    "p98": 215,
+    "black": 0.034,
+    "flags": [
+     "WEDGE"
+    ]
+   },
+   "claude": 3,
+   "why": "V of a col; far peaks show contour-like stripes and the near slope is blotchy."
+  },
+  {
+   "id": "matterhorn-43804",
+   "place": "matterhorn",
+   "seed": 43804,
+   "img": "round-02/pairs/matterhorn-43804.png",
+   "register": "clearing",
+   "light": "front",
+   "key": "full",
+   "weather": "still",
+   "pair": "back",
+   "temper": {
+    "reveal": 1.1,
+    "drama": 0.85,
+    "smear": 1.29,
+    "bristle": 1.07,
+    "streak": 0.97,
+    "grain": 0.95
+   },
+   "metrics": {
+    "p02": 63,
+    "p50": 150,
+    "p98": 209,
+    "black": 0.035,
+    "flags": []
+   },
+   "claude": 3,
+   "why": "Veiled hill, soft; the right sheet is mostly blur."
+  },
+  {
+   "id": "matterhorn-45581",
+   "place": "matterhorn",
+   "seed": 45581,
+   "img": "round-02/pairs/matterhorn-45581.png",
+   "register": "clearing",
+   "light": "side",
+   "key": "low",
+   "weather": "still",
+   "pair": "back",
+   "temper": {
+    "reveal": 1.3,
+    "drama": 1.31,
+    "smear": 0.68,
+    "bristle": 1.04,
+    "streak": 0.72,
+    "grain": 1.05
+   },
+   "metrics": {
+    "p02": 69,
+    "p50": 173,
+    "p98": 213,
+    "black": 0.02,
+    "flags": []
+   },
+   "claude": 4,
+   "why": "Veiled layers behind a dark near rim. Quiet depth."
+  },
+  {
+   "id": "napali-42128",
+   "place": "napali",
+   "seed": 42128,
+   "img": "round-02/pairs/napali-42128.png",
+   "register": "looming",
+   "light": "front",
+   "key": "low",
+   "weather": "spindrift",
+   "pair": "turn",
+   "temper": {
+    "reveal": 1.34,
+    "drama": 1.15,
+    "smear": 1.7,
+    "bristle": 0.99,
+    "streak": 1.52,
+    "grain": 0.93
+   },
+   "metrics": {
+    "p02": 46,
+    "p50": 162,
+    "p98": 213,
+    "black": 0.139,
+    "flags": []
+   },
+   "claude": 3,
+   "why": "Strong dark-and-light crags over a smooth empty foreground."
+  },
+  {
+   "id": "napali-43905",
+   "place": "napali",
+   "seed": 43905,
+   "img": "round-02/pairs/napali-43905.png",
+   "register": "whiteout",
+   "light": "overcast",
+   "key": "high",
+   "weather": "spindrift",
+   "pair": "later",
+   "temper": {
+    "reveal": 1.19,
+    "drama": 1.17,
+    "smear": 0.72,
+    "bristle": 0.69,
+    "streak": 0.52,
+    "grain": 1.1
+   },
+   "metrics": {
+    "p02": 87,
+    "p50": 171,
+    "p98": 209,
+    "black": 0.006,
+    "flags": []
+   },
+   "claude": 3,
+   "why": "Pale snow slope in whiteout; the right sheet holds only a faint mark."
+  },
+  {
+   "id": "napali-45682",
+   "place": "napali",
+   "seed": 45682,
+   "img": "round-02/pairs/napali-45682.png",
+   "register": "whiteout",
+   "light": "overcast",
+   "key": "high",
+   "weather": "still",
+   "pair": "later",
+   "temper": {
+    "reveal": 1.27,
+    "drama": 1.22,
+    "smear": 0.6,
+    "bristle": 0.96,
+    "streak": 1.07,
+    "grain": 1.01
+   },
+   "metrics": {
+    "p02": 94,
+    "p50": 166,
+    "p98": 209,
+    "black": 0.001,
+    "flags": [
+     "TWIN-43602"
+    ]
+   },
+   "claude": 4,
+   "why": "Whiteout with pale ranges and the way to a cairn. Coherent and quiet."
+  },
+  {
+   "id": "perdido-42229",
+   "place": "perdido",
+   "seed": 42229,
+   "img": "round-02/pairs/perdido-42229.png",
+   "register": "whiteout",
+   "light": "overcast",
+   "key": "high",
+   "weather": "still",
+   "pair": "later",
+   "temper": {
+    "reveal": 1.18,
+    "drama": 0.99,
+    "smear": 1.22,
+    "bristle": 0.67,
+    "streak": 1.28,
+    "grain": 0.99
+   },
+   "metrics": {
+    "p02": 146,
+    "p50": 198,
+    "p98": 216,
+    "black": 0,
+    "flags": [
+     "TWIN-42996"
+    ]
+   },
+   "claude": 2,
+   "why": "Almost nothing in either sheet: past quiet into blank."
+  },
+  {
+   "id": "perdido-44006",
+   "place": "perdido",
+   "seed": 44006,
+   "img": "round-02/pairs/perdido-44006.png",
+   "register": "exposure",
+   "light": "front",
+   "key": "high",
+   "weather": "spindrift",
+   "pair": "later",
+   "temper": {
+    "reveal": 1.4,
+    "drama": 1.27,
+    "smear": 1.35,
+    "bristle": 0.71,
+    "streak": 1.34,
+    "grain": 0.93
+   },
+   "metrics": {
+    "p02": 88,
+    "p50": 168,
+    "p98": 210,
+    "black": 0.007,
+    "flags": [
+     "TIMID"
+    ]
+   },
+   "claude": 3,
+   "why": "A blade and a peak in cloud, twice over; sheets too alike."
+  },
+  {
+   "id": "perdido-45783",
+   "place": "perdido",
+   "seed": 45783,
+   "img": "round-02/pairs/perdido-45783.png",
+   "register": "clearing",
+   "light": "against",
+   "key": "full",
+   "weather": "curtains",
+   "pair": "down",
+   "temper": {
+    "reveal": 1.03,
+    "drama": 1.25,
+    "smear": 1.21,
+    "bristle": 1.71,
+    "streak": 1.67,
+    "grain": 1.1
+   },
+   "metrics": {
+    "p02": 64,
+    "p50": 168,
+    "p98": 212,
+    "black": 0.03,
+    "flags": []
+   },
+   "claude": 4,
+   "why": "Snow mottled with rock up close, a veiled lit peak and terraces beyond."
+  },
+  {
+   "id": "prokletije-42330",
+   "place": "prokletije",
+   "seed": 42330,
+   "img": "round-02/pairs/prokletije-42330.png",
+   "register": "looming",
+   "light": "side",
+   "key": "full",
+   "weather": "pouring",
+   "pair": "panorama",
+   "temper": {
+    "reveal": 1.18,
+    "drama": 1.04,
+    "smear": 1.7,
+    "bristle": 1.31,
+    "streak": 0.89,
+    "grain": 1.05
+   },
+   "metrics": {
+    "p02": 53,
+    "p50": 92,
+    "p98": 182,
+    "black": 0.153,
+    "flags": []
+   },
+   "claude": 2,
+   "why": "Murky blurred texture, no place felt."
+  },
+  {
+   "id": "prokletije-44107",
+   "place": "prokletije",
+   "seed": 44107,
+   "img": "round-02/pairs/prokletije-44107.png",
+   "register": "looming",
+   "light": "overcast",
+   "key": "full",
+   "weather": "spindrift+curtains",
+   "pair": "panorama",
+   "temper": {
+    "reveal": 1.14,
+    "drama": 1.06,
+    "smear": 1.78,
+    "bristle": 1.59,
+    "streak": 1.16,
+    "grain": 0.94
+   },
+   "metrics": {
+    "p02": 41,
+    "p50": 85,
+    "p98": 202,
+    "black": 0.274,
+    "flags": [
+     "TWIN-44571"
+    ]
+   },
+   "claude": 2,
+   "why": "The same murk again."
+  },
+  {
+   "id": "prokletije-45884",
+   "place": "prokletije",
+   "seed": 45884,
+   "img": "round-02/pairs/prokletije-45884.png",
+   "register": "whiteout",
+   "light": "overcast",
+   "key": "high",
+   "weather": "still",
+   "pair": "panorama",
+   "temper": {
+    "reveal": 0.96,
+    "drama": 1.36,
+    "smear": 0.78,
+    "bristle": 1.13,
+    "streak": 1.55,
+    "grain": 1.05
+   },
+   "metrics": {
+    "p02": 74,
+    "p50": 126,
+    "p98": 193,
+    "black": 0.011,
+    "flags": []
+   },
+   "claude": 2,
+   "why": "Blurred dome, nothing to hold."
+  },
+  {
+   "id": "triglav-42431",
+   "place": "triglav",
+   "seed": 42431,
+   "img": "round-02/pairs/triglav-42431.png",
+   "register": "exposure",
+   "light": "side",
+   "key": "full",
+   "weather": "still",
+   "pair": "down",
+   "temper": {
+    "reveal": 1.42,
+    "drama": 1.35,
+    "smear": 0.84,
+    "bristle": 1.38,
+    "streak": 1.33,
+    "grain": 1.06
+   },
+   "metrics": {
+    "p02": 44,
+    "p50": 80,
+    "p98": 171,
+    "black": 0.321,
+    "flags": []
+   },
+   "claude": 3,
+   "why": "Dark flecked slope, low key: good texture, little else."
+  },
+  {
+   "id": "triglav-44208",
+   "place": "triglav",
+   "seed": 44208,
+   "img": "round-02/pairs/triglav-44208.png",
+   "register": "looming",
+   "light": "side",
+   "key": "full",
+   "weather": "pouring",
+   "pair": "panorama",
+   "temper": {
+    "reveal": 1.07,
+    "drama": 1.14,
+    "smear": 0.97,
+    "bristle": 1.49,
+    "streak": 0.84,
+    "grain": 1.07
+   },
+   "metrics": {
+    "p02": 41,
+    "p50": 111,
+    "p98": 214,
+    "black": 0.155,
+    "flags": [
+     "WEDGE"
+    ]
+   },
+   "claude": 3,
+   "why": "A col, but the near rock is blotchy and marbled."
+  },
+  {
+   "id": "triglav-45985",
+   "place": "triglav",
+   "seed": 45985,
+   "img": "round-02/pairs/triglav-45985.png",
+   "register": "clearing",
+   "light": "side",
+   "key": "full",
+   "weather": "still",
+   "pair": "panorama",
+   "temper": {
+    "reveal": 0.89,
+    "drama": 1.02,
+    "smear": 0.71,
+    "bristle": 1.77,
+    "streak": 1.38,
+    "grain": 0.92
+   },
+   "metrics": {
+    "p02": 52,
+    "p50": 161,
+    "p98": 208,
+    "black": 0.125,
+    "flags": [
+     "WEDGE"
+    ]
+   },
+   "claude": 4,
+   "why": "Cloud sea with far spires against a dark smooth wall."
+  },
+  {
+   "id": "urriellu-42532",
+   "place": "urriellu",
+   "seed": 42532,
+   "img": "round-02/pairs/urriellu-42532.png",
+   "register": "passage",
+   "light": "against",
+   "key": "full",
+   "weather": "spindrift+pouring",
+   "pair": "panorama",
+   "temper": {
+    "reveal": 0.88,
+    "drama": 1.18,
+    "smear": 0.6,
+    "bristle": 1.38,
+    "streak": 1.25,
+    "grain": 0.98
+   },
+   "metrics": {
+    "p02": 28,
+    "p50": 146,
+    "p98": 215,
+    "black": 0.415,
+    "flags": []
+   },
+   "claude": 4,
+   "why": "Black diagonal flank, cloud, a glimpse of far peaks. The source's grammar."
+  },
+  {
+   "id": "urriellu-44309",
+   "place": "urriellu",
+   "seed": 44309,
+   "img": "round-02/pairs/urriellu-44309.png",
+   "register": "looming",
+   "light": "side",
+   "key": "high",
+   "weather": "spindrift",
+   "pair": "panorama",
+   "temper": {
+    "reveal": 1.15,
+    "drama": 0.91,
+    "smear": 1.02,
+    "bristle": 1.46,
+    "streak": 0.96,
+    "grain": 0.93
+   },
+   "metrics": {
+    "p02": 39,
+    "p50": 106,
+    "p98": 213,
+    "black": 0.283,
+    "flags": []
+   },
+   "claude": 3,
+   "why": "Wavy patterned rock beside a fine far range; the pattern distracts."
+  },
+  {
+   "id": "urriellu-46086",
+   "place": "urriellu",
+   "seed": 46086,
+   "img": "round-02/pairs/urriellu-46086.png",
+   "register": "passage",
+   "light": "side",
+   "key": "full",
+   "weather": "pouring",
+   "pair": "turn",
+   "temper": {
+    "reveal": 1.22,
+    "drama": 1.03,
+    "smear": 1.37,
+    "bristle": 1.32,
+    "streak": 0.9,
+    "grain": 0.84
+   },
+   "metrics": {
+    "p02": 58,
+    "p50": 107,
+    "p98": 210,
+    "black": 0.104,
+    "flags": []
+   },
+   "claude": 4,
+   "why": "Layered valley with mist between the ridges. Atmospheric, natural."
+  }
+ ]
+}

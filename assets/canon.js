@@ -215,6 +215,28 @@
         ['flow', { count: 3, steps: 360, scale: 1.2, step: 3, turns: 0.14, dash: 0 }, 0],
       ],
     },
+    'SYS-021': {
+      name: 'The Round',
+      principle: 'Imitation as law — Moondog\u2019s rounds and canons: one line that must obey itself at a fixed distance. The rule is the entry; everything after is consequence. Opened by AMEND-055.',
+      practice: 'Write one melody; the second voice is the first, later. Strictness is the medium.',
+      drawing: 'The same circle three times, entering along a diagonal \u2014 identical wheels at a fixed delay. Low wobble: the law is strict. A sparse vertical pulse beneath, the snaketime meter.',
+      recipe: (R, A) => [
+        ['rulings', { density: 22, angle: A, dot: 6, drift: 0.08, vertical: 1, mirror: 0 }, 0],
+        ['rings', { count: 8, radius: 0.24, x: 0.30, y: 0.38, wobble: 0.03, broken: 0.35, occlude: 0 }, 0],
+        ['rings', { count: 8, radius: 0.24, x: 0.50, y: 0.50, wobble: 0.03, broken: 0.35, occlude: 0 }, 0],
+        ['rings', { count: 8, radius: 0.24, x: 0.70, y: 0.62, wobble: 0.03, broken: 0.35, occlude: 0 }, 0],
+      ],
+    },
+    'SYS-022': {
+      name: 'The Comma',
+      principle: 'Temperament as the piece \u2014 the ratios chosen before a note exists: just lattices, polymicrotonality, the scale as composition. The number is the medium. Opened by AMEND-055.',
+      practice: 'Fix the tuning; the music is what the numbers permit, and the comma is where they refuse.',
+      drawing: 'Two ruled fields almost aligned \u2014 close densities, two degrees apart. The moir\u00e9 where they disagree is the comma, drawn.',
+      recipe: (R, A) => [
+        ['rulings', { density: 58, angle: A, dot: 4, drift: 0.05, vertical: 0, mirror: 0 }, 0],
+        ['rulings', { density: 61, angle: A + 2, dot: 4, drift: 0.05, vertical: 0, mirror: 0 }, 0],
+      ],
+    },
     'SYS-020': {
       name: 'The Sounding Room',
       principle: 'Resonance as instrument — Lucier’s long thin wire and echolocating rooms, Tudor’s Rainforest, Kirkegaard recording the ear hearing itself. The object or space composes.',

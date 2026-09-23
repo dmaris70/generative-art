@@ -1,0 +1,89 @@
+{
+ "batch": 14,
+ "by": "Dimitris",
+ "saved": "2026-09-23T16:54:28.685Z",
+ "kept": [
+  {
+   "seed": 13311372,
+   "place": "brenta",
+   "register": "clearing",
+   "rescued": false
+  },
+  {
+   "seed": 13356616,
+   "place": "alpamayo",
+   "register": "passage",
+   "rescued": false
+  },
+  {
+   "seed": 13447104,
+   "place": "invented",
+   "register": "exposure",
+   "rescued": false
+  },
+  {
+   "seed": 13526281,
+   "place": "taygetos",
+   "register": "clearing",
+   "rescued": false
+  },
+  {
+   "seed": 13662013,
+   "place": "ushba",
+   "register": "clearing",
+   "rescued": false
+  },
+  {
+   "seed": 13673324,
+   "place": "astraka",
+   "register": "passage",
+   "rescued": false
+  },
+  {
+   "seed": 13809056,
+   "place": "invented",
+   "register": "clearing",
+   "rescued": false
+  },
+  {
+   "seed": 14069209,
+   "place": "trango",
+   "register": "passage",
+   "rescued": false
+  },
+  {
+   "seed": 14103142,
+   "place": "invented",
+   "register": "clearing",
+   "rescued": false
+  },
+  {
+   "seed": 14340673,
+   "place": "machapuchare",
+   "register": "clearing",
+   "rescued": false
+  },
+  {
+   "seed": 14374606,
+   "place": "hotaka",
+   "register": "passage",
+   "rescued": false
+  }
+ ],
+ "culled_by_claude": [
+  13322683,
+  13390549,
+  13458415,
+  13469726,
+  13481037,
+  13548903,
+  13628080,
+  13876922,
+  13899544,
+  13967410,
+  14137075,
+  14182319,
+  14250185,
+  14363295
+ ]
+}

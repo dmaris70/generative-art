@@ -1,0 +1,118 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Ridge, encounters — rating</title>
+  <style>
+    :root { --room: #0e0e10; --panel: #151518; --rule: #2a2a2f; --ink: #deded8; --mute: #8b8b86; --dim: #5d5d5a; --mat: #f7f7f5;
+      --mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace; --sans: ui-sans-serif, system-ui, -apple-system, "Helvetica Neue", sans-serif; }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; background: var(--room); color: var(--ink); font: 13px/1.5 var(--sans); }
+    a { color: inherit; }
+    header { position: sticky; top: 0; z-index: 5; background: rgba(14,14,16,.94); backdrop-filter: blur(6px); border-bottom: 1px solid var(--rule); padding: 12px 20px; display: flex; flex-wrap: wrap; gap: 8px 18px; align-items: center; }
+    header h1 { font-size: 14px; font-weight: 600; margin: 0; }
+    header .stat { font: 11.5px var(--mono); color: var(--mute); }
+    header .grow { flex: 1; }
+    button, select { font: inherit; color: var(--ink); background: transparent; border: 1px solid var(--rule); border-radius: 3px; padding: 6px 10px; cursor: pointer; }
+    button:hover { border-color: var(--mute); }
+    button:focus-visible, textarea:focus-visible, select:focus-visible { outline: 1px solid var(--mat); outline-offset: 2px; }
+    button.primary { background: var(--mat); color: #111; border-color: var(--mat); font-weight: 600; }
+    main { max-width: 1180px; margin: 0 auto; padding: 8px 20px 80px; }
+    .intro { color: var(--mute); max-width: 72ch; margin: 14px 0 6px; }
+    section.place { border-top: 1px solid var(--rule); margin-top: 26px; padding-top: 14px; }
+    section.place > h2 { font-size: 13px; font-weight: 600; margin: 0 0 2px; display: flex; gap: 12px; align-items: baseline; flex-wrap: wrap; }
+    section.place > h2 small { font: 11px var(--mono); color: var(--mute); font-weight: 400; }
+    .card { display: grid; grid-template-columns: minmax(0, 1.55fr) minmax(250px, 1fr); gap: 18px; margin-top: 16px; align-items: start; }
+    .card img { width: 100%; height: auto; display: block; background: #0b0b0b; cursor: zoom-in; }
+    .meta { font: 11px var(--mono); color: var(--mute); margin: 0 0 8px; }
+    .mine { border-left: 2px solid var(--dim); padding: 1px 0 1px 10px; margin: 0 0 12px; }
+    .mine b { font: 600 12px var(--mono); color: var(--mat); }
+    .mine p { margin: 2px 0 0; color: var(--ink); }
+    .you { font-size: 11px; letter-spacing: .12em; text-transform: uppercase; color: var(--mute); margin: 0 0 6px; }
+    .scale { display: grid; grid-template-columns: repeat(5, 1fr) auto; gap: 5px; }
+    .scale button { padding: 8px 0; font: 600 13px var(--mono); color: var(--mute); }
+    .scale button[aria-pressed="true"] { background: var(--mat); color: #111; border-color: var(--mat); }
+    .scale button.agree { font: 11.5px var(--sans); font-weight: 400; padding: 8px 10px; }
+    textarea { width: 100%; margin-top: 8px; min-height: 40px; resize: vertical; font: 12.5px var(--sans); color: var(--ink); background: #0f0f12; border: 1px solid var(--rule); border-radius: 3px; padding: 7px 9px; }
+    textarea::placeholder { color: var(--dim); }
+    .delta { font: 11px var(--mono); color: var(--mute); margin-top: 6px; min-height: 1.2em; }
+    .card.done { opacity: .62; } .card.done:hover, .card.done:focus-within { opacity: 1; }
+    dialog { border: 0; padding: 0; background: #000; max-width: 96vw; max-height: 96vh; } dialog::backdrop { background: rgba(0,0,0,.85); } dialog img { display: block; max-width: 96vw; max-height: 96vh; cursor: zoom-out; }
+    @media (max-width: 760px) { .card { grid-template-columns: 1fr; gap: 10px; } header { padding: 10px 16px; } main { padding: 4px 16px 80px; } }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Ridge, encounters — rating</h1>
+    <select id="round" aria-label="Round"></select>
+    <span class="stat" id="stat" role="status" aria-live="polite"></span>
+    <span class="grow"></span>
+    <a href="./" style="font-size:12px;color:var(--mute)">← the piece</a>
+    <button id="copy">Copy my ratings</button>
+    <button id="save" class="primary">Download ratings</button>
+  </header>
+  <main>
+    <p class="intro" id="intro"></p>
+    <div id="list"></div>
+  </main>
+  <dialog id="zoom"><img alt="" /></dialog>
+
+  <script>
+  (function () {
+    'use strict';
+    const ROUNDS = ['round-01', 'round-02', 'round-03', 'round-04', 'round-05'];                     // add new rounds here
+    const $ = id => document.getElementById(id), el = (t, c, txt) => { const e = document.createElement(t); if (c) e.className = c; if (txt != null) e.textContent = txt; return e; };
+    const key = r => 'ridge-ratings-' + r;
+    let round = new URL(location.href).searchParams.get('round') || ROUNDS[ROUNDS.length - 1], data = null, mine = {};
+    const load = r => { try { return JSON.parse(localStorage.getItem(key(r)) || '{}'); } catch (e) { return {}; } };
+    const store = () => { try { localStorage.setItem(key(round), JSON.stringify(mine)); } catch (e) {} stats(); };
+    const exportObj = () => ({ round: data.round, by: 'Dimitris', saved: new Date().toISOString(), ratings: data.items.filter(i => mine[i.id] && mine[i.id].score).map(i => ({ id: i.id, claude: i.claude, user: mine[i.id].score, note: mine[i.id].note || '' })) });
+    window.ridgeRatings = () => exportObj();       // so Claude can read the ratings from the Browser pane
+
+    function stats() {
+      const rated = data.items.filter(i => mine[i.id] && mine[i.id].score), n = rated.length;
+      let agree = 0, diff = 0; rated.forEach(i => { const d = mine[i.id].score - i.claude; if (!d) agree++; diff += Math.abs(d); });
+      $('stat').textContent = n + ' / ' + data.items.length + ' rated' + (n ? ' · agree on ' + agree + ' · mean difference ' + (diff / n).toFixed(2) : '');
+    }
+
+    function card(i) {
+      const c = el('article', 'card'), left = el('div'), right = el('div');
+      const img = el('img'); img.src = 'ratings/' + i.img; img.alt = 'Pair ' + i.id; img.loading = 'lazy'; img.onclick = () => { $('zoom').firstElementChild.src = img.src; $('zoom').showModal(); };
+      left.append(img);
+      right.append(el('p', 'meta', i.seed + ' · ' + i.register + ' · light ' + i.light + ', ' + i.key + ' key · ' + i.weather + ' · ' + (i.pair === 'panorama' ? 'one view, cut' : i.pair) + (i.metrics.flags.length ? ' · flags: ' + i.metrics.flags.join(' ') : '')));
+      const m = el('div', 'mine'); const b = el('b', null, 'Claude: ' + i.claude + ' / 5'); m.append(b, el('p', null, i.why)); right.append(m);
+      right.append(el('p', 'you', 'Your rating'));
+      const sc = el('div', 'scale'), delta = el('div', 'delta'), note = el('textarea'); note.placeholder = 'Why? (optional — this is what teaches most)'; note.setAttribute('aria-label', 'Note on ' + i.id);
+      const paint = () => { const s = mine[i.id] && mine[i.id].score; [...sc.children].forEach((x, k) => x.setAttribute('aria-pressed', k < 5 && s === k + 1)); c.classList.toggle('done', !!s);
+        delta.textContent = s ? (s === i.claude ? 'agreed' : 'you ' + (s > i.claude ? 'higher' : 'lower') + ' by ' + Math.abs(s - i.claude)) : ''; };
+      const set = s => { mine[i.id] = Object.assign(mine[i.id] || {}, { score: mine[i.id] && mine[i.id].score === s ? 0 : s }); paint(); store(); };
+      for (let s = 1; s <= 5; s++) { const bt = el('button', null, String(s)); bt.setAttribute('aria-label', 'Rate ' + s + ' of 5'); bt.onclick = () => set(s); sc.append(bt); }
+      const ag = el('button', 'agree', 'agree'); ag.title = 'Same as Claude'; ag.onclick = () => { mine[i.id] = Object.assign(mine[i.id] || {}, { score: i.claude }); paint(); store(); }; sc.append(ag);
+      note.value = (mine[i.id] && mine[i.id].note) || ''; note.oninput = () => { mine[i.id] = Object.assign(mine[i.id] || {}, { note: note.value }); store(); };
+      right.append(sc, note, delta); c.append(left, right); paint(); return c;
+    }
+
+    function render() {
+      $('intro').textContent = 'Scale: ' + data.scale + '. Claude has rated each pair and said why. Give your own number (or “agree”), and a word on why where you differ. Your ratings are kept in this browser as you go; “Download ratings” saves them as a file for the project.';
+      const list = $('list'); list.textContent = ''; const by = {};
+      data.items.forEach(i => (by[i.place] = by[i.place] || []).push(i));
+      Object.keys(by).sort((a, b) => avg(by[b]) - avg(by[a])).forEach(p => {
+        const s = el('section', 'place'), h = el('h2', null, p); h.append(el('small', null, 'Claude’s mean ' + avg(by[p]).toFixed(2) + ' · ' + by[p].length + ' pairs')); s.append(h);
+        by[p].forEach(i => s.append(card(i))); list.append(s);
+      });
+      stats();
+    }
+    const avg = a => a.reduce((s, i) => s + i.claude, 0) / a.length;
+
+    ROUNDS.forEach(r => { const o = el('option', null, r); o.value = r; $('round').append(o); }); $('round').value = round;
+    $('round').onchange = () => { round = $('round').value; start(); };
+    $('zoom').onclick = () => $('zoom').close();
+    $('save').onclick = () => { const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([JSON.stringify(exportObj(), null, 1)], { type: 'application/json' })); a.download = round + '-user.json'; a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 4000); };
+    $('copy').onclick = () => { const t = JSON.stringify(exportObj()); (navigator.clipboard ? navigator.clipboard.writeText(t) : Promise.reject()).then(() => $('copy').textContent = 'Copied', () => prompt('Ratings', t)); setTimeout(() => $('copy').textContent = 'Copy my ratings', 1400); };
+    function start() { mine = load(round); fetch('ratings/' + round + '.json?t=' + Date.now()).then(r => r.json()).then(d => { data = d; render(); }).catch(e => { $('list').textContent = 'Could not load ' + round + ': ' + e.message; }); }
+    start();
+  })();
+  </script>
+</body>
+</html>

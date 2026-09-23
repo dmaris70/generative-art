@@ -1,0 +1,106 @@
+{
+ "batch": 2,
+ "by": "Dimitris",
+ "saved": "2026-09-22T20:31:25.317Z",
+ "kept": [
+  {
+   "seed": 604104,
+   "place": "stetind",
+   "register": "clearing",
+   "rescued": false
+  },
+  {
+   "seed": 620476,
+   "place": "besseggen",
+   "register": "passage",
+   "rescued": false
+  },
+  {
+   "seed": 624569,
+   "place": "invented",
+   "register": "exposure",
+   "rescued": false
+  },
+  {
+   "seed": 636848,
+   "place": "nevis",
+   "register": "passage",
+   "rescued": false
+  },
+  {
+   "seed": 645034,
+   "place": "trecime",
+   "register": "passage",
+   "rescued": false
+  },
+  {
+   "seed": 735080,
+   "place": "urriellu",
+   "register": "clearing",
+   "rescued": false
+  },
+  {
+   "seed": 780103,
+   "place": "cinto",
+   "register": "passage",
+   "rescued": false
+  },
+  {
+   "seed": 800568,
+   "place": "meije",
+   "register": "clearing",
+   "rescued": false
+  },
+  {
+   "seed": 804661,
+   "place": "invented",
+   "register": "whiteout",
+   "rescued": false
+  },
+  {
+   "seed": 825126,
+   "place": "amadablam",
+   "register": "clearing",
+   "rescued": false
+  },
+  {
+   "seed": 870149,
+   "place": "invented",
+   "register": "passage",
+   "rescued": false
+  },
+  {
+   "seed": 911079,
+   "place": "denali",
+   "register": "exposure",
+   "rescued": false
+  },
+  {
+   "seed": 952009,
+   "place": "castillo",
+   "register": "clearing",
+   "rescued": false
+  },
+  {
+   "seed": 976567,
+   "place": "matterhorn",
+   "register": "exposure",
+   "rescued": false
+  }
+ ],
+ "culled_by_claude": [
+  600011,
+  608197,
+  616383,
+  628662,
+  649127,
+  677778,
+  759638,
+  771917,
+  784196,
+  894707,
+  939730,
+  972474,
+  984753
+ ]
+}
