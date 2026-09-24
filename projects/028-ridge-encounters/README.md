@@ -589,3 +589,17 @@ with the complete fault taxonomy built across eight batches (dead flat panels, h
 tiger-stripe/grid patterns, terraced/blocky glitches, blank panels, unreadable near-ground blur) applied at full confidence; several
 soft-edged oddities (a cloud "glory" ring, dappled cloud-shadow texture, irregular close-up scree) were inspected and kept as
 legitimate, not faults. Twenty-seven batches: 2 592 seeds, 2 251 offered.
+
+## Batch 27 selection (2026-09-24) — close of this run
+**27 of 93 kept (29 %)**, 0 of 3 culls rescued. `edition/kept-v1.4.json` now holds 225 (batches 19–27). Across the full run of
+twenty-seven batches: **2 592 seeds painted, 2 251 offered, 497 kept (22 %), 0 rescued of 341 culled.**
+
+**Closing this production phase.** 341 pairs culled across the whole run, zero of them ever asked back by rescue — the cull has been
+reliable from the start, not just since the recalibration. What changed at batch 23 was scope, not accuracy: stopping the practice of
+also culling soft-but-structured "clearing" pairs for mood alone, and cutting only faults, blanks and pattern, took the kept rate from
+an 11–29 % range to 29–42 %, and it has held there for five straight batches. 497 pairs are kept under some version of this generator;
+225 of them under the current, frozen v1.4. The one open technical item is the steep-face (50–63°) smear noted since batch 22 — minor,
+never blocking, still un-fixed. What the pool has taught about taste (this session's analysis, above) is not yet acted on, and
+shouldn't be: there is no cheap way to pre-filter seeds by register before painting, and deal-weight changes were already shown once
+(batches 15–16) to look like a taste signal that was actually a camera bug. The next steps from here are not generation — they are
+curation and edition-building from the 497 already kept.

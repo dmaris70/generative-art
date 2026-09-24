@@ -1,0 +1,174 @@
+{
+ "batch": 27,
+ "by": "Dimitris",
+ "saved": "2026-09-24T22:17:05.148Z",
+ "kept": [
+  {
+   "seed": 31426988,
+   "place": "matterhorn",
+   "register": "clearing",
+   "rescued": false
+  },
+  {
+   "seed": 31484592,
+   "place": "lyskamm",
+   "register": "clearing",
+   "rescued": false
+  },
+  {
+   "seed": 31542196,
+   "place": "simien",
+   "register": "passage",
+   "rescued": false
+  },
+  {
+   "seed": 31614201,
+   "place": "invented",
+   "register": "clearing",
+   "rescued": false
+  },
+  {
+   "seed": 31643003,
+   "place": "invented",
+   "register": "clearing",
+   "rescued": false
+  },
+  {
+   "seed": 31657404,
+   "place": "trollveggen",
+   "register": "clearing",
+   "rescued": false
+  },
+  {
+   "seed": 31671805,
+   "place": "drakensberg",
+   "register": "passage",
+   "rescued": false
+  },
+  {
+   "seed": 31758211,
+   "place": "invented",
+   "register": "clearing",
+   "rescued": false
+  },
+  {
+   "seed": 31815815,
+   "place": "tetons",
+   "register": "passage",
+   "rescued": false
+  },
+  {
+   "seed": 31887820,
+   "place": "cuillin",
+   "register": "clearing",
+   "rescued": false
+  },
+  {
+   "seed": 31959825,
+   "place": "nevis",
+   "register": "clearing",
+   "rescued": false
+  },
+  {
+   "seed": 32003028,
+   "place": "castillo",
+   "register": "passage",
+   "rescued": false
+  },
+  {
+   "seed": 32031830,
+   "place": "cinto",
+   "register": "clearing",
+   "rescued": false
+  },
+  {
+   "seed": 32089434,
+   "place": "meije",
+   "register": "clearing",
+   "rescued": false
+  },
+  {
+   "seed": 32161439,
+   "place": "hotaka",
+   "register": "passage",
+   "rescued": false
+  },
+  {
+   "seed": 32204642,
+   "place": "watzmann",
+   "register": "exposure",
+   "rescued": false
+  },
+  {
+   "seed": 32305449,
+   "place": "toubkal",
+   "register": "passage",
+   "rescued": false
+  },
+  {
+   "seed": 32319850,
+   "place": "denali",
+   "register": "clearing",
+   "rescued": false
+  },
+  {
+   "seed": 32334251,
+   "place": "invented",
+   "register": "passage",
+   "rescued": false
+  },
+  {
+   "seed": 32363053,
+   "place": "stetind",
+   "register": "clearing",
+   "rescued": false
+  },
+  {
+   "seed": 32377454,
+   "place": "napali",
+   "register": "clearing",
+   "rescued": false
+  },
+  {
+   "seed": 32406256,
+   "place": "trango",
+   "register": "clearing",
+   "rescued": false
+  },
+  {
+   "seed": 32564667,
+   "place": "invented",
+   "register": "clearing",
+   "rescued": false
+  },
+  {
+   "seed": 32651073,
+   "place": "invented",
+   "register": "clearing",
+   "rescued": false
+  },
+  {
+   "seed": 32708677,
+   "place": "invented",
+   "register": "exposure",
+   "rescued": false
+  },
+  {
+   "seed": 32766281,
+   "place": "perdido",
+   "register": "clearing",
+   "rescued": false
+  },
+  {
+   "seed": 32780682,
+   "place": "tetons",
+   "register": "passage",
+   "rescued": false
+  }
+ ],
+ "culled_by_claude": [
+  31628602,
+  32276647,
+  32478261
+ ]
+}
