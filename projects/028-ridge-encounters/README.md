@@ -562,3 +562,30 @@ both blank. Same light touch as batch 25. Twenty-six batches: 2 496 seeds, 2 158
 **32 of 92 kept (35 %)**, 0 of 4 culls rescued. `edition/kept-v1.4.json` now holds 198 (batches 19–26). Four batches running at
 37 / 42 / 39 / 35 % since the recalibration — stable, not drifting either way. Across twenty-six batches: **2 158 offered, 470 kept
 (22 %), 0 rescued of 338 culled.**
+
+## What the pool teaches, before the last batch (2026-09-24)
+Keep-rate by category, computed across all 672 pairs offered under v1.4 (batches 19–26, 198 kept), before running batch 27:
+
+| | rate | | rate |
+|---|---|---|---|
+| clearing | 37.5 % | panorama | 35.3 % |
+| passage | 27.3 % | turn / later | 24–25 % |
+| exposure | 17.0 % | back / down | 7 / 14 % (small n) |
+| whiteout | 13.5 % | | |
+| invented place | 39.5 % | full key | 35.0 % |
+| real place | 27.3 % | low / high key | 25 / 21 % |
+
+Clearing and panorama are not close calls — they lead every other value in their column by a wide margin, in both volume and rate,
+consistent with what single batches showed all along. The one surprise: **invented terrain beats every real DEM place**, 39.5 % against
+27.3 %, the opposite of what sourcing real ranges was expected to buy. Light and weather show no comparable spread — neither drives the
+outcome much either way. None of this changes the cull: `scene()` builds the whole terrain and runs the camera search to fix the deal,
+so there is no cheap way to pre-filter seeds by register or pairing before painting — the cost is the same as painting them. This is
+recorded as context for a future deal-weight pass, not acted on here.
+
+## Batch 27 (2026-09-24) — v1.4, last of this run
+96 seeds, **3 culled**, 93 offered — the lightest cull of the whole run. Cull: 2 rendering faults (a dead flat panel, a hard perfectly
+straight line cutting across the sky — a new fault signature, not seen in batches 19–26), 1 pair with one panel fully blank. Reviewed
+with the complete fault taxonomy built across eight batches (dead flat panels, hard geometric shards/streaks, mechanical
+tiger-stripe/grid patterns, terraced/blocky glitches, blank panels, unreadable near-ground blur) applied at full confidence; several
+soft-edged oddities (a cloud "glory" ring, dappled cloud-shadow texture, irregular close-up scree) were inspected and kept as
+legitimate, not faults. Twenty-seven batches: 2 592 seeds, 2 251 offered.
