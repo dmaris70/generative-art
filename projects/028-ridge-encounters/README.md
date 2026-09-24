@@ -553,3 +553,12 @@ visible ridge stayed in. Twenty-five batches: 2 400 seeds, 2 066 offered.
 **36 of 92 kept (39 %)**, 0 of 4 culls rescued. `edition/kept-v1.4.json` now holds 166 (batches 19–25). Three batches at 37 / 42 / 39 %
 confirms the recalibration held even as the cull itself shrank to 4 % — going lighter did not let weak pairs back in, it just stopped
 removing pairs he wanted to see. Across twenty-five batches: **2 066 offered, 438 kept (21 %), 0 rescued of 334 culled.**
+
+## Batch 26 (2026-09-24) — v1.4
+96 seeds, **4 culled**, 92 offered. Cull: 2 rendering faults (a hard geometric shard, an unusual terraced/blocky artifact), 1 pair
+both blank. Same light touch as batch 25. Twenty-six batches: 2 496 seeds, 2 158 offered.
+
+## Batch 26 selection (2026-09-24)
+**32 of 92 kept (35 %)**, 0 of 4 culls rescued. `edition/kept-v1.4.json` now holds 198 (batches 19–26). Four batches running at
+37 / 42 / 39 / 35 % since the recalibration — stable, not drifting either way. Across twenty-six batches: **2 158 offered, 470 kept
+(22 %), 0 rescued of 338 culled.**
