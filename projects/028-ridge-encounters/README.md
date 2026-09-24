@@ -511,3 +511,23 @@ whiteout blur (three), blank or smeared sheets (five), survey-water cut-outs (tw
 ## Batches 21–22 selection (2026-09-23)
 Batch 21: **20 of 82 (24 %)**; batch 22: **9 of 79 (11 %)**; 0 rescued of 31 culled. `edition/kept-v1.4.json` now holds 65 (batches 19–22).
 Across twenty-two batches: **1 810 offered, 337 kept (19 %), 0 rescued of 302 culled.**
+
+## Renumbering (2026-09-23/24)
+The project's own slug moved from `027-ridge-encounters` to `028-ridge-encounters` (and 024/025/026 to 025/026/027) to clear a
+collision with unrelated work added upstream at `011`. Every path inside this project, the harness scripts, the freeze record and
+the root convenience symlink were rewritten to match; the freeze check passed unchanged before and after (v1.4's witness pixels did
+not move). The first pass missed `tools/ridge-curate.mjs`, `ridge-freeze.mjs`, `ridge-dem-fetch.py` and `ridge-measure.py` — caught
+before batch 23 ran, fixed, freeze re-checked clean.
+
+## Batch 23 (2026-09-24) — v1.4
+Freeze check passed after the renumbering. 96 seeds, 18 culled, 78 offered; medians 62 / 147 / 210, black 4.4 %. Cull: 8 rendering
+faults (two dead flat panels, a hard streak artifact, a smeared/striped face, a hard wall bar, a second streak+smear pair, a flat
+near-lens wall wedge), 9 blank or featureless panels, 1 flat pictogram wedge. This pass, more of the softer "clearing"-register pairs
+that are hazy but still show a ridge were left in rather than culled for mood alone — only faults and genuine blanks came out. Twenty-
+three batches: 2 208 seeds, 1 888 offered.
+
+## Batch 23 selection (2026-09-24)
+**29 of 78 kept (37 %)**, the best rate since batch 18; 0 of 18 culls rescued. `edition/kept-v1.4.json` now holds 94 (batches 19–23).
+The higher rate lines up with the lighter cull above — leaving the soft-but-structured clearing pairs in for him to judge, rather than
+pre-cutting them for mood, put more of what he actually keeps in front of him. Across twenty-three batches: **1 888 offered, 366 kept
+(19 %), 0 rescued of 320 culled.**
