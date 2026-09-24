@@ -531,3 +531,15 @@ three batches: 2 208 seeds, 1 888 offered.
 The higher rate lines up with the lighter cull above — leaving the soft-but-structured clearing pairs in for him to judge, rather than
 pre-cutting them for mood, put more of what he actually keeps in front of him. Across twenty-three batches: **1 888 offered, 366 kept
 (19 %), 0 rescued of 320 culled.**
+
+## Batch 24 (2026-09-24) — v1.4
+96 seeds, 10 culled, 86 offered — the lightest cull since the wall fixes. Cull: 4 rendering faults (a dead flat panel, an unreadable
+near-ground blur, a streak artifact, a radial/starburst artifact), 1 repeating tiger-stripe pattern, 2 flat pictogram wedges, 3 blank
+panels. Kept the batch-23 recalibration: soft-but-structured clearing pairs left in, only faults and genuine blanks cut. Twenty-four
+batches: 2 304 seeds, 1 974 offered.
+
+## Batch 24 selection (2026-09-24)
+**36 of 86 kept (42 %)**, the best rate yet; 0 of 10 culls rescued. `edition/kept-v1.4.json` now holds 130 (batches 19–24). Two batches
+running now at 37 % and 42 %, against 11–29 % before the recalibration — this is no longer noise; culling only what I recognise
+reliably (faults, blanks, pattern) instead of also cutting soft "clearing" pairs for mood puts far more of what he actually keeps in
+front of him. Across twenty-four batches: **1 974 offered, 402 kept (20 %), 0 rescued of 330 culled.**
