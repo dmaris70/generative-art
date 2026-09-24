@@ -1,0 +1,120 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Ridge, encounters — edition</title>
+  <style>
+    :root { --room: #0e0e10; --rule: #2a2a2f; --ink: #deded8; --mute: #8b8b86; --dim: #5d5d5a; --mat: #f7f7f5;
+      --mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace; --sans: ui-sans-serif, system-ui, -apple-system, "Helvetica Neue", sans-serif; }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; background: var(--room); color: var(--ink); font: 13px/1.5 var(--sans); }
+    a { color: inherit; }
+    header { position: sticky; top: 0; z-index: 5; background: rgba(14,14,16,.94); backdrop-filter: blur(6px); border-bottom: 1px solid var(--rule); padding: 12px 20px; display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: center; }
+    header h1 { font-size: 14px; font-weight: 600; margin: 0; }
+    .stat { font: 11.5px var(--mono); color: var(--mute); } .grow { flex: 1; }
+    button, select, input[type=search] { font: inherit; color: var(--ink); background: transparent; border: 1px solid var(--rule); border-radius: 3px; padding: 6px 10px; cursor: pointer; }
+    input[type=search] { cursor: text; width: 14ch; }
+    button:hover { border-color: var(--mute); }
+    button:focus-visible, select:focus-visible, input:focus-visible { outline: 1px solid var(--mat); outline-offset: 2px; }
+    button.primary { background: var(--mat); color: #111; border-color: var(--mat); font-weight: 600; }
+    button[aria-pressed="true"].filter { background: var(--mat); color: #111; border-color: var(--mat); }
+    main { max-width: 1500px; margin: 0 auto; padding: 8px 20px 80px; }
+    .intro { color: var(--mute); max-width: 78ch; margin: 14px 0 14px; }
+    h2 { font-size: 10.5px; font-weight: 600; letter-spacing: .14em; text-transform: uppercase; color: var(--mute); margin: 30px 0 10px; border-top: 1px solid var(--rule); padding-top: 16px; }
+    .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 14px; }
+    .tile { position: relative; padding: 0; border: 2px solid transparent; border-radius: 2px; background: #0b0b0b; text-align: left; display: block; width: 100%; }
+    .tile img { display: block; width: 100%; height: auto; }
+    .tile:hover { border-color: var(--dim); }
+    .tile[aria-pressed="true"] { border-color: var(--mat); }
+    .tile[aria-pressed="true"]::after { content: "in"; position: absolute; top: 8px; right: 8px; font: 600 10.5px var(--mono); letter-spacing: .08em; color: #111; background: var(--mat); padding: 2px 7px; border-radius: 2px; }
+    .cap { display: flex; justify-content: space-between; gap: 8px; font: 10.5px var(--mono); color: var(--mute); padding: 4px 6px 5px; }
+    .cap a { color: var(--mute); }
+    body.kept-only .tile[aria-pressed="false"] { display: none; }
+    body.kept-only .card[data-in="0"] { display: none; }
+    dialog { border: 0; padding: 0; background: #000; max-width: 96vw; max-height: 96vh; } dialog::backdrop { background: rgba(0,0,0,.88); } dialog img { display: block; max-width: 96vw; max-height: 92vh; }
+    @media (max-width: 760px) { .grid { grid-template-columns: 1fr; } header { padding: 10px 16px; } main { padding: 4px 16px 80px; } input[type=search] { width: 10ch; } }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Ridge, encounters — edition</h1>
+    <select id="fRegister" aria-label="Register"></select>
+    <select id="fPlace" aria-label="Place"></select>
+    <select id="fVersion" aria-label="Version"></select>
+    <input type="search" id="fSearch" placeholder="seed / place" aria-label="Search" />
+    <span class="stat" id="stat" role="status" aria-live="polite"></span>
+    <span class="grow"></span>
+    <button id="only" class="filter" aria-pressed="false">Show chosen only</button>
+    <a href="./" style="font-size:12px;color:var(--mute)">the piece</a>
+    <a href="./select.html" style="font-size:12px;color:var(--mute)">batches</a>
+    <button id="copy">Copy selection</button>
+    <button id="save" class="primary">Download selection</button>
+  </header>
+  <main>
+    <p class="intro" id="intro"></p>
+    <h2 id="hAll"></h2><div class="grid" id="pool"></div>
+  </main>
+  <dialog id="zoom"><img alt="" /></dialog>
+
+  <script>
+  (function () {
+    'use strict';
+    const $ = id => document.getElementById(id), el = (t, c, txt) => { const e = document.createElement(t); if (c) e.className = c; if (txt != null) e.textContent = txt; return e; };
+    let data = null, chosen = {};
+    const KEY = 'ridge-edition-selection';
+    const store = () => { try { localStorage.setItem(KEY, JSON.stringify(chosen)); } catch (e) {} stats(); };
+    const link = i => './?seed=' + i.seed;            // by seed: the piece re-derives place, mood, weather, hand
+    const exportObj = () => ({ by: 'Dimitris', saved: new Date().toISOString(), pool: data.kept.length,
+      chosen: data.kept.filter(i => chosen[i.seed]).map(i => ({ seed: i.seed, place: i.place, register: i.register, batch: i.batch, version: i.version })) });
+    window.ridgeEditionSelection = () => exportObj();        // so Claude can read the selection from the Browser pane
+
+    function stats() { const n = Object.values(chosen).filter(Boolean).length; $('stat').textContent = n + ' chosen of ' + data.kept.length + ' in the pool'; }
+    function passesFilters(i) {
+      const reg = $('fRegister').value, pl = $('fPlace').value, ver = $('fVersion').value, q = $('fSearch').value.trim().toLowerCase();
+      if (reg && i.register !== reg) return false;
+      if (pl && i.place !== pl) return false;
+      if (ver && i.version !== ver) return false;
+      if (q && !(String(i.seed).includes(q) || i.place.toLowerCase().includes(q))) return false;
+      return true;
+    }
+    function tile(i) {
+      const wrap = el('div', 'card'), b = el('button', 'tile'), img = el('img'), cap = el('div', 'cap'), a = el('a', null, 'open'), z = el('a', null, 'enlarge');
+      img.src = i.img; img.alt = 'Seed ' + i.seed; img.loading = 'lazy'; b.append(img); b.setAttribute('aria-pressed', !!chosen[i.seed]); b.setAttribute('aria-label', 'Choose seed ' + i.seed);
+      b.onclick = () => { chosen[i.seed] = !chosen[i.seed]; b.setAttribute('aria-pressed', !!chosen[i.seed]); wrap.dataset.in = chosen[i.seed] ? '1' : '0'; store(); };
+      a.href = link(i); a.target = '_blank'; a.rel = 'noopener'; z.href = '#'; z.onclick = e => { e.preventDefault(); $('zoom').firstElementChild.src = i.img; $('zoom').showModal(); };
+      const right = el('span'); right.append(z, ' · ', a);
+      cap.append(el('span', null, i.seed + ' · ' + i.place + ' · ' + i.register + ' · b' + i.batch + ' v' + i.version), right);
+      wrap.dataset.in = chosen[i.seed] ? '1' : '0'; wrap.append(b, cap);
+      return wrap;
+    }
+    function render() {
+      const shown = data.kept.filter(passesFilters);
+      $('intro').textContent = 'The working pool: ' + data.note + ' Click a pair to put it in the edition; click again to take it out. ' +
+        '"Open" paints the seed in the piece. Your choices are kept in this browser; "Download selection" saves them for the project.';
+      $('hAll').textContent = shown.length + ' of ' + data.kept.length + ' shown';
+      $('pool').textContent = ''; shown.forEach(i => $('pool').append(tile(i))); stats();
+    }
+    function fillSelect(id, values, label) {
+      const s = $(id); s.textContent = ''; s.append(el('option', null, label)); values.forEach(v => { const o = el('option', null, v); o.value = v; s.append(o); });
+      s.querySelector('option').value = '';
+    }
+    $('only').onclick = () => { const on = document.body.classList.toggle('kept-only'); $('only').setAttribute('aria-pressed', on); };
+    $('zoom').onclick = () => $('zoom').close();
+    ['fRegister', 'fPlace', 'fVersion'].forEach(id => $(id).onchange = render);
+    $('fSearch').oninput = render;
+    $('save').onclick = () => { const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([JSON.stringify(exportObj(), null, 1)], { type: 'application/json' })); a.download = 'edition-selection.json'; a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 4000); };
+    $('copy').onclick = () => { const t = JSON.stringify(exportObj()); (navigator.clipboard ? navigator.clipboard.writeText(t) : Promise.reject()).then(() => $('copy').textContent = 'Copied', () => prompt('Selection', t)); setTimeout(() => $('copy').textContent = 'Copy selection', 1400); };
+
+    try { chosen = JSON.parse(localStorage.getItem(KEY) || '{}'); } catch (e) { chosen = {}; }
+    fetch('edition/kept-for-now.json?t=' + Date.now()).then(r => r.json()).then(d => {
+      data = d;
+      fillSelect('fRegister', [...new Set(d.kept.map(i => i.register))].sort(), 'Any register');
+      fillSelect('fPlace', [...new Set(d.kept.map(i => i.place))].sort(), 'Any place');
+      fillSelect('fVersion', [...new Set(d.kept.map(i => i.version))], 'Any version');
+      render();
+    }).catch(e => { $('pool').textContent = 'Could not load kept-for-now.json: ' + e.message; });
+  })();
+  </script>
+</body>
+</html>
