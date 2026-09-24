@@ -1,0 +1,21 @@
+# Ramus
+
+*An algorithmic philosophy — the gesture that proliferates; the line that becomes a tree.*
+
+---
+
+## The manifesto
+
+**Ramus** rejects the grid. Where other systems begin with a ruled plane and populate it, this one begins with a single drawn gesture and lets that gesture *govern everything that follows*. The founding act is a stroke — a heading, a speed, a pressure — planted like a seed, and the entire image is what that seed becomes as it ramifies. There is no lattice underneath, no plotted coordinate deciding where a mark may fall; there is only the branching logic of a hand that started a line and could not stop it from splitting. The movement's conviction is that structure need not be imposed from outside — that a sufficiently disciplined gesture carries its own architecture, and that the most sophisticated form is the one grown, not placed. A meticulously crafted algorithm here reads as calligraphy caught mid-proliferation.
+
+The generative core is recursive arborescence. A branch advances as a tapered, curving stroke — thick at its root, thinning toward its tip, its heading wandering under a coherent noise field so the line breathes like ink laid by a real nib. At intervals it divides: two children, sometimes one, sometimes three, each inheriting the parent's direction but diverging by a governed angle, each shorter and finer than the limb that bore it. That child does the same, and its child again, until the gesture exhausts itself in filaments too fine to split. The tree that results was never drawn as a tree — it was drawn as one stroke that kept deciding to become two. This is the painstaking work: tuning divergence, decay, and curl until the ramification feels botanical and inevitable rather than mechanical or fractal-flat, the product of deep computational expertise refined across countless iterations.
+
+Noise is the pressure of the hand. A single coherent field bends every limb, so that neighbouring branches lean and curl in sympathy — the whole arborescence sharing a weather, a directional bias, a gestural intent that persists down through the generations. Tuned high, the limbs writhe and coil; tuned low, they reach in near-straight lines. The mastery is in keeping this waver *below the threshold of scribble*: enough that no two branches are alike, little enough that the growth stays legible as a single continuous will. Randomness governed to the point that it reads as intention — that is the signature of a master-level implementation.
+
+The line carries weight, literally. Because each stroke tapers and each generation thins, the finished field holds a full calligraphic hierarchy — heavy trunks, medium boughs, hairline tips — and reads at every distance: a dense sweep from across the room, a lace of individual gestures up close. Ink pools slightly where a branch divides, the way a real pen hesitates at a decision. The palette is austere by conviction — ink and a single sanguine accent on prepared paper, the accent reserved for a minority of gestures like a correction pass in red pencil — because the drama is entirely in the branching, and colour would only compete with it. No grid, no staff, no ruled ground: nothing but paper and the gesture that filled it.
+
+What Ramus is finally after is the recognition that the whole came from one mark — that this sprawling, ramified field is not a composition of many lines but the *biography of a single one*. Beauty lives in the process: each seed grows a different tree, none of them plottable in advance, every run a fresh proliferation of the same law. The implementation should feel like the residue of long mastery — every decay ratio, every divergence angle, every octave of curl refined until the growth is reliable yet never repeats itself. Plant the gesture. Let it divide. Trust the branching hand.
+
+---
+
+*Embedded seed (for the implementer): a drawn gesture that ramifies — a line proliferating into a branching, root-like structure, the way a single melodic stroke was made to split and sprawl across a preparatory page. Those who know the pages will feel it; everyone else sees a calligraphic arborescence grown from a seed. Keep it beneath the surface — no grid governs this, only the branching of the gesture itself; tapered ink, divergence, curl, a sanguine correction-hand among the black. Name nothing.*
