@@ -603,3 +603,16 @@ never blocking, still un-fixed. What the pool has taught about taste (this sessi
 shouldn't be: there is no cheap way to pre-filter seeds by register before painting, and deal-weight changes were already shown once
 (batches 15–16) to look like a taste signal that was actually a camera bug. The next steps from here are not generation — they are
 curation and edition-building from the 497 already kept.
+
+## Second-pass QC over all 497 (2026-09-24)
+`tools/ridge-kept-sheets.mjs` builds labelled contact sheets from the already-painted pair images referenced by every
+`kept*.json`, no repainting — 42 sheets of 12. Reviewed all 497 against the complete fault taxonomy built across 27 batches
+(dead flat panels, hard geometric shards/streaks, mechanical patterns, terraced/blocky glitches, blank panels, unreadable
+near-ground blur, curtain streaks). This is a QC pass, not a taste pass: it only removes faults Claude did not yet have a
+name for at the time, never a preference judgement among sound pairs — see `RUBRIC.md` on why that second thing is not
+Claude's to do. Found **8**, all from pre-v1.4 batches (1–18, before the wall/streak/blotch fixes existed): 735080 and
+15535548 (hard streak/zigzag artifacts), 911079 (near-empty composition), 2100019 (vertical "curtain" streaks — the exact
+weather effect later removed from the engine as unfixable), 2118472 (dripping white streak, a documented early bug), and
+5080792/10669472/12482854 (the terraced/blocky floating-structure artifact only recognised as a pattern in batch 26).
+Nothing from the v1.4 era (batches 19–27) had a fault slip through — the harness and eye have both improved enough that
+recent batches need no retrospective correction. `edition/kept-for-now.json`: 489 carried forward, 8 set aside with reasons.
