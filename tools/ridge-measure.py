@@ -2,7 +2,7 @@
 """Measure the source diptych for 027's targets.
     python3 tools/ridge-measure.py                      # from the tonal readings kept in 024/025 data.js (grain removed, half-res)
     python3 tools/ridge-measure.py left.webp right.webp # from the source images themselves, if at hand
-Writes projects/027-ridge-encounters/review/source-measurements.json: tone percentiles and black/white shares (what the
+Writes projects/028-ridge-encounters/review/source-measurements.json: tone percentiles and black/white shares (what the
 curation harness compares against), how local contrast falls as the picture lightens (aerial perspective), and the
 movement smear — direction and length — from the anisotropy of the autocorrelation in a grid of patches."""
 import sys, os, json, base64
@@ -42,10 +42,10 @@ def falloff(d):
         if k.sum() > 1000: rows.append(dict(tone=lo + 10, local_contrast=round(float(sd[k].mean()), 1)))
     return rows
 
-L, R = (from_image(sys.argv[1]), from_image(sys.argv[2])) if len(sys.argv) > 2 else (from_data('024-ridge-study-left'), from_data('025-ridge-study-right'))
+L, R = (from_image(sys.argv[1]), from_image(sys.argv[2])) if len(sys.argv) > 2 else (from_data('025-ridge-study-left'), from_data('026-ridge-study-right'))
 both = np.hstack([L, R]); sm = smear(R); strong = [s for s in sm if s['aniso'] > 1.5]
 res = dict(basis='source images' if len(sys.argv) > 2 else '024/025 tonal readings (grain removed)', pair=tones(both), left=tones(L), right=tones(R), contrast_by_tone=falloff(both),
            smear=dict(note='right sheet; x,y in full-res picture pixels; angle 0 = horizontal, 90 = vertical', median_angle=round(float(np.median([s['angle'] for s in strong])), 1) if strong else None,
                       median_length_px=round(float(np.median([s['length_px'] for s in strong])), 1) if strong else None, strongest=sorted(strong, key=lambda s: -s['aniso'])[:6], patches=sm))
-out = os.path.join(ROOT, 'projects', '027-ridge-encounters', 'review', 'source-measurements.json'); json.dump(res, open(out, 'w'), indent=1)
+out = os.path.join(ROOT, 'projects', '028-ridge-encounters', 'review', 'source-measurements.json'); json.dump(res, open(out, 'w'), indent=1)
 print(json.dumps({k: res[k] for k in ('pair', 'left', 'right', 'contrast_by_tone')})); print('smear', res['smear']['median_angle'], 'deg', res['smear']['median_length_px'], 'px', res['smear']['strongest'][:3])

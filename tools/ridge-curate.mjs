@@ -3,10 +3,10 @@
 // recurring failures, and lays out a labelled contact sheet for a human (or a vision model) to read.
 //   node tools/ridge-curate.mjs --each 3 --event 1 --out …/review/<run>     every place, 3 seeds each (one place per row), with a per-place table
 //     (add --places a,b,c to restrict --each to a shortlist)
-//   node tools/ridge-curate.mjs --n 24 --start 1000 [--step 7919] [--place 0] [--regime 0] [--out projects/027-ridge-encounters/review/run]
+//   node tools/ridge-curate.mjs --n 24 --start 1000 [--step 7919] [--place 0] [--regime 0] [--out projects/028-ridge-encounters/review/run]
 // Writes <out>/sheet-*.png (12 pairs each), <out>/pairs/<seed>.png, <out>/report.json. No dependencies.
 import { createRequire } from 'node:module'; import fs from 'node:fs'; import path from 'node:path'; import zlib from 'node:zlib'; import { fileURLToPath } from 'node:url';
-const require = createRequire(import.meta.url), root = path.join(path.dirname(fileURLToPath(import.meta.url)), '..'), P = path.join(root, 'projects/027-ridge-encounters');
+const require = createRequire(import.meta.url), root = path.join(path.dirname(fileURLToPath(import.meta.url)), '..'), P = path.join(root, 'projects/028-ridge-encounters');
 const DB = require(path.join(root, 'assets/drybrush.js')), C = require(path.join(P, 'compose.js')), PARTS = require(path.join(P, 'parts.js'));
 const arg = (k, d) => { const i = process.argv.indexOf('--' + k); return i > 0 ? process.argv[i + 1] : d; };
 const n = +arg('n', 24), start = +arg('start', 1000), step = +arg('step', 7919), place = isNaN(+arg('place', 0)) ? arg('place', 0) : +arg('place', 0), regime = +arg('regime', 0), event = +arg('event', 0), out = path.resolve(arg('out', path.join(P, 'review/run')));

@@ -3,7 +3,7 @@
 surveys — https://registry.opendata.aws/terrain-tiles/). For each place: 3×3 tiles at z=12 (the data is natively ~30 m; z=13 is only
 upsampled) around the point, decoded (h = R·256 + G + B/256 − 32768 m), cropped to 512² centred on it.
 
-    python3 tools/ridge-dem-fetch.py            fetch every place in PLACES → projects/027-ridge-encounters/dem/<slug>.dem + index.json
+    python3 tools/ridge-dem-fetch.py            fetch every place in PLACES → projects/028-ridge-encounters/dem/<slug>.dem + index.json
     python3 tools/ridge-dem-fetch.py --probe    fetch CANDIDATES too, keep nothing, print how much crest each tile holds
 
 File format (.dem): 512×512 Uint16 little-endian decimetres above the window's minimum, each row delta-coded along x (mod 65536),
@@ -63,7 +63,7 @@ PLACES = [  # chosen for ridge character, not for geography
     ('darrans', 'Darran Mountains and Mitre Peak', -44.6300, 167.8600),
     ('arthurs', 'Western Arthurs, Tasmania — crest strung with tarns', -43.1300, 146.2700),
 ]
-Z, OUT = 12, os.path.join(os.path.dirname(__file__), '..', 'projects', '027-ridge-encounters', 'dem')
+Z, OUT = 12, os.path.join(os.path.dirname(__file__), '..', 'projects', '028-ridge-encounters', 'dem')
 URL = 'https://s3.amazonaws.com/elevation-tiles-prod/terrarium/{z}/{x}/{y}.png'
 
 def tile_xy(lat, lon, z):
