@@ -1,10 +1,10 @@
 #!/usr/bin/env node
 // Freeze 027 — record exactly what makes a seed's picture, and check it later.
-//   node tools/ridge-freeze.mjs write   → projects/027-ridge-encounters/FREEZE.json (hashes of engine, painter, parts, every DEM, the place
+//   node tools/ridge-freeze.mjs write   → projects/028-ridge-encounters/FREEZE.json (hashes of engine, painter, parts, every DEM, the place
 //                                          list, the deal weights; plus 8 witness seeds with a checksum of their painted sheets)
 //   node tools/ridge-freeze.mjs check   → re-hashes everything, repaints the witnesses, and says whether the piece still produces the same pixels
 import { createRequire } from 'node:module'; import fs from 'node:fs'; import path from 'node:path'; import crypto from 'node:crypto'; import zlib from 'node:zlib'; import { fileURLToPath } from 'node:url';
-const require = createRequire(import.meta.url), root = path.join(path.dirname(fileURLToPath(import.meta.url)), '..'), P = path.join(root, 'projects/027-ridge-encounters');
+const require = createRequire(import.meta.url), root = path.join(path.dirname(fileURLToPath(import.meta.url)), '..'), P = path.join(root, 'projects/028-ridge-encounters');
 const sha = b => crypto.createHash('sha256').update(b).digest('hex').slice(0, 16);
 const files = ['compose.js', 'parts.js', 'worker.js', 'index.html', '../../assets/drybrush.js'];
 const ix = JSON.parse(fs.readFileSync(path.join(P, 'dem/index.json')));
