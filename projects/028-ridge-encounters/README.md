@@ -543,3 +543,13 @@ batches: 2 304 seeds, 1 974 offered.
 running now at 37 % and 42 %, against 11–29 % before the recalibration — this is no longer noise; culling only what I recognise
 reliably (faults, blanks, pattern) instead of also cutting soft "clearing" pairs for mood puts far more of what he actually keeps in
 front of him. Across twenty-four batches: **1 974 offered, 402 kept (20 %), 0 rescued of 330 culled.**
+
+## Batch 25 (2026-09-24) — v1.4
+96 seeds, **4 culled**, 92 offered — the lightest cull yet. Cull: 2 rendering faults (a dead flat panel, a hard repeating grid
+artifact), 1 unreadable near-ground blur, 1 pair both blank. Held the line from batch 24: near-lens walls and hazy domes with any
+visible ridge stayed in. Twenty-five batches: 2 400 seeds, 2 066 offered.
+
+## Batch 25 selection (2026-09-24)
+**36 of 92 kept (39 %)**, 0 of 4 culls rescued. `edition/kept-v1.4.json` now holds 166 (batches 19–25). Three batches at 37 / 42 / 39 %
+confirms the recalibration held even as the cull itself shrank to 4 % — going lighter did not let weak pairs back in, it just stopped
+removing pairs he wanted to see. Across twenty-five batches: **2 066 offered, 438 kept (21 %), 0 rescued of 334 culled.**
