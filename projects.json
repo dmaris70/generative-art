@@ -3,6 +3,30 @@
   "author": "dmaris70",
   "projects": [
     {
+      "slug": "031-ruled-continuum",
+      "title": "Ruled Continuum — curve stitching",
+      "year": 2026,
+      "tools": ["p5.js"],
+      "description": "Nothing curved is ever drawn: bundles of straight glissandi, anchored to rails moving in opposite phase, pile into caustic sweeps that read as continuous curves though every mark is straight — doubly-ruled surfaces massed into a field. Ink at low opacity on a faint metric ground; the seed fixes every rail forever, so the same integer rebuilds the same architecture to the last filament.",
+      "thumb": ""
+    },
+    {
+      "slug": "030-drawn-spectra",
+      "title": "Drawn Spectra — the gesture as score",
+      "year": 2026,
+      "tools": ["p5.js"],
+      "description": "A time × frequency plane read the way a score is read: freehand arc-bundles — glissandi, trembling held tones, staccato flecks — stand in for sound events, each strand independently hand-tremored so a sweep reads as a breathing band rather than a wire. Black ink on a faint staff-ruled ground; colour, when it enters, maps pitch to hue.",
+      "thumb": ""
+    },
+    {
+      "slug": "029-ramus",
+      "title": "Ramus — branching gesture",
+      "year": 2026,
+      "tools": ["p5.js"],
+      "description": "A single tapered stroke that cannot stop dividing: heading, thickness and a shared noise-field pass down through each generation as the line ramifies into a calligraphic arborescence, thick at the root and hairline at the tips. Ink on paper, with a sanguine accent reserved for a minority of branches; no grid — the whole tree is the biography of one gesture.",
+      "thumb": ""
+    },
+    {
       "slug": "016-load-paths",
       "title": "Load Paths — beyond the founder",
       "year": 2026,
