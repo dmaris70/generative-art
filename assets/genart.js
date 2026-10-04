@@ -227,8 +227,8 @@
       const folder = gui.addFolder('parameters');
       for (const key in defs) {
         const d = defs[key];
-        folder
-          .add(values, key, d.min, d.max, d.step)
+        // `options` ({label: value}) renders a dropdown instead of a slider
+        (d.options ? folder.add(values, key, d.options) : folder.add(values, key, d.min, d.max, d.step))
           .name(d.label || key)
           .onChange(function () {
             applyReset();
