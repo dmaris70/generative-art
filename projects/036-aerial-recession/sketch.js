@@ -22,7 +22,7 @@
 //
 // The canvas paints itself back-to-front over many frames (sky → far ranges → mist →
 // ground → river → trees → repoussoir → grain), the order a painter would work in.
-// Keys: R new seed · S save PNG.
+// Keys: R new scene · P new paint seed (same scene, new hand) · S save PNG.
 
 const REF_W = 1500;
 const REF_H = 1000;
@@ -67,29 +67,75 @@ let tasks = [];
 let taskIdx = 0;
 let R, U; // field rect on screen, and screen px per REF unit
 let brushK = 1; // brush scale currently applied (scaleBrushes compounds)
+let UNDER = null; // cached underpainting {key, W, H, px, img} for oil repaints
+const SCENE_PARAMS = ['mood', 'sun', 'haze', 'ranges', 'mist', 'clouds', 'meander', 'trees', 'frame'];
+const UI = { status: '' };
+let PANEL_W = 0; // space kept clear for the control panel, fixed at each reset
 
 function setup() {
   createCanvas(windowWidth, windowHeight, WEBGL);
   pixelDensity(Math.min(2, window.devicePixelRatio || 1));
 
+  const SC = 'Scene';
+  const ST = 'Oil · strokes';
+  const BR = 'Oil · bristles';
+  const DI = 'Oil · direction';
+  const IM = 'Oil · impasto & light';
+  const CO = 'Oil · colour & texture';
   G = GenArt.create({
     title: 'Aerial Recession',
+    resetOnFinish: true, // a full repaint is heavy: sliders apply on release
+    closedGroups: [BR, DI, IM, CO],
     params: {
-      medium: { value: 1, options: { watercolour: 0, oil: 1 }, label: 'medium' },
-      mood: { value: 0, options: { 'golden hour': 0, 'after the storm': 1, 'dawn mist': 2 }, label: 'mood' },
-      sun: { value: 0.35, min: 0, max: 1, step: 0.01, label: 'sun height' },
-      haze: { value: 1.0, min: 0.3, max: 2.2, step: 0.05, label: 'atmosphere' },
-      ranges: { value: 5, min: 3, max: 7, step: 1, label: 'mountain ranges' },
-      mist: { value: 0.6, min: 0, max: 1, step: 0.05, label: 'mist' },
-      clouds: { value: 0.55, min: 0, max: 1, step: 0.05, label: 'clouds' },
-      meander: { value: 1.0, min: 0, max: 2, step: 0.05, label: 'river meander' },
-      trees: { value: 0.6, min: 0, max: 1, step: 0.05, label: 'trees' },
-      frame: { value: 1.0, min: 0, max: 1, step: 0.05, label: 'repoussoir' },
-      grain: { value: 0.5, min: 0, max: 1.2, step: 0.05, label: 'paper / canvas grain' },
-      impasto: { value: 1.0, min: 0, max: 2, step: 0.05, label: 'oil: impasto' },
+      medium: { value: 1, options: { watercolour: 0, oil: 1 }, label: 'medium', group: SC },
+      mood: { value: 0, options: { 'golden hour': 0, 'after the storm': 1, 'dawn mist': 2 }, label: 'mood', group: SC },
+      sun: { value: 0.35, min: 0, max: 1, step: 0.01, label: 'sun height', group: SC },
+      haze: { value: 1.0, min: 0.3, max: 2.2, step: 0.05, label: 'atmosphere', group: SC },
+      ranges: { value: 5, min: 3, max: 7, step: 1, label: 'mountain ranges', group: SC },
+      mist: { value: 0.6, min: 0, max: 1, step: 0.05, label: 'mist', group: SC },
+      clouds: { value: 0.55, min: 0, max: 1, step: 0.05, label: 'clouds', group: SC },
+      meander: { value: 1.0, min: 0, max: 2, step: 0.05, label: 'river meander', group: SC },
+      trees: { value: 0.6, min: 0, max: 1, step: 0.05, label: 'trees', group: SC },
+      frame: { value: 1.0, min: 0, max: 1, step: 0.05, label: 'repoussoir', group: SC },
+      grain: { value: 0.5, min: 0, max: 1.2, step: 0.05, label: 'paper / canvas grain', group: SC },
+
+      paintSeed: { value: 0, step: 1, label: 'paint seed (0 = scene)', group: 'Seeds' },
+
+      strokeSize: { value: 15, min: 5, max: 34, step: 0.5, label: 'stroke width', group: ST },
+      strokeLength: { value: 3.1, min: 1.2, max: 7, step: 0.1, label: 'length ÷ width', group: ST },
+      coverage: { value: 1, min: 0.3, max: 2.5, step: 0.05, label: 'coverage', group: ST },
+      layers: { value: 3, min: 1, max: 3, step: 1, label: 'layers (coarse → edges)', group: ST },
+      edgeThreshold: { value: 16, min: 4, max: 48, step: 1, label: 'edge threshold', group: ST },
+      bend: { value: 0.2, min: 0, max: 0.6, step: 0.01, label: 'curvature', group: ST },
+      angleJitter: { value: 0.1, min: 0, max: 0.6, step: 0.01, label: 'angle jitter', group: ST },
+      colourJitter: { value: 0.05, min: 0, max: 0.25, step: 0.005, label: 'value jitter', group: ST },
+      bodyOpacity: { value: 0.95, min: 0.3, max: 1, step: 0.01, label: 'body opacity', group: ST },
+
+      bristles: { value: 9, min: 2, max: 16, step: 1, label: 'max bristles', group: BR },
+      bristleOpacity: { value: 1, min: 0, max: 1.5, step: 0.05, label: 'bristle opacity', group: BR },
+      dryBrush: { value: 0.3, min: 0, max: 0.85, step: 0.01, label: 'dry-brush breaks', group: BR },
+      wetBlend: { value: 1, min: 0, max: 1, step: 0.05, label: 'two-colour load', group: BR },
+
+      vortex: { value: 1, min: 0, max: 1, step: 0.05, label: 'sun vortex', group: DI },
+      vortexStretch: { value: 1.35, min: 1, max: 2.5, step: 0.05, label: 'vortex stretch', group: DI },
+      fieldSweep: { value: 2.2, min: 0.8, max: 5, step: 0.1, label: 'field sweep', group: DI },
+      facetSize: { value: 1, min: 0.4, max: 2, step: 0.05, label: 'mountain facet size', group: DI },
+      facetMix: { value: 0.5, min: 0, max: 1, step: 0.05, label: 'facets on fall line', group: DI },
+
+      impasto: { value: 1.0, min: 0, max: 2, step: 0.05, label: 'impasto', group: IM },
+      lightAngle: { value: -123, min: -180, max: 180, step: 1, label: 'room light angle°', group: IM },
+      sunImpasto: { value: 1, min: 0, max: 2, step: 0.05, label: 'sun impasto', group: IM },
+      haloRings: { value: 5, min: 2, max: 8, step: 1, label: 'halo tonal rings', group: IM },
+      silhouette: { value: 0.4, min: 0, max: 0.9, step: 0.05, label: 'silhouette darkness', group: IM },
+
+      brokenColour: { value: 2600, min: 0, max: 8000, step: 100, label: 'broken-colour strokes', group: CO },
+      accentStrength: { value: 0.38, min: 0, max: 0.8, step: 0.01, label: 'accent strength', group: CO },
+      scumble: { value: 1500, min: 0, max: 5000, step: 100, label: 'scumble strokes', group: CO },
+      lostEdges: { value: 1, min: 0, max: 2, step: 0.05, label: 'lost-edge band', group: CO },
     },
     onReset: reset,
   });
+  buildControls();
 
   // p5.brush binds to the WEBGL sketch once the p5 constructor has returned, so the
   // first brush-dependent frame waits one tick (same pattern as 032).
@@ -105,7 +151,15 @@ function reset() {
   randomSeed(G.seed);
   noiseSeed(G.seed);
   S = buildScene();
-  tasks = buildTasks(S);
+  OP = null;
+  // Keep the painting clear of the panel (measured once per painting, so collapsing the
+  // panel mid-painting can't shift strokes already laid).
+  const el = G.gui && G.gui.domElement;
+  PANEL_W = el && el.offsetWidth && windowWidth > 700 ? el.offsetWidth + 12 : 0;
+  // Only stroke settings changed (same scene, same canvas)? Repaint over the cached
+  // underpainting instead of painting it again.
+  const cached = G.param('medium') === 1 && UNDER && UNDER.key === sceneKey();
+  tasks = cached ? buildRepaintTasks(S) : buildTasks(S);
   taskIdx = 0;
   window.DONE = false;
   loop();
@@ -114,7 +168,7 @@ function reset() {
 function draw() {
   if (!S) return;
   translate(-width / 2, -height / 2);
-  R = fieldRect(width, height);
+  R = fieldRect(width - PANEL_W, height);
   U = R.w / REF_W;
   const t0 = performance.now();
   // Passes may append passes (the oil engine queues its strokes once it has read the
@@ -134,6 +188,9 @@ function draw() {
   if (taskIdx >= last()) {
     noLoop();
     window.DONE = true;
+    UI.status = 'done';
+  } else {
+    UI.status = Math.round((100 * taskIdx) / tasks.length) + '% · ' + (OP && UNDER ? 'oil strokes' : 'underpainting');
   }
 }
 
@@ -584,6 +641,98 @@ function buildGrain(s) {
 // ---------------------------------------------------------------------------------
 // Painting order. Each entry is one small unit of work; draw() runs them under a budget.
 // ---------------------------------------------------------------------------------
+
+// Everything that shapes the underpainting, plus the canvas it was read from.
+function sceneKey() {
+  const p = SCENE_PARAMS.map((k) => G.param(k));
+  return JSON.stringify([G.seed, p, width, height, pixelDensity(), PANEL_W]);
+}
+
+// Oil repaint over the cached underpainting: restore it, then the oil passes.
+function buildRepaintTasks(s) {
+  OP = null;
+  return [
+    () => {
+      background(...matColour(s));
+      if (!UNDER.img) {
+        UNDER.img = createImage(UNDER.W, UNDER.H);
+        UNDER.img.loadPixels();
+        UNDER.img.pixels.set(UNDER.px);
+        UNDER.img.updatePixels();
+      }
+      image(UNDER.img, 0, 0, width, height);
+    },
+    () => oilBegin(s),
+    () => paintCanvasWeave(s),
+    () => paintVignette(s),
+    () => paintMat(s),
+  ];
+}
+
+// Panel extras: progress, seed stepping for scene and paint, presets.
+function buildControls() {
+  const gui = G.gui;
+  if (!gui) return; // contact-sheet tiles have no panel
+  const st = gui.add(UI, 'status').name('painting').listen().disable();
+  // sit the readout just under the seed controls rather than at the foot of the panel
+  const kids = gui.$children;
+  kids.insertBefore(st.domElement, kids.children[2] || null);
+  const seeds = gui.folders.find((f) => f._title === 'Seeds') || gui.addFolder('Seeds');
+  const paint = () => G.param('paintSeed');
+  const act = {
+    scenePrev: () => G.setSeed(Math.max(0, G.seed - 1)),
+    sceneNext: () => G.setSeed(G.seed + 1),
+    sceneRandom: () => G.randomize(),
+    paintPrev: () => G.setParams({ paintSeed: Math.max(1, (paint() || 2) - 1) }),
+    paintNext: () => G.setParams({ paintSeed: (paint() || 0) + 1 }),
+    paintRandom: () => G.setParams({ paintSeed: 1 + Math.floor(Math.random() * 999999) }),
+    save: () => {
+      const blob = new Blob([JSON.stringify({ piece: '036-aerial-recession', seed: G.seed, params: G.params }, null, 2)], { type: 'application/json' });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = 'aerial-recession-' + G.seed + '.json';
+      a.click();
+      setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+    },
+    load: () => {
+      const inp = document.createElement('input');
+      inp.type = 'file';
+      inp.accept = 'application/json,.json';
+      inp.onchange = () => {
+        const f = inp.files && inp.files[0];
+        if (!f) return;
+        f.text().then((t) => {
+          try {
+            const j = JSON.parse(t);
+            if (j.params) G.setParams(j.params);
+            if (j.seed !== undefined) G.setSeed(Number(j.seed) >>> 0);
+          } catch (e) {
+            console.warn('aerial-recession: preset not readable', e && e.message);
+          }
+        });
+      };
+      inp.click();
+    },
+    resetStrokes: () => {
+      const d = G.defaults();
+      const out = {};
+      for (const k in d) if (SCENE_PARAMS.indexOf(k) < 0 && k !== 'medium' && k !== 'grain' && k !== 'paintSeed') out[k] = d[k];
+      G.setParams(out);
+    },
+  };
+  seeds.add(act, 'scenePrev').name('◀ scene seed');
+  seeds.add(act, 'sceneNext').name('▶ scene seed');
+  seeds.add(act, 'sceneRandom').name('🎲 new scene');
+  seeds.add(act, 'paintPrev').name('◀ paint seed');
+  seeds.add(act, 'paintNext').name('▶ paint seed');
+  seeds.add(act, 'paintRandom').name('🎲 new hand (P)');
+  const presets = gui.addFolder('Presets');
+  presets.add(act, 'save').name('Save preset (.json)');
+  presets.add(act, 'load').name('Load preset…');
+  presets.add(act, 'resetStrokes').name('Reset stroke settings');
+  presets.close();
+  window.AR_ACTIONS = act; // keyboard + inspection
+}
 
 function buildTasks(s) {
   const T = [];
@@ -1427,9 +1576,42 @@ function paintRim(s) {
 
 const bankAt = (rp, x) => rp.bank[Math.max(0, Math.min(rp.bank.length - 1, Math.round((x + 20) / 6)))][1];
 
-const OIL_W = 15; // coarse stroke width in REF units
-const OIL_L = 3.1; // stroke length / width
-const ROOM_LIGHT = [-0.55, -0.835]; // the light in the room the canvas hangs in (upper left)
+// The oil engine's settings, frozen from the panel when a painting starts (oilParams),
+// so a slider moved mid-painting can't change strokes already queued.
+let OP = null;
+
+function oilParams() {
+  const P = (k) => G.param(k);
+  const la = (P('lightAngle') * Math.PI) / 180;
+  return {
+    w: P('strokeSize'), // coarse stroke width, REF units
+    l: P('strokeLength'), // stroke length ÷ width
+    coverage: P('coverage'),
+    layers: P('layers'),
+    edge: P('edgeThreshold'),
+    bend: P('bend'),
+    jitterA: P('angleJitter'),
+    jitterC: P('colourJitter'),
+    body: P('bodyOpacity'),
+    bristles: P('bristles'),
+    bristleA: P('bristleOpacity'),
+    dry: P('dryBrush'),
+    wet: P('wetBlend'),
+    vortex: P('vortex'),
+    stretch: P('vortexStretch'),
+    sweep: P('fieldSweep'),
+    facet: P('facetSize'),
+    facetMix: P('facetMix'),
+    light: [Math.cos(la), Math.sin(la)], // the light in the room the canvas hangs in
+    sunImpasto: P('sunImpasto'),
+    rings: P('haloRings'),
+    silhouette: P('silhouette'),
+    broken: P('brokenColour'),
+    accent: P('accentStrength'),
+    scumble: P('scumble'),
+    lost: P('lostEdges'),
+  };
+}
 const ACCENTS = {
   violet: [118, 92, 150],
   ochre: [196, 156, 74],
@@ -1439,11 +1621,20 @@ const ACCENTS = {
 
 // Read the finished underpainting back into memory and queue the oil passes.
 function oilBegin(s) {
-  loadPixels();
+  OP = oilParams();
+  // The paint seed: the same scene, a different hand. 0 derives it from the scene seed.
+  const ps = G.param('paintSeed');
+  randomSeed(ps > 0 ? ps : (G.seed ^ 0x5bd1e995) >>> 0);
   const d = pixelDensity();
   const W = Math.round(width * d);
   const H = Math.round(height * d);
-  const px = new Uint8ClampedArray(pixels);
+  // The underpainting is read once per scene and kept: changing only stroke settings
+  // repaints over the cached copy instead of re-running the whole watercolour pipeline.
+  if (!UNDER || UNDER.key !== sceneKey()) {
+    loadPixels();
+    UNDER = { key: sceneKey(), W, H, px: new Uint8ClampedArray(pixels) };
+  }
+  const px = UNDER.px;
   const lum = (c) => 0.3 * c[0] + 0.59 * c[1] + 0.11 * c[2];
   // 3×3 box sample at a REF point, so one stray pencil grain doesn't set a stroke's colour.
   const under = (x, y) => {
@@ -1473,9 +1664,9 @@ function oilBegin(s) {
     [], // objects
     [], // the sun and its halo
   ];
-  oilLayer(s, O, groups[0], 1.0, 1.2, false);
-  oilLayer(s, O, groups[0], 0.55, 0.8, false);
-  oilLayer(s, O, groups[0], 0.24, 1.0, true);
+  oilLayer(s, O, groups[0], 1.0, 1.2 * OP.coverage, false);
+  if (OP.layers >= 2) oilLayer(s, O, groups[0], 0.55, 0.8 * OP.coverage, false);
+  if (OP.layers >= 3) oilLayer(s, O, groups[0], 0.24, 1.0 * OP.coverage, true);
   oilLostEdges(s, O, groups[1]);
   oilBrokenColour(s, O, groups[1]);
   oilScumble(s, O, groups[1]);
@@ -1552,22 +1743,28 @@ function buildOilField(s) {
           // far: soft, level, small — it should melt, not be carved
           return { a: (noise(x * 0.01, y * 0.01) - 0.5) * 0.25, k: 0.32 + 0.3 * (1 - L.air), kind: 'far' };
         }
-        const k = 0.22 + 0.4 * (1 - L.air); // small facets: crags, not boulders
+        const k = (0.22 + 0.4 * (1 - L.air)) * OP.facet; // small facets: crags, not boulders
         const dir = slope >= 0 ? 1 : -1;
         const fall = Math.atan2(Math.abs(slope) * 1.15 + 0.25, dir);
         const crest = Math.atan(slope);
         // craggy facets: the fall line, a crossing facet, or the crest — chosen per stroke
         const pick = noise(x * 0.09, y * 0.09, i * 3.3);
-        const a = pick < 0.5 ? fall : pick < 0.78 ? Math.PI - fall + 0.25 * dir : crest;
+        const a = pick < OP.facetMix ? fall : pick < OP.facetMix + (1 - OP.facetMix) * 0.56 ? Math.PI - fall + 0.25 * dir : crest;
         return { a, k, kind: 'range' };
       }
     }
     // sky: the vortex around the sun
-    const ra = 1.35; // horizontal stretch of the vortex
+    const ra = OP.stretch; // horizontal stretch of the vortex
     const dx = (x - s.sunX) / ra, dy = y - s.sunY;
     const r = Math.hypot(dx, dy);
     const th = Math.atan2(dy, dx);
-    const a = Math.atan2(Math.cos(th), -ra * Math.sin(th));
+    // tangent of the vortex, blended toward level by (1 − vortex); strokes are undirected,
+    // so the level vector takes the tangent's own left/right sense
+    let tx = -ra * Math.sin(th), ty = Math.cos(th);
+    const tl = Math.hypot(tx, ty) || 1;
+    tx /= tl; ty /= tl;
+    const lx = tx >= 0 ? 1 : -1;
+    const a = Math.atan2(ty * OP.vortex, tx * OP.vortex + lx * (1 - OP.vortex));
     const kSky = 0.42 + 0.85 * clamp01(r / 650);
     for (const c of s.clouds) {
       if (Math.abs(x - c.cx) < c.w * 0.5 && y > c.cy - c.h * 1.2 && y < c.cy + c.h * 0.4) {
@@ -1600,7 +1797,7 @@ function oilRelief(f) {
 // the underpainting has an edge, and laid along it — except on the far ranges, whose
 // edges are meant to be lost.
 function oilLayer(s, O, out, scale, cover, edges) {
-  const w0 = OIL_W * scale;
+  const w0 = OP.w * scale;
   const g = w0 * 0.8;
   for (let gy = -g; gy < REF_H + g; gy += g) {
     for (let gx = -g; gx < REF_W + g; gx += g) {
@@ -1613,18 +1810,18 @@ function oilLayer(s, O, out, scale, cover, edges) {
         const h = 4;
         const gxv = O.lum(O.under(x + h, y)) - O.lum(O.under(x - h, y));
         const gyv = O.lum(O.under(x, y + h)) - O.lum(O.under(x, y - h));
-        if (Math.hypot(gxv, gyv) < 16) continue; // no edge here: leave the coarser passes
+        if (Math.hypot(gxv, gyv) < OP.edge) continue; // no edge here: leave the coarser passes
         a = Math.atan2(gyv, gxv) + Math.PI / 2; // along the edge
       }
       const w = w0 * f.k;
-      const ratio = f.kind === 'ground' ? OIL_L * 2.2 : f.kind === 'leaf' ? OIL_L * 0.5 : f.kind === 'range' ? OIL_L * 0.75 : f.kind === 'water' ? OIL_L * 1.3 : OIL_L;
+      const ratio = f.kind === 'ground' ? OP.l * OP.sweep : f.kind === 'leaf' ? OP.l * 0.5 : f.kind === 'range' ? OP.l * 0.75 : f.kind === 'water' ? OP.l * 1.3 : OP.l;
       const len = w * ratio;
       const p = (cover * g * g) / (w * len);
       const n = Math.floor(p) + (random() < p - Math.floor(p) ? 1 : 0);
       for (let i = 0; i < n; i++) {
         const sx = x + (i ? random(-0.5, 0.5) * g : 0);
         const sy = y + (i ? random(-0.5, 0.5) * g : 0);
-        const jitterA = f.kind === 'range' ? random(-0.06, 0.06) : random(-0.1, 0.1);
+        const jitterA = random(-1, 1) * OP.jitterA * (f.kind === 'range' ? 0.6 : 1);
         out.push(makeOilStroke(O, sx, sy, a + jitterA, len * random(0.75, 1.2), w * random(0.85, 1.1), {
           relief: oilRelief(f),
           angular: f.kind === 'range',
@@ -1641,7 +1838,7 @@ function makeOilStroke(O, x, y, a, len, w, opts) {
   opts = opts || {};
   const ca = Math.cos(a), sa = Math.sin(a);
   const x0 = x - (ca * len) / 2, y0 = y - (sa * len) / 2;
-  const bend = opts.angular ? 0 : random(-0.2, 0.2) * len;
+  const bend = opts.angular ? 0 : random(-1, 1) * OP.bend * len;
   const P = [];
   const pr = opts.angular ? [1, 1, 1, 0.95] : [0.85, 1.1, 1.0, 0.7];
   for (let k = 0; k <= 3; k++) {
@@ -1653,8 +1850,8 @@ function makeOilStroke(O, x, y, a, len, w, opts) {
     const v = 1 + random(-amt, amt);
     return [c[0] * v * (1 + random(-0.03, 0.03)), c[1] * v * (1 + random(-0.03, 0.03)), c[2] * v * (1 + random(-0.03, 0.03))];
   };
-  const body = opts.color || jitter(O.under(x, y), 0.05);
-  const far = opts.color2 || jitter(O.under(x + ca * len * 0.5, y + sa * len * 0.5), 0.09);
+  const body = opts.color || jitter(O.under(x, y), OP.jitterC);
+  const far = opts.color2 || jitter(O.under(x + ca * len * 0.5, y + sa * len * 0.5), OP.jitterC * 1.8);
   return {
     P, w, body, far,
     relief: (opts.relief || 0) * G.param('impasto'),
@@ -1711,21 +1908,21 @@ function oilStroke(st) {
   if (rel > 0.02 && !st.scumble) {
     // the ridge's shadow, cast away from the room light
     const off = st.w * 0.16 * rel;
-    strip(-ROOM_LIGHT[0] * off, -ROOM_LIGHT[1] * off, shadeRGB(st.body, 0.5), 60 + 120 * Math.min(1, rel), 1);
+    strip(-OP.light[0] * off, -OP.light[1] * off, shadeRGB(st.body, 0.5), 60 + 120 * Math.min(1, rel), 1);
   }
-  if (!st.scumble) strip(0, 0, st.body, st.crisp ? 255 : st.soft ? 205 : 242, 1);
+  if (!st.scumble) strip(0, 0, st.body, st.crisp ? 255 : 255 * OP.body * (st.soft ? 0.85 : 1), 1);
 
   // bristles
   const wpx = st.w * U;
-  const nb = Math.max(3, Math.min(9, Math.round(wpx / 1.6)));
-  const dry = st.scumble ? 0.55 : 0.3;
-  const aLo = st.scumble ? 70 : st.soft ? 40 : 120;
-  const aHi = st.scumble ? 160 : st.soft ? 90 : 215;
+  const nb = Math.max(2, Math.min(OP.bristles, Math.round(wpx / 1.6)));
+  const dry = st.scumble ? Math.min(0.9, OP.dry + 0.25) : OP.dry;
+  const aLo = (st.scumble ? 70 : st.soft ? 40 : 120) * OP.bristleA;
+  const aHi = Math.min(255, (st.scumble ? 160 : st.soft ? 90 : 215) * OP.bristleA);
   strokeWeight(Math.max(0.5, (wpx / nb) * (st.scumble ? 0.55 : 0.7)));
   beginShape(LINES);
   for (let b = 0; b < nb; b++) {
-    const off = -0.42 + (0.84 * b) / (nb - 1);
-    const m = random(0.15, 1);
+    const off = -0.42 + (0.84 * b) / Math.max(1, nb - 1);
+    const m = random(0.15, 1) * OP.wet;
     const v = 1 + random(-0.1, 0.1);
     const col = mixRGB(st.body, st.far, m);
     stroke(col[0] * v, col[1] * v, col[2] * v, random(aLo, aHi));
@@ -1747,7 +1944,7 @@ function oilStroke(st) {
     stroke(spec[0], spec[1], spec[2], 90 + 150 * Math.min(1, rel));
     strokeWeight(Math.max(0.5, wpx * 0.09));
     for (let i = 1; i < N - 2; i++) {
-      const facing = normals[i][0] * ROOM_LIGHT[0] + normals[i][1] * ROOM_LIGHT[1] > 0 ? 1 : -1;
+      const facing = normals[i][0] * OP.light[0] + normals[i][1] * OP.light[1] > 0 ? 1 : -1;
       const a = C[i], c = C[i + 1];
       const na = normals[i], nc = normals[i + 1];
       vertex(X(a[0] + na[0] * a[2] * 0.72 * facing), Y(a[1] + na[1] * a[2] * 0.72 * facing));
@@ -1763,7 +1960,9 @@ function oilStroke(st) {
 function oilLostEdges(s, O, out) {
   for (const L of s.ranges) {
     if (L.air <= 0.55) continue;
-    for (let q = 2; q < L.ridge.length - 2; q += 3) {
+    if (OP.lost <= 0.01) return;
+    const step = Math.max(1, Math.round(3 / OP.lost));
+    for (let q = 2; q < L.ridge.length - 2; q += step) {
       const [x, y] = L.ridge[q];
       const slope = (L.ridge[q + 2][1] - L.ridge[q - 2][1]) / 16;
       const above = O.under(x, y - 10);
@@ -1782,7 +1981,7 @@ function oilLostEdges(s, O, out) {
 // the mountains — violet in the shadows, ochre and dull orange in the lights, olive in
 // between — each only half-mixed with what is beneath, so it vibrates rather than shouts.
 function oilBrokenColour(s, O, out) {
-  for (let i = 0; i < 2600; i++) {
+  for (let i = 0; i < OP.broken; i++) {
     const x = random(0, REF_W);
     const y = random(s.HY - 260, REF_H);
     const f = O.field(x, y);
@@ -1790,8 +1989,8 @@ function oilBrokenColour(s, O, out) {
     const base = O.under(x, y);
     const l = O.lum(base);
     const acc = l < 70 ? ACCENTS.violet : l < 110 ? (random() < 0.5 ? ACCENTS.violet : ACCENTS.olive) : random() < 0.55 ? ACCENTS.ochre : ACCENTS.orange;
-    const col = mixRGB(base, acc, random(0.28, 0.48));
-    const w = OIL_W * 0.17 * f.k * random(0.8, 1.3);
+    const col = mixRGB(base, acc, clamp01(OP.accent + random(-0.1, 0.1)));
+    const w = OP.w * 0.17 * f.k * random(0.8, 1.3);
     const ratio = f.kind === 'ground' ? 3.2 : 2.2;
     out.push(makeOilStroke(O, x, y, f.a + random(-0.12, 0.12), w * ratio, w, { color: col, color2: mixRGB(col, base, 0.3), relief: 0.12, angular: f.kind === 'range' }));
   }
@@ -1801,7 +2000,7 @@ function oilBrokenColour(s, O, out) {
 // sun's halo — bristles only, broken often, leaving the darker layer showing through.
 function oilScumble(s, O, out) {
   const C = s.C;
-  for (let i = 0; i < 1500; i++) {
+  for (let i = 0; i < OP.scumble; i++) {
     const x = random(0, REF_W);
     const y = random(0, REF_H);
     const f = O.field(x, y);
@@ -1812,8 +2011,8 @@ function oilScumble(s, O, out) {
     if (random() > (f.kind === 'ground' ? 0.8 : 0.9)) continue;
     const base = O.under(x, y);
     const col = mixRGB(shadeRGB(base, 1.1), C.glow, lift);
-    const w = OIL_W * 0.45 * f.k * random(0.8, 1.3);
-    out.push(makeOilStroke(O, x, y, f.a + random(-0.08, 0.08), w * OIL_L * 1.6, w, { color: col, color2: mixRGB(col, C.glow, 0.25), scumble: true }));
+    const w = OP.w * 0.45 * f.k * random(0.8, 1.3);
+    out.push(makeOilStroke(O, x, y, f.a + random(-0.08, 0.08), w * OP.l * 1.6, w, { color: col, color2: mixRGB(col, C.glow, 0.25), scumble: true }));
   }
 }
 
@@ -1822,7 +2021,7 @@ function oilScumble(s, O, out) {
 function oilObjects(s, O, out) {
   const C = s.C;
   const rp = s.repoussoir;
-  const dark = mixRGB(C.silhouette, [0, 0, 0], 0.4); // pushed toward black
+  const dark = mixRGB(C.silhouette, [0, 0, 0], OP.silhouette); // pushed toward black
 
   // midground trees, far → near
   for (const tr of s.trees) {
@@ -1895,13 +2094,28 @@ function oilSun(s, O, out) {
   const C = s.C;
   const white = [255, 252, 245];
   const sky = O.under(s.sunX + 260, s.sunY - 60);
-  const rings = [
-    { r0: 0, r1: 12, col: white, rel: 1.0, w: [6, 9], n: 26 },
-    { r0: 12, r1: 30, col: mixRGB(white, C.sun, 0.5), rel: 0.85, w: [5, 8], n: 34 },
-    { r0: 30, r1: 62, col: mixRGB(C.sun, C.glow, 0.5), rel: 0.6, w: [5, 8], n: 50 },
-    { r0: 62, r1: 110, col: mixRGB(C.glow, sky, 0.3), rel: 0.4, w: [5, 9], n: 70 },
-    { r0: 110, r1: 170, col: mixRGB(C.glow, sky, 0.6), rel: 0.22, w: [6, 10], n: 90 },
-  ];
+  // N discrete tonal rings from the near-white core out to the sky: each ring a step down
+  // in value and in paint thickness. Radii grow as (k/N)^1.6, so the steps are tight near
+  // the core and wide at the rim.
+  const chain = [white, mixRGB(white, C.sun, 0.5), mixRGB(C.sun, C.glow, 0.5), mixRGB(C.glow, sky, 0.3), mixRGB(C.glow, sky, 0.6)];
+  const along = (t) => {
+    const u = t * (chain.length - 1);
+    const i = Math.min(chain.length - 2, Math.floor(u));
+    return mixRGB(chain[i], chain[i + 1], u - i);
+  };
+  const N = OP.rings;
+  const rings = [];
+  for (let k = 0; k < N; k++) {
+    const t = N === 1 ? 0 : k / (N - 1);
+    rings.push({
+      r0: 170 * Math.pow(k / N, 1.6),
+      r1: 170 * Math.pow((k + 1) / N, 1.6),
+      col: along(t),
+      rel: (1 - 0.78 * t) * OP.sunImpasto,
+      w: k === 0 ? [6, 9] : [5 + t, 8 + 2 * t],
+      n: Math.round((26 + 64 * t) * (5 / N) * 1.0),
+    });
+  }
   // outer rings first, so each brighter ring sits on top of the one outside it
   for (let k = rings.length - 1; k >= 0; k--) {
     const g = rings[k];
@@ -1927,7 +2141,7 @@ function oilSilhouette(s) {
   const C = s.C;
   const rp = s.repoussoir;
   if (!rp.segs.length) return;
-  const dark = mixRGB(C.silhouette, [0, 0, 0], 0.4);
+  const dark = mixRGB(C.silhouette, [0, 0, 0], OP.silhouette);
   noStroke();
   for (const seg of rp.segs) {
     if (seg.pts[0][2] < 2) continue;
@@ -2057,6 +2271,7 @@ function fieldRect(W, H) {
 
 function keyPressed() {
   if (key === 'r' || key === 'R') G.randomize();
+  if ((key === 'p' || key === 'P') && window.AR_ACTIONS) window.AR_ACTIONS.paintRandom();
   if (key === 's' || key === 'S') saveCanvas('aerial-recession-' + G.seed, 'png');
 }
 

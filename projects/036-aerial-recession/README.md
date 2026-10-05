@@ -106,27 +106,68 @@ blending.
 | lost & found edges | `paintRangeEdge`, `paintRiver` (banks), `paintMist` | ink only where `aerial < 0.55` and a noise gate is open; banks inked only for `z < 14` |
 | colour harmony | `MOODS` | five-to-eight-colour palette per mood; all other colours are mixes of these |
 
-## Parameters
+## Interface
 
-| param | effect |
-|---|---|
-| medium | 1 oil (default) · 0 watercolour |
-| mood | palette and cloud / ray weighting (0 golden hour · 1 after the storm · 2 dawn mist) |
-| sun height | sun elevation; lower = warmer glow, longer shadows, stronger sunward glaze |
-| atmosphere | `k` in the transmittance term — how fast distance dissolves into haze |
-| mountain ranges | 3–7 layers at geometric depths 230 → 11 |
-| mist | height and opacity of the valley-floor mist bands |
-| clouds | number of clouds on the ceiling |
-| river meander | world amplitude of the meander |
-| trees | density of copses and bank-side trees |
-| repoussoir | height of the dark bank and presence/size of the framing tree |
-| paper / canvas grain | paper grain (watercolour) or canvas weave (oil) |
-| oil: impasto | strength of the impasto ridge shadows on highlight strokes (oil only) |
+![the panel](interface.png)
+
+Everything is controlled from the panel (top right), grouped into folders. Every
+setting is written into the URL, so *Copy share link* captures the exact painting, and
+*Contact sheet* lays the same settings out across many seeds.
+
+**Two seeds.** The *scene seed* (top of the panel) builds the composition: which third
+the sun takes, the ridges, fields, trees, river, framing tree. The *paint seed* (Seeds
+folder) is the hand: the same scene repainted with different strokes. `0` derives it
+from the scene seed. Both have ◀ ▶ and 🎲 buttons; **P** rolls a new hand.
+
+**Fast repaint.** The underpainting is cached per scene. Changing anything in the oil
+folders, or the paint seed, repaints over the cached copy instead of repainting the
+whole scene — about 17× faster (26 s against 441 s in a software-GL test). Changing a
+Scene setting or the scene seed paints from scratch. Sliders apply on release.
+
+**Presets.** Save the full state (scene seed and every parameter) as JSON, load it
+back, or reset the stroke settings to their defaults while keeping the scene. A
+*painting* readout shows progress and phase (underpainting / oil strokes).
+
+| folder | parameter | effect |
+|---|---|---|
+| Scene | medium | oil (default) or watercolour |
+| | mood | golden hour · after the storm · dawn mist |
+| | sun height | sun elevation; lower = warmer glow, longer shadows |
+| | atmosphere | `k` in the transmittance term — how fast distance dissolves into haze |
+| | mountain ranges | 3–7 layers at geometric depths 230 → 11 |
+| | mist · clouds · river meander · trees · repoussoir | as named |
+| | paper / canvas grain | paper grain (watercolour) or canvas weave (oil) |
+| Seeds | paint seed | the hand; 0 = derived from the scene seed |
+| Oil · strokes | stroke width | coarse stroke width (REF units); the finer layers scale from it |
+| | length ÷ width | stroke aspect |
+| | coverage | how densely each layer is laid |
+| | layers | 1 coarse · 2 + medium · 3 + edge detail |
+| | edge threshold | contrast an edge needs before the detail layer paints along it (lower = more detail) |
+| | curvature · angle jitter · value jitter | the hand's looseness |
+| | body opacity | opacity of the body paint |
+| Oil · bristles | max bristles | streaks per stroke |
+| | bristle opacity | strength of the streaks |
+| | dry-brush breaks | how often a bristle runs dry |
+| | two-colour load | how far the streaks pull toward the colour under the stroke's far end |
+| Oil · direction | sun vortex | 1 = sky strokes circle the sun; 0 = level |
+| | vortex stretch | horizontal flattening of the vortex |
+| | field sweep | length of the field strokes |
+| | mountain facet size | size of the craggy facets |
+| | facets on fall line | share of facets down the fall line vs crossing / along the crest |
+| Oil · impasto & light | impasto | overall paint relief |
+| | room light angle° | direction of the light falling on the canvas surface |
+| | sun impasto | thickness of the sun's core and halo |
+| | halo tonal rings | number of discrete value steps from the core to the sky |
+| | silhouette darkness | how far the foreground tree is pushed toward black |
+| Oil · colour & texture | broken-colour strokes | number of accent micro-strokes |
+| | accent strength | how strongly they show |
+| | scumble strokes | number of dry-brush scumbles |
+| | lost-edge band | density of the wet-on-wet band melting far ridges into the sky |
 
 The seed fixes everything else: which third the sun takes, ridge noise, field layout,
 tree positions, the framing tree's growth, and every brush jitter.
 
-Keys: `R` new seed · `S` save PNG. `?seed=…` (plus the `p_…` params the panel writes into
+Keys: `R` new scene · `P` new paint seed · `S` save PNG. `?seed=…` (plus the `p_…` params the panel writes into
 the URL) reproduces a picture exactly. `?profile` records per-pass timings in
 `window.PROFILE`; `?stop=N` halts after pass N to inspect an intermediate state.
 
