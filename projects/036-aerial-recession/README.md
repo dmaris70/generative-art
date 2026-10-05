@@ -5,9 +5,12 @@ transmittance term `1 − e^(−k·z)` decide the size, colour, contrast, detail
 every mark, so the classical rules of landscape depth are computed rather than painted.
 
 Original composition, painted with [p5.brush](https://github.com/acamposuribe/p5.brush)
-(2.2.3, p5 2.x WEBGL). Not a copy of any painting.
+(2.2.3, p5 2.x WEBGL). Not a copy of any painting. Two media: **oil** (default) and
+**watercolour** — the same scene, the same seed, painted two ways.
 
-![seed 7, golden hour](preview.png)
+![seed 7, golden hour, oil](preview.png)
+
+Watercolour version (`p_medium=0`): [`preview-watercolour.png`](preview-watercolour.png).
 
 ## Philosophy — *Aerial Recession*
 
@@ -56,6 +59,38 @@ rays), *dawn mist* (cool, pale, low contrast). The painting assembles itself bac
 over several seconds — sky, far ranges, mist, nearer ranges, fields, river, trees,
 repoussoir, paper — the order a painter would work in.
 
+## Oil — the same scene, repainted
+
+The oil medium paints the scene the way a tonalist works from an underpainting. The
+whole watercolour pipeline runs first and is read back into memory; then the surface is
+repainted in opaque, bristle-streaked strokes. Nothing about the scene changes — the seed
+builds identical geometry — only the paint. Colour comes from the underpainting under
+each stroke; every other decision is read from the scene's geometry.
+
+| principle | how the oil engine does it |
+|---|---|
+| **Directional rhythm — sky** | every sky stroke follows a (slightly flattened) circle centred exactly on the sun, lengthening outward: a vortex that winds the eye to the light |
+| **— mountains** | near ranges in short, straight, square-ended facets in three directions (fall line, a crossing facet, the crest), chosen per stroke — craggy geology rather than gradients |
+| **— field** | long, sweeping, nearly level strokes (3× longer than elsewhere) — the stable base under the moving sky; their size ∝ `1/√z` and density ∝ `1/size²`, so the brushwork itself recedes |
+| **Impasto hierarchy** | each stroke carries a relief value, drawn as a ridge of paint under a fixed *room* light from the upper left: a shadow strip on the far side, a specular edge on the near side. The sun's core is the thickest paint (relief 1.0), its halo steps down ring by ring (0.85 → 0.22), the foreground tree and grasses are high (0.5–0.6), the rest low (0.1–0.25), the far ranges flat |
+| **Lost edges** | far ranges are painted in soft, level strokes and get no edge pass; a wet-on-wet blend band of strokes straddling each far crest, loaded with the sky above and the mountain below, melts them into the haze |
+| **Found edges** | the framing tree is redrawn last as a hard near-black silhouette with a thin warm rim on the sun side; grass blades are crisp, opaque, unblended |
+| **Broken colour** | 2,600 sparse micro-strokes of violet (in shadows), olive (mid-tones), ochre and dull orange (lights), each only half-mixed with the paint beneath, laid unblended into the field and mountains |
+| **Scumbling** | dry-brush passes — bristles only, lighter opaque paint, broken often — dragged over the plain (more toward the distance) and through the sun's halo, leaving the darker layer showing |
+| **Value: glow vs gloom** | the sun's core goes to near-white; the halo is five discrete tonal rings stepping down to the sky, painted outside-in so each brighter ring sits on the one outside it; the silhouette is pushed 40 % toward black so the meadow reads luminous against it |
+| **Canvas** | a fine twill of light and dark threads over everything |
+
+Each stroke is two colours loaded on one brush — the paint under its middle and under its
+far end — and its bristles streak a mix of the two, starting late, breaking where the
+brush runs dry, lifting early.
+
+Why the oil strokes are native rather than p5.brush strokes: p5.brush mixes colour
+spectrally (Kubelka–Munk, via spectral.js), which is the right optics for transparent
+watercolour glazes — the underpainting uses it throughout — but it darkens with every
+overlap (measured: a sky sampled at `[118,123,133]` came back `[82,84,86]` after the
+layers built up). Oil body paint is opaque, so the strokes are drawn with ordinary "over"
+blending.
+
 ## How each technique is implemented
 
 | technique | where | rule |
@@ -75,6 +110,7 @@ repoussoir, paper — the order a painter would work in.
 
 | param | effect |
 |---|---|
+| medium | 1 oil (default) · 0 watercolour |
 | mood | palette and cloud / ray weighting (0 golden hour · 1 after the storm · 2 dawn mist) |
 | sun height | sun elevation; lower = warmer glow, longer shadows, stronger sunward glaze |
 | atmosphere | `k` in the transmittance term — how fast distance dissolves into haze |
@@ -84,7 +120,8 @@ repoussoir, paper — the order a painter would work in.
 | river meander | world amplitude of the meander |
 | trees | density of copses and bank-side trees |
 | repoussoir | height of the dark bank and presence/size of the framing tree |
-| paper grain | final grain pass |
+| paper / canvas grain | paper grain (watercolour) or canvas weave (oil) |
+| oil: impasto | strength of the impasto ridge shadows on highlight strokes (oil only) |
 
 The seed fixes everything else: which third the sun takes, ridge noise, field layout,
 tree positions, the framing tree's growth, and every brush jitter.
@@ -93,5 +130,6 @@ Keys: `R` new seed · `S` save PNG. `?seed=…` (plus the `p_…` params the pan
 the URL) reproduces a picture exactly. `?profile` records per-pass timings in
 `window.PROFILE`; `?stop=N` halts after pass N to inspect an intermediate state.
 
-Note: painting is progressive and takes a few seconds on a GPU; the PNG should be saved
-after the last pass (paper grain and mat) has landed.
+Note: painting is progressive — the underpainting, then the oil passes (tens of thousands
+of strokes) — and takes a while; save the PNG after the last pass (canvas/grain and mat)
+has landed.
