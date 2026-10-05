@@ -3,6 +3,14 @@
   "author": "dmaris70",
   "projects": [
     {
+      "slug": "036-aerial-recession",
+      "title": "Aerial Recession — computed landscape",
+      "year": 2026,
+      "tools": ["p5.js", "p5.brush"],
+      "description": "The classical rules of landscape depth computed instead of painted: one camera over one ground plane sizes every field, tree, cloud and river bend by 1/z; one transmittance term 1 − e^(−kz) cools, flattens, simplifies and un-inks whatever recedes; one low sun on a third line splits peaks into lit and shadow faces and throws long shadows, while a dark repoussoir tree frames the light. Watercolour, graphite and charcoal from p5.brush, painted back to front.",
+      "thumb": ""
+    },
+    {
       "slug": "031-ruled-continuum",
       "title": "Ruled Continuum — curve stitching",
       "year": 2026,
