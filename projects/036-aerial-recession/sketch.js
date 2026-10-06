@@ -598,8 +598,24 @@ function buildRepoussoir(s) {
       let a = ang;
       const steps = 7;
       let pruned = false;
+      // a limb's gesture: long straight runs broken by an elbow or two where it changes
+      // direction, alternating left and right (Etherington: main movement, direction
+      // change; Ran: the elbowed olive and dead-wood branches) — not a steady wobble
+      // (the trunk itself stays a straight cylinder, Ran)
+      const elbowAt = new Set(depth > 0 ? [Math.floor(rnd(2, steps - 1))] : []);
+      if (depth > 0 && depth <= 2 && rnd(0, 1) < 0.45) elbowAt.add(Math.floor(rnd(2, steps)));
+      let esign = rnd(0, 1) < 0.5 ? -1 : 1;
+      const stubs = [];
       for (let k = 1; k <= steps; k++) {
-        a += rnd(-0.09, 0.09);
+        a += rnd(-0.06, 0.06);
+        if (elbowAt.has(k)) {
+          // bend the alternate way, unless that heads into the keep-clear zone
+          const e = rnd(0.2, 0.4);
+          const ahead = (aa) => clear(cx + Math.cos(aa) * len * 0.5, cy + Math.sin(aa) * len * 0.5);
+          if (ahead(a + esign * e) && !ahead(a - esign * e)) esign = -esign;
+          a += esign * e;
+          esign = -esign;
+        }
         if (depth >= 2) a += 0.03 * Math.sign(Math.cos(a)) * (k / steps); // thin limbs droop
         // A limb that sees the keep-clear zone ahead curves gently up and back toward the
         // edge, the way a tree grows around an obstacle; only if it cannot does it stop.
@@ -619,6 +635,10 @@ function buildRepoussoir(s) {
         cx = nx;
         cy = ny;
         p.push([cx, cy, w * (1 - (0.45 * k) / steps)]);
+        // a broken-off side branch: a short blunt stub (the knuckles along old limbs)
+        if (depth <= 2 && w > 6 && k < steps && rnd(0, 1) < 0.16) {
+          stubs.push([p.length - 1, a + (rnd(0, 1) < 0.5 ? -1 : 1) * rnd(0.6, 1.1), rnd(0.18, 0.28), rnd(2.5, 4.5)]);
+        }
       }
       if (p.length < 3) return; // a limb stopped at birth is simply not grown
       if (pruned) {
@@ -627,6 +647,18 @@ function buildRepoussoir(s) {
         for (let q = 0; q < m; q++) p[p.length - 1 - q][2] *= 0.12 + (0.88 * q) / m;
       }
       segs.push({ pts: p, depth });
+      for (const [idx, sa, fw, fl] of stubs) {
+        if (Math.sin(sa) > -0.1) continue; // stubs point up or sideways, not into the ground
+        // sized from the limb as finally drawn (after any end taper), so a stub is never
+        // thicker than the wood it grows from
+        const [sx, sy, lw] = p[Math.min(idx, p.length - 1)];
+        const sw = lw * fw;
+        if (sw < 1.2) continue;
+        const l = sw * fl;
+        const q = [[sx, sy, sw]];
+        for (let j = 1; j <= 3; j++) q.push([sx + (Math.cos(sa) * l * j) / 3, sy + (Math.sin(sa) * l * j) / 3, sw * (1 - 0.15 * j)]);
+        if (!clear(q[3][0], q[3][1])) segs.push({ pts: q, depth: depth + 2, stub: true });
+      }
       if (depth >= 5 || w < 1.5 || p.length < steps + 1) {
         tips.push([cx, cy, depth]);
         return;
@@ -1938,15 +1970,34 @@ function trunkMarks(s, P, opts = {}) {
   const wAt = (i) => pts[Math.max(0, Math.min(n - 1, Math.round(i)))][2];
   const ph = random(1000);
   const marks = [];
-  const path = (i0, i1, u, wander, phase) => {
+  // bunching: on a bend the bark lines crowd to the inside and spread on the outside
+  // (Etherington). bend[k] is the inside of the curve in u units (−1…1, signed), scaled
+  // by how sharply the limb turns there.
+  const bend = new Float32Array(n);
+  for (let k = 1; k < n - 1; k++) {
+    const [nx, ny] = polyNormal(pts, k);
+    const mx = (pts[k - 1][0] + pts[k + 1][0]) / 2 - pts[k][0];
+    const my = (pts[k - 1][1] + pts[k + 1][1]) / 2 - pts[k][1];
+    const seg = Math.hypot(pts[k + 1][0] - pts[k - 1][0], pts[k + 1][1] - pts[k - 1][1]) || 1;
+    bend[k] = Math.max(-1, Math.min(1, ((mx * nx + my * ny) * sig * 8) / seg));
+  }
+  for (let pass = 0; pass < 2; pass++) for (let k = 1; k < n - 1; k++) bend[k] = (bend[k - 1] + 2 * bend[k] + bend[k + 1]) / 4;
+  const path = (i0, i1, u, wander, phase, bunch = 0) => {
     const out = [];
     const steps = Math.max(2, Math.min(8, Math.round(i1 - i0)));
     for (let k = 0; k <= steps; k++) {
       const i = i0 + ((i1 - i0) * k) / steps;
-      const uu = u + (noise(phase + i * 0.35) - 0.5) * 2 * wander;
+      let uu = u + (noise(phase + i * 0.35) - 0.5) * 2 * wander;
+      if (bunch) uu += bunch * bend[Math.max(0, Math.min(n - 1, Math.round(i)))] * (1 - uu * uu) * 0.6;
       out.push(at(i, Math.max(-1.05, Math.min(1.05, uu))));
     }
     return out;
+  };
+  // bark marks change tone with the side they are on (Etherington: "invert the bark tone
+  // from light to dark" — black lines in the light, light lines in the shadow)
+  const barkCol = (u) => {
+    if (u < -1 / 3) return random() < 0.45 ? mixRGB(T.mid, T.light, 0.25) : T.crevice;
+    return u < 1 / 3 ? mixRGB(T.dark, T.mid, 0.25) : mixRGB(T.mid, T.dark, 0.45);
   };
   const stepI = (len) => Math.max(1, len / (total / (n - 1)));
 
@@ -1954,7 +2005,7 @@ function trunkMarks(s, P, opts = {}) {
   // drops the middle tone)
   const bands = lod === 'two'
     ? [{ u: -0.5, f: 0.55, col: T.dark, rel: 0 }, { u: 0.5, f: 0.55, col: mixRGB(T.mid, T.light, 0.6), rel: 0.15 }]
-    : [{ u: -2 / 3, f: 0.38, col: T.dark, rel: 0 }, { u: 0, f: 0.38, col: T.mid, rel: 0 }, { u: 2 / 3, f: 0.38, col: T.light, rel: 0.25 }];
+    : [{ u: -0.48, f: 0.38, col: T.dark, rel: 0 }, { u: 0.12, f: 0.38, col: T.mid, rel: 0 }, { u: 0.66, f: 0.38, col: T.light, rel: 0.25 }];
   const chunk = stepI(Math.max(8, Math.min(70, W0 * 1.4)));
   for (const b of bands) {
     for (let i = 0; i < n - 1; i += chunk * 0.8) {
@@ -1966,7 +2017,7 @@ function trunkMarks(s, P, opts = {}) {
 
   // the band boundaries, worked wet into wet: short strokes loaded with both tones
   if (lod !== 'two') {
-    for (const [ub, ca, cb] of [[-1 / 3, T.dark, T.mid], [1 / 3, T.mid, T.light]]) {
+    for (const [ub, ca, cb] of [[-0.1, T.dark, T.mid], [0.4, T.mid, T.light]]) {
       for (let i = random(0, 2); i < n - 1; i += stepI(W0 * random(0.35, 0.8))) {
         const len = stepI(W0 * random(0.5, 1.2));
         const col = mixRGB(ca, cb, random(0.35, 0.65));
@@ -1980,15 +2031,70 @@ function trunkMarks(s, P, opts = {}) {
   for (let k = 0; k < K; k++) {
     const u = -0.92 + (1.84 * (k + random(0.2, 0.8))) / K;
     const keep = u < -1 / 3 ? 0.95 : u < 1 / 3 ? 0.8 : 0.45;
-    const col = u < -1 / 3 ? T.crevice : u < 1 / 3 ? mixRGB(T.dark, T.mid, 0.25) : mixRGB(T.mid, T.dark, 0.35);
     let i = random(0, stepI(W0 * 0.6));
     while (i < n - 1) {
       const len = stepI(W0 * random(0.8, 2.6));
       const i1 = Math.min(n - 1, i + len);
       if (random() < keep) {
-        marks.push({ kind: 'groove', path: path(i, i1, u, 0.07, ph + k * 7.7), w: Math.max(0.7, wAt(i) * random(0.04, 0.085)), col, col2: mixRGB(col, T.crevice, 0.5), rel: 0.05 });
+        const col = barkCol(u);
+        marks.push({ kind: 'groove', path: path(i, i1, u, 0.07, ph + k * 7.7, 1), w: Math.max(0.7, wAt(i) * random(0.04, 0.085)), col, col2: mixRGB(col, T.dark, 0.4), rel: 0.05 });
       }
       i = i1 + stepI(W0 * random(0.15, 0.6));
+    }
+  }
+
+  // secondary dashes between the primary grooves (Etherington: "broad, primary strokes
+  // with smaller secondary dashes"), more of them where the value is darker (Ran: more
+  // marks for darker values), following the same flow and bunching on bends
+  if (lod !== 'two') {
+    const nd2 = Math.round((total / W0) * 7 * grooveK);
+    for (let j = 0; j < nd2; j++) {
+      const u = -0.95 + Math.pow(random(), 1.6) * 1.75; // crowded toward the shadow side
+      const len = stepI(W0 * random(0.12, 0.4));
+      const i = random(0, Math.max(0, n - 1 - len));
+      const col = barkCol(u);
+      marks.push({ kind: 'groove', path: path(i, i + len, u, 0.04, ph + 500 + j * 1.3, 1), w: Math.max(0.6, wAt(i) * random(0.025, 0.05)), col, col2: col, rel: 0.03 });
+    }
+  }
+
+  // reflected light: the shadow does not run to the edge — a dim strip of light bounced
+  // from sky and ground turns the far side of the cylinder (Etherington's highlight /
+  // midtone / shadow / highlight; "shadow shows in the third quarter")
+  if (lod !== 'two') {
+    const refl = mixRGB(mixRGB(T.dark, T.mid, 0.55), s.C.shadow, 0.2);
+    for (let i = random(0, 2); i < n - 1; i += stepI(W0 * random(0.5, 1.2))) {
+      if (random() < 0.3) continue;
+      const len = stepI(W0 * random(0.6, 1.8));
+      marks.push({ kind: 'light', path: path(i, Math.min(n - 1, i + len), -0.86, 0.04, ph + 700 + i), w: Math.max(0.6, wAt(i) * random(0.06, 0.1)), col: refl, col2: mixRGB(refl, T.dark, 0.3), rel: 0 });
+    }
+  }
+
+  // cross-contours: bark wraps around the cylinder (Etherington), and the rings are
+  // ellipses whose visible front bows down below eye level and up above it, rounder the
+  // further from the horizon (Ran: the cylinders against the horizon line). Only on
+  // near-upright limbs, broken into pieces, heaviest on the shadow side.
+  if (lod !== 'two' && W0 > 12) {
+    for (let i = random(1, 3); i < n - 1; i += stepI(W0 * random(0.7, 1.4))) {
+      const k = Math.round(i);
+      const ny = polyNormal(pts, k)[1];
+      if (Math.abs(ny) > 0.7) continue; // normal near vertical = limb near horizontal
+      const y = pts[k][1];
+      const r = Math.max(0.06, Math.min(0.35, Math.abs(y - s.HY) / 520));
+      const dir = y > s.HY ? 1 : -1; // screen y: below the horizon the front bows down
+      const hw = wAt(i) * 0.5;
+      let u = -0.98;
+      while (u < 0.55) {
+        const du = random(0.18, 0.45);
+        const u1 = Math.min(0.6, u + du);
+        const seg = [];
+        for (let q = 0; q <= 4; q++) {
+          const uu = u + ((u1 - u) * q) / 4;
+          const p0 = at(i, uu);
+          seg.push([p0[0], p0[1] + dir * r * hw * (1 - uu * uu)]);
+        }
+        if (random() < 0.75) marks.push({ kind: 'break', path: seg, w: Math.max(0.6, wAt(i) * random(0.025, 0.045)), col: barkCol((u + u1) / 2), col2: T.dark, rel: 0.03 });
+        u = u1 + random(0.06, 0.2);
+      }
     }
   }
 

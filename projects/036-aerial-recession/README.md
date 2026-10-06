@@ -185,6 +185,28 @@ lists one); hatching uses `rotring`.
 bark brush (watercolour), canopy wash opacity, leaf hatch spacing and angle, midground
 trees on/off.
 
+### Second foundation: Etherington Brothers and Ran Art Blog
+
+Two more tutorials, read for what they instruct (text and drawings): the Etherington
+Brothers' *How To Draw A Tree* (Clip Studio Art Rocket) and Ran Art Blog's *Tree Drawing
+Guide*. Their rules, and what each became:
+
+| rule (as the tutorial draws or states it) | in the code |
+|---|---|
+| Begin with cylinders and pipes; trunks are cylinders (both) | already the trunk model; the trunk itself is now kept a straight cylinder |
+| A main movement with direction changes; elbowed olive and dead-wood limbs (Etherington; Ran) | limbs grow in straight runs broken by one or two **elbows** (0.2–0.4 rad), alternating left and right; an elbow that would head into the keep-clear zone bends the other way |
+| Broken stubs along old limbs (Etherington's figures) | short blunt **stubs** on thick limbs, pointing up or sideways, sized from the limb as finally drawn so a stub is never thicker than its wood |
+| Highlight · midtone · **shadow in the third quarter** · highlight (Etherington) | the darkest band moved from the edge to u = −0.48; a dim **reflected-light** strip, cooled by the sky, runs along the shadow edge |
+| **Invert the bark tone**: black lines in the light, light lines in the shadow (Etherington) | grooves and dashes on the shadow side are drawn lighter than their band about half the time, darker on the lit side |
+| Focus bark detail on the shadow side; more marks for darker values (Etherington; Ran) | secondary marks crowd toward the shadow side |
+| Broad primary strokes with smaller secondary **dashes** (Etherington) | ~7 short dashes per trunk-width of length between the grooves, on the same flow |
+| Bark runs like water; **bunching** at a direction change (Etherington) | on a bend, grooves and dashes are pushed toward the inside of the curve, in proportion to how sharply the limb turns |
+| Bark wraps around the form; ellipses bow down below the horizon and up above it, rounder the further from it (Etherington; Ran) | broken **cross-contour** arcs on upright limbs, bowing down below the horizon and up above it, depth ∝ distance from the horizon |
+| Roots spread and billow; avoid a flat-bottomed trunk (both) | not applicable here: the trunk's base is cut by the bottom of the frame |
+
+Checked across seeds 1–12: limb and leaf counts stay in the range of the previous
+generator (mean leaves per tree 579 vs. 530).
+
 ## Oil methods — from five tutorials to code
 
 Sources: Leanne Rath, *Oil painting techniques for beginners*; Old Masters Academy,
