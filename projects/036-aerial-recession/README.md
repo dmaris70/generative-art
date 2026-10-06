@@ -185,6 +185,46 @@ lists one); hatching uses `rotring`.
 bark brush (watercolour), canopy wash opacity, leaf hatch spacing and angle, midground
 trees on/off.
 
+## Oil methods — from five tutorials to code
+
+Sources: Leanne Rath, *Oil painting techniques for beginners*; Old Masters Academy,
+*Various oil painting methods*; David Shevlino in *Artists & Illustrators*, *How to
+master wet-into-wet*; Fine Art Tutorials, *A complete list of oil painting
+techniques*; Draw Paint Academy, *9 oil painting techniques*. Each was reduced to what
+it actually instructs, then mapped onto the oil engine.
+
+| technique (as the sources state it) | already in the engine | added here |
+|---|---|---|
+| **Block in** with large brushes, simplify, economise strokes; leave what is not needed (Shevlino, Fine Art Tutorials, Draw Paint Academy) | coarse first layer | the block-in samples a 5×5 average over the brush's footprint, so masses come out simple (*block-in simplification*). **Economy**: the second layer goes only where the underpainting has an edge or a value change, or near the sun; in flat sky and field the block-in is left standing (*economy*) |
+| **Fat over lean**: lean, thin paint first, fuller paint on top (Rath, Old Masters Academy) | — | the block-in is flatter (relief × 0.64) and slightly transparent; each later layer stands higher (*fat over lean*) |
+| **Wet into wet**: the brush lands in wet paint and drags it; strokes bleed into the neighbouring mass; load enough paint to lay it on, not sweep it (Shevlino) | bristles mix the stroke's two colours | after the block-in is down, the surface is read back; the later strokes' bristles carry the paint already on the canvas where they start, the body a trace of it (*wet-into-wet pickup*) |
+| **Thick highlights**, laid with a knife or scraper (Shevlino; impasto in all five) | impasto ridges, thickest at the sun | **palette-knife lights**: flat planes with straight sides, a raised lip on the side facing the room light, a shadow under the other, a ragged trailing end; only above the 88th percentile of value, measured per painting |
+| **Sgraffito**: scratch through the wet film to the layer below (Fine Art Tutorials) | — | short upward scratches through the grass at the bank's lip, back to a warm earth under-layer, commoner toward the sun |
+| **Glazing**: thin transparent colour over dry paint, last; colours mix optically (Old Masters Academy, Vermeer via Draw Paint Academy) | — | final glazes drawn as MULTIPLY (a glaze filters, never lightens): transparent gold radiating from the sun (zero at the white core), cool transparent blue deepening the shadowed foreground |
+| scumbling, dry brush, broken colour, chiaroscuro, sfumato / lost edges, value before temperature, complementary shadows | yes | — |
+
+**Measured, not assumed.** Each method was switched on alone over the same cached
+underpainting (seed 7) and compared with all methods off, as mean absolute pixel
+difference and the saturation of the sky:
+
+| method alone | mean Δ vs. off | effect |
+|---|---|---|
+| economy + block-in | 7.1 | sky and field strokes broader and more varied; the sun stays dense |
+| glazes | 2.6 | sky saturation +23 %, a richer gold halo, a deeper bank |
+| palette knife | 2.9 | flat lit planes in the halo and on the water |
+| sgraffito | — | a few warm stems in the grass |
+| block-in, fat over lean, pickup *without* economy | 0.3–0.4 | invisible: the later layers covered the block-in, which is why economy was added |
+| all together | 8.1 | sky saturation 0.209 → 0.256 |
+
+**Tried and removed: the toned ground (imprimatura).** As a transparent stain under the
+oil strokes it showed as tan holes between the sky strokes (the sources' toned ground
+lies under the *drawing*, before any colour); confined to the joins between masses it
+was entirely covered (Δ 0.1). Here the watercolour underpainting already plays the
+coloured underpainting of the layered method, so no separate ground was kept.
+
+Panel folder: *Oil · methods* — economy, block-in simplification, fat over lean,
+wet-into-wet pickup, palette-knife lights, sgraffito scratches, final glazes.
+
 ## How each technique is implemented
 
 | technique | where | rule |
