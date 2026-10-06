@@ -90,6 +90,7 @@ function setup() {
     closedGroups: [BR, DI, IM, CO, TR],
     params: {
       medium: { value: 1, options: { watercolour: 0, oil: 1 }, label: 'medium', group: SC },
+      wcTrees: { value: 0, options: { 'wash (clean)': 0, 'drawn (charcoal + hatch)': 1 }, label: 'watercolour trees', group: SC },
       mood: { value: 0, options: { 'golden hour': 0, 'after the storm': 1, 'dawn mist': 2 }, label: 'mood', group: SC },
       sun: { value: 0.35, min: 0, max: 1, step: 0.01, label: 'sun height', group: SC },
       haze: { value: 1.0, min: 0.3, max: 2.2, step: 0.05, label: 'atmosphere', group: SC },
@@ -796,7 +797,10 @@ function buildTasks(s) {
   }
   // watercolour: the larger midground trees get the charcoal / hatch language in place,
   // before the foreground goes on (in oil they are restated after the oil passes)
-  if (G.param('medium') === 0) T.push(() => paintMidTreesBrush(s));
+  // watercolour, drawn style: the larger midground trees get the charcoal / hatch language
+  // (the default wash style leaves them as the layered washes above)
+  const drawn = G.param('medium') === 0 && G.param('wcTrees') === 1;
+  if (drawn) T.push(() => paintMidTreesBrush(s));
   T.push(() => paintLightVeil(s));
   T.push(() => paintBank(s));
   T.push(() => paintGrass(s, 0));
@@ -805,9 +809,19 @@ function buildTasks(s) {
     // in oil the underpainting has no framing tree at all: the oil passes paint clean sky
     // behind it, and the tree goes on last, painted (a tree in the underpainting would be
     // sampled into the sky strokes as dark ghosts beside the oil tree)
-    if (G.param('medium') === 0) {
+    if (drawn) {
       for (const t of treeBrushTasks(s)) T.push(t);
       T.push(() => paintCanopyBrush(s));
+      T.push(() => paintRim(s));
+    } else if (G.param('medium') === 0) {
+      // wash style: the tree is laid in the way the sky and ranges are, as transparent
+      // washes over one dark silhouette tone, plus a warm rim where it faces the sun
+      T.push(() => paintTrunk(s));
+      const L = s.repoussoir.leaves;
+      for (let i = 0; i < L.length; i += 25) {
+        const chunk = L.slice(i, i + 25);
+        T.push(() => chunk.forEach((lf) => paintLeafClump(s, lf)));
+      }
       T.push(() => paintRim(s));
     }
   }
@@ -1459,6 +1473,65 @@ function paintGrass(s, pass) {
       const ty = by + Math.sin(ang) * len * 0.6 + 6;
       brush.line(X(tx + s.sunSide * 0.8), Y(ty), X(x1 + s.sunSide * 0.8), Y(y1));
     }
+  }
+}
+
+function paintTrunk(s) {
+  const C = s.C;
+  const rp = s.repoussoir;
+  const dark = mixRGB(C.silhouette, C.shadow, 0.12);
+  const segs = rp.segs.slice().sort((a, b) => b.pts[0][2] - a.pts[0][2]);
+  for (const seg of segs) {
+    if (seg.pts[0][2] >= 2.5) {
+      const left = [];
+      const right = [];
+      for (let k = 0; k < seg.pts.length; k++) {
+        const p = seg.pts[k];
+        const q = seg.pts[Math.min(k + 1, seg.pts.length - 1)];
+        const o = seg.pts[Math.max(k - 1, 0)];
+        const dx = q[0] - o[0];
+        const dy = q[1] - o[1];
+        const d = Math.hypot(dx, dy) || 1;
+        const hw = Math.max(0.6, p[2] * 0.5);
+        left.push([p[0] - (dy / d) * hw, p[1] + (dx / d) * hw]);
+        right.push([p[0] + (dy / d) * hw, p[1] - (dx / d) * hw]);
+      }
+      brush.noStroke();
+      brush.wash(toHex(dark), 255);
+      bpoly(left.concat(right.slice().reverse()));
+      brush.noWash();
+      if (seg.pts[0][2] > 12) {
+        // bark: a few long strokes along the limb
+        for (let k = 0; k < 3; k++) {
+          const off = random(-0.3, 0.3);
+          const line = seg.pts.map((p) => [X(p[0] + off * p[2]), Y(p[1]), 0.6]);
+          brush.set('2B', toHex(mixRGB(dark, C.shadow, 0.35)), 0.7);
+          brush.spline(line, 0.5);
+        }
+      }
+    } else {
+      brush.set('2B', toHex(dark), 1);
+      const line = seg.pts.map((p) => [X(p[0]), Y(p[1]), Math.max(0.3, Math.min(1.4, p[2] / 2))]);
+      brush.strokeWeight(Math.max(0.5, seg.pts[0][2] * 0.45));
+      brush.spline(line, 0.5);
+    }
+  }
+}
+
+function paintLeafClump(s, lf) {
+  const C = s.C;
+  const col = mixRGB(C.silhouette, C.foliage, 0.3 + 0.2 * noise(lf.ph));
+  brush.noStroke();
+  brush.wash(toHex(col), 235);
+  bpoly(treeBlob(lf.x, lf.y, lf.r, lf.r * 0.78, lf.ph, 18));
+  brush.noWash();
+  // Leaf texture at the edge: a few dabs breaking the outline.
+  for (let k = 0; k < 4; k++) {
+    const a = random(TWO_PI);
+    const rr = lf.r * random(0.25, 0.45);
+    brush.wash(toHex(col), 220);
+    bpoly(treeBlob(lf.x + Math.cos(a) * lf.r * 0.95, lf.y + Math.sin(a) * lf.r * 0.75, rr, rr * 0.8, lf.ph + k * 3, 10));
+    brush.noWash();
   }
 }
 

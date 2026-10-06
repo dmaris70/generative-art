@@ -157,14 +157,21 @@ has no outline at all —
 
 In oil the underpainting carries no framing tree at all, so the oil passes paint clean sky
 behind it (a tree in the underpainting was being sampled into the sky strokes as dark
-ghosts beside the oil tree). The ink hatching stays in the watercolour medium, where pen-and-wash belongs; in oil it
-read as digital. **Watercolour** (`treeBrushTasks`, one pass per limb): the same marks in p5.brush — tone
+ghosts beside the oil tree).
+
+**Watercolour** has two tree styles (*Scene → watercolour trees*). **Wash (default)**: the
+tree is laid in like everything else in the watercolour pipeline — limbs as one dark
+transparent wash, a few 2B bark strokes on the thick limbs, the canopy as bleeding wash
+clumps with broken edges, and a warm rim on outer edges facing the sun; the midground trees
+stay as their layered washes. This is the version that sat under the oil and read better
+than the drawn one: one medium, one language, no line work fighting the washes. It also
+paints in under half the time (seed 7, software GL: 376 s; drawn style unfinished at 666 s). **Drawn** (`treeBrushTasks`, one pass per limb): the same marks in p5.brush — tone
 bands as plain fills (hundreds of bleeding p5.brush polygons per tree were far too slow), grooves in the bark brush (charcoal by default), tapered darks and
 edges in 2B with pointed pressure, light in coloured pencil.
 
 The canopy stays abstract: tip clumps gathered into masses, each a bleeding watercolour
 fill on a curved organic outline, a darker core away from the sun, a lighter fill toward
-it, and ink hatching (cross-hatched in the shadowed core) — p5.brush in both media.
+it, and ink hatching (cross-hatched in the shadowed core) — drawn watercolour style only.
 
 p5.brush stroke widths are calibrated, not nominal: each brush was measured at scale 1
 (visible pixels per unit of weight: charcoal 3.1, crayon 3.2, 2B 1.4, cpencil 1.2, pastel
@@ -215,6 +222,7 @@ back, or reset the stroke settings to their defaults while keeping the scene. A
 | folder | parameter | effect |
 |---|---|---|
 | Scene | medium | oil (default) or watercolour |
+| | watercolour trees | wash (default): trees as transparent washes · drawn: charcoal bark and ink-hatched canopies |
 | | mood | golden hour · after the storm · dawn mist |
 | | sun height | sun elevation; lower = warmer glow, longer shadows |
 | | atmosphere | `k` in the transmittance term — how fast distance dissolves into haze |
