@@ -22,7 +22,7 @@
 //
 // The canvas paints itself back-to-front over many frames (sky → far ranges → mist →
 // ground → river → trees → repoussoir → grain), the order a painter would work in.
-// Keys: R new seed · S save PNG.
+// Keys: R new scene · P new paint seed (same scene, new hand) · S save PNG.
 
 const REF_W = 1500;
 const REF_H = 1000;
@@ -31,6 +31,7 @@ const FRAME_BUDGET_MS = 28;
 // ?profile records per-pass timings in window.PROFILE (index, ms) for tuning.
 const PROFILE = /[?&]profile\b/.test(location.search) ? (window.PROFILE = []) : null;
 // ?stop=N halts the painting after pass N, to inspect any intermediate state.
+const YIELD = 'yield';
 const STOP = parseInt(new URLSearchParams(location.search).get('stop'), 10) || Infinity;
 
 const MOODS = {
@@ -66,27 +67,89 @@ let tasks = [];
 let taskIdx = 0;
 let R, U; // field rect on screen, and screen px per REF unit
 let brushK = 1; // brush scale currently applied (scaleBrushes compounds)
+let SURF = null; // sampler over the oil surface as it stood before the tree went on
+let UNDER = null; // cached underpainting {key, W, H, px, img} for oil repaints
+const SCENE_PARAMS = ['mood', 'sun', 'haze', 'ranges', 'mist', 'clouds', 'meander', 'trees', 'frame'];
+const UI = { status: '' };
+let PANEL_W = 0; // space kept clear for the control panel, fixed at each reset
 
 function setup() {
   createCanvas(windowWidth, windowHeight, WEBGL);
   pixelDensity(Math.min(2, window.devicePixelRatio || 1));
 
+  const SC = 'Scene';
+  const ST = 'Oil · strokes';
+  const BR = 'Oil · bristles';
+  const DI = 'Oil · direction';
+  const IM = 'Oil · impasto & light';
+  const CO = 'Oil · colour & texture';
+  const TR = 'Trees · brushwork';
   G = GenArt.create({
     title: 'Aerial Recession',
+    resetOnFinish: true, // a full repaint is heavy: sliders apply on release
+    closedGroups: [BR, DI, IM, CO, TR],
     params: {
-      mood: { value: 0, options: { 'golden hour': 0, 'after the storm': 1, 'dawn mist': 2 }, label: 'mood' },
-      sun: { value: 0.35, min: 0, max: 1, step: 0.01, label: 'sun height' },
-      haze: { value: 1.0, min: 0.3, max: 2.2, step: 0.05, label: 'atmosphere' },
-      ranges: { value: 5, min: 3, max: 7, step: 1, label: 'mountain ranges' },
-      mist: { value: 0.6, min: 0, max: 1, step: 0.05, label: 'mist' },
-      clouds: { value: 0.55, min: 0, max: 1, step: 0.05, label: 'clouds' },
-      meander: { value: 1.0, min: 0, max: 2, step: 0.05, label: 'river meander' },
-      trees: { value: 0.6, min: 0, max: 1, step: 0.05, label: 'trees' },
-      frame: { value: 1.0, min: 0, max: 1, step: 0.05, label: 'repoussoir' },
-      grain: { value: 0.5, min: 0, max: 1.2, step: 0.05, label: 'paper grain' },
+      medium: { value: 1, options: { watercolour: 0, oil: 1 }, label: 'medium', group: SC },
+      wcTrees: { value: 0, options: { 'wash (clean)': 0, 'drawn (charcoal + hatch)': 1 }, label: 'watercolour trees', group: SC },
+      mood: { value: 0, options: { 'golden hour': 0, 'after the storm': 1, 'dawn mist': 2 }, label: 'mood', group: SC },
+      sun: { value: 0.35, min: 0, max: 1, step: 0.01, label: 'sun height', group: SC },
+      haze: { value: 1.0, min: 0.3, max: 2.2, step: 0.05, label: 'atmosphere', group: SC },
+      ranges: { value: 5, min: 3, max: 7, step: 1, label: 'mountain ranges', group: SC },
+      mist: { value: 0.6, min: 0, max: 1, step: 0.05, label: 'mist', group: SC },
+      clouds: { value: 0.55, min: 0, max: 1, step: 0.05, label: 'clouds', group: SC },
+      meander: { value: 1.0, min: 0, max: 2, step: 0.05, label: 'river meander', group: SC },
+      trees: { value: 0.6, min: 0, max: 1, step: 0.05, label: 'trees', group: SC },
+      frame: { value: 1.0, min: 0, max: 1, step: 0.05, label: 'repoussoir', group: SC },
+      grain: { value: 0.5, min: 0, max: 1.2, step: 0.05, label: 'paper / canvas grain', group: SC },
+
+      paintSeed: { value: 0, step: 1, label: 'paint seed (0 = scene)', group: 'Seeds' },
+
+      strokeSize: { value: 15, min: 5, max: 34, step: 0.5, label: 'stroke width', group: ST },
+      strokeLength: { value: 3.1, min: 1.2, max: 7, step: 0.1, label: 'length ÷ width', group: ST },
+      coverage: { value: 1, min: 0.3, max: 2.5, step: 0.05, label: 'coverage', group: ST },
+      layers: { value: 3, min: 1, max: 3, step: 1, label: 'layers (coarse → edges)', group: ST },
+      edgeThreshold: { value: 16, min: 4, max: 48, step: 1, label: 'edge threshold', group: ST },
+      bend: { value: 0.2, min: 0, max: 0.6, step: 0.01, label: 'curvature', group: ST },
+      angleJitter: { value: 0.1, min: 0, max: 0.6, step: 0.01, label: 'angle jitter', group: ST },
+      colourJitter: { value: 0.05, min: 0, max: 0.25, step: 0.005, label: 'value jitter', group: ST },
+      bodyOpacity: { value: 0.95, min: 0.3, max: 1, step: 0.01, label: 'body opacity', group: ST },
+
+      bristles: { value: 9, min: 2, max: 16, step: 1, label: 'max bristles', group: BR },
+      bristleOpacity: { value: 1, min: 0, max: 1.5, step: 0.05, label: 'bristle opacity', group: BR },
+      dryBrush: { value: 0.3, min: 0, max: 0.85, step: 0.01, label: 'dry-brush breaks', group: BR },
+      wetBlend: { value: 1, min: 0, max: 1, step: 0.05, label: 'two-colour load', group: BR },
+
+      vortex: { value: 1, min: 0, max: 1, step: 0.05, label: 'sun vortex', group: DI },
+      vortexStretch: { value: 1.35, min: 1, max: 2.5, step: 0.05, label: 'vortex stretch', group: DI },
+      fieldSweep: { value: 2.2, min: 0.8, max: 5, step: 0.1, label: 'field sweep', group: DI },
+      facetSize: { value: 1, min: 0.4, max: 2, step: 0.05, label: 'mountain facet size', group: DI },
+      facetMix: { value: 0.5, min: 0, max: 1, step: 0.05, label: 'facets on fall line', group: DI },
+
+      impasto: { value: 1.0, min: 0, max: 2, step: 0.05, label: 'impasto', group: IM },
+      lightAngle: { value: -123, min: -180, max: 180, step: 1, label: 'room light angle°', group: IM },
+      sunImpasto: { value: 1, min: 0, max: 2, step: 0.05, label: 'sun impasto', group: IM },
+      haloRings: { value: 5, min: 2, max: 8, step: 1, label: 'halo tonal rings', group: IM },
+      silhouette: { value: 0.4, min: 0, max: 0.9, step: 0.05, label: 'silhouette darkness', group: IM },
+      grass: { value: 1, min: 0, max: 2.5, step: 0.05, label: 'grass density (oil)', group: IM },
+
+      barkBrush: { value: 0, options: { charcoal: 0, 'coloured pencil': 1, '2B': 2, crayon: 3, pastel: 4 }, label: 'bark brush (watercolour)', group: TR },
+      barkAge: { value: 0.4, min: 0, max: 1, step: 0.05, label: 'bark age (darker = older)', group: TR },
+      barkGrooves: { value: 1, min: 0.3, max: 2.5, step: 0.05, label: 'bark grooves', group: TR },
+      taperedDarks: { value: 1, min: 0, max: 2.5, step: 0.05, label: 'tapered darks / crevices', group: TR },
+      knots: { value: 1, min: 0, max: 3, step: 0.1, label: 'knots', group: TR },
+      canopyOpacity: { value: 200, min: 40, max: 230, step: 5, label: 'canopy wash opacity', group: TR },
+      hatchSpacing: { value: 7, min: 3, max: 16, step: 0.5, label: 'leaf hatch spacing', group: TR },
+      hatchAngle: { value: 55, min: 0, max: 180, step: 1, label: 'leaf hatch angle°', group: TR },
+      midTrees: { value: 1, options: { off: 0, on: 1 }, label: 'midground trees too', group: TR },
+
+      brokenColour: { value: 2600, min: 0, max: 8000, step: 100, label: 'broken-colour strokes', group: CO },
+      accentStrength: { value: 0.38, min: 0, max: 0.8, step: 0.01, label: 'accent strength', group: CO },
+      scumble: { value: 1500, min: 0, max: 5000, step: 100, label: 'scumble strokes', group: CO },
+      lostEdges: { value: 1, min: 0, max: 2, step: 0.05, label: 'lost-edge band', group: CO },
     },
     onReset: reset,
   });
+  buildControls();
 
   // p5.brush binds to the WEBGL sketch once the p5 constructor has returned, so the
   // first brush-dependent frame waits one tick (same pattern as 032).
@@ -102,32 +165,63 @@ function reset() {
   randomSeed(G.seed);
   noiseSeed(G.seed);
   S = buildScene();
-  tasks = buildTasks(S);
+  OP = null;
+  // Keep the painting clear of the panel (measured once per painting, so collapsing the
+  // panel mid-painting can't shift strokes already laid).
+  const el = G.gui && G.gui.domElement;
+  PANEL_W = el && el.offsetWidth && windowWidth > 700 ? el.offsetWidth + 12 : 0;
+  // Only stroke settings changed (same scene, same canvas)? Repaint over the cached
+  // underpainting instead of painting it again.
+  const cached = G.param('medium') === 1 && UNDER && UNDER.key === sceneKey();
+  tasks = cached ? buildRepaintTasks(S) : buildTasks(S);
   taskIdx = 0;
   window.DONE = false;
   loop();
 }
 
+// Keep the mat clean while the painting forms. Passes deliberately reach past the field
+// edge (washes, oil strokes, the bank) so no edge shows inside it, and the final mat pass
+// covers the spill; but until then the spill showed on the mat around the forming image.
+// Repainting the mat (four flat rects) at the end of every frame hides it. It has to run
+// after p5.brush composites its layer, which also happens at postdraw, so it is a
+// postdraw hook registered after p5.brush's.
+p5.registerAddon((p5, fn, lifecycles) => {
+  lifecycles.postdraw = function () {
+    if (!S || !R) return;
+    push();
+    resetMatrix();
+    translate(-width / 2, -height / 2);
+    paintMat(S);
+    pop();
+  };
+});
+
 function draw() {
   if (!S) return;
   translate(-width / 2, -height / 2);
-  R = fieldRect(width, height);
+  R = fieldRect(width - PANEL_W, height);
   U = R.w / REF_W;
   const t0 = performance.now();
-  const last = Math.min(tasks.length, STOP);
-  while (taskIdx < last && performance.now() - t0 < FRAME_BUDGET_MS) {
+  // Passes may append passes (the oil engine queues its strokes once it has read the
+  // underpainting), so the end is re-read every iteration. A pass returning YIELD ends
+  // the frame early, so p5.brush flushes to the canvas before the next pass reads it.
+  const last = () => Math.min(tasks.length, STOP);
+  while (taskIdx < last() && performance.now() - t0 < FRAME_BUDGET_MS) {
     const ts = performance.now();
     try {
-      tasks[taskIdx++]();
+      if (tasks[taskIdx++]() === YIELD) break;
       if (PROFILE) PROFILE.push([taskIdx - 1, Math.round(performance.now() - ts)]);
     } catch (e) {
       // One bad mark must not stop the painting; report it and carry on.
       console.warn('aerial-recession: pass', taskIdx - 1, 'failed:', e && e.message);
     }
   }
-  if (taskIdx >= last) {
+  if (taskIdx >= last()) {
     noLoop();
     window.DONE = true;
+    UI.status = 'done';
+  } else {
+    UI.status = Math.round((100 * taskIdx) / tasks.length) + '% · ' + (OP && UNDER ? 'oil strokes' : 'underpainting');
   }
 }
 
@@ -579,6 +673,100 @@ function buildGrain(s) {
 // Painting order. Each entry is one small unit of work; draw() runs them under a budget.
 // ---------------------------------------------------------------------------------
 
+// Everything that shapes the underpainting, plus the canvas it was read from.
+function sceneKey() {
+  const p = SCENE_PARAMS.map((k) => G.param(k));
+  return JSON.stringify([G.seed, p, width, height, pixelDensity(), PANEL_W]);
+}
+
+// Oil repaint over the cached underpainting: restore it, then the oil passes.
+function buildRepaintTasks(s) {
+  OP = null;
+  return [
+    () => {
+      background(...matColour(s));
+      setBrushScale(Math.max(0.3, U * 1.7));
+      brush.noField();
+      if (!UNDER.img) {
+        UNDER.img = createImage(UNDER.W, UNDER.H);
+        UNDER.img.loadPixels();
+        UNDER.img.pixels.set(UNDER.px);
+        UNDER.img.updatePixels();
+      }
+      image(UNDER.img, 0, 0, width, height);
+    },
+    () => oilBegin(s),
+    () => paintCanvasWeave(s),
+    () => paintVignette(s),
+    () => paintMat(s),
+  ];
+}
+
+// Panel extras: progress, seed stepping for scene and paint, presets.
+function buildControls() {
+  const gui = G.gui;
+  if (!gui) return; // contact-sheet tiles have no panel
+  const st = gui.add(UI, 'status').name('painting').listen().disable();
+  // sit the readout just under the seed controls rather than at the foot of the panel
+  const kids = gui.$children;
+  kids.insertBefore(st.domElement, kids.children[2] || null);
+  const seeds = gui.folders.find((f) => f._title === 'Seeds') || gui.addFolder('Seeds');
+  const paint = () => G.param('paintSeed');
+  const act = {
+    scenePrev: () => G.setSeed(Math.max(0, G.seed - 1)),
+    sceneNext: () => G.setSeed(G.seed + 1),
+    sceneRandom: () => G.randomize(),
+    paintPrev: () => G.setParams({ paintSeed: Math.max(1, (paint() || 2) - 1) }),
+    paintNext: () => G.setParams({ paintSeed: (paint() || 0) + 1 }),
+    paintRandom: () => G.setParams({ paintSeed: 1 + Math.floor(Math.random() * 999999) }),
+    save: () => {
+      const blob = new Blob([JSON.stringify({ piece: '036-aerial-recession', seed: G.seed, params: G.params }, null, 2)], { type: 'application/json' });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = 'aerial-recession-' + G.seed + '.json';
+      a.click();
+      setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+    },
+    load: () => {
+      const inp = document.createElement('input');
+      inp.type = 'file';
+      inp.accept = 'application/json,.json';
+      inp.onchange = () => {
+        const f = inp.files && inp.files[0];
+        if (!f) return;
+        f.text().then((t) => {
+          try {
+            const j = JSON.parse(t);
+            if (j.params) G.setParams(j.params);
+            if (j.seed !== undefined) G.setSeed(Number(j.seed) >>> 0);
+          } catch (e) {
+            console.warn('aerial-recession: preset not readable', e && e.message);
+          }
+        });
+      };
+      inp.click();
+    },
+    resetStrokes: () => {
+      const d = G.defaults();
+      const out = {};
+      for (const k in d) if (SCENE_PARAMS.indexOf(k) < 0 && k !== 'medium' && k !== 'grain' && k !== 'paintSeed') out[k] = d[k];
+      G.setParams(out);
+    },
+  };
+  seeds.add(act, 'scenePrev').name('◀ scene seed');
+  seeds.add(act, 'sceneNext').name('▶ scene seed');
+  seeds.add(act, 'sceneRandom').name('🎲 new scene');
+  seeds.add(act, 'paintPrev').name('◀ paint seed');
+  seeds.add(act, 'paintNext').name('▶ paint seed');
+  seeds.add(act, 'paintRandom').name('🎲 new hand (P)');
+  const presets = gui.addFolder('Presets');
+  presets.add(act, 'save').name('Save preset (.json)');
+  presets.add(act, 'load').name('Load preset…');
+  presets.add(act, 'resetStrokes').name('Reset stroke settings');
+  presets.close();
+  window.AR_ACTIONS = act; // keyboard + inspection
+}
+
 function buildTasks(s) {
   const T = [];
 
@@ -625,20 +813,45 @@ function buildTasks(s) {
       chunk.forEach((tr) => paintTree(s, tr));
     });
   }
+  // watercolour: the larger midground trees get the charcoal / hatch language in place,
+  // before the foreground goes on (in oil they are restated after the oil passes)
+  // watercolour, drawn style: the larger midground trees get the charcoal / hatch language
+  // (the default wash style leaves them as the layered washes above)
+  const drawn = G.param('medium') === 0 && G.param('wcTrees') === 1;
+  if (drawn) T.push(() => paintMidTreesBrush(s));
   T.push(() => paintLightVeil(s));
   T.push(() => paintBank(s));
   T.push(() => paintGrass(s, 0));
   T.push(() => paintGrass(s, 1));
   if (s.repoussoir.segs.length) {
-    T.push(() => paintTrunk(s));
-    const L = s.repoussoir.leaves;
-    for (let i = 0; i < L.length; i += 25) {
-      const chunk = L.slice(i, i + 25);
-      T.push(() => chunk.forEach((lf) => paintLeafClump(s, lf)));
+    // in oil the underpainting has no framing tree at all: the oil passes paint clean sky
+    // behind it, and the tree goes on last, painted (a tree in the underpainting would be
+    // sampled into the sky strokes as dark ghosts beside the oil tree)
+    if (drawn) {
+      for (const t of treeBrushTasks(s)) T.push(t);
+      T.push(() => paintCanopyBrush(s));
+      T.push(() => paintRim(s));
+    } else if (G.param('medium') === 0) {
+      // wash style: the tree is laid in the way the sky and ranges are, as transparent
+      // washes over one dark silhouette tone, plus a warm rim where it faces the sun
+      T.push(() => paintTrunk(s));
+      const L = s.repoussoir.leaves;
+      for (let i = 0; i < L.length; i += 25) {
+        const chunk = L.slice(i, i + 25);
+        T.push(() => chunk.forEach((lf) => paintLeafClump(s, lf)));
+      }
+      T.push(() => paintRim(s));
     }
-    T.push(() => paintRim(s));
   }
-  T.push(() => paintGrain(s));
+  if (G.param('medium') === 1) {
+    // Oil: everything above becomes the underpainting; the oil engine reads it back and
+    // repaints the whole surface in directional strokes, then the canvas weave goes on.
+    T.push(() => YIELD);
+    T.push(() => oilBegin(s));
+    T.push(() => paintCanvasWeave(s));
+  } else {
+    T.push(() => paintGrain(s));
+  }
   T.push(() => paintVignette(s));
   T.push(() => paintMat(s));
   return T;
@@ -1281,9 +1494,6 @@ function paintGrass(s, pass) {
   }
 }
 
-// Limbs: anything thicker than a few units is a filled ribbon whose width follows the
-// branch's own taper, so a limb hands its width on to its children without a step;
-// only the twigs are pencil strokes.
 function paintTrunk(s) {
   const C = s.C;
   const rp = s.repoussoir;
@@ -1379,6 +1589,1520 @@ function paintRim(s) {
   }
 }
 
+// --- tree brushwork (p5.brush) ----------------------------------------------------
+//
+// The framing tree, drawn the way a draughtsman builds one in charcoal:
+//   trunk & limbs  never one line: several slightly wandering strands laid side by side
+//                  across each limb's width, overlapping so dry pigment accumulates in
+//                  the overlaps — bark striations and mass in one gesture. A few light
+//                  strands on the sunward flank.
+//   branches       the recursion's own segments, each drawn with a weight that tapers
+//                  with the limb (charcoal near the trunk, 2B in the outer twigs).
+//   foliage        abstract clouds rather than leaves: the tip clumps are gathered into
+//                  canopy masses, each a bleeding watercolour fill on a curved organic
+//                  outline (beginShape with curvature), a lighter fill toward the sun,
+//                  then ink hatching laid over the mass for leaf texture.
+// p5.brush mixes spectrally, so overlapping dark strokes deepen like real charcoal.
+
+const BARK = [74, 53, 37]; // #4a3525
+// p5.brush 2.2.3 ships no 'hatch_brush' (its README still lists one); rotring is the
+// clean technical-pen line closest to it.
+const HATCH_BRUSH = 'rotring';
+
+// Weight argument giving a mark `w` REF units wide with built-in brush `name`. The
+// constants are measured, not the library's nominal weights: drawn at brush scale 1, a
+// unit of weight lays down this many pixels of visible mark (grain and scatter
+// included) — charcoal 3.1 px, crayon 3.2, 2B 1.4, cpencil 1.2, pastel 8.9.
+const BRUSH_PX = { charcoal: 3.1, crayon: 3.2, '2B': 1.4, cpencil: 1.2, pastel: 8.9 };
+function brushW(w, name = 'charcoal') {
+  return Math.max(0.2, (w * U) / ((BRUSH_PX[name] || 1.5) * brushK));
+}
+
+function barkBrush() {
+  return ['charcoal', 'cpencil', '2B', 'crayon', 'pastel'][G.param('barkBrush')] || 'charcoal';
+}
+
+// Normal of a polyline at index k.
+function polyNormal(P, k) {
+  const a = P[Math.max(0, k - 1)];
+  const b = P[Math.min(P.length - 1, k + 1)];
+  const tx = b[0] - a[0];
+  const ty = b[1] - a[1];
+  const d = Math.hypot(tx, ty) || 1;
+  return [-ty / d, tx / d];
+}
+
+// The front tree in watercolour, one pass per limb (thin → thick, so the trunk sits on
+// the branches it throws). Small limbs keep only their essential marks.
+function treeBrushTasks(s) {
+  const rp = s.repoussoir;
+  if (!rp.segs.length) return [];
+  const T = trunkTones(s);
+  const segs = rp.segs.slice().sort((a, b) => a.pts[0][2] - b.pts[0][2]);
+  const out = [
+    () => {
+      brush.noField();
+      brush.noFill();
+      brush.noHatch();
+    },
+  ];
+  // twigs together in one pass: weight tapers with the limb
+  out.push(() => {
+    for (const seg of segs) {
+      const P = seg.pts;
+      const w0 = P[0][2];
+      if (w0 >= 2.5) continue;
+      const line = P.map((p) => [X(p[0]), Y(p[1]), Math.max(0.25, p[2] / w0)]);
+      const twig = seg.depth <= 3 ? 'charcoal' : '2B';
+      brush.set(twig, toHex(T.dark), brushW(Math.max(0.7, w0 * 0.9), twig));
+      brush.spline(line, 0.5);
+    }
+  });
+  for (const seg of segs) {
+    if (seg.pts[0][2] < 2.5) continue;
+    out.push(() => {
+      const { marks, pts } = trunkMarks(s, jointed(seg), { flare: seg.depth === 0 ? 0.55 : 0 });
+      const small = seg.pts[0][2] * U < 10;
+      // the body: a crisp fill on the limb's outline in the mid tone, then the marks
+      noStroke();
+      fill(T.mid[0], T.mid[1], T.mid[2]);
+      beginShape(TRIANGLE_STRIP);
+      pts.forEach((p, k) => {
+        const [nx, ny] = polyNormal(pts, k);
+        const hw = Math.max(0.6, p[2] * 0.5);
+        vertex(X(p[0] + nx * hw), Y(p[1] + ny * hw));
+        vertex(X(p[0] - nx * hw), Y(p[1] - ny * hw));
+      });
+      endShape();
+      for (const m of marks) {
+        if (small && m.kind !== 'band' && m.kind !== 'edge' && m.kind !== 'rim') continue;
+        drawMarkBrush(m);
+      }
+    });
+  }
+  return out;
+}
+
+// Gather the tip clumps into canopy masses (greedy proximity clustering).
+function canopyClusters(leaves) {
+  const out = [];
+  const used = new Array(leaves.length).fill(false);
+  for (let i = 0; i < leaves.length; i++) {
+    if (used[i]) continue;
+    const members = [];
+    for (let j = i; j < leaves.length; j++) {
+      if (!used[j] && Math.hypot(leaves[j].x - leaves[i].x, leaves[j].y - leaves[i].y) < 70) {
+        used[j] = true;
+        members.push(leaves[j]);
+      }
+    }
+    let cx = 0, cy = 0;
+    for (const m of members) { cx += m.x; cy += m.y; }
+    cx /= members.length;
+    cy /= members.length;
+    let r = 0;
+    for (const m of members) r = Math.max(r, Math.hypot(m.x - cx, m.y - cy) + m.r);
+    out.push({ x: cx, y: cy, r: Math.max(14, r), members, ph: random(100) });
+  }
+  return out;
+}
+
+function organicOutline(cx, cy, rx, ry, ph, n = 9) {
+  const P = [];
+  for (let k = 0; k < n; k++) {
+    const a = (k / n) * TWO_PI;
+    const rr = 0.78 + 0.42 * noise(ph + Math.cos(a) * 1.1, ph + Math.sin(a) * 1.1);
+    P.push([X(cx + Math.cos(a) * rx * rr), Y(cy + Math.sin(a) * ry * rr)]);
+  }
+  return P;
+}
+
+function paintCanopyBrush(s) {
+  const C = s.C;
+  const rp = s.repoussoir;
+  if (!rp.leaves.length) return;
+  const op = G.param('canopyOpacity');
+  const spacing = G.param('hatchSpacing');
+  const hAng = (G.param('hatchAngle') * Math.PI) / 180;
+  const base = mixRGB(C.silhouette, C.foliage, 0.32);
+  const core = mixRGB(C.silhouette, [0, 0, 0], 0.15);
+  const litC = mixRGB(mixRGB(C.foliage, C.foliageLit, 0.6), C.light, 0.25 * s.warmth);
+  const hatchC = mixRGB(C.silhouette, [0, 0, 0], 0.2);
+  const clusters = canopyClusters(rp.leaves);
+  brush.noStroke();
+  for (const c of clusters) {
+    // the mass: a bleeding watercolour fill on a curved organic outline
+    brush.noHatch();
+    brush.fill(toHex(base), op);
+    brush.fillBleed(0.12, 'out');
+    brush.fillTexture(0.5, 0.35);
+    brush.beginShape(0.5);
+    for (const [x, y] of organicOutline(c.x, c.y, c.r, c.r * 0.72, c.ph)) brush.vertex(x, y);
+    brush.endShape(true);
+    // a denser core, offset away from the sun: the shadowed heart of the mass
+    brush.fill(toHex(core), op * 0.8);
+    brush.fillBleed(0.1, 'out');
+    brush.fillTexture(0.55, 0.3);
+    brush.beginShape(0.5);
+    for (const [x, y] of organicOutline(c.x - s.sunSide * c.r * 0.15, c.y + c.r * 0.1, c.r * 0.6, c.r * 0.45, c.ph + 4, 8)) brush.vertex(x, y);
+    brush.endShape(true);
+    // the light reaching into the mass from the sun's side
+    const lx = c.x + s.sunSide * c.r * 0.28;
+    const ly = c.y - c.r * 0.18;
+    brush.fill(toHex(litC), op * 0.45);
+    brush.fillBleed(0.15, 'out');
+    brush.fillTexture(0.6, 0.2);
+    brush.beginShape(0.5);
+    for (const [x, y] of organicOutline(lx, ly, c.r * 0.55, c.r * 0.4, c.ph + 9, 8)) brush.vertex(x, y);
+    brush.endShape(true);
+    brush.noFill();
+    // hatching over the mass: leaf texture, denser in the core
+    const a0 = hAng + random(-0.35, 0.35);
+    brush.hatch(spacing * U, a0, { rand: 0.45, gradient: 0.3 });
+    brush.hatchStyle(HATCH_BRUSH, toHex(hatchC), 1.2);
+    brush.circle(X(c.x), Y(c.y), c.r * 0.72 * U, 0.8);
+    // cross-hatching in the shadowed core only
+    brush.hatch(spacing * 0.8 * U, a0 + 1.15, { rand: 0.45 });
+    brush.circle(X(c.x - s.sunSide * c.r * 0.18), Y(c.y + c.r * 0.12), c.r * 0.42 * U, 0.8);
+    brush.noHatch();
+  }
+  // the edge: the individual clumps as small dark dabs, so the silhouette stays broken
+  for (const lf of rp.leaves) {
+    brush.fill(toHex(shadeRGB(base, random(0.6, 0.95))), Math.min(255, op + 50));
+    brush.fillBleed(0.05, 'out');
+    brush.fillTexture(0.4, 0.5);
+    brush.beginShape(0.5);
+    for (const [x, y] of organicOutline(lf.x, lf.y, lf.r * 0.8, lf.r * 0.62, lf.ph, 7)) brush.vertex(x, y);
+    brush.endShape(true);
+  }
+  brush.noFill();
+}
+
+// The larger midground trees get the same language, lightly: two charcoal strands for
+// the trunk and a hatched canopy core. Far trees are left as painted.
+function paintMidTreesBrush(s, trunks = true) {
+  if (G.param('midTrees') < 0.5) return;
+  // trunks: the trunk model, two-tone (watercolour; oil paints them in oil)
+  if (trunks) for (const m of midTrunkMarks(s)) drawMarkBrush(m);
+  const C = s.C;
+  const spacing = G.param('hatchSpacing') * 0.7;
+  const hAng = (G.param('hatchAngle') * Math.PI) / 180;
+  for (const tr of s.trees) {
+    const x = s.gx(tr.wx, tr.z);
+    if (x < -40 || x > REF_W + 40) continue;
+    const y = s.gy(tr.z);
+    const sc = s.F / tr.z;
+    const w = tr.hW * sc * (tr.tall ? 0.5 : 1);
+    const h = tr.hW * sc * (tr.tall ? 2.3 : 1.15);
+    if (w < 14) continue;
+    const air = s.aerial(tr.z);
+    const cy = y - h * 0.18 - h * 0.5;
+    brush.noFill();
+    brush.noHatch();
+    const hc = s.seen(mixRGB(C.foliage, C.silhouette, 0.4), tr.z, x, y);
+    brush.noStroke();
+    brush.hatch(spacing * U, hAng + random(-0.3, 0.3), { rand: 0.3 });
+    brush.hatchStyle(HATCH_BRUSH, toHex(hc), 1 - 0.5 * air);
+    brush.circle(X(x - s.sunSide * w * 0.08), Y(cy + h * 0.05), w * 0.32 * U, 0.7);
+    brush.noHatch();
+  }
+}
+
+// --- trunk model (after pendrawings.me, "How to draw tree trunks") -------------------
+//
+// The tutorial, stripped to what it actually prescribes:
+//   1. a trunk drawing has two jobs: show its ROUNDNESS and show its BARK TEXTURE;
+//   2. bark = slightly wandering lines along the trunk's length (the grooves) — only as
+//      many as convey the feel;
+//   3. roundness = three tones across the width: the third away from the light darkest,
+//      the middle third (facing the viewer) mid, the third toward the light lightest;
+//      darker overall reads older;
+//   4. finish with TAPERED DARKS — crevices and edge roughness — and ground the base;
+//   5. character = shape, size and placement of the tapered darks; long flowing bark lines
+//      become crevices; knots;
+//   6. small / far trunks: two tones only, the dark side zagged;
+//   7. close-up trunks: individual bark pieces, each textured on its own.
+//
+// Decomposed into code: every limb is a cylinder parameterised by s (along its length)
+// and u ∈ [−1, 1] (across it, −1 = away from the light, +1 = toward it). The rules above
+// become marks laid on that cylinder — tone bands with wandering boundaries, grooves,
+// tapered darks, a zagged dark edge, broken highlights on the lit third, knots, and (on
+// close-up limbs) bark pieces cut between the grooves. The level of detail is chosen
+// from the limb's width on screen (rule 6 vs 3 vs 7). The same marks are rendered as
+// oil strokes (impasto on the lit third) or with p5.brush in the watercolour medium.
+
+// Resample a [x, y, w] polyline to roughly even arc-length steps.
+function resampleLimb(P, step) {
+  const out = [P[0].slice()];
+  let carry = 0;
+  for (let i = 1; i < P.length; i++) {
+    const a = P[i - 1];
+    const b = P[i];
+    const L = Math.hypot(b[0] - a[0], b[1] - a[1]);
+    let t = step - carry;
+    while (t <= L) {
+      const f = t / L;
+      out.push([a[0] + (b[0] - a[0]) * f, a[1] + (b[1] - a[1]) * f, a[2] + (b[2] - a[2]) * f]);
+      t += step;
+    }
+    carry = L - (t - step);
+  }
+  const last = P[P.length - 1];
+  const tail = out[out.length - 1];
+  if (Math.hypot(last[0] - tail[0], last[1] - tail[1]) > step * 0.3) out.push(last.slice());
+  return out;
+}
+
+// The tutorial's three tones assume light from the side. This sun stands in the picture,
+// so we see the tree's shaded face: the three bands keep their order but are compressed
+// into a low key (how low follows the silhouette-darkness setting), and the real light
+// is carried by the narrow warm rim on the sunward edge — glow against gloom.
+function trunkTones(s) {
+  const C = s.C;
+  const age = G.param('barkAge');
+  const key = G.param('silhouette'); // 0.4 by default
+  const warm = mixRGB(C.light, C.glow, 0.4);
+  const dark = mixRGB(mixRGB(C.silhouette, [0, 0, 0], 0.2 + 0.6 * key), [0, 0, 0], 0.25 * age);
+  const mid = mixRGB(mixRGB(C.silhouette, BARK, 0.6 - 0.5 * key), C.silhouette, 0.3 * age);
+  const light = mixRGB(mixRGB(BARK, warm, 0.2 + 0.2 * s.warmth), C.silhouette, 0.15 + 0.5 * key + 0.2 * age);
+  return { dark, mid, light, warm, crevice: mixRGB(dark, [0, 0, 0], 0.45) };
+}
+
+// A child limb starts exactly where its parent ends, and both taper there, which leaves
+// a notch at every fork. Extending the child back into its parent by half its width
+// lets the two bodies overlap into one joint.
+function jointed(seg) {
+  const P = seg.pts;
+  if (seg.depth === 0 || P.length < 2) return P;
+  const [x0, y0, w0] = P[0];
+  const dx = P[1][0] - x0;
+  const dy = P[1][1] - y0;
+  const d = Math.hypot(dx, dy) || 1;
+  // slimmer than the limb, so the overlap stays inside the parent's body
+  return [[x0 - (dx / d) * w0 * 0.45, y0 - (dy / d) * w0 * 0.45, w0 * 0.6]].concat(P);
+}
+
+// Marks for one limb. P: [[x, y, w], …] in REF units. opts: {flare, lod}.
+function trunkMarks(s, P, opts = {}) {
+  const T = trunkTones(s);
+  const W0 = Math.max(...P.map((p) => p[2]));
+  const grooveK = G.param('barkGrooves');
+  const darkK = G.param('taperedDarks');
+  const knotK = G.param('knots');
+  // level of detail from the limb's width on screen (rule 6 / 3 / 7)
+  const px = W0 * U;
+  const lod = opts.lod || (px < 6 ? 'two' : W0 < 26 ? 'three' : 'close');
+  const pts = resampleLimb(P, Math.max(2.5, W0 * 0.22));
+  const n = pts.length;
+  if (n < 3) return [];
+  // root flare: the base of the trunk widens into the ground
+  let total = 0;
+  const arc = [0];
+  for (let i = 1; i < n; i++) {
+    total += Math.hypot(pts[i][0] - pts[i - 1][0], pts[i][1] - pts[i - 1][1]);
+    arc.push(total);
+  }
+  if (opts.breathe) {
+    // the width breathes along the length: no limb is a perfect taper
+    const bp = random(1000);
+    for (let i = 0; i < n; i++) pts[i][2] *= 1 + 0.26 * (noise(bp + arc[i] * 0.025) - 0.5);
+  }
+  if (opts.flare) {
+    for (let i = 0; i < n; i++) {
+      const t = arc[i] / total;
+      if (t < 0.16) pts[i][2] *= 1 + opts.flare * Math.pow(1 - t / 0.16, 2);
+    }
+  }
+  // which normal faces the light (the sun's side)
+  const mid = pts[n >> 1];
+  const nm = polyNormal(pts, n >> 1);
+  const sig = nm[0] * (s.sunX - mid[0]) + nm[1] * (s.sunY - mid[1]) >= 0 ? 1 : -1;
+  const at = (i, u) => {
+    const k = Math.max(0, Math.min(n - 1, Math.round(i)));
+    const [nx, ny] = polyNormal(pts, k);
+    const hw = pts[k][2] * 0.5;
+    return [pts[k][0] + nx * sig * u * hw, pts[k][1] + ny * sig * u * hw];
+  };
+  const wAt = (i) => pts[Math.max(0, Math.min(n - 1, Math.round(i)))][2];
+  const ph = random(1000);
+  const marks = [];
+  const path = (i0, i1, u, wander, phase) => {
+    const out = [];
+    const steps = Math.max(2, Math.min(8, Math.round(i1 - i0)));
+    for (let k = 0; k <= steps; k++) {
+      const i = i0 + ((i1 - i0) * k) / steps;
+      const uu = u + (noise(phase + i * 0.35) - 0.5) * 2 * wander;
+      out.push(at(i, Math.max(-1.05, Math.min(1.05, uu))));
+    }
+    return out;
+  };
+  const stepI = (len) => Math.max(1, len / (total / (n - 1)));
+
+  // 1+3 — the body: tone bands along the length, boundaries wandering (rule 3; rule 6
+  // drops the middle tone)
+  const bands = lod === 'two'
+    ? [{ u: -0.5, f: 0.55, col: T.dark, rel: 0 }, { u: 0.5, f: 0.55, col: mixRGB(T.mid, T.light, 0.6), rel: 0.15 }]
+    : [{ u: -2 / 3, f: 0.38, col: T.dark, rel: 0 }, { u: 0, f: 0.38, col: T.mid, rel: 0 }, { u: 2 / 3, f: 0.38, col: T.light, rel: 0.25 }];
+  const chunk = stepI(Math.max(8, Math.min(70, W0 * 1.4)));
+  for (const b of bands) {
+    for (let i = 0; i < n - 1; i += chunk * 0.8) {
+      const i1 = Math.min(n - 1, i + chunk);
+      const w = wAt((i + i1) / 2) * b.f;
+      marks.push({ kind: 'band', path: path(i, i1, b.u, 0.08, ph + b.u * 50), w, col: b.col, col2: shadeRGB(b.col, random(0.85, 1.1)), rel: b.rel });
+    }
+  }
+
+  // the band boundaries, worked wet into wet: short strokes loaded with both tones
+  if (lod !== 'two') {
+    for (const [ub, ca, cb] of [[-1 / 3, T.dark, T.mid], [1 / 3, T.mid, T.light]]) {
+      for (let i = random(0, 2); i < n - 1; i += stepI(W0 * random(0.35, 0.8))) {
+        const len = stepI(W0 * random(0.5, 1.2));
+        const col = mixRGB(ca, cb, random(0.35, 0.65));
+        marks.push({ kind: 'band', path: path(i, Math.min(n - 1, i + len), ub + random(-0.08, 0.08), 0.06, ph + ub * 90 + i), w: wAt(i) * random(0.1, 0.18), col, col2: random() < 0.5 ? ca : cb, rel: 0 });
+      }
+    }
+  }
+
+  // 2 — grooves: wandering lines along the length, denser on the dark side
+  const K = Math.max(2, Math.min(18, Math.round((W0 / 3.4) * grooveK)));
+  for (let k = 0; k < K; k++) {
+    const u = -0.92 + (1.84 * (k + random(0.2, 0.8))) / K;
+    const keep = u < -1 / 3 ? 0.95 : u < 1 / 3 ? 0.8 : 0.45;
+    const col = u < -1 / 3 ? T.crevice : u < 1 / 3 ? mixRGB(T.dark, T.mid, 0.25) : mixRGB(T.mid, T.dark, 0.35);
+    let i = random(0, stepI(W0 * 0.6));
+    while (i < n - 1) {
+      const len = stepI(W0 * random(0.8, 2.6));
+      const i1 = Math.min(n - 1, i + len);
+      if (random() < keep) {
+        marks.push({ kind: 'groove', path: path(i, i1, u, 0.07, ph + k * 7.7), w: Math.max(0.7, wAt(i) * random(0.04, 0.085)), col, col2: mixRGB(col, T.crevice, 0.5), rel: 0.05 });
+      }
+      i = i1 + stepI(W0 * random(0.15, 0.6));
+    }
+  }
+
+  // 4+5 — tapered darks: spindles clustered at the dark/mid boundary; the long ones are
+  // crevices
+  const nd = Math.round((total / W0) * 2.4 * darkK * (lod === 'two' ? 0.4 : 1));
+  for (let j = 0; j < nd; j++) {
+    const u = -0.78 + Math.pow(random(), 1.4) * 0.95;
+    const crev = random() < 0.22;
+    const len = stepI(W0 * (crev ? random(1.4, 3) : random(0.3, 1.0)));
+    const i = random(0, Math.max(0, n - 1 - len));
+    marks.push({ kind: 'dark', path: path(i, i + len, u, 0.05, ph + j * 3.1), w: Math.max(0.7, wAt(i) * (crev ? random(0.05, 0.09) : random(0.07, 0.16))), col: T.crevice, col2: T.dark, rel: 0.02 });
+  }
+
+  // 6 / 4 — edge roughness: the dark edge zagged (short diagonal darks biting inward)
+  const zagStep = stepI(W0 * 0.32);
+  let flip = 1;
+  for (let i = 0; i < n - 1; i += zagStep * random(0.7, 1.3)) {
+    const a = at(i, -1.03);
+    const b = at(i + zagStep * 0.6 * flip, -0.72 + random(-0.08, 0.08));
+    flip = -flip;
+    marks.push({ kind: 'edge', path: [a, [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2], b], w: Math.max(0.6, wAt(i) * random(0.05, 0.09)), col: T.crevice, col2: T.dark, rel: 0.02 });
+  }
+
+  // 3 — the light third: broken highlights, and a lit rim on the light edge
+  if (lod !== 'two' || px > 3) {
+    // fewer when the trunk is small on screen: a highlight can't be thinner than a pixel,
+    // so at gallery size each one weighs more
+    const sparse = Math.max(1, 40 / Math.max(1, px));
+    for (let i = random(0, 2); i < n - 1; i += stepI(W0 * random(0.25, 0.8) * sparse)) {
+      const len = stepI(W0 * random(0.4, 1.3));
+      const u = random(0.45, 0.9);
+      const hc = mixRGB(T.light, T.warm, random(0.1, 0.35));
+      marks.push({ kind: 'light', path: path(i, Math.min(n - 1, i + len), u, 0.05, ph + i), w: Math.max(0.7, wAt(i) * random(0.07, 0.15)), col: hc, col2: mixRGB(hc, T.light, 0.4), rel: 0.35 });
+    }
+    for (let i = 0; i < n - 1; i += stepI(W0 * random(0.6, 1.8))) {
+      const len = stepI(W0 * random(0.6, 1.6));
+      if (random() < 0.35) continue; // the rim breaks
+      marks.push({ kind: 'rim', path: path(i, Math.min(n - 1, i + len), 0.95, 0.02, ph + 300 + i), w: Math.max(0.5, wAt(i) * 0.045), col: T.warm, col2: T.light, rel: 0.3 });
+    }
+  }
+
+  // 5 — knots: a dark ring round a mid core, on trunks big enough to carry them
+  if (W0 > 14) {
+    const nk = Math.round((total / (W0 * 6)) * knotK);
+    for (let j = 0; j < nk; j++) {
+      const i = random(n * 0.25, n * 0.9);
+      const u = random(-0.35, 0.35);
+      const c = at(i, u);
+      const w = wAt(i);
+      const rx = w * random(0.08, 0.13);
+      const ry = rx * random(1.3, 1.8);
+      const [nx, ny] = polyNormal(pts, Math.round(i));
+      const ang = Math.atan2(nx, -ny); // along the limb
+      const ring = [];
+      for (let k = 0; k <= 8; k++) {
+        const a = (k / 8) * TWO_PI;
+        const lx = Math.cos(a) * rx;
+        const ly = Math.sin(a) * ry;
+        ring.push([c[0] + lx * Math.cos(ang) - ly * Math.sin(ang), c[1] + lx * Math.sin(ang) + ly * Math.cos(ang)]);
+      }
+      for (let k = 0; k < 8; k += 2) marks.push({ kind: 'knot', path: ring.slice(k, k + 3), w: Math.max(0.6, rx * 0.5), col: T.crevice, col2: T.dark, rel: 0.1 });
+      marks.push({ kind: 'knotcore', path: [[c[0], c[1] - ry * 0.3], [c[0], c[1]], [c[0], c[1] + ry * 0.3]], w: rx * 0.9, col: T.mid, col2: T.dark, rel: 0.3 });
+    }
+  }
+
+  // 7 — close-up: bark pieces, cut by short transverse breaks between neighbouring grooves
+  if (lod === 'close') {
+    const rows = Math.round((total / W0) * 3 * grooveK);
+    for (let j = 0; j < rows; j++) {
+      const i = random(0, n - 1);
+      const u0 = random(-0.9, 0.7);
+      const du = random(0.12, 0.3);
+      const a = at(i, u0);
+      const b = at(i + stepI(W0 * random(-0.15, 0.15)), u0 + du);
+      const col = u0 < -1 / 3 ? T.crevice : u0 < 1 / 3 ? T.dark : mixRGB(T.mid, T.dark, 0.5);
+      marks.push({ kind: 'break', path: [a, [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2], b], w: Math.max(0.6, wAt(i) * random(0.025, 0.045)), col, col2: col, rel: 0.05 });
+    }
+  }
+  return { marks, pts, sig, at, wAt, n, stepI, W0 };
+}
+
+// A mark as an oil stroke: the path is fitted by a cubic through its quarter points.
+function markToOil(m) {
+  const P = m.path;
+  const q = (t) => P[Math.min(P.length - 1, Math.round(t * (P.length - 1)))];
+  const p0 = P[0], p3 = P[P.length - 1];
+  const a = q(1 / 3), b = q(2 / 3);
+  const pr = m.kind === 'dark' || m.kind === 'edge' || m.kind === 'break' ? [0.35, 1.1, 1, 0.3] : [0.9, 1.05, 1, 0.85];
+  return {
+    P: [[p0[0], p0[1], pr[0]], [a[0], a[1], pr[1]], [b[0], b[1], pr[2]], [p3[0], p3[1], pr[3]]],
+    w: m.w,
+    body: m.col,
+    far: m.col2 || m.col,
+    relief: m.rel * G.param('impasto'),
+    angular: false,
+    soft: false,
+    scumble: false,
+    crisp: m.kind !== 'band',
+  };
+}
+
+// A mark in p5.brush: bands as watercolour washes, grooves in the bark brush, tapered
+// darks and edges in 2B with pointed pressure, light in coloured pencil.
+function drawMarkBrush(m) {
+  const P = m.path;
+  if (m.kind === 'band') {
+    // tone bands as plain fills: hundreds of bleeding watercolour polygons per tree are
+    // far too slow, and the grain comes from the brush marks laid over them
+    noStroke();
+    fill(m.col[0], m.col[1], m.col[2], 215);
+    beginShape(TRIANGLE_STRIP);
+    P.forEach((p, k) => {
+      const [nx, ny] = polyNormal(P, k);
+      vertex(X(p[0] + nx * m.w * 0.5), Y(p[1] + ny * m.w * 0.5));
+      vertex(X(p[0] - nx * m.w * 0.5), Y(p[1] - ny * m.w * 0.5));
+    });
+    endShape();
+    return;
+  }
+  const name = m.kind === 'groove' ? barkBrush() : m.kind === 'light' || m.kind === 'rim' ? 'cpencil' : '2B';
+  const taper = m.kind === 'dark' || m.kind === 'edge' || m.kind === 'break';
+  const pts = P.map((p, k) => {
+    const t = k / (P.length - 1);
+    return [X(p[0]), Y(p[1]), taper ? 0.25 + Math.sin(Math.PI * t) : 1];
+  });
+  brush.set(name, toHex(m.col), brushW(m.w, name));
+  brush.spline(pts, 0.5);
+}
+
+// Midground trunks, two-tone (rule 6), stopping at the canopy's underside.
+function midTrunkMarks(s) {
+  const out = [];
+  for (const tr of s.trees) {
+    const x = s.gx(tr.wx, tr.z);
+    if (x < -40 || x > REF_W + 40) continue;
+    const y = s.gy(tr.z);
+    const sc = s.F / tr.z;
+    const w = tr.hW * sc * (tr.tall ? 0.5 : 1);
+    const h = tr.hW * sc * (tr.tall ? 2.3 : 1.15);
+    if (w < 9) continue;
+    const top = y - h * 0.18 - h * 0.5 + h * 0.32;
+    const tw = Math.max(1.2, w * 0.09);
+    const P = [[x, y + 1, tw * 1.15], [x + random(-0.4, 0.4), (y + top) / 2, tw], [x + random(-0.6, 0.6), top, tw * 0.75]];
+    const air = s.aerial(tr.z);
+    const { marks } = trunkMarks(s, P, { lod: 'two' });
+    for (const m of marks) {
+      m.col = s.seen(m.col, tr.z, x, y);
+      m.col2 = s.seen(m.col2, tr.z, x, y);
+      m.rel *= 1 - air;
+      out.push(m);
+    }
+  }
+  return out;
+}
+
+// --- the tree, painted (oil) -----------------------------------------------------------
+//
+// Vector geometry reads as illustration however good the marks inside it are. A painter
+// never has an outline: the limb is the edge of its own strokes, and the edge is then
+// corrected by cutting the surrounding paint back in. So, in oil:
+//   - limb paths are smoothed (Chaikin) and their width breathes along the length;
+//   - the body is overlapping bristle strokes, not a filled shape;
+//   - after each limb, short strokes of the paint around it — sampled from the oil surface
+//     as it stood before the tree went on — are dragged along both edges, overlapping them
+//     here and there (negative painting), so the silhouette is hard but broken;
+//   - the canopy is clustered leaf dabs: a dark core, mid dabs, warm dabs toward the sun,
+//     the outline broken by dabs that overshoot it, and sky holes painted back in.
+
+// Read the oil surface before the tree goes on: the colour the cut-ins and sky holes
+// need is the paint around and behind the tree, not the underpainting.
+function captureSurface() {
+  loadPixels();
+  const d = pixelDensity();
+  const W = Math.round(width * d);
+  const H = Math.round(height * d);
+  const px = new Uint8ClampedArray(pixels);
+  SURF = (x, y) => {
+    x = Math.max(4, Math.min(REF_W - 4, x));
+    y = Math.max(4, Math.min(REF_H - 4, y));
+    const cx = Math.min(W - 1, Math.max(0, Math.round(X(x) * d)));
+    const cy = Math.min(H - 1, Math.max(0, Math.round(Y(y) * d)));
+    const k = (cy * W + cx) * 4;
+    return [px[k], px[k + 1], px[k + 2]];
+  };
+}
+
+// Chaikin corner-cutting, twice: the recursion's straight segments become a grown curve.
+function smoothLimb(P) {
+  let Q = P;
+  for (let it = 0; it < 2; it++) {
+    const R = [Q[0]];
+    for (let i = 0; i < Q.length - 1; i++) {
+      const a = Q[i];
+      const b = Q[i + 1];
+      R.push([a[0] * 0.75 + b[0] * 0.25, a[1] * 0.75 + b[1] * 0.25, a[2] * 0.75 + b[2] * 0.25]);
+      R.push([a[0] * 0.25 + b[0] * 0.75, a[1] * 0.25 + b[1] * 0.75, a[2] * 0.25 + b[2] * 0.75]);
+    }
+    R.push(Q[Q.length - 1]);
+    Q = R;
+  }
+  return Q;
+}
+
+// A limb as paint: body strokes, the trunk-model marks, then the cut-ins.
+function oilLimbPainterly(s, seg) {
+  const T = trunkTones(s);
+  const { marks, at, wAt, n, stepI, W0 } = trunkMarks(s, smoothLimb(jointed(seg)), { flare: seg.depth === 0 ? 0.55 : 0, breathe: true });
+  // body: overlapping full-width strokes in the mid tone — the limb is the edge of these
+  const len = stepI(W0 * 1.5);
+  for (let i = 0; i < n - 1; i += len * 0.55) {
+    const i1 = Math.min(n - 1, i + len);
+    const k = 6;
+    const path = [];
+    for (let j = 0; j <= k; j++) path.push(at(i + ((i1 - i) * j) / k, random(-0.04, 0.04)));
+    const col = shadeRGB(mixRGB(T.mid, T.dark, random(0, 0.35)), random(0.92, 1.06));
+    oilStroke(markToOil({ kind: 'body', path, w: wAt((i + i1) / 2) * random(0.98, 1.06), col, col2: mixRGB(col, T.dark, 0.4), rel: 0 }));
+  }
+  for (const m of marks) if (m.kind !== 'band' || m.w < W0 * 0.3) oilStroke(markToOil(m));
+  // cut-ins: the surrounding paint dragged back over the edge, here and there
+  if (SURF && W0 * U > 3) {
+    for (const side of [-1, 1]) {
+      for (let i = random(0, 2); i < n - 1; i += stepI(W0 * random(0.5, 1.4))) {
+        if (random() > 0.5) continue;
+        const l = stepI(W0 * random(0.5, 1.6));
+        const i1 = Math.min(n - 1, i + l);
+        const out = at((i + i1) / 2, side * 1.6);
+        const col = shadeRGB(SURF(out[0], out[1]), random(0.96, 1.04));
+        const u0 = side * random(0.95, 1.15);
+        const path = [at(i, side * 1.2), at((i + i1) / 2, u0), at(i1, side * 1.25)];
+        oilStroke(markToOil({ kind: 'cut', path, w: wAt(i) * random(0.12, 0.28), col, col2: col, rel: 0 }));
+      }
+    }
+  }
+}
+
+// The canopy as oil: clustered leaf dabs.
+function oilCanopy(s) {
+  const C = s.C;
+  const rp = s.repoussoir;
+  if (!rp.leaves.length) return;
+  const clusters = canopyClusters(rp.leaves);
+  const core = mixRGB(C.silhouette, [0, 0, 0], 0.15);
+  const mid = mixRGB(C.silhouette, C.foliage, 0.45);
+  const lit = mixRGB(mid, mixRGB(mixRGB(C.foliage, C.foliageLit, 0.55), C.light, 0.25 * s.warmth), 0.6);
+  for (const c of clusters) {
+    const rx = c.r;
+    const ry = c.r * 0.72;
+    const sx = s.sunX - c.x;
+    const sy = s.sunY - c.y;
+    const sl = Math.hypot(sx, sy) || 1;
+    const n = Math.min(900, Math.round(((rx * ry) / 30) * 3.2));
+    const inside = (u, v, a) => {
+      // organic boundary: radius modulated by noise round the clump
+      const rr = 0.78 + 0.42 * noise(c.ph + Math.cos(a) * 1.1, c.ph + Math.sin(a) * 1.1);
+      return Math.hypot(u, v) < rr;
+    };
+    // block in the mass first: broad strokes of the core colour across the interior
+    for (let i = 0; i < 10; i++) {
+      const a = random(TWO_PI);
+      const d = Math.sqrt(random()) * 0.55;
+      const x = c.x + Math.cos(a) * d * rx;
+      const y = c.y + Math.sin(a) * d * ry;
+      const L = c.r * random(0.5, 0.9);
+      const ang = random(-0.5, 0.5);
+      const col = mixRGB(core, mid, random(0, 0.35));
+      oilStroke(markToOil({ kind: 'leaf', path: [[x - Math.cos(ang) * L * 0.5, y - Math.sin(ang) * L * 0.5], [x, y], [x + Math.cos(ang) * L * 0.5, y + Math.sin(ang) * L * 0.5]], w: c.r * random(0.3, 0.45), col, col2: shadeRGB(col, 0.85), rel: 0 }));
+    }
+    for (let i = 0; i < n; i++) {
+      const a = random(TWO_PI);
+      const d = Math.sqrt(random());
+      const u = Math.cos(a) * d * 1.15;
+      const v = Math.sin(a) * d * 1.15;
+      if (!inside(u, v, a)) continue;
+      const x = c.x + u * rx;
+      const y = c.y + v * ry;
+      const toward = (u * sx + v * sy * 0.72) / sl; // > 0 on the sunward side
+      let col;
+      let rel = 0.1;
+      if (toward > 0.25 && d > 0.45 && random() < 0.55) {
+        col = mixRGB(lit, mid, random(0, 0.4));
+        rel = 0.35;
+      } else if (d < 0.55) {
+        col = mixRGB(core, mid, random(0, 0.5));
+      } else {
+        col = mixRGB(mid, core, random(0, 0.5));
+      }
+      // leaves hang: dabs fan outward from the centre and droop
+      const ang = Math.atan2(v, u) * 0.6 + Math.PI * 0.5 * 0.35 + random(-0.5, 0.5);
+      const L = c.r * (random() < 0.25 ? random(0.22, 0.38) : random(0.07, 0.2));
+      const ca = Math.cos(ang);
+      const sa = Math.sin(ang);
+      oilStroke(markToOil({ kind: 'leaf', path: [[x - ca * L * 0.5, y - sa * L * 0.5], [x, y + L * 0.05], [x + ca * L * 0.5, y + sa * L * 0.5]], w: L * random(0.4, 0.6), col, col2: shadeRGB(col, random(0.8, 1.1)), rel }));
+    }
+    // sky holes, painted back in with the paint that was behind the canopy: few, mostly
+    // toward the thinner rim, irregular, the inner ones softened by the leaves around them
+    if (SURF) {
+      const holes = Math.round(n * 0.018);
+      for (let i = 0; i < holes; i++) {
+        const a = random(TWO_PI);
+        const d = 0.55 + 0.4 * Math.pow(random(), 0.6);
+        const x = c.x + Math.cos(a) * d * rx;
+        const y = c.y + Math.sin(a) * d * ry;
+        const col = mixRGB(SURF(x, y), mid, (1 - d) * 0.9);
+        const L = c.r * random(0.04, 0.12);
+        const ang = random(-0.8, 0.8);
+        oilStroke(markToOil({ kind: 'leaf', path: [[x - Math.cos(ang) * L * 0.5, y - Math.sin(ang) * L * 0.5], [x, y], [x + Math.cos(ang) * L * 0.5, y + Math.sin(ang) * L * 0.5]], w: L * random(0.35, 0.7), col, col2: mixRGB(col, mid, 0.3), rel: 0 }));
+      }
+    }
+  }
+}
+
+// --- oil -------------------------------------------------------------------------
+//
+// The oil medium paints the same scene twice, the way a tonalist works: the watercolour
+// pipeline above is the underpainting (values, colours, every object in place); the oil
+// engine reads it back and repaints the surface in opaque, bristle-streaked strokes.
+// p5.brush paints the underpainting; the oil strokes are native (see oilStroke for why).
+//
+// Directional rhythm — stroke direction is read from the scene, never random:
+//   sky        a vortex: every stroke runs along a (slightly flattened) circle centred
+//              exactly on the sun, lengthening outward, so the eye is wound inward
+//   mountains  near ranges in short, straight, square-ended facets in three directions
+//              (fall line, a crossing facet, the crest) — craggy geology; far ranges in
+//              soft level strokes, melted into the sky wet-on-wet
+//   field      long, sweeping, nearly level strokes — the stable base under the sky
+//   river      short level strokes; glints of loaded paint under the sun
+//   bank/tree  grass rising from the lip; strokes along each limb; foliage in dabs
+//
+// Textural hierarchy — every stroke carries a relief value, rendered as the ridge of
+// paint catching a fixed room light from the upper left (a shadow on the far side, a
+// specular edge on the near side). Relief is greatest in the sun's core, steps down
+// through its halo, is high on the foreground tree and grasses, and low elsewhere.
+//
+// Edges — far ridges are lost (a wet-on-wet blend band); the foreground tree is found:
+// redrawn last as a razor-hard silhouette that sits on top of everything.
+//
+// Broken colour and scumbling — sparse micro-strokes of violet, ochre and dull orange
+// laid unblended into the field and mountains; dry-brush scumbles (bristles only, lighter
+// paint, broken) dragged over the plain, distant foliage and the halo.
+//
+// Values — the sun's core goes to near-white and its halo steps down in discrete tonal
+// rings; the silhouette is pushed toward black so the meadow reads luminous against it.
+
+const bankAt = (rp, x) => rp.bank[Math.max(0, Math.min(rp.bank.length - 1, Math.round((x + 20) / 6)))][1];
+
+// The oil engine's settings, frozen from the panel when a painting starts (oilParams),
+// so a slider moved mid-painting can't change strokes already queued.
+let OP = null;
+
+function oilParams() {
+  const P = (k) => G.param(k);
+  const la = (P('lightAngle') * Math.PI) / 180;
+  return {
+    w: P('strokeSize'), // coarse stroke width, REF units
+    l: P('strokeLength'), // stroke length ÷ width
+    coverage: P('coverage'),
+    layers: P('layers'),
+    edge: P('edgeThreshold'),
+    bend: P('bend'),
+    jitterA: P('angleJitter'),
+    jitterC: P('colourJitter'),
+    body: P('bodyOpacity'),
+    bristles: P('bristles'),
+    bristleA: P('bristleOpacity'),
+    dry: P('dryBrush'),
+    wet: P('wetBlend'),
+    vortex: P('vortex'),
+    stretch: P('vortexStretch'),
+    sweep: P('fieldSweep'),
+    facet: P('facetSize'),
+    facetMix: P('facetMix'),
+    light: [Math.cos(la), Math.sin(la)], // the light in the room the canvas hangs in
+    sunImpasto: P('sunImpasto'),
+    rings: P('haloRings'),
+    silhouette: P('silhouette'),
+    broken: P('brokenColour'),
+    accent: P('accentStrength'),
+    scumble: P('scumble'),
+    lost: P('lostEdges'),
+  };
+}
+const ACCENTS = {
+  violet: [118, 92, 150],
+  ochre: [196, 156, 74],
+  orange: [196, 120, 70],
+  olive: [120, 128, 64],
+};
+
+// Read the finished underpainting back into memory and queue the oil passes.
+function oilBegin(s) {
+  OP = oilParams();
+  // The paint seed: the same scene, a different hand. 0 derives it from the scene seed.
+  const ps = G.param('paintSeed');
+  randomSeed(ps > 0 ? ps : (G.seed ^ 0x5bd1e995) >>> 0);
+  const d = pixelDensity();
+  const W = Math.round(width * d);
+  const H = Math.round(height * d);
+  // The underpainting is read once per scene and kept: changing only stroke settings
+  // repaints over the cached copy instead of re-running the whole watercolour pipeline.
+  if (!UNDER || UNDER.key !== sceneKey()) {
+    loadPixels();
+    UNDER = { key: sceneKey(), W, H, px: new Uint8ClampedArray(pixels) };
+  }
+  const px = UNDER.px;
+  const lum = (c) => 0.3 * c[0] + 0.59 * c[1] + 0.11 * c[2];
+  // 3×3 box sample at a REF point, so one stray pencil grain doesn't set a stroke's colour.
+  const under = (x, y) => {
+    // Strokes reach past the picture edge; their colour must still come from inside it.
+    x = Math.max(4, Math.min(REF_W - 4, x));
+    y = Math.max(4, Math.min(REF_H - 4, y));
+    const cx = Math.round(X(x) * d);
+    const cy = Math.round(Y(y) * d);
+    let r = 0, g = 0, b = 0, n = 0;
+    const st = Math.max(1, Math.round(d));
+    for (let j = -1; j <= 1; j++) {
+      for (let i = -1; i <= 1; i++) {
+        const xx = Math.min(W - 1, Math.max(0, cx + i * st));
+        const yy = Math.min(H - 1, Math.max(0, cy + j * st));
+        const k = (yy * W + xx) * 4;
+        r += px[k]; g += px[k + 1]; b += px[k + 2]; n++;
+      }
+    }
+    return [r / n, g / n, b / n];
+  };
+  const O = { under, lum, field: buildOilField(s) };
+  if (PROFILE) window.OIL = O; // inspection hook for ?profile runs
+
+  const groups = [
+    [], // body layers
+    [], // lost edges, broken colour, scumbles
+    [], // objects
+    [], // the sun and its halo
+  ];
+  oilLayer(s, O, groups[0], 1.0, 1.2 * OP.coverage, false);
+  if (OP.layers >= 2) oilLayer(s, O, groups[0], 0.55, 0.8 * OP.coverage, false);
+  if (OP.layers >= 3) oilLayer(s, O, groups[0], 0.24, 1.0 * OP.coverage, true);
+  oilLostEdges(s, O, groups[1]);
+  oilBrokenColour(s, O, groups[1]);
+  oilScumble(s, O, groups[1]);
+  oilObjects(s, O, groups[2]);
+  oilSun(s, O, groups[3]);
+
+  const queue = [];
+  for (const g of groups) {
+    for (let i = 0; i < g.length; i += 70) {
+      const chunk = g.slice(i, i + 70);
+      queue.push(() => chunk.forEach(oilStroke));
+    }
+  }
+  // the grass on the bank: turf, then clumps back to front, painted blade by blade
+  const blades = oilGrass(s, O);
+  for (let i = 0; i < blades.length; i += 220) {
+    const chunk = blades.slice(i, i + 220);
+    queue.push(() => {
+      noStroke();
+      chunk.forEach(oilBlade);
+    });
+  }
+  // The found edge: the foreground tree, hard, on top of everything.
+  // the trees, built on the trunk model and painted in oil: midground trunks two-tone,
+  // then the front tree limb by limb; then its canopy and the midground canopies in
+  // p5.brush (watercolour mass + ink hatching)
+  queue.push(() => YIELD);
+  queue.push(() => captureSurface());
+  const mid = midTrunkMarks(s);
+  for (let i = 0; i < mid.length; i += 80) {
+    const chunk = mid.slice(i, i + 80);
+    queue.push(() => chunk.forEach((m) => oilStroke(markToOil(m))));
+  }
+  // the front tree limb by limb, thin → thick, then its canopy
+  const segs = s.repoussoir.segs.slice().sort((a, b) => a.pts[0][2] - b.pts[0][2]);
+  queue.push(() => {
+    const T = trunkTones(s);
+    for (const seg of segs) {
+      if (seg.pts[0][2] >= 2.5) continue;
+      oilStroke(markToOil({ kind: 'dark', path: smoothLimb(seg.pts).map((p) => [p[0], p[1]]), w: Math.max(0.8, seg.pts[0][2] * 0.9), col: T.dark, col2: T.crevice, rel: 0 }));
+    }
+  });
+  for (const seg of segs) if (seg.pts[0][2] >= 2.5) queue.push(() => oilLimbPainterly(s, seg));
+  queue.push(() => oilCanopy(s));
+  tasks.splice(taskIdx, 0, ...queue);
+}
+
+// The direction/scale field, from scene geometry. Returns {a, k, kind, ...} — stroke
+// angle, size multiplier and what is being painted — for a REF point.
+function buildOilField(s) {
+  const rp = s.repoussoir;
+  const limbSegs = [];
+  for (const seg of rp.segs) {
+    for (let i = 1; i < seg.pts.length; i++) {
+      const a = seg.pts[i - 1];
+      const b = seg.pts[i];
+      limbSegs.push({ ax: a[0], ay: a[1], bx: b[0], by: b[1], w: Math.max(a[2], b[2]) });
+    }
+  }
+  const ridgeAt = (L, x) => {
+    const i = Math.max(0, Math.min(L.ridge.length - 1, Math.round((x + 30) / 4)));
+    return L.ridge[i][1];
+  };
+  const yGround = s.gy(s.zGround);
+  return (x, y) => {
+    // the framing tree
+    for (const g of limbSegs) {
+      const vx = g.bx - g.ax, vy = g.by - g.ay;
+      const t = clamp01(((x - g.ax) * vx + (y - g.ay) * vy) / (vx * vx + vy * vy || 1));
+      const dx = x - (g.ax + vx * t), dy = y - (g.ay + vy * t);
+      if (dx * dx + dy * dy < Math.pow(Math.max(2.5, g.w * 0.55), 2)) {
+        return { a: Math.atan2(vy, vx), k: Math.max(0.18, Math.min(0.9, g.w / 30)), kind: 'limb' };
+      }
+    }
+    for (const lf of rp.leaves) {
+      if (Math.hypot((x - lf.x) / lf.r, (y - lf.y) / (lf.r * 0.78)) < 1.05) {
+        return { a: noise(x * 0.05, y * 0.05) * TWO_PI, k: 0.32, kind: 'leaf' };
+      }
+    }
+    // the bank and its grass
+    const by = bankAt(rp, x);
+    if (y > by - 3) {
+      if (y < by + 45) return { a: -Math.PI / 2 + (noise(x * 0.02) - 0.5) * 0.9, k: 0.45, kind: 'grass' };
+      const slope = (bankAt(rp, x + 12) - bankAt(rp, x - 12)) / 24;
+      // the bank in shadow is grown ground: short upward strokes leaning with the grass,
+      // not long strokes along the slope (whose ridge highlights read as grey streaks)
+      const lean = Math.atan(slope) * 0.4;
+      return { a: -Math.PI / 2 + lean + (noise(x * 0.03, y * 0.03, 5) - 0.5) * 0.9, k: 0.6, kind: 'bank' };
+    }
+    // the ground plane: long sweeping level strokes, receding
+    if (y > yGround) {
+      const z = s.F / Math.max(0.5, y - s.HY);
+      const wx = ((x - s.CX) * z) / s.F;
+      const k = Math.max(0.13, Math.min(1.1, 1.2 / Math.sqrt(z)));
+      const rc = s.river.center(Math.min(z, s.river.zN));
+      if (Math.abs(wx - rc) < s.river.halfW(z)) return { a: (noise(x * 0.03, y * 0.1) - 0.5) * 0.1, k: k * 0.7, kind: 'water' };
+      return { a: (noise(x * 0.003, y * 0.02) - 0.5) * 0.12, k, kind: 'ground', z };
+    }
+    // mountain ranges, nearest first
+    for (let i = s.ranges.length - 1; i >= 0; i--) {
+      const L = s.ranges[i];
+      const ry = ridgeAt(L, x);
+      if (y >= ry) {
+        const slope = (ridgeAt(L, x + 10) - ridgeAt(L, x - 10)) / 20;
+        if (L.air > 0.55) {
+          // far: soft, level, small — it should melt, not be carved
+          return { a: (noise(x * 0.01, y * 0.01) - 0.5) * 0.25, k: 0.32 + 0.3 * (1 - L.air), kind: 'far' };
+        }
+        const k = (0.22 + 0.4 * (1 - L.air)) * OP.facet; // small facets: crags, not boulders
+        const dir = slope >= 0 ? 1 : -1;
+        const fall = Math.atan2(Math.abs(slope) * 1.15 + 0.25, dir);
+        const crest = Math.atan(slope);
+        // craggy facets: the fall line, a crossing facet, or the crest — chosen per stroke
+        const pick = noise(x * 0.09, y * 0.09, i * 3.3);
+        const a = pick < OP.facetMix ? fall : pick < OP.facetMix + (1 - OP.facetMix) * 0.56 ? Math.PI - fall + 0.25 * dir : crest;
+        return { a, k, kind: 'range' };
+      }
+    }
+    // sky: the vortex around the sun
+    const ra = OP.stretch; // horizontal stretch of the vortex
+    const dx = (x - s.sunX) / ra, dy = y - s.sunY;
+    const r = Math.hypot(dx, dy);
+    const th = Math.atan2(dy, dx);
+    // tangent of the vortex, blended toward level by (1 − vortex); strokes are undirected,
+    // so the level vector takes the tangent's own left/right sense
+    let tx = -ra * Math.sin(th), ty = Math.cos(th);
+    const tl = Math.hypot(tx, ty) || 1;
+    tx /= tl; ty /= tl;
+    const lx = tx >= 0 ? 1 : -1;
+    const a = Math.atan2(ty * OP.vortex, tx * OP.vortex + lx * (1 - OP.vortex));
+    const kSky = 0.42 + 0.85 * clamp01(r / 650);
+    for (const c of s.clouds) {
+      if (Math.abs(x - c.cx) < c.w * 0.5 && y > c.cy - c.h * 1.2 && y < c.cy + c.h * 0.4) {
+        return { a, k: Math.max(0.35, Math.min(kSky, c.w / 500)), kind: 'cloud', r };
+      }
+    }
+    return { a, k: kSky, kind: 'sky', r };
+  };
+}
+
+// Relief (impasto height, 0..1) by what is being painted.
+function oilRelief(f) {
+  switch (f.kind) {
+    case 'sky': return f.r < 320 ? 0.15 + 0.55 * (1 - f.r / 320) : 0.12;
+    case 'cloud': return 0.2;
+    case 'range': return 0.22;
+    case 'far': return 0;
+    case 'ground': return 0.14;
+    case 'water': return 0.1;
+    case 'grass': return 0.55;
+    case 'bank': return 0.03; // matte: a shadowed bank catches no room light on its ridges
+    case 'limb': case 'leaf': return 0.5;
+    default: return 0.1;
+  }
+}
+
+// One layer of strokes. Seeds sit on a jittered grid; each seed emits as many strokes as
+// its local stroke size needs to cover the area (density ∝ 1/size²), so receding ground
+// gets proportionally more, smaller strokes. With `edges`, strokes are only placed where
+// the underpainting has an edge, and laid along it — except on the far ranges, whose
+// edges are meant to be lost.
+function oilLayer(s, O, out, scale, cover, edges) {
+  const w0 = OP.w * scale;
+  const g = w0 * 0.8;
+  for (let gy = -g; gy < REF_H + g; gy += g) {
+    for (let gx = -g; gx < REF_W + g; gx += g) {
+      const x = gx + random(-0.5, 0.5) * g;
+      const y = gy + random(-0.5, 0.5) * g;
+      const f = O.field(x, y);
+      let a = f.a;
+      if (edges) {
+        if (f.kind === 'far' || f.kind === 'sky') continue;
+        const h = 4;
+        const gxv = O.lum(O.under(x + h, y)) - O.lum(O.under(x - h, y));
+        const gyv = O.lum(O.under(x, y + h)) - O.lum(O.under(x, y - h));
+        if (Math.hypot(gxv, gyv) < OP.edge) continue; // no edge here: leave the coarser passes
+        a = Math.atan2(gyv, gxv) + Math.PI / 2; // along the edge
+      }
+      const w = w0 * f.k;
+      const ratio = f.kind === 'ground' ? OP.l * OP.sweep : f.kind === 'leaf' || f.kind === 'bank' ? OP.l * 0.5 : f.kind === 'range' ? OP.l * 0.75 : f.kind === 'water' ? OP.l * 1.3 : OP.l;
+      const len = w * ratio;
+      const p = (cover * g * g) / (w * len);
+      const n = Math.floor(p) + (random() < p - Math.floor(p) ? 1 : 0);
+      for (let i = 0; i < n; i++) {
+        const sx = x + (i ? random(-0.5, 0.5) * g : 0);
+        const sy = y + (i ? random(-0.5, 0.5) * g : 0);
+        const jitterA = random(-1, 1) * OP.jitterA * (f.kind === 'range' ? 0.6 : 1);
+        out.push(makeOilStroke(O, sx, sy, a + jitterA, len * random(0.75, 1.2), w * random(0.85, 1.1), {
+          relief: oilRelief(f),
+          angular: f.kind === 'range',
+          soft: f.kind === 'far',
+          // on the dark bank the bristles carry the stroke's own colour, so no pale
+          // underpainting from further along is dragged across it
+          color2: f.kind === 'bank' ? shadeRGB(O.under(sx, sy), random(0.85, 1.05)) : undefined,
+        }));
+      }
+    }
+  }
+}
+
+// A stroke: body colour from the underpainting at its middle, a second colour from its
+// far end for the bristle streaks (wet-into-wet), both with a little broken-colour jitter.
+function makeOilStroke(O, x, y, a, len, w, opts) {
+  opts = opts || {};
+  const ca = Math.cos(a), sa = Math.sin(a);
+  const x0 = x - (ca * len) / 2, y0 = y - (sa * len) / 2;
+  const bend = opts.angular ? 0 : random(-1, 1) * OP.bend * len;
+  const P = [];
+  const pr = opts.angular ? [1, 1, 1, 0.95] : [0.85, 1.1, 1.0, 0.7];
+  for (let k = 0; k <= 3; k++) {
+    const t = k / 3;
+    const bo = bend * Math.sin(Math.PI * t);
+    P.push([x0 + ca * len * t - sa * bo, y0 + sa * len * t + ca * bo, pr[k]]);
+  }
+  const jitter = (c, amt) => {
+    const v = 1 + random(-amt, amt);
+    return [c[0] * v * (1 + random(-0.03, 0.03)), c[1] * v * (1 + random(-0.03, 0.03)), c[2] * v * (1 + random(-0.03, 0.03))];
+  };
+  const body = opts.color || jitter(O.under(x, y), OP.jitterC);
+  const far = opts.color2 || jitter(O.under(x + ca * len * 0.5, y + sa * len * 0.5), OP.jitterC * 1.8);
+  return {
+    P, w, body, far,
+    relief: (opts.relief || 0) * G.param('impasto'),
+    angular: !!opts.angular,
+    soft: !!opts.soft,
+    scumble: !!opts.scumble,
+    crisp: !!opts.crisp,
+  };
+}
+
+// An oil stroke, drawn natively with ordinary "over" blending: oil body paint is opaque,
+// whereas p5.brush mixes spectrally (Kubelka–Munk), the right optics for watercolour
+// glazes but one that darkens with every overlap. The stroke is a tapered body along a
+// cubic path, then a comb of bristle streaks, each its own mix of the two loaded colours,
+// starting late, breaking where the brush runs dry, and lifting early. Relief adds the
+// ridge of paint under the room light: a shadow strip on the far side and a specular edge
+// on the near side. A scumble is bristles only — dry paint dragged over what is there.
+function oilStroke(st) {
+  const [p0, p1, p2, p3] = st.P;
+  const N = 9;
+  const C = [];
+  for (let i = 0; i < N; i++) {
+    const t = i / (N - 1);
+    const u = 1 - t;
+    const x = u * u * u * p0[0] + 3 * u * u * t * p1[0] + 3 * u * t * t * p2[0] + t * t * t * p3[0];
+    const y = u * u * u * p0[1] + 3 * u * u * t * p1[1] + 3 * u * t * t * p2[1] + t * t * t * p3[1];
+    const seg = Math.min(2, Math.floor(t * 3));
+    const pr = st.P[seg][2] + (st.P[seg + 1][2] - st.P[seg][2]) * (t * 3 - seg);
+    // angular strokes end square (a flat brush laid and lifted); others taper
+    const taper = st.angular ? (t < 0.04 || t > 0.96 ? 0.85 : 1) : Math.pow(Math.sin(Math.PI * (0.06 + 0.88 * t)), 0.4);
+    C.push([x, y, st.w * 0.5 * pr * taper]);
+  }
+  const normals = C.map((_, i) => {
+    const a = C[Math.max(0, i - 1)];
+    const b = C[Math.min(N - 1, i + 1)];
+    const tx = b[0] - a[0];
+    const ty = b[1] - a[1];
+    const d = Math.hypot(tx, ty) || 1;
+    return [-ty / d, tx / d];
+  });
+  const strip = (dx, dy, col, alpha, wk) => {
+    fill(col[0], col[1], col[2], alpha);
+    beginShape(TRIANGLE_STRIP);
+    for (let i = 0; i < N; i++) {
+      const [x, y, hw] = C[i];
+      const [nx, ny] = normals[i];
+      vertex(X(x + dx + nx * hw * wk), Y(y + dy + ny * hw * wk));
+      vertex(X(x + dx - nx * hw * wk), Y(y + dy - ny * hw * wk));
+    }
+    endShape();
+  };
+  noStroke();
+  const rel = st.relief;
+  if (rel > 0.02 && !st.scumble) {
+    // the ridge's shadow, cast away from the room light
+    const off = st.w * 0.16 * rel;
+    strip(-OP.light[0] * off, -OP.light[1] * off, shadeRGB(st.body, 0.5), 60 + 120 * Math.min(1, rel), 1);
+  }
+  if (!st.scumble) strip(0, 0, st.body, st.crisp ? 255 : 255 * OP.body * (st.soft ? 0.85 : 1), 1);
+
+  // bristles
+  const wpx = st.w * U;
+  const nb = Math.max(2, Math.min(OP.bristles, Math.round(wpx / 1.6)));
+  const dry = st.scumble ? Math.min(0.9, OP.dry + 0.25) : OP.dry;
+  const aLo = (st.scumble ? 70 : st.soft ? 40 : 120) * OP.bristleA;
+  const aHi = Math.min(255, (st.scumble ? 160 : st.soft ? 90 : 215) * OP.bristleA);
+  strokeWeight(Math.max(0.5, (wpx / nb) * (st.scumble ? 0.55 : 0.7)));
+  beginShape(LINES);
+  for (let b = 0; b < nb; b++) {
+    const off = -0.42 + (0.84 * b) / Math.max(1, nb - 1);
+    const m = random(0.15, 1) * OP.wet;
+    const v = 1 + random(-0.1, 0.1);
+    const col = mixRGB(st.body, st.far, m);
+    stroke(col[0] * v, col[1] * v, col[2] * v, random(aLo, aHi));
+    const t0 = random(0, 0.3);
+    const t1 = random(0.6, 1);
+    const ph = random(100);
+    for (let i = 0; i < N - 1; i++) {
+      const t = i / (N - 1);
+      if (t < t0 || t > t1 || noise(ph + i * 0.7) < dry) continue; // dry-brush breaks
+      const a = C[i], c = C[i + 1];
+      const na = normals[i], nc = normals[i + 1];
+      vertex(X(a[0] + na[0] * a[2] * off * 2), Y(a[1] + na[1] * a[2] * off * 2));
+      vertex(X(c[0] + nc[0] * c[2] * off * 2), Y(c[1] + nc[1] * c[2] * off * 2));
+    }
+  }
+  // specular: the lit flank of the ridge, on whichever side faces the room light
+  // (no specular on strokes under 4 px: a ridge that small can't catch a visible light,
+  // and a 1 px highlight on a 3 px dab reads as a white dot)
+  if (rel > 0.05 && !st.scumble && wpx >= 4) {
+    const spec = mixRGB(st.body, [255, 252, 244], 0.35 + 0.35 * Math.min(1, rel));
+    stroke(spec[0], spec[1], spec[2], 90 + 150 * Math.min(1, rel));
+    strokeWeight(Math.max(0.5, wpx * 0.09));
+    for (let i = 1; i < N - 2; i++) {
+      const facing = normals[i][0] * OP.light[0] + normals[i][1] * OP.light[1] > 0 ? 1 : -1;
+      const a = C[i], c = C[i + 1];
+      const na = normals[i], nc = normals[i + 1];
+      vertex(X(a[0] + na[0] * a[2] * 0.72 * facing), Y(a[1] + na[1] * a[2] * 0.72 * facing));
+      vertex(X(c[0] + nc[0] * c[2] * 0.72 * facing), Y(c[1] + nc[1] * c[2] * 0.72 * facing));
+    }
+  }
+  endShape();
+  noStroke();
+}
+
+// Lost edges: far ridges melted into the sky, wet-on-wet — soft strokes straddling the
+// crest, each loaded with the sky above and the mountain below.
+function oilLostEdges(s, O, out) {
+  for (const L of s.ranges) {
+    if (L.air <= 0.55) continue;
+    if (OP.lost <= 0.01) return;
+    const step = Math.max(1, Math.round(3 / OP.lost));
+    for (let q = 2; q < L.ridge.length - 2; q += step) {
+      const [x, y] = L.ridge[q];
+      const slope = (L.ridge[q + 2][1] - L.ridge[q - 2][1]) / 16;
+      const above = O.under(x, y - 10);
+      const below = O.under(x, y + 10);
+      const w = random(7, 12) * (0.7 + 0.6 * L.air);
+      out.push(makeOilStroke(O, x, y + random(-3, 3), Math.atan(slope) + random(-0.15, 0.15), w * random(2.5, 4), w, {
+        color: mixRGB(above, below, random(0.35, 0.65)),
+        color2: mixRGB(above, below, random(0.2, 0.8)),
+        soft: true,
+      }));
+    }
+  }
+}
+
+// Broken colour: sparse micro-strokes of unblended accent hues laid into the field and
+// the mountains — violet in the shadows, ochre and dull orange in the lights, olive in
+// between — each only half-mixed with what is beneath, so it vibrates rather than shouts.
+function oilBrokenColour(s, O, out) {
+  for (let i = 0; i < OP.broken; i++) {
+    const x = random(0, REF_W);
+    const y = random(s.HY - 260, REF_H);
+    const f = O.field(x, y);
+    if (f.kind !== 'ground' && f.kind !== 'range') continue; // the bank's colour goes into its turf
+    const base = O.under(x, y);
+    const l = O.lum(base);
+    const acc = l < 70 ? ACCENTS.violet : l < 110 ? (random() < 0.5 ? ACCENTS.violet : ACCENTS.olive) : random() < 0.55 ? ACCENTS.ochre : ACCENTS.orange;
+    const col = mixRGB(base, acc, clamp01(OP.accent + random(-0.1, 0.1)));
+    const w = OP.w * 0.17 * f.k * random(0.8, 1.3);
+    const ratio = f.kind === 'ground' ? 3.2 : 2.2;
+    out.push(makeOilStroke(O, x, y, f.a + random(-0.12, 0.12), w * ratio, w, { color: col, color2: mixRGB(col, base, 0.3), relief: 0.12, angular: f.kind === 'range' }));
+  }
+}
+
+// Scumbling: dry, opaque, lighter paint dragged over the plain, distant foliage and the
+// sun's halo — bristles only, broken often, leaving the darker layer showing through.
+function oilScumble(s, O, out) {
+  const C = s.C;
+  for (let i = 0; i < OP.scumble; i++) {
+    const x = random(0, REF_W);
+    const y = random(0, REF_H);
+    const f = O.field(x, y);
+    let lift = 0;
+    if (f.kind === 'ground') lift = 0.14 + 0.1 * clamp01((f.z - 2) / 8); // more scumble toward the distance
+    else if ((f.kind === 'sky' || f.kind === 'cloud') && f.r < 360) lift = 0.22 * (1 - f.r / 360);
+    else continue;
+    if (random() > (f.kind === 'ground' ? 0.8 : 0.9)) continue;
+    const base = O.under(x, y);
+    const col = mixRGB(shadeRGB(base, 1.1), C.glow, lift);
+    const w = OP.w * 0.45 * f.k * random(0.8, 1.3);
+    out.push(makeOilStroke(O, x, y, f.a + random(-0.08, 0.08), w * OP.l * 1.6, w, { color: col, color2: mixRGB(col, C.glow, 0.25), scumble: true }));
+  }
+}
+
+// Objects restated over the field: midground trees as dabs (dark mass, then lit dabs),
+// and glints on the water (grass and the framing tree are painted on their own, later).
+function oilObjects(s, O, out) {
+  const C = s.C;
+  const rp = s.repoussoir;
+
+  // midground trees, far → near
+  for (const tr of s.trees) {
+    const x = s.gx(tr.wx, tr.z);
+    if (x < -40 || x > REF_W + 40) continue;
+    const y = s.gy(tr.z);
+    const sc = s.F / tr.z;
+    const w = tr.hW * sc * (tr.tall ? 0.5 : 1);
+    const h = tr.hW * sc * (tr.tall ? 2.3 : 1.15);
+    if (w < 5) continue;
+    const cy = y - h * 0.18 - h * 0.5;
+    const base = O.under(x, cy);
+    const dab = Math.max(1.6, w * 0.22);
+    const n = Math.round(5 + w * 0.35);
+    for (let i = 0; i < n; i++) {
+      const u = random(-0.45, 0.45), v = random(-0.45, 0.45);
+      out.push(makeOilStroke(O, x + u * w, cy + v * h, random(-0.6, 0.6) - (Math.PI / 2) * (tr.tall ? 1 : 0), dab * random(1.6, 2.6), dab, { color: shadeRGB(base, random(0.75, 0.95)), relief: 0.2 }));
+    }
+    const lit = mixRGB(base, mixRGB(C.foliageLit, C.light, 0.4), 0.45 * s.warmth + 0.15);
+    for (let i = 0; i < Math.round(n * 0.5); i++) {
+      const u = random(0, 0.4) * s.sunSide, v = random(-0.45, 0.1);
+      out.push(makeOilStroke(O, x + u * w, cy + v * h, random(-0.8, 0.8), dab * random(1.2, 2), dab * 0.8, { color: mixRGB(lit, base, random(0, 0.3)), relief: 0.35 }));
+    }
+  }
+
+  // glints on the water: loaded paint, brightest under the sun
+  const r = s.river;
+  for (let i = 0; i < 240; i++) {
+    const z = Math.exp(random(Math.log(0.9), Math.log(r.zN)));
+    const wx = r.center(z) + random(-0.8, 0.8) * r.halfW(z);
+    const x = s.gx(wx, z);
+    const y = s.gy(z);
+    const near = Math.exp(-Math.pow((x - s.sunX) / 220, 2));
+    if (random() > 0.18 + 0.82 * near) continue;
+    if (y > bankAt(rp, x) - 4) continue; // the bank hides the near water
+    const len = Math.max(3, (random(0.06, 0.2) * s.F) / z);
+    // the glint is the water's own colour lifted toward the sun, not a white chip
+    const col = mixRGB(O.under(x, y), mixRGB(C.glow, C.sun, near), 0.35 + 0.4 * near);
+    out.push(makeOilStroke(O, x, y, random(-0.06, 0.06), len * 0.8, Math.max(0.8, Math.min(2.8, 4.5 / Math.sqrt(z))), { color: col, color2: mixRGB(col, O.under(x, y), 0.4), relief: 0.12 + 0.25 * near }));
+  }
+}
+
+// Grass, as a painter builds it rather than as a row of stalks:
+//  1. turf — the bank is covered in short upright flicks, densest at the lip and thinning
+//     toward the viewer, each a few percent off the local value and temperature, so the
+//     bank reads as a grown surface, not a flat dark with dots on it;
+//  2. clumps — tufts at irregular intervals with bare gaps between them (noise decides
+//     where grass grows), rooted at different depths below the lip, so they overlap in
+//     depth instead of standing on one line. Each tuft is a dark base mass first, then
+//     blades fanned from one root: tapered from base to point, curving progressively
+//     with the wind, of log-normal length (a few long, most short);
+//  3. contre-jour — almost every blade is a dark silhouette against the bright field; a
+//     few toward the sun are lit through (translucent yellow-green), and sunward edges
+//     carry a thin warm rim;
+//  4. seed heads on a minority of stems only, as small grains along a nodding tip —
+//     never a cap on every stalk.
+// Returns blade records for oilBlade(): {P: spine [[x,y]..], w0, col, a, rim, rimCol}.
+function oilGrass(s, O) {
+  const C = s.C;
+  const rp = s.repoussoir;
+  const dens = G.param('grass');
+  const out = [];
+  if (dens <= 0) return out;
+  const dark = mixRGB(C.silhouette, [0, 0, 0], OP.silhouette * 0.5);
+  const cool = mixRGB(dark, C.shadow, 0.35);
+  const warmDark = mixRGB(dark, ACCENTS.olive, 0.22);
+  const lit = mixRGB(mixRGB(C.foliageLit, C.glow, 0.35), C.light, 0.2 * s.warmth);
+  const straw = mixRGB(ACCENTS.ochre, C.light, 0.3);
+  const rimCol = mixRGB(C.light, C.glow, 0.45);
+  const wind = (x, y) => -Math.PI / 2 + 0.38 * (noise(x * 0.004, y * 0.004, 9) - 0.5) * 2 - 0.12 * s.sunSide;
+  const sunward = (x) => clamp01(1 - Math.abs(x - s.sunX) / (REF_W * 0.75));
+  // a blade's spine: the angle turns steadily from root to tip (curl), so the blade arcs
+  const spine = (x, y, a, len, curl) => {
+    const P = [[x, y]];
+    const n = len * U > 30 ? 8 : 5;
+    let px = x, py = y;
+    for (let k = 1; k <= n; k++) {
+      const t = k / n;
+      const th = a + curl * t * t;
+      px += (Math.cos(th) * len) / n;
+      py += (Math.sin(th) * len) / n;
+      P.push([px, py]);
+    }
+    return P;
+  };
+  const vary = (c, amt) => {
+    const v = 1 + random(-amt, amt);
+    return [c[0] * v, c[1] * v * (1 + random(-0.04, 0.04)), c[2] * v * (1 + random(-0.06, 0.06))];
+  };
+  const left = rp.bank[0][0];
+  const right = rp.bank[rp.bank.length - 1][0];
+
+  // 1. turf
+  const nTurf = Math.round(3600 * dens);
+  for (let i = 0; i < nTurf; i++) {
+    const x = random(left, right);
+    const lip = bankAt(rp, x);
+    const depth = -Math.log(1 - random() * 0.985) * 70; // exponential: crowded at the lip
+    const y = lip + 2 + depth;
+    if (y > REF_H + 10) continue;
+    const near = 1 + depth / 90; // lower on the bank = nearer = bigger
+    const base = O.under(x, Math.min(REF_H - 4, y + 4));
+    const t = random();
+    const tint = t < 0.4 ? cool : t < 0.75 ? warmDark : dark;
+    const col = vary(mixRGB(base, tint, random(0.3, 0.7)), 0.12);
+    const len = random(4, 13) * near;
+    out.push({ P: spine(x, y, wind(x, y) + random(-0.45, 0.45), len, random(-0.5, 0.5)), w0: random(0.9, 1.8) * near, col, a: random(170, 235) });
+    // a few turf tips at the lip catch the low sun
+    if (depth < 12 && random() < 0.08 + 0.18 * sunward(x)) {
+      out.push({ P: spine(x + 0.6, y - len * 0.45, wind(x, y), len * 0.45, 0.2 * s.sunSide), w0: 0.7, col: vary(mixRGB(base, lit, 0.3), 0.08), a: 140 });
+    }
+  }
+
+  // 2–4. clumps: walk the lip with irregular steps; noise decides tuft vs bare ground
+  const clumps = [];
+  for (let x = left + random(0, 10); x < right; x += random(5, 22) / Math.max(0.35, dens)) {
+    const grow = noise(x * 0.011, 3.3);
+    if (grow < 0.36) continue; // bare stretch of lip
+    // most tufts root just under the lip; some lower and nearer, which stand taller
+    const depth = random() < 0.78 ? random(1, 9) : random(10, 55);
+    clumps.push({ x: x + random(-3, 3), y: bankAt(rp, x) + depth, depth, grow });
+  }
+  clumps.sort((a, b) => a.y - b.y); // back to front
+  for (const c of clumps) {
+    const near = 1 + c.depth / 70;
+    const H = Math.exp(random(Math.log(14), Math.log(46))) * (0.45 + 1.25 * (c.grow - 0.36)) * near;
+    const lean = wind(c.x, c.y);
+    const n = Math.max(3, Math.round(random(4, 13) * (0.6 + c.grow)));
+    const base = O.under(c.x, Math.min(REF_H - 4, c.y + 6));
+    const tint = random() < 0.5 ? cool : warmDark;
+    const body = mixRGB(mixRGB(base, tint, 0.5), dark, 0.45);
+    const sw = sunward(c.x);
+    // base mass: short wide strokes, so the root is a mass and not a bundle of lines
+    for (let k = 0; k < 3; k++) {
+      out.push({ P: spine(c.x + random(-2, 2) * near, c.y + 2, lean + random(-0.6, 0.6), H * random(0.18, 0.3), random(-0.3, 0.3)), w0: random(3.5, 6) * near, col: vary(body, 0.06), a: 235 });
+    }
+    const seeding = random() < 0.3;
+    let heads = seeding ? 1 + Math.floor(random(0, 3)) : 0;
+    for (let i = 0; i < n; i++) {
+      const fan = (i / Math.max(1, n - 1) - 0.5) * random(0.7, 1.3);
+      const a = lean + fan + random(-0.12, 0.12);
+      const centre = 1 - Math.abs(fan) * 0.8; // the middle blades stand tallest
+      const len = H * centre * Math.exp(random(-0.55, 0.15));
+      // blades bend over toward the side they lean to, and more the longer they are
+      const curl = (a + Math.PI / 2) * random(0.6, 1.6) + random(-0.12, 0.12);
+      const P = spine(c.x + random(-1.5, 1.5) * near, c.y + random(0, 2), a, len, curl);
+      const throughLit = random() < 0.08 + 0.22 * sw; // the sun shining through a blade
+      const col = throughLit ? vary(mixRGB(lit, body, random(0.15, 0.45)), 0.08) : vary(body, 0.1);
+      const rim = !throughLit && random() < 0.15 + 0.45 * sw;
+      out.push({ P, w0: random(1.3, 2.8) * near, col, a: 245, rim, rimCol, side: s.sunSide });
+      // a seed head: a thin stem past the leaves and grains along its nodding tip
+      if (heads > 0 && centre > 0.5 && random() < 0.5) {
+        heads--;
+        const sl = len * random(1.1, 1.5);
+        const sp = spine(c.x, c.y, a * 0.9 + lean * 0.1, sl, curl * 1.4 + 0.25 * Math.sign(curl || 1));
+        out.push({ P: sp, w0: 0.75 * near, col: vary(mixRGB(body, straw, 0.25), 0.06), a: 235 });
+        const tip = sp[sp.length - 1];
+        const prev = sp[sp.length - 2];
+        const ta = Math.atan2(tip[1] - prev[1], tip[0] - prev[0]);
+        const g = 3 + Math.floor(random(0, 5));
+        for (let k = 0; k < g; k++) {
+          const t = k / g;
+          const gx = tip[0] - Math.cos(ta) * sl * 0.16 * t;
+          const gy = tip[1] - Math.sin(ta) * sl * 0.16 * t;
+          const ga = ta + (k % 2 ? 0.6 : -0.6) + random(-0.2, 0.2);
+          // grains stay close to the stem's value; only a few toward the sun catch the light
+          const gcol = random() < 0.12 + 0.25 * sw ? mixRGB(mixRGB(straw, body, 0.3), rimCol, random(0, 0.25)) : mixRGB(straw, body, random(0.55, 0.8));
+          out.push({ P: spine(gx, gy, ga, random(1.4, 2.6) * near, 0), w0: random(0.9, 1.4) * near, col: vary(gcol, 0.08), a: 220 });
+        }
+      }
+    }
+  }
+  // a few wild single stalks break the top line of the grass
+  for (let i = 0; i < Math.round(26 * dens); i++) {
+    const x = random(left, right);
+    const y = bankAt(rp, x) + random(2, 14);
+    const a = wind(x, y) + random(-0.15, 0.15);
+    const len = random(40, 85);
+    out.push({ P: spine(x, y, a, len, (a + Math.PI / 2) * 1.5 + random(-0.2, 0.2)), w0: random(0.7, 1.1), col: vary(dark, 0.08), a: 230, rim: random() < 0.5, rimCol, side: s.sunSide });
+  }
+  return out;
+}
+
+// One blade: a filled ribbon tapering from its root width to a point, with a darker
+// shadow-side half (the blade's fold) and, if lit from behind, a thin warm rim on the
+// side facing the sun. Drawn natively, as the oil strokes are.
+function oilBlade(b) {
+  const P = b.P;
+  const n = P.length;
+  const nrm = P.map((_, i) => {
+    const p = P[Math.max(0, i - 1)], q = P[Math.min(n - 1, i + 1)];
+    const dx = q[0] - p[0], dy = q[1] - p[1];
+    const d = Math.hypot(dx, dy) || 1;
+    return [-dy / d, dx / d];
+  });
+  const hw = (i) => b.w0 * 0.5 * Math.pow(1 - i / (n - 1), 0.85) + 0.12 / U;
+  const ribbon = (col, alpha, lo, hi) => {
+    fill(col[0], col[1], col[2], alpha);
+    beginShape(TRIANGLE_STRIP);
+    for (let i = 0; i < n; i++) {
+      const [x, y] = P[i];
+      const [nx, ny] = nrm[i];
+      const h = hw(i);
+      vertex(X(x + nx * h * lo), Y(y + ny * h * lo));
+      vertex(X(x + nx * h * hi), Y(y + ny * h * hi));
+    }
+    endShape();
+  };
+  ribbon(b.col, b.a, -1, 1);
+  if (b.w0 * U >= 2.2) ribbon(shadeRGB(b.col, 0.78), b.a * 0.55, -1, -0.1); // the fold
+  if (b.rim) {
+    // the rim on the edge facing the sun: + normal side if that points sunward
+    const f = nrm[Math.floor(n / 2)][0] * b.side > 0 ? 1 : -1;
+    fill(b.rimCol[0], b.rimCol[1], b.rimCol[2], 175);
+    beginShape(TRIANGLE_STRIP);
+    for (let i = Math.floor(n * 0.3); i < n; i++) {
+      const [x, y] = P[i];
+      const [nx, ny] = nrm[i];
+      const h = hw(i);
+      const r = Math.max(0.28 / U, h * 0.35);
+      vertex(X(x + nx * h * f), Y(y + ny * h * f));
+      vertex(X(x + nx * (h - r) * f), Y(y + ny * (h - r) * f));
+    }
+    endShape();
+  }
+}
+
+// The sun: the thickest paint in the picture. A near-white core built up in loaded,
+// circling strokes, then the halo in discrete tonal rings stepping down to the sky —
+// each ring thinner paint than the one inside it.
+function oilSun(s, O, out) {
+  const C = s.C;
+  const white = [255, 252, 245];
+  const sky = O.under(s.sunX + 260, s.sunY - 60);
+  // N discrete tonal rings from the near-white core out to the sky: each ring a step down
+  // in value and in paint thickness. Radii grow as (k/N)^1.6, so the steps are tight near
+  // the core and wide at the rim.
+  const chain = [white, mixRGB(white, C.sun, 0.5), mixRGB(C.sun, C.glow, 0.5), mixRGB(C.glow, sky, 0.3), mixRGB(C.glow, sky, 0.6)];
+  const along = (t) => {
+    const u = t * (chain.length - 1);
+    const i = Math.min(chain.length - 2, Math.floor(u));
+    return mixRGB(chain[i], chain[i + 1], u - i);
+  };
+  const N = OP.rings;
+  const rings = [];
+  for (let k = 0; k < N; k++) {
+    const t = N === 1 ? 0 : k / (N - 1);
+    rings.push({
+      r0: 170 * Math.pow(k / N, 1.6),
+      r1: 170 * Math.pow((k + 1) / N, 1.6),
+      col: along(t),
+      rel: (1 - 0.78 * t) * OP.sunImpasto,
+      w: k === 0 ? [6, 9] : [5 + t, 8 + 2 * t],
+      n: Math.round((26 + 64 * t) * (5 / N) * 1.0),
+    });
+  }
+  // outer rings first, so each brighter ring sits on top of the one outside it
+  for (let k = rings.length - 1; k >= 0; k--) {
+    const g = rings[k];
+    for (let i = 0; i < g.n; i++) {
+      const a = random(TWO_PI);
+      const rr = g.r0 + random() * (g.r1 - g.r0);
+      const x = s.sunX + Math.cos(a) * rr * 1.1;
+      const y = s.sunY + Math.sin(a) * rr;
+      // the halo is air: where a ridge stands in front of it, the ridge wins
+      const kind = O.field(x, y).kind;
+      if (k > 0 && kind !== 'sky' && kind !== 'cloud') continue;
+      const w = random(g.w[0], g.w[1]);
+      const len = k === 0 ? w * random(1.4, 2.2) : Math.max(w * 2, rr * random(0.35, 0.6));
+      const col = mixRGB(g.col, O.under(x, y), k === 0 ? 0 : 0.18);
+      out.push(makeOilStroke(O, x, y, a + Math.PI / 2, len, w, { color: col, color2: mixRGB(col, white, 0.3), relief: g.rel }));
+    }
+  }
+}
+
+// Canvas: a fine twill of light and dark threads over everything.
+function paintCanvasWeave(s) {
+  const g = G.param('grain');
+  if (g <= 0.01) return;
+  const step = 2.6;
+  strokeWeight(Math.max(1, 0.8 * U));
+  beginShape(LINES);
+  for (let y = 0; y < REF_H; y += step) {
+    const a = (6 + 6 * noise(y * 0.3)) * g;
+    stroke(255, 250, 240, a);
+    vertex(X(0), Y(y));
+    vertex(X(REF_W), Y(y + 0.4));
+  }
+  for (let x = 0; x < REF_W; x += step) {
+    const a = (6 + 6 * noise(x * 0.3, 5)) * g;
+    stroke(20, 16, 10, a);
+    vertex(X(x), Y(0));
+    vertex(X(x + 0.4), Y(REF_H));
+  }
+  endShape();
+  noStroke();
+}
+
 // --- finish ----------------------------------------------------------------------
 
 function paintGrain(s) {
@@ -1448,6 +3172,7 @@ function fieldRect(W, H) {
 
 function keyPressed() {
   if (key === 'r' || key === 'R') G.randomize();
+  if ((key === 'p' || key === 'P') && window.AR_ACTIONS) window.AR_ACTIONS.paintRandom();
   if (key === 's' || key === 'S') saveCanvas('aerial-recession-' + G.seed, 'png');
 }
 

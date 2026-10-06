@@ -5,9 +5,12 @@ transmittance term `1 − e^(−k·z)` decide the size, colour, contrast, detail
 every mark, so the classical rules of landscape depth are computed rather than painted.
 
 Original composition, painted with [p5.brush](https://github.com/acamposuribe/p5.brush)
-(2.2.3, p5 2.x WEBGL). Not a copy of any painting.
+(2.2.3, p5 2.x WEBGL). Not a copy of any painting. Two media: **oil** (default) and
+**watercolour** — the same scene, the same seed, painted two ways.
 
-![seed 7, golden hour](preview.png)
+![seed 7, golden hour, oil](preview.png)
+
+Watercolour version (`p_medium=0`): [`preview-watercolour.png`](preview-watercolour.png).
 
 ## Philosophy — *Aerial Recession*
 
@@ -56,6 +59,132 @@ rays), *dawn mist* (cool, pale, low contrast). The painting assembles itself bac
 over several seconds — sky, far ranges, mist, nearer ranges, fields, river, trees,
 repoussoir, paper — the order a painter would work in.
 
+## Oil — the same scene, repainted
+
+The oil medium paints the scene the way a tonalist works from an underpainting. The
+whole watercolour pipeline runs first and is read back into memory; then the surface is
+repainted in opaque, bristle-streaked strokes. Nothing about the scene changes — the seed
+builds identical geometry — only the paint. Colour comes from the underpainting under
+each stroke; every other decision is read from the scene's geometry.
+
+| principle | how the oil engine does it |
+|---|---|
+| **Directional rhythm — sky** | every sky stroke follows a (slightly flattened) circle centred exactly on the sun, lengthening outward: a vortex that winds the eye to the light |
+| **— mountains** | near ranges in short, straight, square-ended facets in three directions (fall line, a crossing facet, the crest), chosen per stroke — craggy geology rather than gradients |
+| **— field** | long, sweeping, nearly level strokes (3× longer than elsewhere) — the stable base under the moving sky; their size ∝ `1/√z` and density ∝ `1/size²`, so the brushwork itself recedes |
+| **Impasto hierarchy** | each stroke carries a relief value, drawn as a ridge of paint under a fixed *room* light from the upper left: a shadow strip on the far side, a specular edge on the near side. The sun's core is the thickest paint (relief 1.0), its halo steps down ring by ring (0.85 → 0.22), the foreground tree is high (0.5–0.6), the rest low (0.1–0.25), the far ranges flat |
+| **Lost edges** | far ranges are painted in soft, level strokes and get no edge pass; a wet-on-wet blend band of strokes straddling each far crest, loaded with the sky above and the mountain below, melts them into the haze |
+| **Found edges** | the framing tree is redrawn last as a hard near-black silhouette with a thin warm rim on the sun side |
+| **Grass** (`oilGrass`) | built the way a painter builds it, not as a row of stalks. *Turf*: thousands of short upright flicks over the bank, densest at the lip, each a few percent off the local value and temperature (cool, olive, neutral dark), larger lower down where the bank is nearer. *Tufts*: placed at irregular steps along the lip, with bare stretches where noise says nothing grows, and rooted at different depths so they overlap rather than stand on one line. Each tuft is a dark base mass, then 4–13 blades fanned from one root, tapered from root to point, arcing progressively with a shared wind field, of log-normal length. *Contre-jour*: blades are dark silhouettes against the lit field; a few toward the sun are lit through (yellow-green), and some sunward edges carry a thin warm rim. *Seed heads* on about a third of tufts only, as small grains along a nodding tip, kept close to the stem's value. Below the lip the bank's own oil strokes are short and upright like the turf, matte (no ridge highlight, which on a dark ground reads as grey streaks), and their bristles carry the stroke's own colour. Panel: *grass density (oil)*. |
+| **Broken colour** | 2,600 sparse micro-strokes of violet (in shadows), olive (mid-tones), ochre and dull orange (lights), each only half-mixed with the paint beneath, laid unblended into the field and mountains |
+| **Scumbling** | dry-brush passes — bristles only, lighter opaque paint, broken often — dragged over the plain (more toward the distance) and through the sun's halo, leaving the darker layer showing |
+| **Value: glow vs gloom** | the sun's core goes to near-white; the halo is five discrete tonal rings stepping down to the sky, painted outside-in so each brighter ring sits on the one outside it; the silhouette is pushed 40 % toward black so the meadow reads luminous against it |
+| **Canvas** | a fine twill of light and dark threads over everything |
+
+![the grass in oil, 2× detail (seed 7)](grass-detail.png)
+
+Each stroke is two colours loaded on one brush — the paint under its middle and under its
+far end — and its bristles streak a mix of the two, starting late, breaking where the
+brush runs dry, lifting early.
+
+Why the oil strokes are native rather than p5.brush strokes: p5.brush mixes colour
+spectrally (Kubelka–Munk, via spectral.js), which is the right optics for transparent
+watercolour glazes — the underpainting uses it throughout — but it darkens with every
+overlap (measured: a sky sampled at `[118,123,133]` came back `[82,84,86]` after the
+layers built up). Oil body paint is opaque, so the strokes are drawn with ordinary "over"
+blending.
+
+## The trees — a trunk model, painted in oil
+
+The trunks are built on a model decomposed from a drawing tutorial
+([pendrawings.me, *How to draw tree trunks*](https://pendrawings.me/how-to-draw-tree-trunks/)).
+Stripped to what it actually prescribes:
+
+1. a trunk drawing has two jobs — show its **roundness** and its **bark texture**;
+2. bark = slightly wandering lines **along the length** (the grooves), only as many as
+   convey the feel;
+3. roundness = **three tones** across the width: the third away from the light darkest,
+   the middle third mid, the third toward the light lightest; darker overall reads older;
+4. finish with **tapered darks** — crevices and edge roughness — and ground the base;
+5. character = the shape, size and placement of the tapered darks; long flowing bark
+   lines become crevices; knots;
+6. small / far trunks: **two tones** only, the dark side zagged;
+7. close-up trunks: **individual bark pieces**, each textured on its own.
+
+Recomposed as code (`trunkMarks`): every limb is a cylinder parameterised along its
+length and across it (`u ∈ [−1, 1]`, −1 = away from the light, read from the sun's
+position). The rules become marks on that cylinder —
+
+| rule | mark |
+|---|---|
+| 3 | three tone bands along the limb, boundaries wandering; short strokes loaded with both neighbouring tones work each boundary wet into wet |
+| 2 | groove lines along the length at spread `u`, broken into runs, denser and darker on the dark side, sparse on the light third |
+| 4, 5 | tapered darks — spindle strokes pointed at both ends — clustered at the dark/mid boundary; the long ones are crevices |
+| 6, 4 | edge roughness: short diagonal darks biting inward along the dark edge in a zig-zag |
+| 3 | broken highlights and a broken warm rim on the light third — the thickest paint on the trunk |
+| 5 | knots: a dark ring round a mid core, on trunks big enough to carry them |
+| 7 | on close-up limbs, bark pieces cut by short transverse breaks between neighbouring grooves |
+| 4 | a root flare at the base, which the bank's grass grounds |
+
+Level of detail is chosen from the limb's width on screen — two-tone below 6 px (rule 6;
+the midground trunks), three-tone, then close-up with bark pieces from 26 REF units
+(rule 7; the front trunk). Child limbs are extended back into their parent and capped
+round, so forks are joints rather than notches.
+
+![front trunk, close-up study (oil renderer, seed 3)](trunk-study.png)
+
+The tutorial's three tones assume side light; this sun stands in the picture, so the
+tree is seen from its shaded face. The bands keep their order but are compressed into a
+low key (following the *silhouette darkness* setting), impasto relief is kept off the
+shaded bands, and the light is carried by the light third and a broken warm rim on the
+sunward edge. At gallery size a highlight can't be thinner than a pixel, so highlights
+thin out as the trunk gets smaller on screen.
+
+The same marks have two renderers. **Oil** (`oilLimbPainterly`, `oilCanopy`): vector
+geometry reads as illustration however good the marks inside it are, so in oil the tree
+has no outline at all —
+
+- limb paths are smoothed (Chaikin, twice) and their width breathes along the length;
+- the body is overlapping full-width bristle strokes in the mid tone; the limb is the edge
+  of its own strokes; the trunk-model marks go on top, impasto only on the light third;
+- **negative painting**: after each limb, short strokes of the surrounding paint —
+  sampled from the oil surface as it stood before the tree went on — are dragged along
+  both edges, overlapping them here and there, so the silhouette is hard but broken;
+- the canopy is blocked in with broad core-colour strokes, then built of hundreds of
+  overlapping leaf dabs (dark core, mid, warm dabs toward the sun) whose outline is broken
+  by dabs that overshoot it, with a few irregular sky holes painted back in near the rim;
+- no impasto specular on any stroke under 4 px — a ridge that small can't catch visible
+  light, and a 1 px highlight on a 3 px dab reads as a white dot.
+
+![the tree in oil, 2× detail (seed 3)](tree-detail.png)
+
+In oil the underpainting carries no framing tree at all, so the oil passes paint clean sky
+behind it (a tree in the underpainting was being sampled into the sky strokes as dark
+ghosts beside the oil tree).
+
+**Watercolour** has two tree styles (*Scene → watercolour trees*). **Wash (default)**: the
+tree is laid in like everything else in the watercolour pipeline — limbs as one dark
+transparent wash, a few 2B bark strokes on the thick limbs, the canopy as bleeding wash
+clumps with broken edges, and a warm rim on outer edges facing the sun; the midground trees
+stay as their layered washes. This is the version that sat under the oil and read better
+than the drawn one: one medium, one language, no line work fighting the washes. It also
+paints in under half the time (seed 7, software GL: 376 s; drawn style unfinished at 666 s). **Drawn** (`treeBrushTasks`, one pass per limb): the same marks in p5.brush — tone
+bands as plain fills (hundreds of bleeding p5.brush polygons per tree were far too slow), grooves in the bark brush (charcoal by default), tapered darks and
+edges in 2B with pointed pressure, light in coloured pencil.
+
+The canopy stays abstract: tip clumps gathered into masses, each a bleeding watercolour
+fill on a curved organic outline, a darker core away from the sun, a lighter fill toward
+it, and ink hatching (cross-hatched in the shadowed core) — drawn watercolour style only.
+
+p5.brush stroke widths are calibrated, not nominal: each brush was measured at scale 1
+(visible pixels per unit of weight: charcoal 3.1, crayon 3.2, 2B 1.4, cpencil 1.2, pastel
+8.9) and weights are solved from those. p5.brush 2.2.3 has no `hatch_brush` (its README
+lists one); hatching uses `rotring`.
+
+*Trees · brushwork* folder: bark age, bark grooves, tapered darks / crevices, knots,
+bark brush (watercolour), canopy wash opacity, leaf hatch spacing and angle, midground
+trees on/off.
+
 ## How each technique is implemented
 
 | technique | where | rule |
@@ -71,27 +200,72 @@ repoussoir, paper — the order a painter would work in.
 | lost & found edges | `paintRangeEdge`, `paintRiver` (banks), `paintMist` | ink only where `aerial < 0.55` and a noise gate is open; banks inked only for `z < 14` |
 | colour harmony | `MOODS` | five-to-eight-colour palette per mood; all other colours are mixes of these |
 
-## Parameters
+## Interface
 
-| param | effect |
-|---|---|
-| mood | palette and cloud / ray weighting (0 golden hour · 1 after the storm · 2 dawn mist) |
-| sun height | sun elevation; lower = warmer glow, longer shadows, stronger sunward glaze |
-| atmosphere | `k` in the transmittance term — how fast distance dissolves into haze |
-| mountain ranges | 3–7 layers at geometric depths 230 → 11 |
-| mist | height and opacity of the valley-floor mist bands |
-| clouds | number of clouds on the ceiling |
-| river meander | world amplitude of the meander |
-| trees | density of copses and bank-side trees |
-| repoussoir | height of the dark bank and presence/size of the framing tree |
-| paper grain | final grain pass |
+![the panel](interface.png)
+
+Everything is controlled from the panel (top right), grouped into folders. Every
+setting is written into the URL, so *Copy share link* captures the exact painting, and
+*Contact sheet* lays the same settings out across many seeds.
+
+**Two seeds.** The *scene seed* (top of the panel) builds the composition: which third
+the sun takes, the ridges, fields, trees, river, framing tree. The *paint seed* (Seeds
+folder) is the hand: the same scene repainted with different strokes. `0` derives it
+from the scene seed. Both have ◀ ▶ and 🎲 buttons; **P** rolls a new hand.
+
+**Fast repaint.** The underpainting is cached per scene. Changing anything in the oil
+folders, or the paint seed, repaints over the cached copy instead of repainting the
+whole scene — about 17× faster (26 s against 441 s in a software-GL test). Changing a
+Scene setting or the scene seed paints from scratch. Sliders apply on release.
+
+**Presets.** Save the full state (scene seed and every parameter) as JSON, load it
+back, or reset the stroke settings to their defaults while keeping the scene. A
+*painting* readout shows progress and phase (underpainting / oil strokes).
+
+| folder | parameter | effect |
+|---|---|---|
+| Scene | medium | oil (default) or watercolour |
+| | watercolour trees | wash (default): trees as transparent washes · drawn: charcoal bark and ink-hatched canopies |
+| | mood | golden hour · after the storm · dawn mist |
+| | sun height | sun elevation; lower = warmer glow, longer shadows |
+| | atmosphere | `k` in the transmittance term — how fast distance dissolves into haze |
+| | mountain ranges | 3–7 layers at geometric depths 230 → 11 |
+| | mist · clouds · river meander · trees · repoussoir | as named |
+| | paper / canvas grain | paper grain (watercolour) or canvas weave (oil) |
+| Seeds | paint seed | the hand; 0 = derived from the scene seed |
+| Oil · strokes | stroke width | coarse stroke width (REF units); the finer layers scale from it |
+| | length ÷ width | stroke aspect |
+| | coverage | how densely each layer is laid |
+| | layers | 1 coarse · 2 + medium · 3 + edge detail |
+| | edge threshold | contrast an edge needs before the detail layer paints along it (lower = more detail) |
+| | curvature · angle jitter · value jitter | the hand's looseness |
+| | body opacity | opacity of the body paint |
+| Oil · bristles | max bristles | streaks per stroke |
+| | bristle opacity | strength of the streaks |
+| | dry-brush breaks | how often a bristle runs dry |
+| | two-colour load | how far the streaks pull toward the colour under the stroke's far end |
+| Oil · direction | sun vortex | 1 = sky strokes circle the sun; 0 = level |
+| | vortex stretch | horizontal flattening of the vortex |
+| | field sweep | length of the field strokes |
+| | mountain facet size | size of the craggy facets |
+| | facets on fall line | share of facets down the fall line vs crossing / along the crest |
+| Oil · impasto & light | impasto | overall paint relief |
+| | room light angle° | direction of the light falling on the canvas surface |
+| | sun impasto | thickness of the sun's core and halo |
+| | halo tonal rings | number of discrete value steps from the core to the sky |
+| | silhouette darkness | how far the foreground tree is pushed toward black |
+| Oil · colour & texture | broken-colour strokes | number of accent micro-strokes |
+| | accent strength | how strongly they show |
+| | scumble strokes | number of dry-brush scumbles |
+| | lost-edge band | density of the wet-on-wet band melting far ridges into the sky |
 
 The seed fixes everything else: which third the sun takes, ridge noise, field layout,
 tree positions, the framing tree's growth, and every brush jitter.
 
-Keys: `R` new seed · `S` save PNG. `?seed=…` (plus the `p_…` params the panel writes into
+Keys: `R` new scene · `P` new paint seed · `S` save PNG. `?seed=…` (plus the `p_…` params the panel writes into
 the URL) reproduces a picture exactly. `?profile` records per-pass timings in
 `window.PROFILE`; `?stop=N` halts after pass N to inspect an intermediate state.
 
-Note: painting is progressive and takes a few seconds on a GPU; the PNG should be saved
-after the last pass (paper grain and mat) has landed.
+Note: painting is progressive — the underpainting, then the oil passes (tens of thousands
+of strokes) — and takes a while; save the PNG after the last pass (canvas/grain and mat)
+has landed.

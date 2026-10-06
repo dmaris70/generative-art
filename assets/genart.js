@@ -132,6 +132,26 @@
       reset: function () {
         applyReset();
       },
+      // Programmatic control for sketch-side UI (seed stepping, presets): each call
+      // updates the panel and the URL, then resets once.
+      setSeed: function (next) {
+        setSeed(next);
+      },
+      setParams: function (obj) {
+        for (const k in obj) {
+          if (!(k in defs)) continue;
+          const v = typeof defs[k].value === 'number' ? Number(obj[k]) : obj[k];
+          if (typeof v === 'number' && !isFinite(v)) continue;
+          values[k] = v;
+        }
+        if (api.gui) api.gui.controllersRecursive().forEach(function (c) { c.updateDisplay(); });
+        applyReset();
+      },
+      defaults: function () {
+        const out = {};
+        for (const k in defs) out[k] = defs[k].value;
+        return out;
+      },
     };
 
     function applyReset() {
@@ -224,15 +244,30 @@
         });
       gui.add(ctrl, 'randomize').name('🎲 randomize');
 
-      const folder = gui.addFolder('parameters');
+      // Params land in 'parameters' unless they declare a `group`, which gets its own
+      // folder (created in first-seen order; names in config.closedGroups start closed).
+      // Heavy sketches can pass config.resetOnFinish so a slider repaints once on release
+      // rather than on every step of the drag.
+      let folder = null;
+      const groups = {};
+      const closed = config.closedGroups || [];
       for (const key in defs) {
         const d = defs[key];
+        let target;
+        if (d.group) {
+          if (!groups[d.group]) {
+            groups[d.group] = gui.addFolder(d.group);
+            if (closed.indexOf(d.group) >= 0) groups[d.group].close();
+          }
+          target = groups[d.group];
+        } else {
+          target = folder || (folder = gui.addFolder('parameters'));
+        }
         // `options` ({label: value}) renders a dropdown instead of a slider
-        (d.options ? folder.add(values, key, d.options) : folder.add(values, key, d.min, d.max, d.step))
-          .name(d.label || key)
-          .onChange(function () {
-            applyReset();
-          });
+        const c = d.options ? target.add(values, key, d.options) : target.add(values, key, d.min, d.max, d.step);
+        c.name(d.label || key);
+        if (config.resetOnFinish && !d.options) c.onFinishChange(function () { applyReset(); });
+        else c.onChange(function () { applyReset(); });
       }
 
       if (slugFromPath()) gui.add(ctrl, 'variations').name('⊞ Contact sheet');
