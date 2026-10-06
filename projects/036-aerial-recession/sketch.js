@@ -130,6 +130,7 @@ function setup() {
       sunImpasto: { value: 1, min: 0, max: 2, step: 0.05, label: 'sun impasto', group: IM },
       haloRings: { value: 5, min: 2, max: 8, step: 1, label: 'halo tonal rings', group: IM },
       silhouette: { value: 0.4, min: 0, max: 0.9, step: 0.05, label: 'silhouette darkness', group: IM },
+      grass: { value: 1, min: 0, max: 2.5, step: 0.05, label: 'grass density (oil)', group: IM },
 
       barkBrush: { value: 0, options: { charcoal: 0, 'coloured pencil': 1, '2B': 2, crayon: 3, pastel: 4 }, label: 'bark brush (watercolour)', group: TR },
       barkAge: { value: 0.4, min: 0, max: 1, step: 0.05, label: 'bark age (darker = older)', group: TR },
@@ -2409,6 +2410,15 @@ function oilBegin(s) {
       queue.push(() => chunk.forEach(oilStroke));
     }
   }
+  // the grass on the bank: turf, then clumps back to front, painted blade by blade
+  const blades = oilGrass(s, O);
+  for (let i = 0; i < blades.length; i += 220) {
+    const chunk = blades.slice(i, i + 220);
+    queue.push(() => {
+      noStroke();
+      chunk.forEach(oilBlade);
+    });
+  }
   // The found edge: the foreground tree, hard, on top of everything.
   // the trees, built on the trunk model and painted in oil: midground trunks two-tone,
   // then the front tree limb by limb; then its canopy and the midground canopies in
@@ -2736,7 +2746,7 @@ function oilBrokenColour(s, O, out) {
     const x = random(0, REF_W);
     const y = random(s.HY - 260, REF_H);
     const f = O.field(x, y);
-    if (f.kind !== 'ground' && f.kind !== 'range' && f.kind !== 'bank') continue;
+    if (f.kind !== 'ground' && f.kind !== 'range') continue; // the bank's colour goes into its turf
     const base = O.under(x, y);
     const l = O.lum(base);
     const acc = l < 70 ? ACCENTS.violet : l < 110 ? (random() < 0.5 ? ACCENTS.violet : ACCENTS.olive) : random() < 0.55 ? ACCENTS.ochre : ACCENTS.orange;
@@ -2768,11 +2778,10 @@ function oilScumble(s, O, out) {
 }
 
 // Objects restated over the field: midground trees as dabs (dark mass, then lit dabs),
-// grass and glints on the water (the framing tree is painted on its own, later).
+// and glints on the water (grass and the framing tree are painted on their own, later).
 function oilObjects(s, O, out) {
   const C = s.C;
   const rp = s.repoussoir;
-  const dark = mixRGB(C.silhouette, [0, 0, 0], OP.silhouette); // pushed toward black
 
   // midground trees, far → near
   for (const tr of s.trees) {
@@ -2798,21 +2807,6 @@ function oilObjects(s, O, out) {
     }
   }
 
-  // grass on the bank lip: sharp dark blades, warm tips toward the sun
-  for (let i = 0; i < 320; i++) {
-    const q = Math.floor(random(1, rp.bank.length - 1));
-    const [bx, by] = rp.bank[q];
-    const len = random(14, 48);
-    const a = -Math.PI / 2 + (noise(bx * 0.02) - 0.5) * 0.8 + random(-0.2, 0.2);
-    const col = mixRGB(shadeRGB(O.under(bx, by + 10), random(0.6, 0.9)), dark, 0.3);
-    out.push(makeOilStroke(O, bx + Math.cos(a) * len * 0.4, by + 8 + Math.sin(a) * len * 0.4, a, len, random(2, 3.8), { color: col, relief: 0.55, crisp: true }));
-    const sunward = s.sunSide < 0 ? 1 - bx / REF_W : bx / REF_W;
-    if (random() < 0.12 + 0.45 * sunward) {
-      const tip = mixRGB(C.light, C.glow, 0.35);
-      out.push(makeOilStroke(O, bx + Math.cos(a) * len * 0.7, by + 8 + Math.sin(a) * len * 0.7, a, len * 0.35, 1.5, { color: tip, color2: tip, relief: 0.6, crisp: true }));
-    }
-  }
-
   // glints on the water: loaded paint, brightest under the sun
   const r = s.river;
   for (let i = 0; i < 240; i++) {
@@ -2827,6 +2821,191 @@ function oilObjects(s, O, out) {
     // the glint is the water's own colour lifted toward the sun, not a white chip
     const col = mixRGB(O.under(x, y), mixRGB(C.glow, C.sun, near), 0.35 + 0.4 * near);
     out.push(makeOilStroke(O, x, y, random(-0.06, 0.06), len * 0.8, Math.max(0.8, Math.min(2.8, 4.5 / Math.sqrt(z))), { color: col, color2: mixRGB(col, O.under(x, y), 0.4), relief: 0.12 + 0.25 * near }));
+  }
+}
+
+// Grass, as a painter builds it rather than as a row of stalks:
+//  1. turf — the bank is covered in short upright flicks, densest at the lip and thinning
+//     toward the viewer, each a few percent off the local value and temperature, so the
+//     bank reads as a grown surface, not a flat dark with dots on it;
+//  2. clumps — tufts at irregular intervals with bare gaps between them (noise decides
+//     where grass grows), rooted at different depths below the lip, so they overlap in
+//     depth instead of standing on one line. Each tuft is a dark base mass first, then
+//     blades fanned from one root: tapered from base to point, curving progressively
+//     with the wind, of log-normal length (a few long, most short);
+//  3. contre-jour — almost every blade is a dark silhouette against the bright field; a
+//     few toward the sun are lit through (translucent yellow-green), and sunward edges
+//     carry a thin warm rim;
+//  4. seed heads on a minority of stems only, as small grains along a nodding tip —
+//     never a cap on every stalk.
+// Returns blade records for oilBlade(): {P: spine [[x,y]..], w0, col, a, rim, rimCol}.
+function oilGrass(s, O) {
+  const C = s.C;
+  const rp = s.repoussoir;
+  const dens = G.param('grass');
+  const out = [];
+  if (dens <= 0) return out;
+  const dark = mixRGB(C.silhouette, [0, 0, 0], OP.silhouette * 0.5);
+  const cool = mixRGB(dark, C.shadow, 0.35);
+  const warmDark = mixRGB(dark, ACCENTS.olive, 0.22);
+  const lit = mixRGB(mixRGB(C.foliageLit, C.glow, 0.35), C.light, 0.2 * s.warmth);
+  const straw = mixRGB(ACCENTS.ochre, C.light, 0.3);
+  const rimCol = mixRGB(C.light, C.glow, 0.45);
+  const wind = (x, y) => -Math.PI / 2 + 0.38 * (noise(x * 0.004, y * 0.004, 9) - 0.5) * 2 - 0.12 * s.sunSide;
+  const sunward = (x) => clamp01(1 - Math.abs(x - s.sunX) / (REF_W * 0.75));
+  // a blade's spine: the angle turns steadily from root to tip (curl), so the blade arcs
+  const spine = (x, y, a, len, curl) => {
+    const P = [[x, y]];
+    const n = len * U > 30 ? 8 : 5;
+    let px = x, py = y;
+    for (let k = 1; k <= n; k++) {
+      const t = k / n;
+      const th = a + curl * t * t;
+      px += (Math.cos(th) * len) / n;
+      py += (Math.sin(th) * len) / n;
+      P.push([px, py]);
+    }
+    return P;
+  };
+  const vary = (c, amt) => {
+    const v = 1 + random(-amt, amt);
+    return [c[0] * v, c[1] * v * (1 + random(-0.04, 0.04)), c[2] * v * (1 + random(-0.06, 0.06))];
+  };
+  const left = rp.bank[0][0];
+  const right = rp.bank[rp.bank.length - 1][0];
+
+  // 1. turf
+  const nTurf = Math.round(3600 * dens);
+  for (let i = 0; i < nTurf; i++) {
+    const x = random(left, right);
+    const lip = bankAt(rp, x);
+    const depth = -Math.log(1 - random() * 0.985) * 70; // exponential: crowded at the lip
+    const y = lip + 2 + depth;
+    if (y > REF_H + 10) continue;
+    const near = 1 + depth / 90; // lower on the bank = nearer = bigger
+    const base = O.under(x, Math.min(REF_H - 4, y + 4));
+    const t = random();
+    const tint = t < 0.4 ? cool : t < 0.75 ? warmDark : dark;
+    const col = vary(mixRGB(base, tint, random(0.3, 0.7)), 0.12);
+    const len = random(4, 13) * near;
+    out.push({ P: spine(x, y, wind(x, y) + random(-0.45, 0.45), len, random(-0.5, 0.5)), w0: random(0.9, 1.8) * near, col, a: random(170, 235) });
+    // a few turf tips at the lip catch the low sun
+    if (depth < 12 && random() < 0.08 + 0.18 * sunward(x)) {
+      out.push({ P: spine(x + 0.6, y - len * 0.45, wind(x, y), len * 0.45, 0.2 * s.sunSide), w0: 0.7, col: vary(mixRGB(base, lit, 0.3), 0.08), a: 140 });
+    }
+  }
+
+  // 2–4. clumps: walk the lip with irregular steps; noise decides tuft vs bare ground
+  const clumps = [];
+  for (let x = left + random(0, 10); x < right; x += random(5, 22) / Math.max(0.35, dens)) {
+    const grow = noise(x * 0.011, 3.3);
+    if (grow < 0.36) continue; // bare stretch of lip
+    // most tufts root just under the lip; some lower and nearer, which stand taller
+    const depth = random() < 0.78 ? random(1, 9) : random(10, 55);
+    clumps.push({ x: x + random(-3, 3), y: bankAt(rp, x) + depth, depth, grow });
+  }
+  clumps.sort((a, b) => a.y - b.y); // back to front
+  for (const c of clumps) {
+    const near = 1 + c.depth / 70;
+    const H = Math.exp(random(Math.log(14), Math.log(46))) * (0.45 + 1.25 * (c.grow - 0.36)) * near;
+    const lean = wind(c.x, c.y);
+    const n = Math.max(3, Math.round(random(4, 13) * (0.6 + c.grow)));
+    const base = O.under(c.x, Math.min(REF_H - 4, c.y + 6));
+    const tint = random() < 0.5 ? cool : warmDark;
+    const body = mixRGB(mixRGB(base, tint, 0.5), dark, 0.45);
+    const sw = sunward(c.x);
+    // base mass: short wide strokes, so the root is a mass and not a bundle of lines
+    for (let k = 0; k < 3; k++) {
+      out.push({ P: spine(c.x + random(-2, 2) * near, c.y + 2, lean + random(-0.6, 0.6), H * random(0.18, 0.3), random(-0.3, 0.3)), w0: random(3.5, 6) * near, col: vary(body, 0.06), a: 235 });
+    }
+    const seeding = random() < 0.3;
+    let heads = seeding ? 1 + Math.floor(random(0, 3)) : 0;
+    for (let i = 0; i < n; i++) {
+      const fan = (i / Math.max(1, n - 1) - 0.5) * random(0.7, 1.3);
+      const a = lean + fan + random(-0.12, 0.12);
+      const centre = 1 - Math.abs(fan) * 0.8; // the middle blades stand tallest
+      const len = H * centre * Math.exp(random(-0.55, 0.15));
+      // blades bend over toward the side they lean to, and more the longer they are
+      const curl = (a + Math.PI / 2) * random(0.6, 1.6) + random(-0.12, 0.12);
+      const P = spine(c.x + random(-1.5, 1.5) * near, c.y + random(0, 2), a, len, curl);
+      const throughLit = random() < 0.08 + 0.22 * sw; // the sun shining through a blade
+      const col = throughLit ? vary(mixRGB(lit, body, random(0.15, 0.45)), 0.08) : vary(body, 0.1);
+      const rim = !throughLit && random() < 0.15 + 0.45 * sw;
+      out.push({ P, w0: random(1.3, 2.8) * near, col, a: 245, rim, rimCol, side: s.sunSide });
+      // a seed head: a thin stem past the leaves and grains along its nodding tip
+      if (heads > 0 && centre > 0.5 && random() < 0.5) {
+        heads--;
+        const sl = len * random(1.1, 1.5);
+        const sp = spine(c.x, c.y, a * 0.9 + lean * 0.1, sl, curl * 1.4 + 0.25 * Math.sign(curl || 1));
+        out.push({ P: sp, w0: 0.75 * near, col: vary(mixRGB(body, straw, 0.25), 0.06), a: 235 });
+        const tip = sp[sp.length - 1];
+        const prev = sp[sp.length - 2];
+        const ta = Math.atan2(tip[1] - prev[1], tip[0] - prev[0]);
+        const g = 3 + Math.floor(random(0, 5));
+        for (let k = 0; k < g; k++) {
+          const t = k / g;
+          const gx = tip[0] - Math.cos(ta) * sl * 0.16 * t;
+          const gy = tip[1] - Math.sin(ta) * sl * 0.16 * t;
+          const ga = ta + (k % 2 ? 0.6 : -0.6) + random(-0.2, 0.2);
+          // grains stay close to the stem's value; only a few toward the sun catch the light
+          const gcol = random() < 0.12 + 0.25 * sw ? mixRGB(mixRGB(straw, body, 0.3), rimCol, random(0, 0.25)) : mixRGB(straw, body, random(0.55, 0.8));
+          out.push({ P: spine(gx, gy, ga, random(1.4, 2.6) * near, 0), w0: random(0.9, 1.4) * near, col: vary(gcol, 0.08), a: 220 });
+        }
+      }
+    }
+  }
+  // a few wild single stalks break the top line of the grass
+  for (let i = 0; i < Math.round(26 * dens); i++) {
+    const x = random(left, right);
+    const y = bankAt(rp, x) + random(2, 14);
+    const a = wind(x, y) + random(-0.15, 0.15);
+    const len = random(40, 85);
+    out.push({ P: spine(x, y, a, len, (a + Math.PI / 2) * 1.5 + random(-0.2, 0.2)), w0: random(0.7, 1.1), col: vary(dark, 0.08), a: 230, rim: random() < 0.5, rimCol, side: s.sunSide });
+  }
+  return out;
+}
+
+// One blade: a filled ribbon tapering from its root width to a point, with a darker
+// shadow-side half (the blade's fold) and, if lit from behind, a thin warm rim on the
+// side facing the sun. Drawn natively, as the oil strokes are.
+function oilBlade(b) {
+  const P = b.P;
+  const n = P.length;
+  const nrm = P.map((_, i) => {
+    const p = P[Math.max(0, i - 1)], q = P[Math.min(n - 1, i + 1)];
+    const dx = q[0] - p[0], dy = q[1] - p[1];
+    const d = Math.hypot(dx, dy) || 1;
+    return [-dy / d, dx / d];
+  });
+  const hw = (i) => b.w0 * 0.5 * Math.pow(1 - i / (n - 1), 0.85) + 0.12 / U;
+  const ribbon = (col, alpha, lo, hi) => {
+    fill(col[0], col[1], col[2], alpha);
+    beginShape(TRIANGLE_STRIP);
+    for (let i = 0; i < n; i++) {
+      const [x, y] = P[i];
+      const [nx, ny] = nrm[i];
+      const h = hw(i);
+      vertex(X(x + nx * h * lo), Y(y + ny * h * lo));
+      vertex(X(x + nx * h * hi), Y(y + ny * h * hi));
+    }
+    endShape();
+  };
+  ribbon(b.col, b.a, -1, 1);
+  if (b.w0 * U >= 2.2) ribbon(shadeRGB(b.col, 0.78), b.a * 0.55, -1, -0.1); // the fold
+  if (b.rim) {
+    // the rim on the edge facing the sun: + normal side if that points sunward
+    const f = nrm[Math.floor(n / 2)][0] * b.side > 0 ? 1 : -1;
+    fill(b.rimCol[0], b.rimCol[1], b.rimCol[2], 175);
+    beginShape(TRIANGLE_STRIP);
+    for (let i = Math.floor(n * 0.3); i < n; i++) {
+      const [x, y] = P[i];
+      const [nx, ny] = nrm[i];
+      const h = hw(i);
+      const r = Math.max(0.28 / U, h * 0.35);
+      vertex(X(x + nx * h * f), Y(y + ny * h * f));
+      vertex(X(x + nx * (h - r) * f), Y(y + ny * (h - r) * f));
+    }
+    endShape();
   }
 }
 
