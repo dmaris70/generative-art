@@ -179,6 +179,23 @@ function reset() {
   loop();
 }
 
+// Keep the mat clean while the painting forms. Passes deliberately reach past the field
+// edge (washes, oil strokes, the bank) so no edge shows inside it, and the final mat pass
+// covers the spill; but until then the spill showed on the mat around the forming image.
+// Repainting the mat (four flat rects) at the end of every frame hides it. It has to run
+// after p5.brush composites its layer, which also happens at postdraw, so it is a
+// postdraw hook registered after p5.brush's.
+p5.registerAddon((p5, fn, lifecycles) => {
+  lifecycles.postdraw = function () {
+    if (!S || !R) return;
+    push();
+    resetMatrix();
+    translate(-width / 2, -height / 2);
+    paintMat(S);
+    pop();
+  };
+});
+
 function draw() {
   if (!S) return;
   translate(-width / 2, -height / 2);
