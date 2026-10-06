@@ -137,10 +137,28 @@ shaded bands, and the light is carried by the light third and a broken warm rim 
 sunward edge. At gallery size a highlight can't be thinner than a pixel, so highlights
 thin out as the trunk gets smaller on screen.
 
-The same marks have two renderers. **Oil** (`oilTrunks`): a crisp body ribbon in the mid
-tone (the found edge), then every mark as an oil stroke — opaque body, bristle streaks,
-impasto under the room light, so the light third stands proud and the grooves and
-crevices sit low. **Watercolour** (`treeBrushTasks`, one pass per limb): the same marks in p5.brush — tone
+The same marks have two renderers. **Oil** (`oilLimbPainterly`, `oilCanopy`): vector
+geometry reads as illustration however good the marks inside it are, so in oil the tree
+has no outline at all —
+
+- limb paths are smoothed (Chaikin, twice) and their width breathes along the length;
+- the body is overlapping full-width bristle strokes in the mid tone; the limb is the edge
+  of its own strokes; the trunk-model marks go on top, impasto only on the light third;
+- **negative painting**: after each limb, short strokes of the surrounding paint —
+  sampled from the oil surface as it stood before the tree went on — are dragged along
+  both edges, overlapping them here and there, so the silhouette is hard but broken;
+- the canopy is blocked in with broad core-colour strokes, then built of hundreds of
+  overlapping leaf dabs (dark core, mid, warm dabs toward the sun) whose outline is broken
+  by dabs that overshoot it, with a few irregular sky holes painted back in near the rim;
+- no impasto specular on any stroke under 4 px — a ridge that small can't catch visible
+  light, and a 1 px highlight on a 3 px dab reads as a white dot.
+
+![the tree in oil, 2× detail (seed 3)](tree-detail.png)
+
+In oil the underpainting carries no framing tree at all, so the oil passes paint clean sky
+behind it (a tree in the underpainting was being sampled into the sky strokes as dark
+ghosts beside the oil tree). The ink hatching stays in the watercolour medium, where pen-and-wash belongs; in oil it
+read as digital. **Watercolour** (`treeBrushTasks`, one pass per limb): the same marks in p5.brush — tone
 bands as plain fills (hundreds of bleeding p5.brush polygons per tree were far too slow), grooves in the bark brush (charcoal by default), tapered darks and
 edges in 2B with pointed pressure, light in coloured pencil.
 

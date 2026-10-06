@@ -67,6 +67,7 @@ let tasks = [];
 let taskIdx = 0;
 let R, U; // field rect on screen, and screen px per REF unit
 let brushK = 1; // brush scale currently applied (scaleBrushes compounds)
+let SURF = null; // sampler over the oil surface as it stood before the tree went on
 let UNDER = null; // cached underpainting {key, W, H, px, img} for oil repaints
 const SCENE_PARAMS = ['mood', 'sun', 'haze', 'ranges', 'mist', 'clouds', 'meander', 'trees', 'frame'];
 const UI = { status: '' };
@@ -801,19 +802,14 @@ function buildTasks(s) {
   T.push(() => paintGrass(s, 0));
   T.push(() => paintGrass(s, 1));
   if (s.repoussoir.segs.length) {
-    if (G.param('medium') === 1) {
-      // oil: the underpainting keeps the plain silhouette; the brushwork goes on last
-      T.push(() => paintTrunk(s));
-      const L = s.repoussoir.leaves;
-      for (let i = 0; i < L.length; i += 25) {
-        const chunk = L.slice(i, i + 25);
-        T.push(() => chunk.forEach((lf) => paintLeafClump(s, lf)));
-      }
-    } else {
+    // in oil the underpainting has no framing tree at all: the oil passes paint clean sky
+    // behind it, and the tree goes on last, painted (a tree in the underpainting would be
+    // sampled into the sky strokes as dark ghosts beside the oil tree)
+    if (G.param('medium') === 0) {
       for (const t of treeBrushTasks(s)) T.push(t);
       T.push(() => paintCanopyBrush(s));
+      T.push(() => paintRim(s));
     }
-    T.push(() => paintRim(s));
   }
   if (G.param('medium') === 1) {
     // Oil: everything above becomes the underpainting; the oil engine reads it back and
@@ -1466,68 +1462,6 @@ function paintGrass(s, pass) {
   }
 }
 
-// Limbs: anything thicker than a few units is a filled ribbon whose width follows the
-// branch's own taper, so a limb hands its width on to its children without a step;
-// only the twigs are pencil strokes.
-function paintTrunk(s) {
-  const C = s.C;
-  const rp = s.repoussoir;
-  const dark = mixRGB(C.silhouette, C.shadow, 0.12);
-  const segs = rp.segs.slice().sort((a, b) => b.pts[0][2] - a.pts[0][2]);
-  for (const seg of segs) {
-    if (seg.pts[0][2] >= 2.5) {
-      const left = [];
-      const right = [];
-      for (let k = 0; k < seg.pts.length; k++) {
-        const p = seg.pts[k];
-        const q = seg.pts[Math.min(k + 1, seg.pts.length - 1)];
-        const o = seg.pts[Math.max(k - 1, 0)];
-        const dx = q[0] - o[0];
-        const dy = q[1] - o[1];
-        const d = Math.hypot(dx, dy) || 1;
-        const hw = Math.max(0.6, p[2] * 0.5);
-        left.push([p[0] - (dy / d) * hw, p[1] + (dx / d) * hw]);
-        right.push([p[0] + (dy / d) * hw, p[1] - (dx / d) * hw]);
-      }
-      brush.noStroke();
-      brush.wash(toHex(dark), 255);
-      bpoly(left.concat(right.slice().reverse()));
-      brush.noWash();
-      if (seg.pts[0][2] > 12) {
-        // bark: a few long strokes along the limb
-        for (let k = 0; k < 3; k++) {
-          const off = random(-0.3, 0.3);
-          const line = seg.pts.map((p) => [X(p[0] + off * p[2]), Y(p[1]), 0.6]);
-          brush.set('2B', toHex(mixRGB(dark, C.shadow, 0.35)), 0.7);
-          brush.spline(line, 0.5);
-        }
-      }
-    } else {
-      brush.set('2B', toHex(dark), 1);
-      const line = seg.pts.map((p) => [X(p[0]), Y(p[1]), Math.max(0.3, Math.min(1.4, p[2] / 2))]);
-      brush.strokeWeight(Math.max(0.5, seg.pts[0][2] * 0.45));
-      brush.spline(line, 0.5);
-    }
-  }
-}
-
-function paintLeafClump(s, lf) {
-  const C = s.C;
-  const col = mixRGB(C.silhouette, C.foliage, 0.3 + 0.2 * noise(lf.ph));
-  brush.noStroke();
-  brush.wash(toHex(col), 235);
-  bpoly(treeBlob(lf.x, lf.y, lf.r, lf.r * 0.78, lf.ph, 18));
-  brush.noWash();
-  // Leaf texture at the edge: a few dabs breaking the outline.
-  for (let k = 0; k < 4; k++) {
-    const a = random(TWO_PI);
-    const rr = lf.r * random(0.25, 0.45);
-    brush.wash(toHex(col), 220);
-    bpoly(treeBlob(lf.x + Math.cos(a) * lf.r * 0.95, lf.y + Math.sin(a) * lf.r * 0.75, rr, rr * 0.8, lf.ph + k * 3, 10));
-    brush.noWash();
-  }
-}
-
 // Rim light: silhouette edges facing the sun catch a thin warm line — only where the edge
 // is an outer edge (not buried inside a neighbouring clump).
 function paintRim(s) {
@@ -1877,6 +1811,11 @@ function trunkMarks(s, P, opts = {}) {
     total += Math.hypot(pts[i][0] - pts[i - 1][0], pts[i][1] - pts[i - 1][1]);
     arc.push(total);
   }
+  if (opts.breathe) {
+    // the width breathes along the length: no limb is a perfect taper
+    const bp = random(1000);
+    for (let i = 0; i < n; i++) pts[i][2] *= 1 + 0.26 * (noise(bp + arc[i] * 0.025) - 0.5);
+  }
   if (opts.flare) {
     for (let i = 0; i < n; i++) {
       const t = arc[i] / total;
@@ -2026,7 +1965,7 @@ function trunkMarks(s, P, opts = {}) {
       marks.push({ kind: 'break', path: [a, [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2], b], w: Math.max(0.6, wAt(i) * random(0.025, 0.045)), col, col2: col, rel: 0.05 });
     }
   }
-  return { marks, pts, sig };
+  return { marks, pts, sig, at, wAt, n, stepI, W0 };
 }
 
 // A mark as an oil stroke: the path is fitted by a cubic through its quarter points.
@@ -2077,36 +2016,6 @@ function drawMarkBrush(m) {
   brush.spline(pts, 0.5);
 }
 
-// The front tree in oil: limbs thin → thick (so the trunk sits on top of the branches it
-// throws), each a crisp body ribbon then its trunk marks as oil strokes; twigs as fine
-// tapering dark strokes.
-function oilTrunks(s) {
-  const rp = s.repoussoir;
-  if (!rp.segs.length) return;
-  const T = trunkTones(s);
-  const segs = rp.segs.slice().sort((a, b) => a.pts[0][2] - b.pts[0][2]);
-  for (const seg of segs) {
-    const w0 = seg.pts[0][2];
-    if (w0 < 2.5) {
-      oilStroke(markToOil({ kind: 'dark', path: seg.pts.map((p) => [p[0], p[1]]), w: Math.max(0.8, w0 * 0.9), col: T.dark, col2: T.crevice, rel: 0.15 }));
-      continue;
-    }
-    const { marks, pts } = trunkMarks(s, jointed(seg), { flare: seg.depth === 0 ? 0.55 : 0 });
-    // crisp body underlayer in the mid tone: the found edge
-    noStroke();
-    fill(T.mid[0], T.mid[1], T.mid[2]);
-    beginShape(TRIANGLE_STRIP);
-    pts.forEach((p, k) => {
-      const [nx, ny] = polyNormal(pts, k);
-      const hw = Math.max(0.6, p[2] * 0.5);
-      vertex(X(p[0] + nx * hw), Y(p[1] + ny * hw));
-      vertex(X(p[0] - nx * hw), Y(p[1] - ny * hw));
-    });
-    endShape();
-    for (const m of marks) oilStroke(markToOil(m));
-  }
-}
-
 // Midground trunks, two-tone (rule 6), stopping at the canopy's underside.
 function midTrunkMarks(s) {
   const out = [];
@@ -2131,6 +2040,162 @@ function midTrunkMarks(s) {
     }
   }
   return out;
+}
+
+// --- the tree, painted (oil) -----------------------------------------------------------
+//
+// Vector geometry reads as illustration however good the marks inside it are. A painter
+// never has an outline: the limb is the edge of its own strokes, and the edge is then
+// corrected by cutting the surrounding paint back in. So, in oil:
+//   - limb paths are smoothed (Chaikin) and their width breathes along the length;
+//   - the body is overlapping bristle strokes, not a filled shape;
+//   - after each limb, short strokes of the paint around it — sampled from the oil surface
+//     as it stood before the tree went on — are dragged along both edges, overlapping them
+//     here and there (negative painting), so the silhouette is hard but broken;
+//   - the canopy is clustered leaf dabs: a dark core, mid dabs, warm dabs toward the sun,
+//     the outline broken by dabs that overshoot it, and sky holes painted back in.
+
+// Read the oil surface before the tree goes on: the colour the cut-ins and sky holes
+// need is the paint around and behind the tree, not the underpainting.
+function captureSurface() {
+  loadPixels();
+  const d = pixelDensity();
+  const W = Math.round(width * d);
+  const H = Math.round(height * d);
+  const px = new Uint8ClampedArray(pixels);
+  SURF = (x, y) => {
+    x = Math.max(4, Math.min(REF_W - 4, x));
+    y = Math.max(4, Math.min(REF_H - 4, y));
+    const cx = Math.min(W - 1, Math.max(0, Math.round(X(x) * d)));
+    const cy = Math.min(H - 1, Math.max(0, Math.round(Y(y) * d)));
+    const k = (cy * W + cx) * 4;
+    return [px[k], px[k + 1], px[k + 2]];
+  };
+}
+
+// Chaikin corner-cutting, twice: the recursion's straight segments become a grown curve.
+function smoothLimb(P) {
+  let Q = P;
+  for (let it = 0; it < 2; it++) {
+    const R = [Q[0]];
+    for (let i = 0; i < Q.length - 1; i++) {
+      const a = Q[i];
+      const b = Q[i + 1];
+      R.push([a[0] * 0.75 + b[0] * 0.25, a[1] * 0.75 + b[1] * 0.25, a[2] * 0.75 + b[2] * 0.25]);
+      R.push([a[0] * 0.25 + b[0] * 0.75, a[1] * 0.25 + b[1] * 0.75, a[2] * 0.25 + b[2] * 0.75]);
+    }
+    R.push(Q[Q.length - 1]);
+    Q = R;
+  }
+  return Q;
+}
+
+// A limb as paint: body strokes, the trunk-model marks, then the cut-ins.
+function oilLimbPainterly(s, seg) {
+  const T = trunkTones(s);
+  const { marks, at, wAt, n, stepI, W0 } = trunkMarks(s, smoothLimb(jointed(seg)), { flare: seg.depth === 0 ? 0.55 : 0, breathe: true });
+  // body: overlapping full-width strokes in the mid tone — the limb is the edge of these
+  const len = stepI(W0 * 1.5);
+  for (let i = 0; i < n - 1; i += len * 0.55) {
+    const i1 = Math.min(n - 1, i + len);
+    const k = 6;
+    const path = [];
+    for (let j = 0; j <= k; j++) path.push(at(i + ((i1 - i) * j) / k, random(-0.04, 0.04)));
+    const col = shadeRGB(mixRGB(T.mid, T.dark, random(0, 0.35)), random(0.92, 1.06));
+    oilStroke(markToOil({ kind: 'body', path, w: wAt((i + i1) / 2) * random(0.98, 1.06), col, col2: mixRGB(col, T.dark, 0.4), rel: 0 }));
+  }
+  for (const m of marks) if (m.kind !== 'band' || m.w < W0 * 0.3) oilStroke(markToOil(m));
+  // cut-ins: the surrounding paint dragged back over the edge, here and there
+  if (SURF && W0 * U > 3) {
+    for (const side of [-1, 1]) {
+      for (let i = random(0, 2); i < n - 1; i += stepI(W0 * random(0.5, 1.4))) {
+        if (random() > 0.5) continue;
+        const l = stepI(W0 * random(0.5, 1.6));
+        const i1 = Math.min(n - 1, i + l);
+        const out = at((i + i1) / 2, side * 1.6);
+        const col = shadeRGB(SURF(out[0], out[1]), random(0.96, 1.04));
+        const u0 = side * random(0.95, 1.15);
+        const path = [at(i, side * 1.2), at((i + i1) / 2, u0), at(i1, side * 1.25)];
+        oilStroke(markToOil({ kind: 'cut', path, w: wAt(i) * random(0.12, 0.28), col, col2: col, rel: 0 }));
+      }
+    }
+  }
+}
+
+// The canopy as oil: clustered leaf dabs.
+function oilCanopy(s) {
+  const C = s.C;
+  const rp = s.repoussoir;
+  if (!rp.leaves.length) return;
+  const clusters = canopyClusters(rp.leaves);
+  const core = mixRGB(C.silhouette, [0, 0, 0], 0.15);
+  const mid = mixRGB(C.silhouette, C.foliage, 0.45);
+  const lit = mixRGB(mid, mixRGB(mixRGB(C.foliage, C.foliageLit, 0.55), C.light, 0.25 * s.warmth), 0.6);
+  for (const c of clusters) {
+    const rx = c.r;
+    const ry = c.r * 0.72;
+    const sx = s.sunX - c.x;
+    const sy = s.sunY - c.y;
+    const sl = Math.hypot(sx, sy) || 1;
+    const n = Math.min(900, Math.round(((rx * ry) / 30) * 3.2));
+    const inside = (u, v, a) => {
+      // organic boundary: radius modulated by noise round the clump
+      const rr = 0.78 + 0.42 * noise(c.ph + Math.cos(a) * 1.1, c.ph + Math.sin(a) * 1.1);
+      return Math.hypot(u, v) < rr;
+    };
+    // block in the mass first: broad strokes of the core colour across the interior
+    for (let i = 0; i < 10; i++) {
+      const a = random(TWO_PI);
+      const d = Math.sqrt(random()) * 0.55;
+      const x = c.x + Math.cos(a) * d * rx;
+      const y = c.y + Math.sin(a) * d * ry;
+      const L = c.r * random(0.5, 0.9);
+      const ang = random(-0.5, 0.5);
+      const col = mixRGB(core, mid, random(0, 0.35));
+      oilStroke(markToOil({ kind: 'leaf', path: [[x - Math.cos(ang) * L * 0.5, y - Math.sin(ang) * L * 0.5], [x, y], [x + Math.cos(ang) * L * 0.5, y + Math.sin(ang) * L * 0.5]], w: c.r * random(0.3, 0.45), col, col2: shadeRGB(col, 0.85), rel: 0 }));
+    }
+    for (let i = 0; i < n; i++) {
+      const a = random(TWO_PI);
+      const d = Math.sqrt(random());
+      const u = Math.cos(a) * d * 1.15;
+      const v = Math.sin(a) * d * 1.15;
+      if (!inside(u, v, a)) continue;
+      const x = c.x + u * rx;
+      const y = c.y + v * ry;
+      const toward = (u * sx + v * sy * 0.72) / sl; // > 0 on the sunward side
+      let col;
+      let rel = 0.1;
+      if (toward > 0.25 && d > 0.45 && random() < 0.55) {
+        col = mixRGB(lit, mid, random(0, 0.4));
+        rel = 0.35;
+      } else if (d < 0.55) {
+        col = mixRGB(core, mid, random(0, 0.5));
+      } else {
+        col = mixRGB(mid, core, random(0, 0.5));
+      }
+      // leaves hang: dabs fan outward from the centre and droop
+      const ang = Math.atan2(v, u) * 0.6 + Math.PI * 0.5 * 0.35 + random(-0.5, 0.5);
+      const L = c.r * (random() < 0.25 ? random(0.22, 0.38) : random(0.07, 0.2));
+      const ca = Math.cos(ang);
+      const sa = Math.sin(ang);
+      oilStroke(markToOil({ kind: 'leaf', path: [[x - ca * L * 0.5, y - sa * L * 0.5], [x, y + L * 0.05], [x + ca * L * 0.5, y + sa * L * 0.5]], w: L * random(0.4, 0.6), col, col2: shadeRGB(col, random(0.8, 1.1)), rel }));
+    }
+    // sky holes, painted back in with the paint that was behind the canopy: few, mostly
+    // toward the thinner rim, irregular, the inner ones softened by the leaves around them
+    if (SURF) {
+      const holes = Math.round(n * 0.018);
+      for (let i = 0; i < holes; i++) {
+        const a = random(TWO_PI);
+        const d = 0.55 + 0.4 * Math.pow(random(), 0.6);
+        const x = c.x + Math.cos(a) * d * rx;
+        const y = c.y + Math.sin(a) * d * ry;
+        const col = mixRGB(SURF(x, y), mid, (1 - d) * 0.9);
+        const L = c.r * random(0.04, 0.12);
+        const ang = random(-0.8, 0.8);
+        oilStroke(markToOil({ kind: 'leaf', path: [[x - Math.cos(ang) * L * 0.5, y - Math.sin(ang) * L * 0.5], [x, y], [x + Math.cos(ang) * L * 0.5, y + Math.sin(ang) * L * 0.5]], w: L * random(0.35, 0.7), col, col2: mixRGB(col, mid, 0.3), rel: 0 }));
+      }
+    }
+  }
 }
 
 // --- oil -------------------------------------------------------------------------
@@ -2275,15 +2340,24 @@ function oilBegin(s) {
   // the trees, built on the trunk model and painted in oil: midground trunks two-tone,
   // then the front tree limb by limb; then its canopy and the midground canopies in
   // p5.brush (watercolour mass + ink hatching)
+  queue.push(() => YIELD);
+  queue.push(() => captureSurface());
   const mid = midTrunkMarks(s);
   for (let i = 0; i < mid.length; i += 80) {
     const chunk = mid.slice(i, i + 80);
     queue.push(() => chunk.forEach((m) => oilStroke(markToOil(m))));
   }
-  queue.push(() => oilTrunks(s));
-  queue.push(() => YIELD);
-  queue.push(() => paintCanopyBrush(s));
-  queue.push(() => paintMidTreesBrush(s, false));
+  // the front tree limb by limb, thin → thick, then its canopy
+  const segs = s.repoussoir.segs.slice().sort((a, b) => a.pts[0][2] - b.pts[0][2]);
+  queue.push(() => {
+    const T = trunkTones(s);
+    for (const seg of segs) {
+      if (seg.pts[0][2] >= 2.5) continue;
+      oilStroke(markToOil({ kind: 'dark', path: smoothLimb(seg.pts).map((p) => [p[0], p[1]]), w: Math.max(0.8, seg.pts[0][2] * 0.9), col: T.dark, col2: T.crevice, rel: 0 }));
+    }
+  });
+  for (const seg of segs) if (seg.pts[0][2] >= 2.5) queue.push(() => oilLimbPainterly(s, seg));
+  queue.push(() => oilCanopy(s));
   tasks.splice(taskIdx, 0, ...queue);
 }
 
@@ -2541,7 +2615,9 @@ function oilStroke(st) {
     }
   }
   // specular: the lit flank of the ridge, on whichever side faces the room light
-  if (rel > 0.05 && !st.scumble) {
+  // (no specular on strokes under 4 px: a ridge that small can't catch a visible light,
+  // and a 1 px highlight on a 3 px dab reads as a white dot)
+  if (rel > 0.05 && !st.scumble && wpx >= 4) {
     const spec = mixRGB(st.body, [255, 252, 244], 0.35 + 0.35 * Math.min(1, rel));
     stroke(spec[0], spec[1], spec[2], 90 + 150 * Math.min(1, rel));
     strokeWeight(Math.max(0.5, wpx * 0.09));
@@ -2619,7 +2695,7 @@ function oilScumble(s, O, out) {
 }
 
 // Objects restated over the field: midground trees as dabs (dark mass, then lit dabs),
-// the framing tree's foliage and limbs, grass, glints on the water.
+// grass and glints on the water (the framing tree is painted on its own, later).
 function oilObjects(s, O, out) {
   const C = s.C;
   const rp = s.repoussoir;
@@ -2646,14 +2722,6 @@ function oilObjects(s, O, out) {
     for (let i = 0; i < Math.round(n * 0.5); i++) {
       const u = random(0, 0.4) * s.sunSide, v = random(-0.45, 0.1);
       out.push(makeOilStroke(O, x + u * w, cy + v * h, random(-0.8, 0.8), dab * random(1.2, 2), dab * 0.8, { color: mixRGB(lit, base, random(0, 0.3)), relief: 0.35 }));
-    }
-  }
-
-  // the framing tree's foliage: dark crisp dabs, a warm edge where it faces the sun
-  for (const lf of rp.leaves) {
-    const base = mixRGB(dark, C.foliage, 0.3);
-    for (let i = 0; i < 3; i++) {
-      out.push(makeOilStroke(O, lf.x + random(-0.5, 0.5) * lf.r, lf.y + random(-0.4, 0.4) * lf.r, random(TWO_PI), lf.r * random(0.8, 1.3), lf.r * 0.55, { color: shadeRGB(base, random(0.8, 1.15)), relief: 0.5, crisp: true }));
     }
   }
 
