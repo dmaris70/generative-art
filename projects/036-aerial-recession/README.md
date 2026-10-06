@@ -91,6 +91,72 @@ overlap (measured: a sky sampled at `[118,123,133]` came back `[82,84,86]` after
 layers built up). Oil body paint is opaque, so the strokes are drawn with ordinary "over"
 blending.
 
+## The trees — a trunk model, painted in oil
+
+The trunks are built on a model decomposed from a drawing tutorial
+([pendrawings.me, *How to draw tree trunks*](https://pendrawings.me/how-to-draw-tree-trunks/)).
+Stripped to what it actually prescribes:
+
+1. a trunk drawing has two jobs — show its **roundness** and its **bark texture**;
+2. bark = slightly wandering lines **along the length** (the grooves), only as many as
+   convey the feel;
+3. roundness = **three tones** across the width: the third away from the light darkest,
+   the middle third mid, the third toward the light lightest; darker overall reads older;
+4. finish with **tapered darks** — crevices and edge roughness — and ground the base;
+5. character = the shape, size and placement of the tapered darks; long flowing bark
+   lines become crevices; knots;
+6. small / far trunks: **two tones** only, the dark side zagged;
+7. close-up trunks: **individual bark pieces**, each textured on its own.
+
+Recomposed as code (`trunkMarks`): every limb is a cylinder parameterised along its
+length and across it (`u ∈ [−1, 1]`, −1 = away from the light, read from the sun's
+position). The rules become marks on that cylinder —
+
+| rule | mark |
+|---|---|
+| 3 | three tone bands along the limb, boundaries wandering; short strokes loaded with both neighbouring tones work each boundary wet into wet |
+| 2 | groove lines along the length at spread `u`, broken into runs, denser and darker on the dark side, sparse on the light third |
+| 4, 5 | tapered darks — spindle strokes pointed at both ends — clustered at the dark/mid boundary; the long ones are crevices |
+| 6, 4 | edge roughness: short diagonal darks biting inward along the dark edge in a zig-zag |
+| 3 | broken highlights and a broken warm rim on the light third — the thickest paint on the trunk |
+| 5 | knots: a dark ring round a mid core, on trunks big enough to carry them |
+| 7 | on close-up limbs, bark pieces cut by short transverse breaks between neighbouring grooves |
+| 4 | a root flare at the base, which the bank's grass grounds |
+
+Level of detail is chosen from the limb's width on screen — two-tone below 6 px (rule 6;
+the midground trunks), three-tone, then close-up with bark pieces from 26 REF units
+(rule 7; the front trunk). Child limbs are extended back into their parent and capped
+round, so forks are joints rather than notches.
+
+![front trunk, close-up study (oil renderer, seed 3)](trunk-study.png)
+
+The tutorial's three tones assume side light; this sun stands in the picture, so the
+tree is seen from its shaded face. The bands keep their order but are compressed into a
+low key (following the *silhouette darkness* setting), impasto relief is kept off the
+shaded bands, and the light is carried by the light third and a broken warm rim on the
+sunward edge. At gallery size a highlight can't be thinner than a pixel, so highlights
+thin out as the trunk gets smaller on screen.
+
+The same marks have two renderers. **Oil** (`oilTrunks`): a crisp body ribbon in the mid
+tone (the found edge), then every mark as an oil stroke — opaque body, bristle streaks,
+impasto under the room light, so the light third stands proud and the grooves and
+crevices sit low. **Watercolour** (`treeBrushTasks`, one pass per limb): the same marks in p5.brush — tone
+bands as plain fills (hundreds of bleeding p5.brush polygons per tree were far too slow), grooves in the bark brush (charcoal by default), tapered darks and
+edges in 2B with pointed pressure, light in coloured pencil.
+
+The canopy stays abstract: tip clumps gathered into masses, each a bleeding watercolour
+fill on a curved organic outline, a darker core away from the sun, a lighter fill toward
+it, and ink hatching (cross-hatched in the shadowed core) — p5.brush in both media.
+
+p5.brush stroke widths are calibrated, not nominal: each brush was measured at scale 1
+(visible pixels per unit of weight: charcoal 3.1, crayon 3.2, 2B 1.4, cpencil 1.2, pastel
+8.9) and weights are solved from those. p5.brush 2.2.3 has no `hatch_brush` (its README
+lists one); hatching uses `rotring`.
+
+*Trees · brushwork* folder: bark age, bark grooves, tapered darks / crevices, knots,
+bark brush (watercolour), canopy wash opacity, leaf hatch spacing and angle, midground
+trees on/off.
+
 ## How each technique is implemented
 
 | technique | where | rule |
