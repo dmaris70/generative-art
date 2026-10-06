@@ -2481,7 +2481,10 @@ function buildOilField(s) {
     if (y > by - 3) {
       if (y < by + 45) return { a: -Math.PI / 2 + (noise(x * 0.02) - 0.5) * 0.9, k: 0.45, kind: 'grass' };
       const slope = (bankAt(rp, x + 12) - bankAt(rp, x - 12)) / 24;
-      return { a: Math.atan(slope) + (noise(x * 0.01, y * 0.01) - 0.5) * 0.3, k: 0.9, kind: 'bank' };
+      // the bank in shadow is grown ground: short upward strokes leaning with the grass,
+      // not long strokes along the slope (whose ridge highlights read as grey streaks)
+      const lean = Math.atan(slope) * 0.4;
+      return { a: -Math.PI / 2 + lean + (noise(x * 0.03, y * 0.03, 5) - 0.5) * 0.9, k: 0.6, kind: 'bank' };
     }
     // the ground plane: long sweeping level strokes, receding
     if (y > yGround) {
@@ -2544,7 +2547,7 @@ function oilRelief(f) {
     case 'ground': return 0.14;
     case 'water': return 0.1;
     case 'grass': return 0.55;
-    case 'bank': return 0.25;
+    case 'bank': return 0.03; // matte: a shadowed bank catches no room light on its ridges
     case 'limb': case 'leaf': return 0.5;
     default: return 0.1;
   }
@@ -2573,7 +2576,7 @@ function oilLayer(s, O, out, scale, cover, edges) {
         a = Math.atan2(gyv, gxv) + Math.PI / 2; // along the edge
       }
       const w = w0 * f.k;
-      const ratio = f.kind === 'ground' ? OP.l * OP.sweep : f.kind === 'leaf' ? OP.l * 0.5 : f.kind === 'range' ? OP.l * 0.75 : f.kind === 'water' ? OP.l * 1.3 : OP.l;
+      const ratio = f.kind === 'ground' ? OP.l * OP.sweep : f.kind === 'leaf' || f.kind === 'bank' ? OP.l * 0.5 : f.kind === 'range' ? OP.l * 0.75 : f.kind === 'water' ? OP.l * 1.3 : OP.l;
       const len = w * ratio;
       const p = (cover * g * g) / (w * len);
       const n = Math.floor(p) + (random() < p - Math.floor(p) ? 1 : 0);
@@ -2585,6 +2588,9 @@ function oilLayer(s, O, out, scale, cover, edges) {
           relief: oilRelief(f),
           angular: f.kind === 'range',
           soft: f.kind === 'far',
+          // on the dark bank the bristles carry the stroke's own colour, so no pale
+          // underpainting from further along is dragged across it
+          color2: f.kind === 'bank' ? shadeRGB(O.under(sx, sy), random(0.85, 1.05)) : undefined,
         }));
       }
     }
