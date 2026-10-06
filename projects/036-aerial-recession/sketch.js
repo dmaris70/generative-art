@@ -97,9 +97,9 @@ function setup() {
       wcTrees: { value: 0, options: { 'wash (clean)': 0, 'drawn (charcoal + hatch)': 1 }, label: 'watercolour trees', group: SC },
       mood: { value: 0, options: { 'golden hour': 0, 'after the storm': 1, 'dawn mist': 2 }, label: 'mood', group: SC },
       sun: { value: 0.35, min: 0, max: 1, step: 0.01, label: 'sun height', group: SC },
-      haze: { value: 1.0, min: 0.3, max: 2.2, step: 0.05, label: 'atmosphere', group: SC },
+      haze: { value: 0.72, min: 0.3, max: 2.2, step: 0.05, label: 'atmosphere', group: SC },
       ranges: { value: 5, min: 3, max: 7, step: 1, label: 'mountain ranges', group: SC },
-      mist: { value: 0.6, min: 0, max: 1, step: 0.05, label: 'mist', group: SC },
+      mist: { value: 0.45, min: 0, max: 1, step: 0.05, label: 'mist', group: SC },
       clouds: { value: 0.55, min: 0, max: 1, step: 0.05, label: 'clouds', group: SC },
       meander: { value: 1.0, min: 0, max: 2, step: 0.05, label: 'river meander', group: SC },
       trees: { value: 0.6, min: 0, max: 1, step: 0.05, label: 'trees', group: SC },
@@ -108,7 +108,7 @@ function setup() {
 
       paintSeed: { value: 0, step: 1, label: 'paint seed (0 = scene)', group: 'Seeds' },
 
-      strokeSize: { value: 15, min: 5, max: 34, step: 0.5, label: 'stroke width', group: ST },
+      strokeSize: { value: 18, min: 5, max: 34, step: 0.5, label: 'stroke width', group: ST },
       strokeLength: { value: 3.1, min: 1.2, max: 7, step: 0.1, label: 'length ÷ width', group: ST },
       coverage: { value: 1, min: 0.3, max: 2.5, step: 0.05, label: 'coverage', group: ST },
       layers: { value: 3, min: 1, max: 3, step: 1, label: 'layers (coarse → edges)', group: ST },
@@ -124,16 +124,16 @@ function setup() {
       wetBlend: { value: 1, min: 0, max: 1, step: 0.05, label: 'two-colour load', group: BR },
 
       vortex: { value: 1, min: 0, max: 1, step: 0.05, label: 'sun vortex', group: DI },
-      vortexStretch: { value: 1.35, min: 1, max: 2.5, step: 0.05, label: 'vortex stretch', group: DI },
+      vortexStretch: { value: 1.6, min: 1, max: 2.5, step: 0.05, label: 'vortex stretch', group: DI },
       fieldSweep: { value: 2.2, min: 0.8, max: 5, step: 0.1, label: 'field sweep', group: DI },
-      facetSize: { value: 1, min: 0.4, max: 2, step: 0.05, label: 'mountain facet size', group: DI },
+      facetSize: { value: 1.1, min: 0.4, max: 2, step: 0.05, label: 'mountain facet size', group: DI },
       facetMix: { value: 0.5, min: 0, max: 1, step: 0.05, label: 'facets on fall line', group: DI },
 
       impasto: { value: 1.0, min: 0, max: 2, step: 0.05, label: 'impasto', group: IM },
       lightAngle: { value: -123, min: -180, max: 180, step: 1, label: 'room light angle°', group: IM },
       sunImpasto: { value: 1, min: 0, max: 2, step: 0.05, label: 'sun impasto', group: IM },
       haloRings: { value: 5, min: 2, max: 8, step: 1, label: 'halo tonal rings', group: IM },
-      silhouette: { value: 0.4, min: 0, max: 0.9, step: 0.05, label: 'silhouette darkness', group: IM },
+      silhouette: { value: 0.5, min: 0, max: 0.9, step: 0.05, label: 'silhouette darkness', group: IM },
       grass: { value: 1, min: 0, max: 2.5, step: 0.05, label: 'grass density (oil)', group: IM },
 
       barkBrush: { value: 0, options: { charcoal: 0, 'coloured pencil': 1, '2B': 2, crayon: 3, pastel: 4 }, label: 'bark brush (watercolour)', group: TR },
@@ -146,18 +146,18 @@ function setup() {
       hatchAngle: { value: 55, min: 0, max: 180, step: 1, label: 'leaf hatch angle°', group: TR },
       midTrees: { value: 1, options: { off: 0, on: 1 }, label: 'midground trees too', group: TR },
 
-      brokenColour: { value: 2600, min: 0, max: 8000, step: 100, label: 'broken-colour strokes', group: CO },
+      brokenColour: { value: 2000, min: 0, max: 8000, step: 100, label: 'broken-colour strokes', group: CO },
       accentStrength: { value: 0.38, min: 0, max: 0.8, step: 0.01, label: 'accent strength', group: CO },
-      scumble: { value: 1500, min: 0, max: 5000, step: 100, label: 'scumble strokes', group: CO },
-      lostEdges: { value: 1, min: 0, max: 2, step: 0.05, label: 'lost-edge band', group: CO },
+      scumble: { value: 2300, min: 0, max: 5000, step: 100, label: 'scumble strokes', group: CO },
+      lostEdges: { value: 0.9, min: 0, max: 2, step: 0.05, label: 'lost-edge band', group: CO },
 
-      economy: { value: 0.5, min: 0, max: 1, step: 0.05, label: 'economy (leave the block-in)', group: MT },
+      economy: { value: 0.7, min: 0, max: 1, step: 0.05, label: 'economy (leave the block-in)', group: MT },
       blockIn: { value: 0.6, min: 0, max: 1, step: 0.05, label: 'block-in simplification', group: MT },
       fatOverLean: { value: 0.6, min: 0, max: 1, step: 0.05, label: 'fat over lean', group: MT },
       wetPickup: { value: 0.5, min: 0, max: 0.8, step: 0.05, label: 'wet-into-wet pickup', group: MT },
-      knife: { value: 140, min: 0, max: 600, step: 10, label: 'palette-knife lights', group: MT },
+      knife: { value: 200, min: 0, max: 600, step: 10, label: 'palette-knife lights', group: MT },
       sgraffito: { value: 90, min: 0, max: 400, step: 10, label: 'sgraffito scratches', group: MT },
-      glaze: { value: 0.5, min: 0, max: 1, step: 0.05, label: 'final glazes', group: MT },
+      glaze: { value: 0.65, min: 0, max: 1, step: 0.05, label: 'final glazes', group: MT },
     },
     onReset: reset,
   });
@@ -2941,6 +2941,19 @@ function oilLostEdges(s, O, out) {
       const slope = (L.ridge[q + 2][1] - L.ridge[q - 2][1]) / 16;
       const above = O.under(x, y - 10);
       const below = O.under(x, y + 10);
+      // lost and found: the focal summit keeps a found edge. Near it the crest is restated
+      // with crisp strokes in the mountain's own colour, laid along the ridge on its sky
+      // side; everywhere else it melts into the sky.
+      const summit = Math.exp(-Math.pow((x - s.focalX) / 110, 2)) * (y < s.peakTop + 120 ? 1 : 0);
+      if (summit > 0.35) {
+        const fw = random(2.5, 4.5);
+        out.push(makeOilStroke(O, x, y + fw * 0.35, Math.atan(slope) + random(-0.05, 0.05), fw * random(3, 5), fw, {
+          color: shadeRGB(below, random(0.96, 1.02)),
+          color2: mixRGB(below, above, 0.15),
+          angular: true,
+        }));
+        continue;
+      }
       const w = random(7, 12) * (0.7 + 0.6 * L.air);
       out.push(makeOilStroke(O, x, y + random(-3, 3), Math.atan(slope) + random(-0.15, 0.15), w * random(2.5, 4), w, {
         color: mixRGB(above, below, random(0.35, 0.65)),

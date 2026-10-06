@@ -247,6 +247,40 @@ coloured underpainting of the layered method, so no separate ground was kept.
 Panel folder: *Oil · methods* — economy, block-in simplification, fat over lean,
 wet-into-wet pickup, palette-knife lights, sgraffito scratches, final glazes.
 
+## Tuned defaults (seed 4)
+
+`?seed=4` at the defaults, 2480 × 1720: [`preview.png`](preview.png).
+
+The defaults were set by looking, not guessing:
+
+1. **Composition.** Seeds 1–12 were rendered small and judged on the essay's rules. Seed 4
+   won: sun on the left third, focal peak on the right third, a full framing tree at the
+   right edge with its canopy across the top, and the river as an S-shaped leading line
+   from the lower left into the middle distance. Runner-up: seed 9 (an arching canopy,
+   but the peak sits dead centre).
+2. **Brushwork**, varied over one cached underpainting, each step kept or dropped by
+   eye. One problem remained in every step: the focal peak dissolved into the halo.
+3. **The focal peak.** Lowering the haze sharpened the field but did not bring the peak
+   back. The cause was the lost-edge pass, which melted the whole crest, summit
+   included. The summit now keeps a found edge: near the focal peak the crest is
+   restated with crisp strokes in the mountain's own colour, and it melts into the sky
+   everywhere else.
+
+| parameter | was | now | why |
+|---|---|---|---|
+| stroke width | 15 | 18 | the sky read as rice-grain dabs; larger strokes, calmer |
+| vortex stretch | 1.35 | 1.6 | longer orbits around the sun, fewer stroke ends |
+| economy | 0.5 | 0.7 | more of the broad block-in left standing in flat sky and field |
+| mountain facet size | 1 | 1.1 | broader planes on the near ranges |
+| lost-edge band | 1 | 0.9 | at 1.4 the peak vanished; slightly tighter than before |
+| final glazes | 0.5 | 0.65 | a fuller gold halo, a deeper foreground |
+| silhouette darkness | 0.4 | 0.5 | stronger contre-jour; the meadow reads lighter by contrast |
+| palette-knife lights | 140 | 200 | more solid paint in the brightest lights |
+| broken-colour strokes | 2600 | 2000 | fewer accents; less speckle |
+| scumble strokes | 1500 | 2300 | more dry-brushed veil in the halo and the far plain |
+| atmosphere (haze) | 1.0 | 0.72 | the middle distance was soft enough to be mushy; trees and field firmer |
+| mist | 0.6 | 0.45 | less veiling on the ranges |
+
 ## How each technique is implemented
 
 | technique | where | rule |
