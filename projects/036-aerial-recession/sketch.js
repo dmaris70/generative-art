@@ -860,7 +860,11 @@ function buildTasks(s) {
     const chunk = s.trees.slice(i, i + 6);
     T.push(() => {
       chunk.forEach((tr) => paintTreeShadow(s, tr));
-      chunk.forEach((tr) => paintTree(s, tr));
+      // In oil the underpainting carries only the trees' cast shadows: the oil field
+      // strokes are long sweeps, and any that started on a watercolour crown dragged its
+      // green out across the meadow as a pale ghost round every tree. The crowns are
+      // painted on top by oilMidTree, from the scene's palette.
+      if (G.param('medium') === 0) chunk.forEach((tr) => paintTree(s, tr));
     });
   }
   // watercolour: the larger midground trees get the charcoal / hatch language in place,
@@ -2272,7 +2276,9 @@ function midTrunkMarks(s) {
     const w = tr.hW * sc * (tr.tall ? 0.5 : 1);
     const h = tr.hW * sc * (tr.tall ? 2.3 : 1.15);
     if (w < 9) continue;
-    const top = y - h * 0.18 - h * 0.5 + h * 0.32;
+    // the trunk ends just inside the crown's lower edge (it is painted after the crown,
+    // so any further and it would show through the foliage)
+    const top = y - h * 0.18 - h * (tr.tall ? 0.02 : 0.12);
     const tw = Math.max(1.2, w * 0.09);
     const P = [[x, y + 1, tw * 1.15], [x + random(-0.4, 0.4), (y + top) / 2, tw], [x + random(-0.6, 0.6), top, tw * 0.75]];
     const air = s.aerial(tr.z);
@@ -3566,7 +3572,7 @@ function oilGlazes(s) {
 //    middle distance, everything taken from the underpainting, which already carries the
 //    aerial perspective (less contrast, bluer, lighter with distance)
 //  - edge leaves only where the tree is big enough on screen to show them
-// Too-small trees (under 5 REF wide) keep the underpainting: distance removes detail.
+// Far trees (under 5 REF wide) get one or two clumps: distance removes detail.
 function oilMidTree(s, O, tr, out) {
   const C = s.C;
   const x = s.gx(tr.wx, tr.z);
@@ -3575,10 +3581,12 @@ function oilMidTree(s, O, tr, out) {
   const sc = s.F / tr.z;
   const w = tr.hW * sc * (tr.tall ? 0.5 : 1);
   const h = tr.hW * sc * (tr.tall ? 2.3 : 1.15);
-  if (w < 5) return;
+  if (w < 1.4) return;
   const air = s.aerial(tr.z);
   const cy = y - h * 0.18 - h * 0.5;
-  const base = O.under(x, cy);
+  // the crown's colour from the scene, as the watercolour pass would have mixed it (the
+  // underpainting no longer carries the crowns), through the same atmosphere
+  const base = s.seen(mixRGB(C.foliage, C.foliageLit, 0.12), tr.z, x, cy);
   const desat = (c, k) => {
     const l = 0.3 * c[0] + 0.59 * c[1] + 0.11 * c[2];
     return [c[0] + (l - c[0]) * k, c[1] + (l - c[1]) * k, c[2] + (l - c[2]) * k];
@@ -3599,12 +3607,18 @@ function oilMidTree(s, O, tr, out) {
   // sub-clumps: the basic shapes
   const clumps = [];
   if (tr.tall) {
-    const m = 3 + Math.round(h / 22);
+    // a column narrowing to a rounded (not needle-thin) top: overlapping clumps, closely
+    // spaced so no gap of meadow shows between them
+    const m = 4 + Math.round(h / 12);
     for (let i = 0; i < m; i++) {
       const t = (i + 0.5) / m; // 0 at the top
-      const r = w * (0.22 + 0.3 * t) * random(0.85, 1.1);
-      clumps.push({ x: x + random(-0.12, 0.12) * w, y: top + t * h * 0.95, r });
+      const r = w * (0.34 + 0.24 * Math.sqrt(t)) * random(0.9, 1.08);
+      clumps.push({ x: x + random(-0.1, 0.1) * w, y: top + r * 0.6 + t * (h * 0.95 - r * 0.6), r });
     }
+  } else if (w < 5) {
+    // far away: one or two clumps, no more detail than the distance allows
+    clumps.push({ x, y: cy, r: w * 0.5 });
+    if (w > 3) clumps.push({ x: x + random(-0.2, 0.2) * w, y: cy - h * 0.12, r: w * 0.38 });
   } else {
     const m = Math.min(7, 3 + Math.round(w / 12));
     for (let i = 0; i < m; i++) {
@@ -3613,6 +3627,14 @@ function oilMidTree(s, O, tr, out) {
     }
   }
   clumps.sort((p, q) => p.y - q.y); // top to bottom: lower clumps overlap the ones above
+  // the trunk under the crown, for trees too small for the trunk model (midTrunkMarks
+  // takes over from 9 REF wide): one dark tapered stroke, the crown painted over its top
+  if (w >= 2.5 && w < 9) {
+    const tw = Math.max(0.7, w * 0.1);
+    const tc = s.seen(mixRGB(C.silhouette, C.shadow, 0.2), tr.z, x, y);
+    const ty = cy + h * 0.15;
+    out.push(makeOilStroke(O, x, (y + 1 + ty) / 2, -Math.PI / 2, y + 1 - ty, tw, { color: tc, color2: tc, relief: 0, crisp: true, angular: true }));
+  }
   const sz0 = Math.max(1.1, Math.min(3.2, w * 0.075)); // mark size by distance
   const nPer = (r) => Math.min(120, Math.round((r * r) / (sz0 * sz0) * 1.6) + 6);
   const markAt = (cx, cyy, sz, col, crisp) => {
@@ -3626,7 +3648,7 @@ function oilMidTree(s, O, tr, out) {
   for (const c of clumps) {
     for (let i = 0; i < 3; i++) {
       const a = random(TWO_PI), d = random(0, 0.3) * c.r;
-      out.push(makeOilStroke(O, c.x + Math.cos(a) * d, c.y + Math.sin(a) * d * 0.9, random(-0.6, 0.6) + (tr.tall ? -Math.PI / 2 : 0), c.r * random(1.2, 1.7), c.r * random(0.8, 1.1), {
+      out.push(makeOilStroke(O, c.x + Math.cos(a) * d, c.y + Math.sin(a) * d * 0.9, random(-0.6, 0.6) + (tr.tall ? -Math.PI / 2 : 0), c.r * random(1.1, 1.5), c.r * random(0.9, 1.2), {
         color: shadeRGB(dark, random(0.9, 1)), color2: dark, relief: 0, soft: true,
       }));
     }

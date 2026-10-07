@@ -249,7 +249,14 @@ its zone fully, and light marks thicken toward the lit pole.
 | leaf type only at the edge | edge leaves only on trees wider than 14 REF units |
 | overlapping | sub-clumps painted top to bottom |
 | temperature; less saturated | cool shadow, warm light, desaturated 15 %; colours taken from the underpainting, which already carries the aerial perspective, and contrast scaled by (1 − air) |
-| distant objects show less | trees narrower than 5 REF units keep the underpainting |
+| distant objects show less | trees narrower than 5 REF units get one or two clumps and a single trunk stroke |
+
+In oil the underpainting carries only the trees' cast shadows, not their crowns. The oil
+field strokes are long sweeps; any that started on a watercolour crown dragged its green
+out across the meadow as a pale ghost round every tree. Crown colours now come from the
+scene palette through the same atmosphere (`s.seen`). Tall trees are a column of closely
+spaced clumps to a rounded top, and the trunk model stops just inside the crown's lower
+edge so it never shows through the foliage.
 
 ![midground trees, 2× detail (seed 4)](midground-detail.png)
 
