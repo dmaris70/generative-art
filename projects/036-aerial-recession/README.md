@@ -260,6 +260,26 @@ edge so it never shows through the foliage.
 
 ![midground trees, 2× detail (seed 4)](midground-detail.png)
 
+**Trunk, second look** (why it still read as artificial, against the guide):
+
+| problem | fix |
+|---|---|
+| each branch butted onto its parent with a square seam (a horizontal cut across the main fork) | limbs record their parent; a branch's path is extended back along the parent's last stretch (far for the dominant child, which continues the run) and its base swells into a collar no wider than the parent; limbs are painted thick → thin so each branch covers the parent's end — the wood flows round the fork |
+| a pale line on both edges outlined the limb like a tube | the warm rim breaks 60 % of the time; the reflected light sits inside the edge, closer to the dark |
+| pruned branches tapered to needles (horns) | ends taper to 38 % of their width: blunt, like broken or cut wood |
+| bark as long parallel streaks (brushed metal) | grooves 0.35–1.3 trunk-widths long with wider gaps; bark pieces on every limb that is not tiny |
+| pale slivers in crotches | edge cut-ins skip the base of a branch and never cut sky in over another limb |
+| the hollow's bright hooked lip | the lip only a little lighter than the bark |
+
+**Watercolour medium**: the framing canopy is built from clumps filling each cluster, a
+light-to-mid base of three overlapping irregular blobs per clump, a dark glaze inside each
+clump whose strength follows the cluster's sphere and the crown's height (glazes darken by
+layering, so the pen's "more marks = darker" carries over), abstract dark and lit dabs,
+and pointed leaves only at outer edges. Midground crowns: sub-clumps (a column for tall
+trees), shadow glazes, lit dabs on big trees. The trunk gets a knobbly contour, dark
+crotch accents, a lighter glaze down the sun side (a cylinder, not a cut-out) and short
+broken bark marks instead of three ruled lines.
+
 ## Oil methods — from five tutorials to code
 
 Sources: Leanne Rath, *Oil painting techniques for beginners*; Old Masters Academy,
