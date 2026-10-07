@@ -155,6 +155,8 @@ function setup() {
       lostEdges: { value: 0.9, min: 0, max: 2, step: 0.05, label: 'lost-edge band', group: CO },
       wildflowers: { value: 0.5, min: 0, max: 1.5, step: 0.05, label: 'wildflowers', group: CO },
       meadowBroken: { value: 0.7, min: 0, max: 1, step: 0.05, label: 'meadow broken colour', group: CO },
+      waterBroken: { value: 0.7, min: 0, max: 1, step: 0.05, label: 'water broken colour', group: CO },
+      foliageComplements: { value: 0.5, min: 0, max: 1.5, step: 0.05, label: 'foliage complements (rose flecks)', group: CO },
 
       economy: { value: 0.7, min: 0, max: 1, step: 0.05, label: 'economy (leave the block-in)', group: MT },
       blockIn: { value: 0.6, min: 0, max: 1, step: 0.05, label: 'block-in simplification', group: MT },
@@ -1597,7 +1599,7 @@ function treeReflectionMarks(s) {
       // the outline wavers row to row (the crown's clumps, broken by ripples)
       const half = yv < c0 ? 0 : (w / 2) * Math.sqrt(Math.max(0, 1 - v * v)) * (tr.tall ? 0.9 : 1) * (0.7 + 0.55 * noise(ti * 2.3 + 11, yv * 0.45));
       // ripples: the image shears and breaks more the farther it is from the foot
-      const shear = (noise(ti * 3.1, yv * 0.35) - 0.5) * w * 0.35 * u;
+      const shear = (noise(ti * 3.1, yv * 0.35) - 0.5) * w * 0.55 * u;
       const dens = noise(ti * 7.7 + 40, y * 0.6);
       // the trunk's reflection, under the foot
       if (yv < c0 + rs && onWater(x + shear, y)) {
@@ -1616,7 +1618,14 @@ function treeReflectionMarks(s) {
         const cx = a && b ? px : a ? px - len * 0.2 : px + len * 0.2;
         if (y > bankAt(rp, cx) - 3) continue; // the near bank hides the water
         const col = shadeRGB(mixRGB(crown, waterColour(s, s.F / (y - s.HY), cx), fade), 0.92 + 0.1 * noise(ti, yv * 0.9, k + 9));
-        out.push({ x: cx, y, len: L, sw: rs, col, t: u });
+        // ripples cut the row into dashes with water between them, more the farther from
+        // the foot (Bank of the Seine: each reflection a column of separate dark dashes)
+        const pieces = 1 + Math.floor(clamp01(u * 1.3 + 0.35 * noise(ti * 4.1, y * 0.7, k)) * 3);
+        const seg = L / pieces;
+        for (let pq = 0; pq < pieces; pq++) {
+          const off = (noise(ti, y * 1.3, pq + k * 5) - 0.5) * seg * 0.4;
+          out.push({ x: cx - L / 2 + seg * (pq + 0.5) + off, y, len: seg * (pieces > 1 ? 0.62 + 0.15 * noise(ti, y, pq) : 1), sw: rs, col, t: u });
+        }
         // now and then a thin light ripple cuts across the image
         if (noise(ti * 5.3, y * 0.8, k) > 0.66) {
           out.push({ x: cx + L * 0.1, y: y + rs * 0.3, len: L * 0.8, sw: rs * 0.4, col: shadeRGB(waterColour(s, s.F / (y - s.HY), cx), 1.08), t: u });
@@ -1627,7 +1636,7 @@ function treeReflectionMarks(s) {
     // the tree (any of three columns across the crown), if it starts near the foot.
     const wet = (y) => onWater(x, y) || onWater(x - w * 0.25, y) || onWater(x + w * 0.25, y);
     let yA = -1, yB = -1;
-    for (let y = yb + 0.5; y < c1; y += 0.5) {
+    for (let y = yb + 0.5; y < yb + 1.3 * (c1 - yb); y += 0.5) {
       if (wet(y)) {
         if (yA < 0) {
           if (y > yb + 0.45 * (c1 - yb)) break;
@@ -1649,9 +1658,11 @@ function treeReflectionMarks(s) {
       }
       from = yB + sw; // past the band, open water (if the river comes back) mirrors as usual
     }
-    for (let y = from; y < c1; y += sw * 0.9) {
-      const u = (y - yb) / M; // 0 at the foot
-      row(y, y, sw, u, 0.08 + 0.37 * u, 0.22 + 0.35 * u);
+    // on open water ripples stretch a reflection downward (≈1.3× the tree)
+    const S = 1.3;
+    for (let y = from; y < yb + S * M; y += sw * 0.9) {
+      const u = (y - yb) / (S * M); // 0 at the foot
+      row(y, yb + (y - yb) / S, sw, u, 0.08 + 0.37 * u, 0.22 + 0.35 * u);
     }
   });
   return out;
@@ -3095,6 +3106,21 @@ function oilCanopy(s) {
       }
     }
   }
+  // 3c. complements (Bank of the Seine): a few rose and red-ochre flecks through the green,
+  // inside the clumps, keeping the value of the leaves around them
+  {
+    const fc = G.param('foliageComplements');
+    for (const lf of clumpsAll) {
+      const m = Math.round(lf.r * 0.22 * fc + random());
+      for (let k = 0; k < m; k++) {
+        const a = random(TWO_PI), d = Math.sqrt(random()) * 0.75;
+        const u = Math.cos(a) * d, v = Math.sin(a) * d;
+        const y = lf.y + v * lf.r * 0.7;
+        const t = shadeAt(u, v, y);
+        mark(lf.x + u * lf.r, y, leafSize * Math.exp(random(-0.4, 0.3)), mixRGB(colourAt(t), ROSE, random(0.3, 0.5)), true);
+      }
+    }
+  }
   // 4. sky holes, painted back with the paint that was behind the canopy: small,
   // irregular, inside the clumps but toward their thinner edges; some of them show a
   // branch crossing the gap (Ran's olive: the limbs seen through the foliage)
@@ -3211,6 +3237,11 @@ const PRUSSIAN = [40, 66, 132];
 // the meadow's unblended touches (Arles): ochre, warm yellow, yellow-green, olive, a cool
 // green and the light; violet only goes into the darker patches
 const MEADOW_TOUCHES = [[196, 156, 74], [222, 196, 92], [156, 170, 72], [120, 128, 64], [92, 128, 96]];
+// Bank of the Seine (1887): the water's unblended hues besides the mirrored sky and bank,
+// and the rose flecked through green crowns
+const LAVENDER = [150, 140, 188];
+const SALMON = [214, 150, 128];
+const ROSE = [178, 96, 88];
 const ACCENTS = {
   violet: [118, 92, 150],
   ochre: [196, 156, 74],
@@ -4011,9 +4042,22 @@ function oilRiver(s, O, out) {
       // calm and wind-ruffled bands lie level across the water: the one cue a path lacks
       const band = 0.84 + 0.22 * noise(y * 0.09, 31.7) + 0.06 * noise(x * 0.02, y * 0.3);
       let col = shadeRGB(mixRGB(waterColour(s, a.z, x), O.under(x, ym), 0.5), 0.9 * band);
+      // broken colour (Bank of the Seine): each dash is one unblended hue beside the next —
+      // the mirrored sky, the colour of the bank beside the water (strongest in the rows
+      // near it), lavender, salmon — muted by the same air as the water
+      const WB = G.param('waterBroken');
+      if (WB > 0) {
+        const q = random();
+        const edgeD = Math.min(x - xl, xr - x) / Math.max(1, wid); // 0 at the bank
+        const bankC = O.under(x < (xl + xr) / 2 ? xl - 5 : xr + 5, y - dy * 0.5);
+        const hue = q < 0.3 + 0.3 * (1 - 2 * edgeD) ? bankC : q < 0.72 ? null : q < 0.86 ? LAVENDER : SALMON;
+        if (hue) col = mixRGB(col, s.seen(hue, a.z, x, y), WB * random(0.25, 0.48));
+      }
       col = mixRGB(col, mixRGB(C.glow, C.sun, 0.4), 0.28 * near);
-      const len = Math.min(wid * 0.95, (wid / n) * random(1.3, 1.9));
-      out.push(makeOilStroke(O, x, y - dy * 0.5, random(-0.03, 0.03), len, sw, { color: col, color2: shadeRGB(col, random(0.94, 1.04)), relief: 0.05, soft: true }));
+      // dashes, not a sheet: they vary in length and leave small gaps on the layer below
+      const len = Math.min(wid * 0.95, (wid / n) * (WB > 0 ? random(0.75, 1.75) : random(1.3, 1.9)));
+      const c2 = WB > 0 && random() < 0.5 * WB ? mixRGB(col, random() < 0.5 ? LAVENDER : SALMON, 0.25) : shadeRGB(col, random(0.94, 1.04));
+      out.push(makeOilStroke(O, x, y - dy * 0.5, random(-0.03, 0.03), len, sw, { color: col, color2: c2, relief: 0.05 + 0.08 * WB, soft: WB < 0.3 }));
     }
     // the far bank's thin shadow on the water
     if (i % 2 === 0 && wid > 3) {
@@ -4021,6 +4065,35 @@ function oilRiver(s, O, out) {
       if (y1 < bankAt(rp, x) - 3) {
         const col = shadeRGB(waterColour(s, b.z, x), 0.72);
         out.push(makeOilStroke(O, x, y1 + 0.4, 0, wid * random(0.4, 0.8), Math.max(0.7, sw * 0.35), { color: col, color2: col, relief: 0, soft: true }));
+      }
+    }
+  }
+  // the lit lip at the water's edge (Bank of the Seine puts its thickest, brightest paint
+  // where the bank meets the water): where land lies just above the water's edge, the
+  // grass tops catch the low sun — short warm loaded strokes along it, toward the sun
+  {
+    const wet = (x, y) => {
+      if (y <= s.HY + 0.5) return false;
+      const z = s.F / (y - s.HY);
+      if (z < sm[0].z || z > r.zN) return false;
+      return Math.abs(((x - s.CX) * z) / s.F - r.center(z)) < r.halfW(z);
+    };
+    const rim = mixRGB(mixRGB(C.light, C.glow, 0.5), [250, 238, 205], 0.3);
+    // scan each row of the ribbon for its top edge: water here, land just above
+    for (let i = 0; i < sm.length - 1; i++) {
+      const p = sm[i];
+      const y = s.gy(p.z), dy = Math.max(0.6, y - s.gy(sm[i + 1].z));
+      const xl = s.gx(p.wl, p.z), xr = s.gx(p.wr, p.z);
+      const sc = Math.min(1.6, 2.2 / Math.sqrt(p.z));
+      const step = Math.max(3, 6 * sc);
+      for (let x = xl + random(0, step); x < xr; x += step) {
+        if (x < 0 || x > REF_W || y > bankAt(rp, x) - 4) continue;
+        if (wet(x, y - dy - 1.5)) continue; // water above too: not the edge
+        const sunw = clamp01(1 - Math.abs(x - s.sunX) / (REF_W * 0.7));
+        if (random() > 0.2 + 0.55 * sunw) continue; // broken, and mostly toward the sun
+        const base = O.under(x, y - dy - 3);
+        const col = s.seen(mixRGB(base, rim, 0.22 + 0.35 * sunw), p.z, x, y);
+        out.push(makeOilStroke(O, x, y - dy - 0.8 * sc, random(-0.08, 0.08), step * random(1, 1.6), random(1, 1.8) * sc, { color: col, color2: mixRGB(col, base, 0.35), relief: 0.2, crisp: true }));
       }
     }
   }
@@ -4592,6 +4665,19 @@ function oilMidTree(s, O, tr, out) {
         if (pass === 1 && random() > 0.45 + 0.55 * t) continue;
         const col = colourAt(clamp01(t + random(pass === 0 ? -0.04 : -0.08, pass === 0 ? 0.3 : 0.08)));
         markAt(mx, my, sz0 * Math.exp(random(-0.45, 0.4)), col, pass === 0 || random() < 0.4);
+      }
+    }
+  }
+  // rose flecks through the crown (the complement of its green), fading with the air
+  const fc = G.param('foliageComplements');
+  if (fc > 0 && w >= 9) {
+    for (const c of clumps) {
+      const m = Math.round(nPer(c.r) * 0.05 * fc);
+      for (let i = 0; i < m; i++) {
+        const a = random(TWO_PI), d = Math.sqrt(random()) * 0.75;
+        const u = Math.cos(a) * d, v = Math.sin(a) * d;
+        const my = c.y + v * c.r * 0.9;
+        markAt(c.x + u * c.r, my, sz0 * Math.exp(random(-0.3, 0.3)), mixRGB(colourAt(shade(u, v, my)), ROSE, random(0.3, 0.5) * k), true);
       }
     }
   }

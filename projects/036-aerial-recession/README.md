@@ -433,6 +433,20 @@ All four are oil-only and have panel controls; the watercolour medium is unchang
   - **Shape.** Each leaf keeps its width for two thirds of its length, a little narrower at the root, then narrows to a point.
   - **Colour.** A little greener than the bank, with a lighter middle (lighter toward the sun) and a dark Prussian-tinged edge on the side away from the sun. Some carry a warm rim on the sun's side.
 
+## After *Bank of the Seine* (van Gogh, 1887)
+
+The painting's water is broken colour: short horizontal dashes in about six unmixed
+hues carrying both the bank's and the sky's colours. Its reflections are columns of
+separate dark dashes, stretched downward by ripples. Four devices are adopted. They
+are oil-only, except the broken reflections (2), whose marks both media share.
+
+| device | measured on the painting (≈2000 px reproduction) | now |
+|---|---|---|
+| **1. Broken-colour water** (*water broken colour*, 0.7) | dashes ≈40–120 px long and 8–15 px tall, longer toward the viewer; blue, cerulean, ochre/yellow, viridian, salmon-pink, cream; the bank's yellow-green strongest near the bank | each river dash takes one unblended hue at 25–48 % × the setting: the bank's own colour beside the water (strongest near the edges), lavender or salmon, or no tint (the mirrored sky alone); all seen through the river's air. Dash lengths vary 0.75–1.75× and leave small gaps; half of the dashes carry a second touch in the bristles; a little more relief |
+| **2. Broken reflections** | figure reflections ≈2× the figure's height, cut into 4–6 dashes | each reflection row is cut into 1–4 dashes with water between them, more the farther from the foot; sideways drift up from 0.35 to 0.55 of the crown width; on open water the image is stretched 1.3× downward (thin stretches keep the squeeze) |
+| **3. Light at the water's edge** | the thickest, brightest paint where the bank meets the water | each row of the river is scanned for its top edge (water there, land just above): along it, short loaded warm strokes on the grass tops, broken, mostly toward the sun, just above the far bank's dark line |
+| **4. Complements in the foliage** (*foliage complements*, 0.5) | red and pink dabs through the green crowns | rose and red-ochre flecks (30–50 % rose) inside the framing tree's clumps (≈0.22 × radius × setting per clump) and in the midground crowns ≥ 9 px wide (5 % of their marks × setting, fading with the air), keeping the value of the leaves around them |
+
 ## How each technique is implemented
 
 | technique | where | rule |
