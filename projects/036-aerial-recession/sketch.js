@@ -1955,7 +1955,9 @@ function trunkMarks(s, P, opts = {}) {
   if (opts.breathe) {
     // the width breathes along the length: no limb is a perfect taper
     const bp = random(1000);
-    for (let i = 0; i < n; i++) pts[i][2] *= 1 + 0.26 * (noise(bp + arc[i] * 0.025) - 0.5);
+    // plus a knobbly, irregular contour (Ran: outlines drawn as broken, wavering lines —
+    // every trunk has its own "personality", never a ruled tube)
+    for (let i = 0; i < n; i++) pts[i][2] *= (1 + 0.26 * (noise(bp + arc[i] * 0.025) - 0.5)) * (1 + 0.16 * (noise(bp + 50 + arc[i] * 0.16) - 0.5));
   }
   if (opts.flare) {
     for (let i = 0; i < n; i++) {
@@ -2167,6 +2169,34 @@ function trunkMarks(s, P, opts = {}) {
     }
   }
 
+  // Ran's "basic details" before texture: a hollow / old scar on the main trunk — a dark
+  // elongated opening, its lower lip catching the light, the bark marks crowding round it
+  if (opts.hollow && W0 > 18 && random() < 0.7) {
+    const i = random(n * 0.3, n * 0.7);
+    const u = random(-0.35, 0.15);
+    const c = at(i, u);
+    const w = wAt(i);
+    const [nx, ny] = polyNormal(pts, Math.round(i));
+    const ang = Math.atan2(nx, -ny);
+    const rx = w * random(0.07, 0.11), ry = rx * random(2, 3.2);
+    const ring = (sc) => {
+      const R = [];
+      for (let k = 0; k <= 10; k++) {
+        const a = (k / 10) * TWO_PI;
+        const lx = Math.cos(a) * rx * sc, ly = Math.sin(a) * ry * sc;
+        R.push([c[0] + lx * Math.cos(ang) - ly * Math.sin(ang), c[1] + lx * Math.sin(ang) + ly * Math.cos(ang)]);
+      }
+      return R;
+    };
+    marks.push({ kind: 'knotcore', path: [ring(1)[7], [c[0], c[1]], ring(1)[2]], w: rx * 1.7, col: T.crevice, col2: T.crevice, rel: 0 });
+    const lip = ring(1.15).slice(1, 5);
+    marks.push({ kind: 'light', path: lip, w: Math.max(0.6, rx * 0.35), col: mixRGB(T.mid, T.light, 0.5), col2: T.mid, rel: 0.2 });
+    for (const sc of [1.5, 1.9, 2.4]) {
+      const R = ring(sc);
+      for (let k = 0; k < 10; k += 3) if (random() < 0.7) marks.push({ kind: 'groove', path: R.slice(k, k + 3), w: Math.max(0.6, rx * 0.25), col: barkCol(u - 0.2), col2: T.dark, rel: 0.03 });
+    }
+  }
+
   // 7 — close-up: bark pieces, cut by short transverse breaks between neighbouring grooves
   if (lod === 'close') {
     const rows = Math.round((total / W0) * 3 * grooveK);
@@ -2313,7 +2343,7 @@ function smoothLimb(P) {
 // A limb as paint: body strokes, the trunk-model marks, then the cut-ins.
 function oilLimbPainterly(s, seg) {
   const T = trunkTones(s);
-  const { marks, at, wAt, n, stepI, W0 } = trunkMarks(s, smoothLimb(jointed(seg)), { flare: seg.depth === 0 ? 0.55 : 0, breathe: true });
+  const { marks, at, wAt, n, stepI, W0 } = trunkMarks(s, smoothLimb(jointed(seg)), { flare: seg.depth === 0 ? 0.55 : 0, breathe: true, hollow: seg.depth === 0 });
   // body: overlapping full-width strokes in the mid tone — the limb is the edge of these
   const len = stepI(W0 * 1.5);
   for (let i = 0; i < n - 1; i += len * 0.55) {
@@ -2325,6 +2355,16 @@ function oilLimbPainterly(s, seg) {
     oilStroke(markToOil({ kind: 'body', path, w: wAt((i + i1) / 2) * random(0.98, 1.06), col, col2: mixRGB(col, T.dark, 0.4), rel: 0 }));
   }
   for (const m of marks) if (m.kind !== 'band' || m.w < W0 * 0.3) oilStroke(markToOil(m));
+  // the darkest accents go in the crotch, under a branch where it leaves its parent
+  // (Ran's branch steps: light layer, midtones, then the darkest accents on the shadow
+  // side and under the junctions)
+  if (seg.depth > 0 && !seg.stub && W0 * U > 2) {
+    const T2 = trunkTones(s);
+    const p0 = at(1, 0), p1 = at(Math.min(n - 1, stepI(W0 * 1.6)), 0);
+    const down = at(stepI(W0 * 0.8), 1)[1] > at(stepI(W0 * 0.8), -1)[1] ? 1 : -1; // the underside
+    const path = [at(0.5, down * 0.85), at(stepI(W0 * 0.7), down * 0.75), at(Math.min(n - 1, stepI(W0 * 1.5)), down * 0.6)];
+    if (Math.hypot(p1[0] - p0[0], p1[1] - p0[1]) > 1) oilStroke(markToOil({ kind: 'dark', path, w: W0 * 0.32, col: T2.crevice, col2: T2.dark, rel: 0 }));
+  }
   // cut-ins: the surrounding paint dragged back over the edge, here and there
   if (SURF && W0 * U > 3) {
     for (const side of [-1, 1]) {
@@ -2342,77 +2382,191 @@ function oilLimbPainterly(s, seg) {
   }
 }
 
-// The canopy as oil: clustered leaf dabs.
+// The canopy as oil, after Ran Art Blog's tree guide:
+//  - basic shapes first: the crown is many small clumps (the tip clumps), each treated as
+//    a sphere — the guide's "circular transition" — lit on the side toward the sun and on
+//    top, dark underneath and away from it, with a "linear transition" darker toward the
+//    bottom of the whole crown; clumps are painted top to bottom, so each lower clump's lit
+//    top overlaps the dark underside of the one above (overlapping = depth)
+//  - dark values first, then light; value comes from mark density as much as colour:
+//    more marks where it is dark, fewer and less defined where it is light
+//  - abstract marks, never a pattern: no single direction, no repeated round loops —
+//    squiggles, irregular blobs and ticks mixed, every one a different size and angle
+//  - temperature transitions too: cool in the shadow, warm in the light; natural colour is
+//    less saturated than tube colour
+//  - leaf type is told only at the edge: individual pointed leaves stand out against the
+//    sky round the crown, the inside stays messy
+//  - the branches show through the gaps in the crown
+const desat = (c, k) => {
+  const l = 0.3 * c[0] + 0.59 * c[1] + 0.11 * c[2];
+  return [c[0] + (l - c[0]) * k, c[1] + (l - c[1]) * k, c[2] + (l - c[2]) * k];
+};
 function oilCanopy(s) {
   const C = s.C;
   const rp = s.repoussoir;
   if (!rp.leaves.length) return;
+  // the crown's basic shape: the tip clumps, plus sub-clumps filling each cluster inside
+  // its organic outline, so the crown is a dense mass with holes, not a scatter
   const clusters = canopyClusters(rp.leaves);
-  const core = mixRGB(C.silhouette, [0, 0, 0], 0.15);
-  const mid = mixRGB(C.silhouette, C.foliage, 0.45);
-  const lit = mixRGB(mid, mixRGB(mixRGB(C.foliage, C.foliageLit, 0.55), C.light, 0.25 * s.warmth), 0.6);
+  const clumpsAll = rp.leaves.slice();
   for (const c of clusters) {
-    const rx = c.r;
-    const ry = c.r * 0.72;
-    const sx = s.sunX - c.x;
-    const sy = s.sunY - c.y;
-    const sl = Math.hypot(sx, sy) || 1;
-    const n = Math.min(900, Math.round(((rx * ry) / 30) * 3.2));
-    const inside = (u, v, a) => {
-      // organic boundary: radius modulated by noise round the clump
+    const m = Math.round((c.r * c.r * 0.72) / (14 * 14) * 1.1);
+    for (let k = 0; k < m; k++) {
+      const a = random(TWO_PI);
+      const d = Math.sqrt(random()) * 0.92;
       const rr = 0.78 + 0.42 * noise(c.ph + Math.cos(a) * 1.1, c.ph + Math.sin(a) * 1.1);
-      return Math.hypot(u, v) < rr;
-    };
-    // block in the mass first: broad strokes of the core colour across the interior
-    for (let i = 0; i < 10; i++) {
-      const a = random(TWO_PI);
-      const d = Math.sqrt(random()) * 0.55;
-      const x = c.x + Math.cos(a) * d * rx;
-      const y = c.y + Math.sin(a) * d * ry;
-      const L = c.r * random(0.5, 0.9);
-      const ang = random(-0.5, 0.5);
-      const col = mixRGB(core, mid, random(0, 0.35));
-      oilStroke(markToOil({ kind: 'leaf', path: [[x - Math.cos(ang) * L * 0.5, y - Math.sin(ang) * L * 0.5], [x, y], [x + Math.cos(ang) * L * 0.5, y + Math.sin(ang) * L * 0.5]], w: c.r * random(0.3, 0.45), col, col2: shadeRGB(col, 0.85), rel: 0 }));
+      if (d > rr * 0.95) continue;
+      const x = c.x + Math.cos(a) * d * c.r, y = c.y + Math.sin(a) * d * c.r * 0.72;
+      if (Math.hypot(x - s.sunX, y - s.sunY) < 150) continue;
+      clumpsAll.push({ x, y, r: random(10, 18), ph: random(100) });
     }
-    for (let i = 0; i < n; i++) {
-      const a = random(TWO_PI);
-      const d = Math.sqrt(random());
-      const u = Math.cos(a) * d * 1.15;
-      const v = Math.sin(a) * d * 1.15;
-      if (!inside(u, v, a)) continue;
-      const x = c.x + u * rx;
-      const y = c.y + v * ry;
-      const toward = (u * sx + v * sy * 0.72) / sl; // > 0 on the sunward side
-      let col;
-      let rel = 0.1;
-      if (toward > 0.25 && d > 0.45 && random() < 0.55) {
-        col = mixRGB(lit, mid, random(0, 0.4));
-        rel = 0.35;
-      } else if (d < 0.55) {
-        col = mixRGB(core, mid, random(0, 0.5));
-      } else {
-        col = mixRGB(mid, core, random(0, 0.5));
+  }
+  const core = desat(mixRGB(mixRGB(C.silhouette, [0, 0, 0], 0.15), C.shadow, 0.12), 0.15);
+  const mid = desat(mixRGB(C.silhouette, C.foliage, 0.45), 0.15);
+  const lit = desat(mixRGB(mid, mixRGB(mixRGB(C.foliage, C.foliageLit, 0.55), C.light, 0.3 * s.warmth), 0.62), 0.15);
+  let top = Infinity, bot = -Infinity;
+  for (const lf of clumpsAll) { top = Math.min(top, lf.y - lf.r); bot = Math.max(bot, lf.y + lf.r); }
+  const span = Math.max(1, bot - top);
+  // the light: toward the sun in the picture plane, tilted up, and partly toward us
+  const lx0 = s.sunX - (rp.side > 0 ? REF_W * 0.8 : REF_W * 0.2), ly0 = s.sunY - REF_H * 0.3;
+  const ll = Math.hypot(lx0, ly0) || 1;
+  const L = [(lx0 / ll) * 0.75, (ly0 / ll) * 0.75 - 0.35, 0.55];
+  const Ln = Math.hypot(...L);
+  L[0] /= Ln; L[1] /= Ln; L[2] /= Ln;
+  const shadeAt = (u, v, y) => {
+    // sphere normal from the position inside the clump, then Lambert, then the crown's
+    // own linear transition (darker toward its bottom)
+    const d2 = Math.min(1, u * u + v * v);
+    const nz = Math.sqrt(1 - d2);
+    const lam = Math.max(0, u * L[0] + v * L[1] + nz * L[2]);
+    const down = clamp01((y - top) / span);
+    return clamp01(Math.pow(lam, 0.8) * (1 - 0.4 * down) + 0.06);
+  };
+  const colourAt = (t) => {
+    // value and temperature together: cool dark → mid → warm light
+    if (t < 0.45) return mixRGB(core, mid, t / 0.45);
+    return mixRGB(mid, lit, (t - 0.45) / 0.55);
+  };
+  // an abstract mark: a squiggle, a blob or a tick — never the same twice
+  const mark = (x, y, size, col, crisp) => {
+    const kind = random();
+    const a0 = random(TWO_PI);
+    let path;
+    if (kind < 0.45) {
+      path = [[x, y]];
+      let a = a0, px = x, py = y;
+      const n = 2 + Math.floor(random(0, 3));
+      for (let k = 0; k < n; k++) {
+        a += random(-2.2, 2.2);
+        px += Math.cos(a) * size * random(0.35, 0.7);
+        py += Math.sin(a) * size * random(0.35, 0.7);
+        path.push([px, py]);
       }
-      // leaves hang: dabs fan outward from the centre and droop
-      const ang = Math.atan2(v, u) * 0.6 + Math.PI * 0.5 * 0.35 + random(-0.5, 0.5);
-      const L = c.r * (random() < 0.25 ? random(0.22, 0.38) : random(0.07, 0.2));
-      const ca = Math.cos(ang);
-      const sa = Math.sin(ang);
-      oilStroke(markToOil({ kind: 'leaf', path: [[x - ca * L * 0.5, y - sa * L * 0.5], [x, y + L * 0.05], [x + ca * L * 0.5, y + sa * L * 0.5]], w: L * random(0.4, 0.6), col, col2: shadeRGB(col, random(0.8, 1.1)), rel }));
+      oilStroke(markToOil({ kind: crisp ? 'leaf' : 'band', path, w: size * random(0.22, 0.4), col, col2: shadeRGB(col, random(0.85, 1.1)), rel: 0 }));
+    } else if (kind < 0.85) {
+      const l = size * random(0.5, 1.1);
+      path = [[x - Math.cos(a0) * l * 0.5, y - Math.sin(a0) * l * 0.5], [x + random(-0.15, 0.15) * l, y + random(-0.15, 0.15) * l], [x + Math.cos(a0) * l * 0.5, y + Math.sin(a0) * l * 0.5]];
+      oilStroke(markToOil({ kind: crisp ? 'leaf' : 'band', path, w: l * random(0.45, 0.8), col, col2: shadeRGB(col, random(0.85, 1.1)), rel: 0 }));
+    } else {
+      const l = size * random(0.4, 0.8);
+      path = [[x, y], [x + Math.cos(a0) * l * 0.5, y + Math.sin(a0) * l * 0.5], [x + Math.cos(a0) * l, y + Math.sin(a0) * l]];
+      oilStroke(markToOil({ kind: 'dark', path, w: size * random(0.15, 0.25), col, col2: col, rel: 0 }));
     }
-    // sky holes, painted back in with the paint that was behind the canopy: few, mostly
-    // toward the thinner rim, irregular, the inner ones softened by the leaves around them
-    if (SURF) {
-      const holes = Math.round(n * 0.018);
-      for (let i = 0; i < holes; i++) {
+  };
+
+  // 1. the masses, darkest first: each tip clump laid in as a dark, broken underlayer
+  // (built from the clumps themselves, so the crown's silhouette is their sum, not an
+  // ellipse per cluster)
+  for (const lf of clumpsAll) {
+    for (let i = 0; i < 3; i++) {
+      const a = random(TWO_PI);
+      const d = random(0, 0.35) * lf.r;
+      const x = lf.x + Math.cos(a) * d, y = lf.y + Math.sin(a) * d * 0.8;
+      const Lm = lf.r * random(0.6, 1.0);
+      const ang = random(-0.6, 0.6);
+      const col = shadeRGB(core, random(0.78, 0.9)); // a touch deeper than the marks that go on it
+      oilStroke(markToOil({ kind: 'leaf', path: [[x - Math.cos(ang) * Lm * 0.5, y - Math.sin(ang) * Lm * 0.5], [x, y + random(-0.1, 0.1) * Lm], [x + Math.cos(ang) * Lm * 0.5, y + Math.sin(ang) * Lm * 0.5]], w: lf.r * random(0.38, 0.55), col, col2: shadeRGB(col, 0.85), rel: 0 }));
+    }
+  }
+  // leaf-mark size: big leaves, big marks; this tree is near, so its marks are large
+  const leafSize = 3.4;
+  // 2. the clumps as spheres, top to bottom (lower clumps overlap the undersides above)
+  const clumps = clumpsAll.slice().sort((a, b) => a.y - b.y);
+  for (const lf of clumps) {
+    const rx = lf.r * 1.05, ry = lf.r * 0.85;
+    const area = rx * ry;
+    const n = Math.max(10, Math.min(110, Math.round(area / 4.5)));
+    // dark values first, then light: two sweeps over the same clump
+    for (const pass of [0, 1]) {
+      for (let i = 0; i < n * (pass === 0 ? 2 : 1); i++) {
         const a = random(TWO_PI);
-        const d = 0.55 + 0.4 * Math.pow(random(), 0.6);
-        const x = c.x + Math.cos(a) * d * rx;
-        const y = c.y + Math.sin(a) * d * ry;
-        const col = mixRGB(SURF(x, y), mid, (1 - d) * 0.9);
-        const L = c.r * random(0.04, 0.12);
-        const ang = random(-0.8, 0.8);
-        oilStroke(markToOil({ kind: 'leaf', path: [[x - Math.cos(ang) * L * 0.5, y - Math.sin(ang) * L * 0.5], [x, y], [x + Math.cos(ang) * L * 0.5, y + Math.sin(ang) * L * 0.5]], w: L * random(0.35, 0.7), col, col2: mixRGB(col, mid, 0.3), rel: 0 }));
+        const d = Math.sqrt(random());
+        const rr = 0.8 + 0.35 * noise(lf.ph + Math.cos(a), lf.ph + Math.sin(a));
+        if (d > rr) continue;
+        const u = Math.cos(a) * d, v = Math.sin(a) * d;
+        const x = lf.x + u * rx, y = lf.y + v * ry;
+        const t = shadeAt(u, v, y);
+        if (pass === 0 ? t > 0.45 : t <= 0.45) continue;
+        // In pen, value is mark density on white paper (more marks = darker). In oil the
+        // paper is the dark underlayer, so the translation runs the other way: the dark
+        // sweep covers its zone fully, and light marks thicken toward the lit pole.
+        if (pass === 1 && random() > 0.45 + 0.55 * t) continue;
+        // the darks are dense marks, not a flat fill: they vary enough to read as texture
+        const col = colourAt(Math.max(0, Math.min(1, t + random(pass === 0 ? -0.04 : -0.08, pass === 0 ? 0.32 : 0.08))));
+        const size = leafSize * Math.exp(random(-0.5, 0.45));
+        // light marks are made "swiftly at an angle": less defined, so they read lighter
+        mark(x, y, size, col, pass === 0 || random() < 0.4);
+      }
+    }
+  }
+  // 3. the edge: individual leaves against the sky tell the leaf type and size; grown
+  // from the outer edge of the clumps actually painted, never floating off them
+  for (const lf of clumpsAll) {
+    const steps = Math.max(3, Math.round(lf.r * 0.5));
+    for (let k = 0; k < steps; k++) {
+      const a = (k / steps) * TWO_PI + random(-0.2, 0.2);
+      const ex = lf.x + Math.cos(a) * lf.r * 0.85;
+      const ey = lf.y + Math.sin(a) * lf.r * 0.7;
+      // an outer edge only: not inside any other clump
+      if (clumpsAll.some((o) => o !== lf && Math.hypot((ex - o.x) / o.r, (ey - o.y) / (o.r * 0.8)) < 0.95)) continue;
+      if (random() < 0.4) continue;
+      const nl = 1 + Math.floor(random(0, 2.5));
+      for (let q = 0; q < nl; q++) {
+        const la = a + random(-0.7, 0.7) + 0.3; // outward, and drooping
+        const len = leafSize * random(1.2, 2.1);
+        const bx = ex - Math.cos(a) * len * 0.3, by = ey - Math.sin(a) * len * 0.3; // rooted inside the clump
+        const sunward = Math.cos(a) * L[0] + Math.sin(a) * L[1] > 0.2;
+        const col = sunward && random() < 0.5 ? mixRGB(lit, mid, random(0, 0.35)) : mixRGB(core, mid, random(0.1, 0.5));
+        oilStroke(markToOil({ kind: 'dark', path: [[bx, by], [bx + Math.cos(la) * len * 0.5, by + Math.sin(la) * len * 0.5], [bx + Math.cos(la) * len, by + Math.sin(la) * len]], w: len * random(0.35, 0.5), col, col2: col, rel: 0 }));
+      }
+    }
+  }
+  // 4. sky holes, painted back with the paint that was behind the canopy: small,
+  // irregular, inside the clumps but toward their thinner edges; some of them show a
+  // branch crossing the gap (Ran's olive: the limbs seen through the foliage)
+  if (SURF) {
+    const T = trunkTones(s);
+    const inClump = (x, y) => clumpsAll.some((o) => Math.hypot((x - o.x) / o.r, (y - o.y) / (o.r * 0.8)) < 0.8);
+    for (const lf of clumpsAll) {
+      if (random() > 0.3) continue;
+      const a = random(TWO_PI);
+      const d = random(0.4, 0.75);
+      const x = lf.x + Math.cos(a) * d * lf.r;
+      const y = lf.y + Math.sin(a) * d * lf.r * 0.8;
+      if (!inClump(x, y)) continue;
+      const col = mixRGB(SURF(x, y), mid, 0.12);
+      const sz = lf.r * random(0.12, 0.26);
+      // an irregular gap: two or three overlapping small blobs, not one ellipse
+      const k = 2 + Math.floor(random(0, 2));
+      for (let q = 0; q < k; q++) {
+        const hx = x + random(-0.5, 0.5) * sz, hy = y + random(-0.5, 0.5) * sz;
+        const ang = random(TWO_PI), l = sz * random(0.4, 0.8);
+        oilStroke(markToOil({ kind: 'leaf', path: [[hx - Math.cos(ang) * l * 0.5, hy - Math.sin(ang) * l * 0.5], [hx, hy], [hx + Math.cos(ang) * l * 0.5, hy + Math.sin(ang) * l * 0.5]], w: l * random(0.4, 0.75), col, col2: col, rel: 0 }));
+      }
+      if (random() < 0.4) {
+        const ba = random(-1.2, 1.2) - Math.PI / 2;
+        const bl = sz * random(1.4, 2.2);
+        oilStroke(markToOil({ kind: 'dark', path: [[x - Math.cos(ba) * bl * 0.5, y - Math.sin(ba) * bl * 0.5], [x, y], [x + Math.cos(ba) * bl * 0.5, y + Math.sin(ba) * bl * 0.5]], w: Math.max(0.8, sz * 0.16), col: T.dark, col2: T.crevice, rel: 0 }));
       }
     }
   }
