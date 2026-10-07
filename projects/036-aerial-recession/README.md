@@ -447,6 +447,31 @@ are oil-only, except the broken reflections (2), whose marks both media share.
 | **3. Light at the water's edge** | the thickest, brightest paint where the bank meets the water | each row of the river is scanned for its top edge (water there, land just above): along it, short loaded warm strokes on the grass tops, broken, mostly toward the sun, just above the far bank's dark line |
 | **4. Complements in the foliage** (*foliage complements*, 0.5) | red and pink dabs through the green crowns | rose and red-ochre flecks (30–50 % rose) inside the framing tree's clumps (≈0.22 × radius × setting per clump) and in the midground crowns ≥ 9 px wide (5 % of their marks × setting, fading with the air), keeping the value of the leaves around them |
 
+## After *Mont Sainte-Victoire with Large Pine* (Cézanne, c. 1887)
+
+Cézanne's composition is nearly this piece's own: a framing pine, a focal mountain, and a
+plain of fields. What he adds is how the planes are built:
+
+- **Constructive stroke:** patches of parallel strokes, one shared angle per patch.
+- **Temperature, not haze:** warm pink and ochre against blue-violet give form and depth,
+  so the mountain stays clear yet distant.
+- **Rhyme:** the pine's branches echo the mountain's slopes.
+
+Five devices are adopted. All are oil-only except the rhyme, which shapes the scene
+itself.
+
+| device | measured on the painting (≈2000 px reproduction) | now |
+|---|---|---|
+| **1. Field colour planes** (*field colour planes*, 0.6) | the valley a patchwork of ochre, pale green, mint and lavender planes, separated by temperature more than value | each field cell of the plain is given one temperature from a seed-stable hash (warm ochre, mint, lavender, pale yellow-green, or none for 25 %); its meadow strokes take it at 45 % × the setting (bristles 33 %), seen through the field's air and halved toward the back |
+| **2. Constructive stroke** (*constructive stroke (mid plain)*, 0.6) | patches of 5–10 parallel strokes ≈30–60 px long, one angle per patch, mostly a rising diagonal (≈50–70°) | in the middle of the plain (depth z ≈ 3–9, fading in and out) that share of meadow strokes is laid in screen patches of ≈2.4 stroke widths: one angle per patch (70 % rising at 50–70°, 20 % falling, 10 % level), parallel within ±0.05 rad, each patch a step lighter or darker (±8 %), carrying the meadow's broken colour |
+| **3. Peak by temperature** (*peak warm / cool*, 0.6) | lit planes warm pink and ochre, shadow planes blue-violet; clear yet distant | the focal peak's lit band and half-tones take warm pink at up to 30–32 % × setting, its shadow face blue-violet at 34 % × setting, scaled by the peak's own air |
+| **3b. Blue contour** (*peak blue contour*, 0.6) | the crest and flanks restated with broken, often doubled blue-violet lines | broken runs of 3–7 crest points along the crest and upper flanks (each point checked as seen and within 60 % of the peak's height below the summit), 75 % drawn, 35 % × setting of them doubled 3 px below (≈21 % at default), mixed toward blue-violet by 110 % × setting × the peak's air factor (capped at 85 %), only where the peak is seen |
+| **4. Crown hatching** (*crown hatching (constructive)*, 0.3) | crowns as patches of parallel hatching in yellow-, blue- and olive-green | in midground crowns ≥ 6 px wide, that share of marks takes one angle per clump (±0.12 rad) as ticks, tinted toward that clump's own green |
+| **5. Rhyme** (*tree rhymes the peak (experiment)*, off) | the pine's lower branches parallel to the mountain's near flank | when on, the framing tree's inward secondary limbs turn 55 % of the way toward the slope of the peak's near flank (apex to 160 px toward the tree). It adds no random draws, so with it off every tree is exactly as before (checked on seeds 1, 4, 7 and 11). It is a scene setting, so the underpainting is rebuilt |
+
+Also: midground crowns are now re-centred on their trunks. A lopsided scatter of clumps
+could leave the trunk standing beside the crown as a bare pole.
+
 ## How each technique is implemented
 
 | technique | where | rule |
