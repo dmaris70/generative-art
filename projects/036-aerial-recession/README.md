@@ -422,6 +422,17 @@ recession this piece is about.
 
 All four are oil-only and have panel controls; the watercolour medium is unchanged.
 
+**Second pass.**
+
+- **Stronger broken colour in the meadow** (*meadow broken colour*, 0.7).
+  - **Upright dashes.** 90 % × the setting of them carry an unblended touch at 20–42 % strength, fading 70 % toward the back. The touch is one of ochre, warm yellow, yellow-green, olive, a cool green, or the light. In the meadow's darker patches a quarter of them go violet instead.
+  - **Bristles.** Each dash's bristles carry a second, different touch.
+  - **Level strokes.** Only 40 % × the setting get a touch, at 8–18 %.
+- **Sword leaves** (*sword leaves (foreground)*, 1). These are the irises' leaves along the foot of van Gogh's field.
+  - **Placement.** About 7 clumps of 3–5 wide strap leaves stand in the bank near the viewer, among the thin blades, fanned from one root and arching over.
+  - **Shape.** Each leaf keeps its width for two thirds of its length, a little narrower at the root, then narrows to a point.
+  - **Colour.** A little greener than the bank, with a lighter middle (lighter toward the sun) and a dark Prussian-tinged edge on the side away from the sun. Some carry a warm rim on the sun's side.
+
 ## How each technique is implemented
 
 | technique | where | rule |
