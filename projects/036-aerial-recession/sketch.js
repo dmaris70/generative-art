@@ -173,6 +173,15 @@ function setup() {
 // Reset: rebuild the whole scene from the seed, then queue the painting.
 // ---------------------------------------------------------------------------------
 
+// Space to keep clear for the control panel: none when it is collapsed or hidden, so the
+// painting is centred whenever the panel is out of the way.
+function panelSpace() {
+  const g = G.gui;
+  const el = g && g.domElement;
+  if (!el || g._closed || g._hidden || windowWidth <= 700) return 0;
+  return el.offsetWidth ? el.offsetWidth + 12 : 0;
+}
+
 function reset() {
   randomSeed(G.seed);
   noiseSeed(G.seed);
@@ -180,8 +189,7 @@ function reset() {
   OP = null;
   // Keep the painting clear of the panel (measured once per painting, so collapsing the
   // panel mid-painting can't shift strokes already laid).
-  const el = G.gui && G.gui.domElement;
-  PANEL_W = el && el.offsetWidth && windowWidth > 700 ? el.offsetWidth + 12 : 0;
+  PANEL_W = panelSpace();
   // Only stroke settings changed (same scene, same canvas)? Repaint over the cached
   // underpainting instead of painting it again.
   const cached = G.param('medium') === 1 && UNDER && UNDER.key === sceneKey();
@@ -277,6 +285,10 @@ function toHex(c) {
 function mixRGB(a, b, t) {
   return [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t, a[2] + (b[2] - a[2]) * t];
 }
+function desatRGB(c, k) {
+  const l = 0.3 * c[0] + 0.59 * c[1] + 0.11 * c[2];
+  return [c[0] + (l - c[0]) * k, c[1] + (l - c[1]) * k, c[2] + (l - c[2]) * k];
+}
 function shadeRGB(c, k) {
   return [c[0] * k, c[1] * k, c[2] * k];
 }
@@ -335,6 +347,13 @@ function buildScene() {
   };
   // Seen colour of something with local colour c at depth z.
   s.seen = (c, z, x, y) => mixRGB(c, s.hazeAt(x, y), s.aerial(z));
+  // The plain's trees span only the near middle distance (z ≈ 2–30), where the global
+  // transmittance barely acts; on its own it left far trees as dark and saturated as near
+  // ones, so they jumped forward. Across the plain they also fade by their place between
+  // the nearest tree and the hills.
+  s.treeHaze = (z) => 0.55 * clamp01(Math.log(z / 2.4) / Math.log(Math.max(2.5, s.zGround / 2.4)));
+  s.seenTree = (c, z, x, y) => mixRGB(s.seen(c, z, x, y), s.hazeAt(x, y), s.treeHaze(z));
+  s.treeAir = (z) => 1 - (1 - s.aerial(z)) * (1 - s.treeHaze(z));
 
   // --- projection onto the ground plane (camera height 1) ---
   s.gy = (z) => s.HY + s.F / z;
@@ -554,11 +573,33 @@ function buildTrees(s) {
     if (rnd(0, 1) < 0.4 * (0.4 + density)) {
       const side = rnd(0, 1) < 0.5 ? -1 : 1;
       const wx = river.center(z) + side * (river.halfW(z) + rnd(0.15, 0.35));
-      out.push({ z, wx, hW: rnd(0.22, 0.32), tall: rnd(0, 1) < 0.5, ph: rnd(0, 100) });
+      out.push({ z, wx, hW: rnd(0.22, 0.32), tall: rnd(0, 1) < 0.5, ph: rnd(0, 100), bank: true });
     }
   }
-  out.sort((a, b) => b.z - a.z);
-  return out;
+  // Composition pass. Spread evenly, the trees read as a planted orchard: the plain wants
+  // a few groves and the river's banks, with open meadow between. This pass thins and
+  // varies them with its own random stream, so the scene's draws (the framing tree, the
+  // grain) are untouched.
+  let h = (G.seed ^ 0x9e3779b9) >>> 0;
+  const lr = () => {
+    h = (h + 0x6d2b79f5) | 0;
+    let t = Math.imul(h ^ (h >>> 15), 1 | h);
+    t ^= t + Math.imul(t ^ (t >>> 7), 61 | t);
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+  const kept = [];
+  for (const t of out) {
+    const grove = noise(t.wx * 0.3 + 50, t.z * 0.25 + 80);
+    const keep = t.bank ? 0.9 : grove > 0.62 ? 0.95 : grove > 0.55 ? 0.55 : 0.3;
+    if (lr() > keep) continue;
+    // sizes vary: bushes, ordinary trees, now and then an old broad one
+    t.hW *= Math.exp(-0.35 + 0.8 * lr()) * (lr() < 0.06 ? 1.6 : 1);
+    // poplars are few, and mostly stand along the water
+    t.tall = t.bank ? lr() < 0.35 : lr() < 0.07;
+    kept.push(t);
+  }
+  kept.sort((a, b) => b.z - a.z);
+  return kept;
 }
 
 // Repoussoir: a dark bank rising toward the shadow side and a tree at
@@ -580,10 +621,21 @@ function buildRepoussoir(s) {
     bank.push([x, REF_H - lift - n + 24]);
   }
 
-  const segs = [];
-  const tips = [];
-  const forks = [];
-  if (amt > 0.05) {
+  // The limb tree is grown twice from the same random tape: once with the no-crossing rule,
+  // once without. The crossing-free tree is kept unless steering round other limbs cost it
+  // more than a sixth of its crown (a thin crown is a worse fault than one crossing).
+  const tape = [];
+  const taped = () => {
+    let i = 0;
+    return (lo, hi) => {
+      if (i >= tape.length) tape.push(rnd(0, 1));
+      return lo + (hi - lo) * tape[i++];
+    };
+  };
+  const growTree = (noCross, rnd) => {
+    const segs = [];
+    const tips = [];
+    const forks = [];
     const bx = edgeX(rnd(50, 120));
     const inward = -side;
     const nearPeak = (x, y) => Math.hypot((x - s.focalX) / 1.3, y - s.peakTop) < 150;
@@ -591,6 +643,45 @@ function buildRepoussoir(s) {
       Math.hypot(x - s.sunX, y - s.sunY) < 170 ||
       nearPeak(x, y) ||
       (fromEdge(x) > REF_W * 0.24 && y > REF_H * 0.3);
+    // Limbs never cross one another (an X of two big limbs reads as a mistake): a step that
+    // would cut through an existing limb turns aside, or the limb stops there.
+    const cut = (ax, ay, bx, by, ox, oy) => {
+      const ccw = (px, py, qx, qy, rx, ry) => (ry - py) * (qx - px) > (qy - py) * (rx - px);
+      for (const g of segs) {
+        if (g.stub || g.depth > 2) continue;
+        for (let i = 1; i < g.pts.length; i++) {
+          const [cx2, cy2] = g.pts[i - 1], [dx2, dy2] = g.pts[i];
+          // segments that touch the fork this limb grows from are its parent and siblings
+          if (Math.hypot(cx2 - ox, cy2 - oy) < 6 || Math.hypot(dx2 - ox, dy2 - oy) < 6) continue;
+          if (ccw(ax, ay, cx2, cy2, dx2, dy2) !== ccw(bx, by, cx2, cy2, dx2, dy2) && ccw(ax, ay, bx, by, cx2, cy2) !== ccw(ax, ay, bx, by, dx2, dy2)) return true;
+        }
+      }
+      return false;
+    };
+    // A limb that ends without children forks into two short twigs instead of standing as a
+    // bare pole; the twig ends carry foliage.
+    const twigFork = (p, a, len, w, depth, me) => {
+      const n0 = p.length;
+      if (depth > 2 || n0 < 4) return false;
+      // only where the twigs can carry foliage: a bare fork low in the picture reads as a thorn
+      const m = Math.max(3, Math.round(n0 * 0.72));
+      const [ex, ey, ew] = p[m - 1];
+      if (ey > REF_H * 0.42 && fromEdge(ex) > REF_W * 0.2) return false;
+      let any = false;
+      for (const da of [-0.55, 0.5]) {
+        const ta = a + da + 0.15 * Math.sign(Math.cos(a)); // the twigs droop a little
+        const l = len * 0.3;
+        const tw = Math.max(1.2, ew * 0.55);
+        const q = [[ex, ey, tw]];
+        for (let j = 1; j <= 4; j++) q.push([ex + (Math.cos(ta) * l * j) / 4, ey + (Math.sin(ta) * l * j) / 4, tw * (1 - 0.18 * j)]);
+        if (clear(q[4][0], q[4][1]) || cut(ex, ey, q[4][0], q[4][1], ex, ey)) continue;
+        segs.push({ pts: q, depth: depth + 1, parent: me });
+        tips.push([q[4][0], q[4][1], depth + 1]);
+        any = true;
+      }
+      if (any) p.length = m;
+      return any;
+    };
     const grow = (x, y, ang, len, w, depth, parent = -1) => {
       const p = [[x, y, w]];
       let cx = x;
@@ -632,6 +723,18 @@ function buildRepoussoir(s) {
           pruned = true;
           break;
         }
+        if (noCross && depth === 1 && cut(cx, cy, nx, ny, x, y)) {
+          // steer gently round the other limb; if no small turn clears it, keep the course
+          // (a large turn or a pruned limb costs more of the crown than the crossing does)
+          const a0 = a;
+          let ok = false;
+          for (const da of [0.15, -0.3, 0.45, -0.6]) {
+            a += da;
+            const tx = cx + (Math.cos(a) * len) / steps, ty = cy + (Math.sin(a) * len) / steps;
+            if (!clear(tx, ty) && !cut(cx, cy, tx, ty, x, y)) { nx = tx; ny = ty; ok = true; break; }
+          }
+          if (!ok) a = a0;
+        }
         cx = nx;
         cy = ny;
         p.push([cx, cy, w * (1 - (0.45 * k) / steps)]);
@@ -641,6 +744,18 @@ function buildRepoussoir(s) {
         }
       }
       if (p.length < 3) return; // a limb stopped at birth is simply not grown
+      if (pruned && depth > 0) {
+        // a limb steered more than ~60° off its course has hooked round the keep-clear zone:
+        // it ends where the hook begins, as a snapped limb
+        for (let q = 2; q < p.length; q++) {
+          const ha = Math.atan2(p[q][1] - p[q - 1][1], p[q][0] - p[q - 1][0]);
+          if (Math.abs(Math.atan2(Math.sin(ha - ang), Math.cos(ha - ang))) > 1.05) {
+            p.length = Math.max(3, q);
+            [cx, cy] = p[p.length - 1];
+            break;
+          }
+        }
+      }
       if (pruned) {
         // Taper the last stretch to a point so a stopped limb never ends as a sawn stub.
         const m = Math.min(4, p.length - 1);
@@ -661,7 +776,7 @@ function buildRepoussoir(s) {
         if (!clear(q[3][0], q[3][1])) segs.push({ pts: q, depth: depth + 2, stub: true, parent: me });
       }
       if (depth >= 5 || w < 1.5 || p.length < steps + 1) {
-        tips.push([cx, cy, depth]);
+        if (!(p.length < steps + 1 && twigFork(p, a, len, w, depth, me))) tips.push([cx, cy, depth]);
         return;
       }
       if (depth >= 3) forks.push([cx, cy, depth]); // foliage along the outer limbs, not only at tips
@@ -675,7 +790,7 @@ function buildRepoussoir(s) {
         if (na < lo || na >= Math.PI / 2) na = lo + rnd(0, 0.25);
         grow(cx, cy, na, len * rnd(0.64, 0.84), w * rnd(0.52, 0.68), depth + 1, me);
       }
-      if (segs.length === before) {
+      if (segs.length === before && !twigFork(p, a, len, w, depth, me)) {
         // Every child was stopped by the keep-clear zone: this limb becomes a tip, tapered.
         const m = Math.min(4, p.length - 1);
         for (let q = 0; q < m; q++) p[p.length - 1 - q][2] *= 0.38 + (0.62 * q) / m;
@@ -683,6 +798,16 @@ function buildRepoussoir(s) {
       }
     };
     grow(bx, REF_H + 30, -Math.PI / 2 + inward * rnd(0.05, 0.14), rnd(340, 420) * (0.75 + 0.25 * amt), rnd(36, 48), 0);
+    return { segs, tips, forks };
+  };
+  let segs = [];
+  let tips = [];
+  let forks = [];
+  if (amt > 0.05) {
+    const crown = (t) => t.tips.length + 0.4 * t.forks.length;
+    const free = growTree(false, taped());
+    const tidy = growTree(true, taped());
+    ({ segs, tips, forks } = crown(tidy) >= 0.85 * crown(free) ? tidy : free);
   }
   // Foliage masses at tips and outer forks — high, and never over the sun.
   const leaves = [];
@@ -699,6 +824,15 @@ function buildRepoussoir(s) {
       leaves.push({ x: lx, y: ly, r, ph: rnd(0, 100) });
     }
   }
+  // A limb end that no foliage reached (the keep-clear zone emptied it) would taper to a
+  // bare needle: it is snapped instead, ending blunt like an old broken limb.
+  const hasKids = new Set(segs.map((g) => g.parent)); // stubs too: they sit along the limb
+  segs.forEach((g, i) => {
+    if (g.stub || g.depth === 0 || hasKids.has(i) || g.pts.length < 5) return;
+    const [ex, ey] = g.pts[g.pts.length - 1];
+    if (leaves.some((l) => Math.hypot(l.x - ex, l.y - ey) < 50)) return;
+    g.pts.length -= 2;
+  });
   return { side, bank, segs, leaves, amt };
 }
 
@@ -816,6 +950,12 @@ function buildControls() {
   presets.add(act, 'resetStrokes').name('Reset stroke settings');
   presets.close();
   window.AR_ACTIONS = act; // keyboard + inspection
+  // collapsing or opening the panel changes the space it needs: repaint, re-centred
+  if (gui.onOpenClose) {
+    gui.onOpenClose((g) => {
+      if (g === gui && panelSpace() !== PANEL_W) G.reset();
+    });
+  }
 }
 
 function buildTasks(s) {
@@ -1433,13 +1573,13 @@ function paintTree(s, tr) {
   const w = tr.hW * sc * (tr.tall ? 0.5 : 1);
   const h = tr.hW * sc * (tr.tall ? 2.3 : 1.15);
   const trunkH = h * 0.18;
-  const air = s.aerial(tr.z);
-  const body = s.seen(C.foliage, tr.z, x, y);
-  const dark = s.seen(mixRGB(C.foliage, C.shadow, 0.45), tr.z, x, y);
-  const lit = s.seen(mixRGB(C.foliageLit, C.light, 0.4 * s.warmth), tr.z, x, y);
+  const air = s.treeAir(tr.z);
+  const body = s.seenTree(C.foliage, tr.z, x, y);
+  const dark = s.seenTree(mixRGB(C.foliage, C.shadow, 0.45), tr.z, x, y);
+  const lit = s.seenTree(mixRGB(C.foliageLit, C.light, 0.4 * s.warmth), tr.z, x, y);
   const big = w > 14;
   if (w > 5) {
-    brush.set('HB', toHex(s.seen(C.silhouette, tr.z, x, y)), Math.min(1.6, 0.3 + w * 0.025));
+    brush.set('HB', toHex(s.seenTree(C.silhouette, tr.z, x, y)), Math.min(1.6, 0.3 + w * 0.025));
     brush.line(X(x), Y(y + 1), X(x), Y(y - trunkH - h * 0.25));
   }
   const cy = y - trunkH - h * 0.5;
@@ -2035,11 +2175,11 @@ function paintMidTreesBrush(s, trunks = true) {
     const w = tr.hW * sc * (tr.tall ? 0.5 : 1);
     const h = tr.hW * sc * (tr.tall ? 2.3 : 1.15);
     if (w < 14) continue;
-    const air = s.aerial(tr.z);
+    const air = s.treeAir(tr.z);
     const cy = y - h * 0.18 - h * 0.5;
     brush.noFill();
     brush.noHatch();
-    const hc = s.seen(mixRGB(C.foliage, C.silhouette, 0.4), tr.z, x, y);
+    const hc = s.seenTree(mixRGB(C.foliage, C.silhouette, 0.4), tr.z, x, y);
     brush.noStroke();
     brush.hatch(spacing * U, hAng + random(-0.3, 0.3), { rand: 0.3 });
     brush.hatchStyle(HATCH_BRUSH, toHex(hc), 1 - 0.5 * air);
@@ -2488,11 +2628,11 @@ function midTrunkMarks(s) {
     const top = y - h * 0.18 - h * (tr.tall ? 0.02 : 0.12);
     const tw = Math.max(1.2, w * 0.09);
     const P = [[x, y + 1, tw * 1.15], [x + random(-0.4, 0.4), (y + top) / 2, tw], [x + random(-0.6, 0.6), top, tw * 0.75]];
-    const air = s.aerial(tr.z);
+    const air = s.treeAir(tr.z);
     const { marks } = trunkMarks(s, P, { lod: 'two' });
     for (const m of marks) {
-      m.col = s.seen(m.col, tr.z, x, y);
-      m.col2 = s.seen(m.col2, tr.z, x, y);
+      m.col = s.seenTree(m.col, tr.z, x, y);
+      m.col2 = s.seenTree(m.col2, tr.z, x, y);
       m.rel *= 1 - air;
       out.push(m);
     }
@@ -2760,6 +2900,25 @@ function oilCanopy(s) {
       }
     }
   }
+  // 3b. the warm rim: the low sun catches the edges of the canopy that face it — short,
+  // broken warm dabs on the outer edge of the clumps on that side, never all round
+  {
+    const rim = mixRGB(mixRGB(C.light, C.glow, 0.5), lit, 0.35);
+    for (const lf of clumpsAll) {
+      const sx = s.sunX - lf.x, sy = s.sunY - lf.y, sl = Math.hypot(sx, sy) || 1;
+      const steps = Math.max(3, Math.round(lf.r * 0.6));
+      for (let k = 0; k < steps; k++) {
+        const a = (k / steps) * TWO_PI + random(-0.15, 0.15);
+        const facing = (Math.cos(a) * sx + Math.sin(a) * sy) / sl;
+        if (facing < 0.35 || random() > 0.55 * facing) continue;
+        const ex = lf.x + Math.cos(a) * lf.r * 0.82, ey = lf.y + Math.sin(a) * lf.r * 0.68;
+        if (clumpsAll.some((o) => o !== lf && Math.hypot((ex - o.x) / o.r, (ey - o.y) / (o.r * 0.8)) < 0.9)) continue;
+        const len = leafSize * random(0.9, 1.6);
+        const la = a + Math.PI / 2 + random(-0.4, 0.4); // along the edge
+        oilStroke(markToOil({ kind: 'leaf', path: [[ex - Math.cos(la) * len * 0.5, ey - Math.sin(la) * len * 0.5], [ex, ey], [ex + Math.cos(la) * len * 0.5, ey + Math.sin(la) * len * 0.5]], w: len * random(0.35, 0.55), col: mixRGB(rim, lit, random(0, 0.4)), col2: rim, rel: 0 }));
+      }
+    }
+  }
   // 4. sky holes, painted back with the paint that was behind the canopy: small,
   // irregular, inside the clumps but toward their thinner edges; some of them show a
   // branch crossing the gap (Ran's olive: the limbs seen through the foliage)
@@ -2937,6 +3096,7 @@ function oilBegin(s) {
   if (OP.layers >= 2) oilLayer(s, O, groups[1], 0.55, 0.8 * OP.coverage, false, 1);
   if (OP.layers >= 3) oilLayer(s, O, groups[1], 0.24, 1.0 * OP.coverage, true, 2);
   oilLostEdges(s, O, groups[2]);
+  oilPeak(s, O, groups[2]);
   oilBrokenColour(s, O, groups[2]);
   oilScumble(s, O, groups[2]);
   oilObjects(s, O, groups[3]);
@@ -3071,7 +3231,7 @@ function buildOilField(s) {
         // craggy facets: the fall line, a crossing facet, or the crest — chosen per stroke
         const pick = noise(x * 0.09, y * 0.09, i * 3.3);
         const a = pick < OP.facetMix ? fall : pick < OP.facetMix + (1 - OP.facetMix) * 0.56 ? Math.PI - fall + 0.25 * dir : crest;
-        return { a, k, kind: 'range' };
+        return { a, k, kind: 'range', air: L.air };
       }
     }
     // sky: the vortex around the sun
@@ -3085,8 +3245,11 @@ function buildOilField(s) {
     const tl = Math.hypot(tx, ty) || 1;
     tx /= tl; ty /= tl;
     const lx = tx >= 0 ? 1 : -1;
-    const a = Math.atan2(ty * OP.vortex, tx * OP.vortex + lx * (1 - OP.vortex));
-    const kSky = 0.42 + 0.85 * clamp01(r / 650);
+    // far from the sun the vortex relaxes toward level: a steep tangent there read as
+    // diagonal rain across the upper sky
+    const vtx = OP.vortex * (1 - 0.75 * clamp01((r - 320) / 420));
+    const a = Math.atan2(ty * vtx, tx * vtx + lx * (1 - vtx));
+    const kSky = 0.42 + 1.05 * clamp01(r / 700);
     for (const c of s.clouds) {
       if (Math.abs(x - c.cx) < c.w * 0.5 && y > c.cy - c.h * 1.2 && y < c.cy + c.h * 0.4) {
         return { a, k: Math.max(0.35, Math.min(kSky, c.w / 500)), kind: 'cloud', r };
@@ -3099,11 +3262,12 @@ function buildOilField(s) {
 // Relief (impasto height, 0..1) by what is being painted.
 function oilRelief(f) {
   switch (f.kind) {
-    case 'sky': return f.r < 320 ? 0.15 + 0.55 * (1 - f.r / 320) : 0.12;
+    // beyond the halo the ridge fades: a bright edge on every dab read as scratches
+    case 'sky': return f.r < 320 ? 0.15 + 0.55 * (1 - f.r / 320) : 0.12 * Math.exp(-(f.r - 320) / 160);
     case 'cloud': return 0.2;
     case 'range': return 0.22;
     case 'far': return 0;
-    case 'ground': return 0.14;
+    case 'ground': return 0.04; // flat meadow: no ridge highlight (it outlined every stroke)
     case 'water': return 0.1;
     case 'grass': return 0.55;
     case 'bank': return 0.03; // matte: a shadowed bank catches no room light on its ridges
@@ -3158,18 +3322,34 @@ function oilLayer(s, O, out, scale, cover, edges, layer) {
       for (let i = 0; i < n; i++) {
         const sx = x + (i ? random(-0.5, 0.5) * g : 0);
         const sy = y + (i ? random(-0.5, 0.5) * g : 0);
-        const jitterA = random(-1, 1) * OP.jitterA * (f.kind === 'range' ? 0.6 : 1);
-        out.push(makeOilStroke(O, sx, sy, a + jitterA, len * random(0.75, 1.2), w * random(0.85, 1.1), {
+        const jitterA = random(-1, 1) * OP.jitterA * (f.kind === 'range' ? 0.6 : f.kind === 'ground' ? 1.8 : 1);
+        // meadow strokes vary in length, so they stop reading as contour lines
+        const lk = f.kind === 'ground' ? random(0.45, 1.4) : random(0.75, 1.2);
+        const st = makeOilStroke(O, sx, sy, a + jitterA, len * lk, w * random(0.85, 1.1), {
           relief: oilRelief(f) * leanRel,
           lean: leanBody,
           sample,
           pickup: layer > 0,
           angular: f.kind === 'range',
-          soft: f.kind === 'far',
+          soft: f.kind === 'far' || (f.kind === 'sky' && f.r > 450),
           // on the dark bank the bristles carry the stroke's own colour, so no pale
           // underpainting from further along is dragged across it
           color2: f.kind === 'bank' ? shadeRGB(O.under(sx, sy), random(0.85, 1.05)) : undefined,
-        }));
+        });
+        if (f.kind === 'ground') {
+          // the meadow greys a little with distance (aerial perspective on saturation)
+          const far = clamp01(Math.log(f.z / 1.5) / Math.log(Math.max(2, s.zGround / 1.5)));
+          st.body = desatRGB(st.body, 0.28 * far);
+          st.far = desatRGB(st.far, 0.28 * far);
+        } else if (f.kind === 'bank') {
+          // the dark bank is not one flat tone: broad, slow shifts warm/cool and up/down
+          const nt = noise(sx * 0.005, sy * 0.008, 7.7);
+          const nv = noise(sx * 0.004 + 40, sy * 0.006, 3.1);
+          const tint = nt > 0.5 ? mixRGB(s.C.light, BARK, 0.5) : s.C.shadow;
+          st.body = shadeRGB(mixRGB(st.body, tint, Math.abs(nt - 0.5) * 0.35), 0.88 + 0.3 * nv);
+          st.far = mixRGB(st.far, st.body, 0.5);
+        }
+        out.push(st);
       }
     }
   }
@@ -3345,6 +3525,103 @@ function oilLostEdges(s, O, out) {
   }
 }
 
+// The focal peak, given structure. It read as a smooth hazy cone (a sand pile) with no
+// counterweight to the sun. A mountain against a low sun has a shadowed face turned to us
+// and only a narrow lit edge on the sun's side; its gullies run down the fall line. Kept
+// within the haze it stands in (colours shifted from the underpainting, not invented).
+function oilPeak(s, O, out) {
+  const C = s.C;
+  let L = null, ia = -1, ay = Infinity;
+  for (const R of s.ranges) {
+    R.ridge.forEach((p, i) => {
+      if (Math.abs(p[0] - s.focalX) < 70 && p[1] < ay) { ay = p[1]; L = R; ia = i; }
+    });
+  }
+  if (!L) return;
+  const rid = L.ridge;
+  const ax = rid[ia][0];
+  const H = Math.max(40, (s.HY - ay) * 0.75);
+  // the peak's flanks: walk down each side while the crest keeps descending
+  const flank = (dir) => {
+    let i = ia, rises = 0;
+    while (i + dir > 0 && i + dir < rid.length - 1 && rid[i + dir][1] < ay + H) {
+      if (rid[i + dir][1] < rid[i][1] - 0.5) rises++; else rises = 0;
+      if (rises > 3) break;
+      i += dir;
+    }
+    return i;
+  };
+  const il = flank(-1), ir = flank(1);
+  const sunDir = Math.sign(s.sunX - ax) || 1;
+  // only where the peak itself is seen: not behind a nearer range
+  const li = s.ranges.indexOf(L);
+  const crestY = (R, x) => R.ridge[Math.max(0, Math.min(R.ridge.length - 1, Math.round((x + 30) / 4)))][1];
+  const seenAt = (x, y) => s.ranges.every((R, j) => j <= li || y < crestY(R, x) - 2) && y < s.HY;
+  const push = (st, x, y) => { if (seenAt(x, y)) out.push(st); };
+  const k = 1 - 0.6 * L.air; // structure weakens with the range's own distance
+  for (let i = il; i <= ir; i++) {
+    const [x, ry] = rid[i];
+    const onSun = (x - ax) * sunDir > 0;
+    const depth = Math.min(H, (ay + H - ry) * 0.9);
+    if (depth < 4) continue;
+    const slope = (rid[Math.min(rid.length - 1, i + 2)][1] - rid[Math.max(0, i - 2)][1]) / 16;
+    const fall = Math.atan2(Math.abs(slope) * 1.15 + 0.3, (x < ax ? -1 : 1));
+    if (onSun) {
+      // the lit edge: a narrow band just under the crest, warm, laid along it
+      if (i % 2 === 0) {
+        const y = ry + random(1.5, 5);
+        const base = O.under(x, y + 2);
+        const col = mixRGB(base, mixRGB(C.glow, C.light, 0.4), 0.3 * k);
+        push(makeOilStroke(O, x, y, Math.atan(slope), random(9, 16), random(2.5, 4), { color: col, color2: mixRGB(col, base, 0.3), relief: 0.15, angular: true }), x, y);
+      }
+      // below the lit band the sun side is half-tone: light shading toward the shadow
+      if (i % 3 === 0) {
+        const y = ry + random(10, depth * 0.7);
+        const base = O.under(x, y);
+        const col = mixRGB(shadeRGB(base, 0.97), C.shadow, 0.04 * k);
+        push(makeOilStroke(O, x, y, fall, random(20, 34), random(5, 8), { color: col, color2: base, relief: 0, soft: true }), x, y);
+      }
+    } else {
+      // the shadowed face toward us: cooler and darker, fading down into the mist
+      if (i % 2 === 0) {
+        const t = random();
+        const y = ry + 2 + t * depth;
+        const base = O.under(x, y);
+        const col = mixRGB(shadeRGB(base, 1 - 0.07 * k * (1 - 0.6 * t)), C.shadow, 0.08 * k * (1 - t));
+        push(makeOilStroke(O, x, y, fall + random(-0.15, 0.15), random(16, 30), random(4, 7), { color: col, color2: mixRGB(col, base, 0.5), relief: 0, soft: true }), x, y);
+      }
+    }
+  }
+  // gullies: darker lines down the fall line from just under the crest, on both faces
+  const ng = 3 + Math.round((ir - il) / 16);
+  for (let g = 0; g < ng; g++) {
+    const i = Math.round(il + random(0.1, 0.9) * (ir - il));
+    const [x, ry] = rid[i];
+    const dir = x < ax ? -1 : 1;
+    // long and broad, a value shift rather than a line: short dark gullies read as dashes
+    if (k < 0.55) break;
+    const len = random(40, 80) * k;
+    const a = Math.atan2(1.3, dir * random(0.25, 0.6));
+    const y = ry + 4 + len * 0.45 * Math.sin(a);
+    const base = O.under(x, y);
+    const onSun = (x - ax) * sunDir > 0;
+    const col = mixRGB(shadeRGB(base, onSun ? 0.97 : 0.95), C.shadow, 0.04 * k);
+    push(makeOilStroke(O, x + Math.cos(a) * len * 0.45, y, a, len, random(3.5, 5.5), { color: col, color2: base, relief: 0, soft: true }), x, y);
+  }
+  // the nearer ranges separated by value: a soft, slightly darker band under each crest
+  // that is not too far to read (the far ones stay lost in the haze)
+  s.ranges.forEach((R, ri) => {
+    if (R === L || R.air > 0.8 || R.air < 0.25) return;
+    for (let i = 2; i < R.ridge.length - 2; i += 3) {
+      const [x, ry] = R.ridge[i];
+      if (!s.ranges.every((Q, j) => j <= ri || ry + 5 < crestY(Q, x) - 2)) continue;
+      const base = O.under(x, ry + 5);
+      const slope = (R.ridge[i + 2][1] - R.ridge[i - 2][1]) / 16;
+      out.push(makeOilStroke(O, x, ry + random(2.5, 5), Math.atan(slope), random(10, 16), random(3, 5), { color: shadeRGB(base, 0.93), color2: base, relief: 0, soft: true }));
+    }
+  });
+}
+
 // Broken colour: sparse micro-strokes of unblended accent hues laid into the field and
 // the mountains — violet in the shadows, ochre and dull orange in the lights, olive in
 // between — each only half-mixed with what is beneath, so it vibrates rather than shouts.
@@ -3354,10 +3631,13 @@ function oilBrokenColour(s, O, out) {
     const y = random(s.HY - 260, REF_H);
     const f = O.field(x, y);
     if (f.kind !== 'ground' && f.kind !== 'range') continue; // the bank's colour goes into its turf
+    // the haze swallows broken colour on a mountain: on a far smooth face it reads as dashes
+    const fade = f.kind === 'range' ? 1 - f.air : 1;
+    if (random() > fade * fade) continue;
     const base = O.under(x, y);
     const l = O.lum(base);
     const acc = l < 70 ? ACCENTS.violet : l < 110 ? (random() < 0.5 ? ACCENTS.violet : ACCENTS.olive) : random() < 0.55 ? ACCENTS.ochre : ACCENTS.orange;
-    const col = mixRGB(base, acc, clamp01(OP.accent + random(-0.1, 0.1)));
+    const col = mixRGB(base, acc, fade * clamp01(OP.accent + random(-0.1, 0.1)));
     const w = OP.w * 0.17 * f.k * random(0.8, 1.3);
     const ratio = f.kind === 'ground' ? 3.2 : 2.2;
     out.push(makeOilStroke(O, x, y, f.a + random(-0.12, 0.12), w * ratio, w, { color: col, color2: mixRGB(col, base, 0.3), relief: 0.12, angular: f.kind === 'range' }));
@@ -3387,26 +3667,70 @@ function oilScumble(s, O, out) {
 // Objects restated over the field: midground trees as dabs (dark mass, then lit dabs),
 // and glints on the water (grass and the framing tree are painted on their own, later).
 function oilObjects(s, O, out) {
-  const C = s.C;
-  const rp = s.repoussoir;
 
-  // midground trees, far → near (Ran Art Blog's guide, at a distance — see oilMidTree)
+  // the river first, as water; then the midground trees, far → near (oilMidTree)
+  oilRiver(s, O, out);
   for (const tr of s.trees) oilMidTree(s, O, tr, out);
 
-  // glints on the water: loaded paint, brightest under the sun
+  // (the river is painted by oilRiver, before the trees)
+
+}
+
+// The river as water, not as grey patches with white flecks: one continuous ribbon,
+// painted across its width in level strokes, each the colour of the sky it mirrors
+// (waterColour: the sky at the same angle above the horizon), brightening toward the
+// sun's column; a thin darker line where the far bank overhangs it; and glints only
+// where the water lines up with the sun — short level strokes of loaded paint.
+function oilRiver(s, O, out) {
+  const C = s.C;
+  const rp = s.repoussoir;
   const r = s.river;
-  for (let i = 0; i < 240; i++) {
+  const sm = r.samples;
+  for (let i = 0; i < sm.length - 1; i++) {
+    const a = sm[i], b = sm[i + 1];
+    const y = s.gy(a.z), y1 = s.gy(b.z);
+    const dy = Math.max(0.6, y - y1);
+    const xl = s.gx(a.wl, a.z), xr = s.gx(a.wr, a.z);
+    const wid = xr - xl;
+    if (wid < 0.8) continue;
+    // strokes across the ribbon, overlapping, with stroke thickness from row spacing
+    const sw = Math.max(1.1, Math.min(9, dy * 1.7));
+    const n = Math.max(1, Math.round(wid / Math.max(6, sw * 3)));
+    for (let k = 0; k < n; k++) {
+      const x = xl + ((k + 0.5) / n) * wid + random(-0.2, 0.2) * (wid / n);
+      if (y > bankAt(rp, x) - 3) continue; // the bank hides the near water
+      const near = Math.exp(-Math.pow((x - s.sunX) / 160, 2));
+      // the water mirrors what stands above the horizon at the same angle (sky, glow, the
+      // hills), a touch darker than the thing itself, as a reflection always is
+      const ym = Math.max(4, 2 * s.HY - y);
+      // calm and wind-ruffled bands lie level across the water: the one cue a path lacks
+      const band = 0.84 + 0.22 * noise(y * 0.09, 31.7) + 0.06 * noise(x * 0.02, y * 0.3);
+      let col = shadeRGB(mixRGB(waterColour(s, a.z, x), O.under(x, ym), 0.5), 0.9 * band);
+      col = mixRGB(col, mixRGB(C.glow, C.sun, 0.4), 0.28 * near);
+      const len = Math.min(wid * 0.95, (wid / n) * random(1.3, 1.9));
+      out.push(makeOilStroke(O, x, y - dy * 0.5, random(-0.03, 0.03), len, sw, { color: col, color2: shadeRGB(col, random(0.94, 1.04)), relief: 0.05, soft: true }));
+    }
+    // the far bank's thin shadow on the water
+    if (i % 2 === 0 && wid > 3) {
+      const x = xl + wid * random(0.2, 0.8);
+      if (y1 < bankAt(rp, x) - 3) {
+        const col = shadeRGB(waterColour(s, b.z, x), 0.72);
+        out.push(makeOilStroke(O, x, y1 + 0.4, 0, wid * random(0.4, 0.8), Math.max(0.7, sw * 0.35), { color: col, color2: col, relief: 0, soft: true }));
+      }
+    }
+  }
+  // glints: only in the sun's column
+  for (let i = 0; i < 160; i++) {
     const z = Math.exp(random(Math.log(0.9), Math.log(r.zN)));
-    const wx = r.center(z) + random(-0.8, 0.8) * r.halfW(z);
+    const wx = r.center(z) + random(-0.85, 0.85) * r.halfW(z);
     const x = s.gx(wx, z);
     const y = s.gy(z);
-    const near = Math.exp(-Math.pow((x - s.sunX) / 220, 2));
-    if (random() > 0.18 + 0.82 * near) continue;
-    if (y > bankAt(rp, x) - 4) continue; // the bank hides the near water
-    const len = Math.max(3, (random(0.06, 0.2) * s.F) / z);
-    // the glint is the water's own colour lifted toward the sun, not a white chip
-    const col = mixRGB(O.under(x, y), mixRGB(C.glow, C.sun, near), 0.35 + 0.4 * near);
-    out.push(makeOilStroke(O, x, y, random(-0.06, 0.06), len * 0.8, Math.max(0.8, Math.min(2.8, 4.5 / Math.sqrt(z))), { color: col, color2: mixRGB(col, O.under(x, y), 0.4), relief: 0.12 + 0.25 * near }));
+    const near = Math.exp(-Math.pow((x - s.sunX) / 120, 2));
+    if (random() > near) continue;
+    if (y > bankAt(rp, x) - 4) continue;
+    const len = Math.max(2.5, (random(0.04, 0.14) * s.F) / z);
+    const col = mixRGB(waterColour(s, z, x), mixRGB(C.glow, [255, 250, 238], 0.6), 0.55 + 0.35 * near);
+    out.push(makeOilStroke(O, x, y, random(-0.03, 0.03), len, Math.max(0.7, Math.min(2.4, 4 / Math.sqrt(z))), { color: col, color2: col, relief: 0.15 * near, crisp: true }));
   }
 }
 
@@ -3479,6 +3803,17 @@ function oilGrass(s, O) {
     if (depth < 12 && random() < 0.08 + 0.18 * sunward(x)) {
       out.push({ P: spine(x + 0.6, y - len * 0.45, wind(x, y), len * 0.45, 0.2 * s.sunSide), w0: 0.7, col: vary(mixRGB(base, lit, 0.3), 0.08), a: 140 });
     }
+  }
+
+  // the lit lip: where the bank meets the meadow the low sun catches its edge — short,
+  // broken warm strokes laid along the lip, strongest toward the sun
+  for (let x = left; x < right; x += random(3, 9)) {
+    const sw = sunward(x);
+    if (random() > 0.25 + 0.6 * sw) continue;
+    const lip = bankAt(rp, x);
+    const slope = (bankAt(rp, x + 6) - bankAt(rp, x - 6)) / 12;
+    const base = O.under(x, lip - 3);
+    out.push({ P: spine(x, lip + random(0.5, 2.5), Math.atan(slope) + random(-0.15, 0.15), random(5, 13), 0), w0: random(1, 1.9), col: vary(mixRGB(base, rimCol, 0.35 + 0.3 * sw), 0.06), a: 120 + 70 * sw });
   }
 
   // 2–4. clumps: walk the lip with irregular steps; noise decides tuft vs bare ground
@@ -3797,11 +4132,11 @@ function oilMidTree(s, O, tr, out) {
   const w = tr.hW * sc * (tr.tall ? 0.5 : 1);
   const h = tr.hW * sc * (tr.tall ? 2.3 : 1.15);
   if (w < 1.4) return;
-  const air = s.aerial(tr.z);
+  const air = s.treeAir(tr.z);
   const cy = y - h * 0.18 - h * 0.5;
   // the crown's colour from the scene, as the watercolour pass would have mixed it (the
   // underpainting no longer carries the crowns), through the same atmosphere
-  const base = s.seen(mixRGB(C.foliage, C.foliageLit, 0.12), tr.z, x, cy);
+  const base = s.seenTree(mixRGB(C.foliage, C.foliageLit, 0.12), tr.z, x, cy);
   const desat = (c, k) => {
     const l = 0.3 * c[0] + 0.59 * c[1] + 0.11 * c[2];
     return [c[0] + (l - c[0]) * k, c[1] + (l - c[1]) * k, c[2] + (l - c[2]) * k];
@@ -3846,7 +4181,7 @@ function oilMidTree(s, O, tr, out) {
   // takes over from 9 REF wide): one dark tapered stroke, the crown painted over its top
   if (w >= 2.5 && w < 9) {
     const tw = Math.max(0.7, w * 0.1);
-    const tc = s.seen(mixRGB(C.silhouette, C.shadow, 0.2), tr.z, x, y);
+    const tc = s.seenTree(mixRGB(C.silhouette, C.shadow, 0.2), tr.z, x, y);
     const ty = cy + h * 0.15;
     out.push(makeOilStroke(O, x, (y + 1 + ty) / 2, -Math.PI / 2, y + 1 - ty, tw, { color: tc, color2: tc, relief: 0, crisp: true, angular: true }));
   }
