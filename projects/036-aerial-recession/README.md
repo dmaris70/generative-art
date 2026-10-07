@@ -355,6 +355,24 @@ The defaults were set by looking, not guessing:
 | atmosphere (haze) | 1.0 | 0.72 | the middle distance was soft enough to be mushy; trees and field firmer |
 | mist | 0.6 | 0.45 | less veiling on the ranges |
 
+## Evaluation pass — eight fixes
+
+The tuned painting was examined at full size for strokes, composition and the overall
+look. Eight faults were ranked, and every one is fixed:
+
+| # | fault | fix |
+|---|---|---|
+| 1 | midground trees spread like a planted orchard (seed 4: ≈72 trees, 13–20 poplars) | a composition pass, with its own random stream, keeps groves and the river banks and thins the open meadow (seed 4: 42 trees, 4 poplars, mostly by the water; 38–90 across seeds 1–12); sizes vary log-normally; a gentler tree-specific haze keeps them from going grey |
+| 2 | river as scattered glints, pale, reading as a path | painted as one ribbon of level strokes, mirroring what stands above the horizon at the same angle; level calm/ruffled value bands, a thin dark line under the far bank, glints only in the sun's column |
+| 3 | focal peak flat, with no light and shade | `oilPeak`: a warm lit band under the crest on the sun's flank, broad soft half-tones below it, a cooler shadow face, long soft gullies, and soft value bands under the nearer crests to separate the ranges; nothing is painted where a nearer range hides the peak |
+| 4 | meadow strokes in uniform rows | ground relief 0.14 → 0.04, 1.8× angle jitter, length varied 0.45–1.4×, colour desaturated with distance |
+| 5 | outer sky read as diagonal rain | the vortex relaxes toward level away from the sun (up to 75 % beyond r ≈ 320 px), and outer sky strokes are larger, softer and nearly flat |
+| 6 | bank a flat dark band | tint varied warm/cool by noise; a lit lip of short warm strokes, strongest on the sun's side |
+| 7 | framing tree: limbs crossing in an X, bare poles, needle-thin dead ends | primary limbs steer around one another (the tree is grown with and without that rule from the same random tape, and the crossing-free version is kept unless it loses more than 15 % of the crown); a childless limb forks into two drooping twigs where foliage can reach; a limb that hooks round the keep-clear zone ends where the hook begins; bare ends are snapped blunt; warm rim dabs on sun-facing canopy edges |
+| 8 | the control panel covered part of the painting | the canvas reserves the panel's width only while the panel is open on a wide window, and re-lays itself out when the panel opens or closes |
+
+Broken colour also fades with mountain distance, because the haze would swallow it.
+
 ## How each technique is implemented
 
 | technique | where | rule |
