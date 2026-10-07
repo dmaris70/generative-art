@@ -250,6 +250,7 @@ wet-into-wet pickup, palette-knife lights, sgraffito scratches, final glazes.
 ## Tuned defaults (seed 4)
 
 `?seed=4` at the defaults, 2480 × 1720: [`preview.png`](preview.png).
+In the interface: *Presets → ★ Tuned painting (seed 4)* sets seed 4 and every setting to its default in one click.
 
 The defaults were set by looking, not guessing:
 

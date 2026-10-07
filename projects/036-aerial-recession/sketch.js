@@ -790,6 +790,11 @@ function buildControls() {
       };
       inp.click();
     },
+    // the tuned painting (README, "Tuned defaults"): seed 4 with every setting at its default
+    tuned: () => {
+      G.setSeed(4);
+      G.setParams(G.defaults());
+    },
     resetStrokes: () => {
       const d = G.defaults();
       const out = {};
@@ -804,6 +809,7 @@ function buildControls() {
   seeds.add(act, 'paintNext').name('▶ paint seed');
   seeds.add(act, 'paintRandom').name('🎲 new hand (P)');
   const presets = gui.addFolder('Presets');
+  presets.add(act, 'tuned').name('★ Tuned painting (seed 4)');
   presets.add(act, 'save').name('Save preset (.json)');
   presets.add(act, 'load').name('Load preset…');
   presets.add(act, 'resetStrokes').name('Reset stroke settings');
