@@ -207,6 +207,36 @@ Guide*. Their rules, and what each became:
 Checked across seeds 1–12: limb and leaf counts stay in the range of the previous
 generator (mean leaves per tree 579 vs. 530).
 
+### Third pass: Ran Art Blog's *Tree Drawing Guide*, in full
+
+Read again end to end (text plus 24 of its figures) and applied rule by rule.
+The guide is about pen and pencil: value comes from **mark density** on white
+paper (more marks = darker). Oil works the other way, with light paint over a
+dark underlayer, so that rule was translated, not copied: the dark sweep covers
+its zone fully, and light marks thicken toward the lit pole.
+
+| the guide | in the code |
+|---|---|
+| look at the basic shapes first; don't draw every leaf | the crown is built from clumps: the tip clumps plus sub-clumps filling each cluster's organic outline — a dense mass with holes |
+| leaves point in every direction, overlap, foreshorten — abstract and messy | marks are squiggles (2–4 turning segments), irregular blobs and ticks, each at its own size (log-normal) and angle |
+| avoid any pattern: not a direction pattern, not a rounded (looping) pattern | no shared direction, no repeated loop; three mark types mixed at random |
+| flat vs 3-D: value transitions make volume — *circular* (sphere) and *linear* | each clump is shaded as a sphere (normal from position, Lambert toward the sun and up); the whole crown darkens toward its bottom |
+| draw the dark values first, then the light | two sweeps per clump: dark marks, then light marks |
+| lines drawn swiftly at an angle are less defined and read lighter | most light marks are soft (non-crisp) strokes; darks are crisp |
+| transitions are also in colour and temperature | cool in shadow (core mixed toward the sky's shadow colour), warm in the light |
+| colours in nature are less saturated | every canopy colour desaturated 15 % |
+| leaf size depends on the tree type and distance; at the crown's edges indicate leaf type and size | the near tree uses larger marks; individual pointed leaves grow outward and drooping from the outer edges of the clumps only, never floating |
+| overlapping is depth | clumps painted top to bottom, so each lower clump's lit top overlaps the dark underside of the one above |
+| (olive figures) limbs visible through the foliage | small irregular sky gaps inside the clumps, some crossed by a dark branch |
+| outlines are thin, broken and wavering; every trunk has its own personality | a second, higher-frequency width noise makes the contour knobbly |
+| form, then guidelines and basic details, then texture | the main trunk can carry a hollow/scar: a dark elongated opening with a lit lower lip, bark marks ringing it |
+| branch steps: light layer, midtones, then the darkest accents on the shadow side and under junctions | a dark crotch accent under each branch where it leaves its parent |
+| trunks are cylinders; base wider; avoid a flat bottom; foreshortening by the horizon | already in place (cylinder model, root flare, cross-contours by horizon); the base is below the frame |
+| bark: value transition or bulging rectangle-like pieces, never uniform; more marks for darker | already in place (bands, bark pieces, dashes crowded to the shadow side) |
+| trees are hard objects with hard edges; cast shadows are soft | already in place (hard cut-in edges; soft ground shadows under the midground trees) |
+| contrast between highlights and shadows, not too little, not cartoonish | kept the contre-jour value range; lit crown tops now separate the clumps |
+| not applied | pen technique (nib size, hatching, stippling, white pens), drawing order for a right hand, photo reference advice, paper choice — about tools rather than the image |
+
 ## Oil methods — from five tutorials to code
 
 Sources: Leanne Rath, *Oil painting techniques for beginners*; Old Masters Academy,
