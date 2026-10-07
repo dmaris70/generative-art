@@ -72,7 +72,7 @@ let WET = null; // sampler over the wet block-in, for later strokes to pick pain
 // the warm earth under-layer that sgraffito scratches back to (sienna-like)
 const IMPRIMATURA = [150, 94, 54];
 let UNDER = null; // cached underpainting {key, W, H, px, img} for oil repaints
-const SCENE_PARAMS = ['mood', 'sun', 'haze', 'ranges', 'mist', 'clouds', 'meander', 'trees', 'frame'];
+const SCENE_PARAMS = ['mood', 'sun', 'haze', 'ranges', 'mist', 'clouds', 'meander', 'trees', 'frame', 'rhyme'];
 const UI = { status: '' };
 let PANEL_W = 0; // space kept clear for the control panel, fixed at each reset
 
@@ -104,6 +104,7 @@ function setup() {
       meander: { value: 1.0, min: 0, max: 2, step: 0.05, label: 'river meander', group: SC },
       trees: { value: 0.6, min: 0, max: 1, step: 0.05, label: 'trees', group: SC },
       frame: { value: 1.0, min: 0, max: 1, step: 0.05, label: 'repoussoir', group: SC },
+      rhyme: { value: 0, options: { off: 0, on: 1 }, label: 'tree rhymes the peak (experiment)', group: SC },
       grain: { value: 0.5, min: 0, max: 1.2, step: 0.05, label: 'paper / canvas grain', group: SC },
 
       paintSeed: { value: 0, step: 1, label: 'paint seed (0 = scene)', group: 'Seeds' },
@@ -127,6 +128,7 @@ function setup() {
       vortexStretch: { value: 1.6, min: 1, max: 2.5, step: 0.05, label: 'vortex stretch', group: DI },
       fieldSweep: { value: 2.2, min: 0.8, max: 5, step: 0.1, label: 'field sweep', group: DI },
       meadowUpright: { value: 0.65, min: 0, max: 1, step: 0.05, label: 'meadow strokes upright', group: DI },
+      constructive: { value: 0.6, min: 0, max: 1, step: 0.05, label: 'constructive stroke (mid plain)', group: DI },
       depthScale: { value: 0.95, min: 0.3, max: 1.2, step: 0.05, label: 'meadow stroke size ∝ 1/zⁿ: n', group: DI },
       facetSize: { value: 1.1, min: 0.4, max: 2, step: 0.05, label: 'mountain facet size', group: DI },
       facetMix: { value: 0.5, min: 0, max: 1, step: 0.05, label: 'facets on fall line', group: DI },
@@ -156,6 +158,10 @@ function setup() {
       wildflowers: { value: 0.5, min: 0, max: 1.5, step: 0.05, label: 'wildflowers', group: CO },
       meadowBroken: { value: 0.7, min: 0, max: 1, step: 0.05, label: 'meadow broken colour', group: CO },
       waterBroken: { value: 0.7, min: 0, max: 1, step: 0.05, label: 'water broken colour', group: CO },
+      fieldPlanes: { value: 0.6, min: 0, max: 1.2, step: 0.05, label: 'field colour planes', group: CO },
+      peakTemperature: { value: 0.6, min: 0, max: 1.2, step: 0.05, label: 'peak warm / cool', group: CO },
+      peakContour: { value: 0.6, min: 0, max: 1.2, step: 0.05, label: 'peak blue contour', group: MT },
+      crownHatching: { value: 0.3, min: 0, max: 1, step: 0.05, label: 'crown hatching (constructive)', group: CO },
       foliageComplements: { value: 0.5, min: 0, max: 1.5, step: 0.05, label: 'foliage complements (rose flecks)', group: CO },
 
       economy: { value: 0.7, min: 0, max: 1, step: 0.05, label: 'economy (leave the block-in)', group: MT },
@@ -673,6 +679,18 @@ function buildRepoussoir(s) {
       return lo + (hi - lo) * tape[i++];
     };
   };
+  // the direction of the peak's near flank, rising from the tree's side to the summit
+  let rhymeA = null;
+  if (G.param('rhyme') === 1) {
+    let L = null, ia = -1, ay = Infinity;
+    for (const R of s.ranges) R.ridge.forEach((p, i) => { if (Math.abs(p[0] - s.focalX) < 70 && p[1] < ay) { ay = p[1]; L = R; ia = i; } });
+    if (L) {
+      const ax = L.ridge[ia][0];
+      const j = Math.max(0, Math.min(L.ridge.length - 1, ia + Math.round((side * 160) / 4)));
+      const [x2, y2] = L.ridge[j];
+      if (Math.abs(x2 - ax) > 20) rhymeA = Math.atan2(ay - y2, ax - x2);
+    }
+  }
   const growTree = (noCross, rnd) => {
     const segs = [];
     const tips = [];
@@ -829,6 +847,9 @@ function buildRepoussoir(s) {
         const hi = -0.1;
         if (na > hi && na < Math.PI / 2) na = hi - rnd(0, 0.25);
         if (na < lo || na >= Math.PI / 2) na = lo + rnd(0, 0.25);
+        // rhyme (Cézanne's pine): the inward secondary limbs turn toward the slope of the
+        // peak's near flank, so the tree echoes the mountain (no extra draws: off = as before)
+        if (rhymeA !== null && depth === 1 && Math.cos(na) * inward > 0) na = Math.max(lo, Math.min(hi, na + (rhymeA - na) * 0.55));
         grow(cx, cy, na, len * rnd(0.64, 0.84), w * rnd(0.52, 0.68), depth + 1, me);
       }
       if (segs.length === before && !twigFork(p, a, len, w, depth, me)) {
@@ -3212,6 +3233,8 @@ function oilParams() {
     sweep: P('fieldSweep'),
     upright: P('meadowUpright'),
     meadowBroken: P('meadowBroken'),
+    constructive: P('constructive'),
+    fieldPlanes: P('fieldPlanes'),
     depthN: P('depthScale'),
     facet: P('facetSize'),
     facetMix: P('facetMix'),
@@ -3237,6 +3260,18 @@ const PRUSSIAN = [40, 66, 132];
 // the meadow's unblended touches (Arles): ochre, warm yellow, yellow-green, olive, a cool
 // green and the light; violet only goes into the darker patches
 const MEADOW_TOUCHES = [[196, 156, 74], [222, 196, 92], [156, 170, 72], [120, 128, 64], [92, 128, 96]];
+// Mont Sainte-Victoire with Large Pine (Cézanne, c. 1887): the plain's field planes by
+// temperature (warm ochre, mint, lavender, pale yellow-green), the peak's warm pink and
+// blue-violet, and its drawn blue contour
+const FIELD_TEMPS = [[214, 182, 112], [152, 196, 162], [172, 162, 204], [182, 198, 122]];
+const PEAK_WARM = [224, 172, 150];
+const PEAK_COOL = [118, 118, 172];
+const PEAK_LINE = [92, 98, 152];
+// a repeatable pseudo-random value in [0, 1) for a pair of integers (patch and field ids)
+const hash2 = (a, b) => {
+  const v = Math.sin(a * 127.1 + b * 311.7) * 43758.5453;
+  return v - Math.floor(v);
+};
 // Bank of the Seine (1887): the water's unblended hues besides the mirrored sky and bank,
 // and the rose flecked through green crowns
 const LAVENDER = [150, 140, 188];
@@ -3252,6 +3287,25 @@ const ACCENTS = {
 // Read the finished underpainting back into memory and queue the oil passes.
 function oilBegin(s) {
   OP = oilParams();
+  // the plain's fields by row, each given one temperature (or none) for the field planes
+  {
+    const rows = new Map();
+    s.fields.forEach((f, i) => {
+      const h = hash2(i, G.seed % 9973);
+      f.temp = h < 0.25 ? null : FIELD_TEMPS[Math.floor(((h - 0.25) / 0.75) * FIELD_TEMPS.length)];
+      if (!rows.has(f.z0)) rows.set(f.z0, { z0: f.z0, z1: f.z1, cells: [] });
+      rows.get(f.z0).cells.push(f);
+    });
+    const list = [...rows.values()];
+    list.forEach((r) => r.cells.sort((a, b) => a.x - b.x));
+    s.fieldAt = (wx, z) => {
+      const r = list.find((q) => z >= q.z0 && z < q.z1);
+      if (!r) return null;
+      const c = r.cells;
+      const j = Math.floor((wx - c[0].x) / c[0].cw);
+      return c[Math.max(0, Math.min(c.length - 1, j))];
+    };
+  }
   // The paint seed: the same scene, a different hand. 0 derives it from the scene seed.
   const ps = G.param('paintSeed');
   randomSeed(ps > 0 ? ps : (G.seed ^ 0x5bd1e995) >>> 0);
@@ -3560,7 +3614,22 @@ function oilLayer(s, O, out, scale, cover, edges, layer) {
         let sa = a + jitterA;
         let sl = len * lk;
         let isUp = false;
-        if (pUp > 0) {
+        let isCon = false;
+        let conShade = 1;
+        // constructive stroke (Cézanne): in the middle of the plain the strokes come in
+        // patches of parallel hatching, one shared angle per patch — mostly a rising
+        // diagonal, some falling, a few level — abutting like tiles
+        const pCon = pUp > 0 ? OP.constructive * clamp01((f.z - 2.6) / 1.0) * (1 - clamp01((f.z - 8) / 2.5)) : 0;
+        if (pCon > 0 && random() < pCon) {
+          isCon = true;
+          const P = Math.max(14, w * 2.4);
+          const ci = Math.floor(sx / P), cj = Math.floor(sy / (P * 0.55));
+          const hh = hash2(ci, cj);
+          const dir = hh < 0.7 ? -1 : hh < 0.9 ? 1 : 0;
+          sa = dir * (0.87 + 0.35 * hash2(ci + 7, cj + 3)) + random(-0.05, 0.05);
+          sl = w * OP.l * 1.1 * gAsp * random(0.85, 1.1);
+          conShade = 0.92 + 0.16 * hash2(ci + 3, cj + 5); // each patch a step lighter or darker
+        } else if (pUp > 0) {
           // upright dashes, as the field grows (van Gogh's field near Arles), leaning a
           // little with the wind; the rest stay level, laying the colour in drifts
           isUp = random() < pUp;
@@ -3572,8 +3641,8 @@ function oilLayer(s, O, out, scale, cover, edges, layer) {
         // broken colour: the upright dashes carry their own colour, laid unblended beside
         // one another (most of them, and strongly); the level strokes only a touch
         const pick = () => (random() < 0.15 ? s.C.light : MEADOW_TOUCHES[Math.floor(random(MEADOW_TOUCHES.length))]);
-        const tint = f.kind !== 'ground' ? null : isUp ? (random() < 0.9 * OP.meadowBroken ? pick() : null) : random() < 0.4 * OP.meadowBroken ? pick() : null;
-        const tint2 = tint && isUp ? pick() : tint;
+        const tint = f.kind !== 'ground' ? null : isUp || isCon ? (random() < 0.9 * OP.meadowBroken ? pick() : null) : random() < 0.4 * OP.meadowBroken ? pick() : null;
+        const tint2 = tint && (isUp || isCon) ? pick() : tint;
         const st = makeOilStroke(O, sx, sy, sa, sl, w * random(0.85, 1.1), {
           relief: oilRelief(f) * leanRel,
           lean: leanBody,
@@ -3586,8 +3655,22 @@ function oilLayer(s, O, out, scale, cover, edges, layer) {
           color2: f.kind === 'bank' ? shadeRGB(O.under(sx, sy), random(0.85, 1.05)) : undefined,
         });
         if (f.kind === 'ground') {
+          if (isCon) {
+            st.body = shadeRGB(st.body, conShade);
+            st.far = shadeRGB(st.far, conShade);
+          }
+          // field planes (Cézanne): each field of the plain has its own temperature,
+          // so the patchwork reads as planes of colour, not one olive sheet
+          if (OP.fieldPlanes > 0 && s.fieldAt) {
+            const fd = s.fieldAt(((sx - s.CX) * f.z) / s.F, f.z);
+            if (fd && fd.temp) {
+              const ft = s.seen(fd.temp, f.z, sx, sy);
+              st.body = mixRGB(st.body, ft, OP.fieldPlanes * 0.45 * (1 - 0.5 * gFar));
+              st.far = mixRGB(st.far, ft, OP.fieldPlanes * 0.33 * (1 - 0.5 * gFar));
+            }
+          }
           if (tint) {
-            const k = (isUp ? random(0.2, 0.42) : random(0.08, 0.18)) * (1 - 0.7 * gFar);
+            const k = (isUp || isCon ? random(0.2, 0.42) : random(0.08, 0.18)) * (1 - 0.7 * gFar);
             // in the meadow's darker patches some dashes go violet, the shadow's complement
             const tc = isUp && O.lum(st.body) < 95 && random() < 0.25 ? ACCENTS.violet : tint;
             st.body = mixRGB(st.body, tc, k);
@@ -3814,6 +3897,35 @@ function oilPeak(s, O, out) {
   const seenAt = (x, y) => s.ranges.every((R, j) => j <= li || y < crestY(R, x) - 2) && y < s.HY;
   const push = (st, x, y) => { if (seenAt(x, y)) out.push(st); };
   const k = 1 - 0.6 * L.air; // structure weakens with the range's own distance
+  const PT = G.param('peakTemperature');
+  // the drawn contour (Cézanne): a broken blue-violet line restating the crest and the
+  // upper flanks, here and there doubled just below, through the peak's own air
+  const PC = G.param('peakContour');
+  if (PC > 0) {
+    for (let i = il; i < ir; ) {
+      const n = 3 + Math.floor(random(0, 5));
+      const j = Math.min(ir, i + n);
+      if (random() < 0.75) {
+        for (const off of random() < 0.35 * PC ? [0.6, 3.2] : [0.6]) {
+          // every point must be seen and on the upper flanks, or the run is cut there: a
+          // line carried on behind a nearer range reads as a stray scratch
+          const runs = [[]];
+          for (let q = i; q <= j; q++) {
+            const px = rid[q][0], py = rid[q][1] + off;
+            if (py < ay + 0.6 * H && seenAt(px, py + 1)) runs[runs.length - 1].push([px, py + random(-0.3, 0.3)]);
+            else if (runs[runs.length - 1].length) runs.push([]);
+          }
+          for (const path of runs) {
+            if (path.length < 2) continue;
+            const [mx, my] = path[Math.floor(path.length / 2)];
+            const col = mixRGB(O.under(mx, my + 3), PEAK_LINE, Math.min(0.85, 1.1 * PC * k));
+            out.push(markToOil({ kind: 'edge', path, w: (off > 1 ? 1.3 : 2) * (0.7 + 0.5 * PC), col, col2: col, rel: 0 }));
+          }
+        }
+      }
+      i = j + 1 + Math.floor(random(0, 3));
+    }
+  }
   for (let i = il; i <= ir; i++) {
     const [x, ry] = rid[i];
     const onSun = (x - ax) * sunDir > 0;
@@ -3826,14 +3938,15 @@ function oilPeak(s, O, out) {
       if (i % 2 === 0) {
         const y = ry + random(1.5, 5);
         const base = O.under(x, y + 2);
-        const col = mixRGB(base, mixRGB(C.glow, C.light, 0.4), 0.3 * k);
+        const col = mixRGB(mixRGB(base, mixRGB(C.glow, C.light, 0.4), 0.3 * k), PEAK_WARM, 0.3 * PT * k);
         push(makeOilStroke(O, x, y, Math.atan(slope), random(9, 16), random(2.5, 4), { color: col, color2: mixRGB(col, base, 0.3), relief: 0.15, angular: true }), x, y);
       }
       // below the lit band the sun side is half-tone: light shading toward the shadow
       if (i % 3 === 0) {
         const y = ry + random(10, depth * 0.7);
         const base = O.under(x, y);
-        const col = mixRGB(shadeRGB(base, 0.97), C.shadow, 0.04 * k);
+        // Cézanne: the lit planes warm pink and ochre, by temperature more than value
+        const col = mixRGB(mixRGB(shadeRGB(base, 0.97), C.shadow, 0.04 * k), PEAK_WARM, 0.32 * PT * k * random(0.6, 1.2));
         push(makeOilStroke(O, x, y, fall, random(20, 34), random(5, 8), { color: col, color2: base, relief: 0, soft: true }), x, y);
       }
     } else {
@@ -3842,7 +3955,7 @@ function oilPeak(s, O, out) {
         const t = random();
         const y = ry + 2 + t * depth;
         const base = O.under(x, y);
-        const col = mixRGB(shadeRGB(base, 1 - 0.07 * k * (1 - 0.6 * t)), C.shadow, 0.08 * k * (1 - t));
+        const col = mixRGB(mixRGB(shadeRGB(base, 1 - 0.07 * k * (1 - 0.6 * t)), C.shadow, 0.08 * k * (1 - t)), PEAK_COOL, 0.34 * PT * k * (1 - 0.5 * t));
         push(makeOilStroke(O, x, y, fall + random(-0.15, 0.15), random(16, 30), random(4, 7), { color: col, color2: mixRGB(col, base, 0.5), relief: 0, soft: true }), x, y);
       }
     }
@@ -4625,6 +4738,12 @@ function oilMidTree(s, O, tr, out) {
       clumps.push({ x: x + Math.cos(a) * d * w, y: cy + Math.sin(a) * d * h * 0.85, r: w * random(0.26, 0.38) });
     }
   }
+  // the crown stands over its trunk: the scattered clumps are re-centred on it, so a
+  // lopsided scatter never leaves the trunk standing beside the crown as a bare pole
+  if (!tr.tall && clumps.length > 2) {
+    const mx = clumps.reduce((acc, c) => acc + c.x, 0) / clumps.length;
+    for (const c of clumps) c.x += x - mx;
+  }
   clumps.sort((p, q) => p.y - q.y); // top to bottom: lower clumps overlap the ones above
   // the trunk under the crown, for trees too small for the trunk model (midTrunkMarks
   // takes over from 9 REF wide): one dark tapered stroke, the crown painted over its top
@@ -4636,9 +4755,16 @@ function oilMidTree(s, O, tr, out) {
   }
   const sz0 = Math.max(1.1, Math.min(3.2, w * 0.075)); // mark size by distance
   const nPer = (r) => Math.min(120, Math.round((r * r) / (sz0 * sz0) * 1.6) + 6);
+  // crown hatching (Cézanne): within a clump, some marks share one angle — a patch of
+  // parallel strokes — in that clump's own green (yellow-, blue- or olive-green)
+  const CH = G.param('crownHatching');
+  let hatchA = null;
+  let hatchTint = null;
   const markAt = (cx, cyy, sz, col, crisp) => {
-    const a = random(TWO_PI); // abstract: every angle
-    const tick = random() < 0.25;
+    const hatch = hatchA !== null && random() < CH;
+    const a = hatch ? hatchA + random(-0.12, 0.12) : random(TWO_PI); // abstract: every angle
+    const tick = hatch || random() < 0.25;
+    if (hatch) col = mixRGB(col, hatchTint, 0.18 * k);
     out.push(makeOilStroke(O, cx, cyy, a, sz * (tick ? random(1.1, 1.6) : random(0.6, 1.2)), sz * (tick ? random(0.25, 0.4) : random(0.5, 0.85)), {
       color: col, color2: shadeRGB(col, random(0.88, 1.08)), relief: crisp ? 0.12 * k : 0, crisp, soft: !crisp,
     }));
@@ -4654,6 +4780,11 @@ function oilMidTree(s, O, tr, out) {
   }
   for (const pass of [0, 1]) {
     for (const c of clumps) {
+      if (CH > 0 && w >= 6) {
+        const hh = hash2(Math.round(c.x * 3), Math.round(c.y * 3));
+        hatchA = -(0.7 + 0.6 * hh) * (hh < 0.75 ? 1 : -1);
+        hatchTint = [[176, 186, 92], [92, 140, 132], [124, 132, 70]][Math.floor(hash2(Math.round(c.y), Math.round(c.x)) * 3)];
+      }
       const n = nPer(c.r) * (pass === 0 ? 2 : 1);
       for (let i = 0; i < n; i++) {
         const a = random(TWO_PI), d = Math.sqrt(random());
@@ -4668,6 +4799,7 @@ function oilMidTree(s, O, tr, out) {
       }
     }
   }
+  hatchA = null;
   // rose flecks through the crown (the complement of its green), fading with the air
   const fc = G.param('foliageComplements');
   if (fc > 0 && w >= 9) {
