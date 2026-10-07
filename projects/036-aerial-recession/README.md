@@ -373,6 +373,33 @@ look. Eight faults were ranked, and every one is fixed:
 
 Broken colour also fades with mountain distance, because the haze would swallow it.
 
+## Tree reflections in the river
+
+A level surface mirrors a tree about the line where it stands. A point at height *h* above
+the ground at depth *z* appears *h·F/z* below the tree's foot. It shows only where the ground
+under that screen point is water: the ray meets the plane at *z′ = F/(y − HY)*, world
+*x′ = (x − CX)·z′/F*, and the test is |*x′* − river centre(*z′*)| < half-width(*z′*).
+
+- **What is mirrored.** The trunk is mirrored just below the foot. Below that, the crown's
+  outline is mirrored as an ellipse from 0.18 *h* to 1.18 *h* under the foot, wavering row
+  by row.
+- **How it is painted.** Level strokes, because ripples break a reflection into
+  horizontals. The strokes are darker than the tree (contre-jour: the water shows the
+  shaded underside). With distance from the foot they shear sideways, break into gaps and
+  take more of the water's colour. Thin light ripple lines now and then cut across them.
+  Strokes are clipped at the water's edge and hidden behind the near bank.
+- **Physics.** Only trees on a far bank, where the river runs across the view, have water
+  in front of their foot. A tree beside a stretch that runs toward the viewer reflects onto
+  grass. A thin ribbon shows only the trunk's reflection.
+- **Waterside trees.** The composition pass, on its own random stream so nothing else in
+  the scene moves, plants three of them. Candidate positions on land are scored by how
+  much of their mirrored height lands on water, weighted toward nearer trees, and the best
+  three that stand apart are kept. River-bank trees also stand a little closer to the water.
+- **Both media.** Oil: `oilRiver` lays the marks as soft level strokes before the glints.
+  Watercolour: `paintTreeReflections` lays them as translucent level bars after the
+  river's glitter. Jitter comes from noise, so the rest of the painting's random stream is
+  untouched.
+
 ## How each technique is implemented
 
 | technique | where | rule |
