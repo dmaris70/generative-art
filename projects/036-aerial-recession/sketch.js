@@ -572,7 +572,7 @@ function buildTrees(s) {
   for (let z = 2.2; z < s.zGround * 0.9; z *= rnd(1.15, 1.4)) {
     if (rnd(0, 1) < 0.4 * (0.4 + density)) {
       const side = rnd(0, 1) < 0.5 ? -1 : 1;
-      const wx = river.center(z) + side * (river.halfW(z) + rnd(0.15, 0.35));
+      const wx = river.center(z) + side * (river.halfW(z) + rnd(0.05, 0.25)); // close enough to mirror in it
       out.push({ z, wx, hW: rnd(0.22, 0.32), tall: rnd(0, 1) < 0.5, ph: rnd(0, 100), bank: true });
     }
   }
@@ -597,6 +597,39 @@ function buildTrees(s) {
     // poplars are few, and mostly stand along the water
     t.tall = t.bank ? lr() < 0.35 : lr() < 0.07;
     kept.push(t);
+  }
+  // Waterside trees: where the river runs across the view, a tree on its far bank stands
+  // with the water straight in front of its foot, so its reflection falls in the river.
+  // Candidates on land are scored by how much of their mirrored height lands on water;
+  // the best three, apart from one another and from the other trees, are planted.
+  const cover = (wx, z, hW) => {
+    let hits = 0;
+    for (let f = 0.05; f < 1.2; f += 0.1) {
+      const z2 = z / (1 + 1.15 * hW * f);
+      if (z2 > river.samples[0].z && Math.abs((wx * z2) / z - river.center(z2)) < river.halfW(z2) * 0.9) hits++;
+    }
+    return hits / 12;
+  };
+  const cands = [];
+  for (let tries = 0; tries < 900; tries++) {
+    const z = 2.4 * Math.pow((s.zGround * 0.6) / 2.4, lr());
+    const wx = river.center(z) + (lr() < 0.5 ? -1 : 1) * (river.halfW(z) + 0.04 + 0.5 * lr());
+    const hW = 0.24 + 0.1 * lr();
+    const tall = lr() < 0.3;
+    const x = s.gx(wx, z);
+    if (x < 60 || x > REF_W - 60 || Math.abs(wx - river.center(z)) < river.halfW(z) + 0.04) continue;
+    const c = cover(wx, z, hW * (tall ? 2 : 1));
+    if (c >= 0.25) cands.push({ z, wx, hW, tall, ph: lr() * 100, bank: true, score: c * Math.sqrt(s.F / z) });
+  }
+  cands.sort((p, q) => q.score - p.score);
+  let added = 0;
+  for (const c of cands) {
+    if (added >= 3) break;
+    const x = s.gx(c.wx, c.z);
+    if (kept.some((q) => Math.abs(q.z - c.z) < c.z * 0.12 && Math.abs(s.gx(q.wx, q.z) - x) < 24)) continue;
+    delete c.score;
+    kept.push(c);
+    added++;
   }
   kept.sort((a, b) => b.z - a.z);
   return kept;
@@ -996,6 +1029,7 @@ function buildTasks(s) {
   }
   T.push(() => paintRiver(s));
   T.push(() => paintRiverLight(s));
+  T.push(() => paintTreeReflections(s));
   // Trees far → near, in small batches (shadows first within each batch).
   for (let i = 0; i < s.trees.length; i += 6) {
     const chunk = s.trees.slice(i, i + 6);
@@ -1512,6 +1546,90 @@ function paintRiver(s) {
       else flush();
     }
     flush();
+  }
+}
+
+// Reflections of the midground trees. A level surface mirrors a tree about the line where
+// it stands: a point h above the ground at depth z appears h·F/z below the tree's foot, and
+// it shows only where the ground under that screen point is water (the ray meets the plane
+// at z' = F/(y − HY), world x' = (x − CX)·z'/F). Painted as level strokes — a reflection is
+// broken by ripples into horizontals — darker than the tree (the water shows the shaded
+// underside, contre-jour), thinning and taking more of the water's colour with distance
+// from the foot. Jitter comes from noise, not random(), so the rest of the painting's
+// random stream is untouched.
+function treeReflectionMarks(s) {
+  const C = s.C;
+  const r = s.river;
+  const rp = s.repoussoir;
+  const out = [];
+  const onWater = (x, y) => {
+    if (y <= s.HY + 0.5) return false;
+    const z = s.F / (y - s.HY);
+    if (z < r.samples[0].z || z > r.zN) return false;
+    const wx = ((x - s.CX) * z) / s.F;
+    return Math.abs(wx - r.center(z)) < r.halfW(z) * 0.94;
+  };
+  s.trees.forEach((tr, ti) => {
+    const x = s.gx(tr.wx, tr.z);
+    if (x < -40 || x > REF_W + 40) return;
+    const yb = s.gy(tr.z);
+    const sc = s.F / tr.z;
+    const w = tr.hW * sc * (tr.tall ? 0.5 : 1);
+    const h = tr.hW * sc * (tr.tall ? 2.3 : 1.15);
+    if (w < 1.4) return;
+    const crown = s.seenTree(shadeRGB(mixRGB(C.foliage, C.silhouette, 0.25), 0.85), tr.z, x, yb);
+    const trunk = s.seenTree(mixRGB(C.silhouette, C.shadow, 0.2), tr.z, x, yb);
+    const sw = Math.max(0.9, Math.min(3, h / 12)); // row spacing = stroke height
+    // the crown's mirrored outline: an ellipse from 0.18h to 1.18h below the foot
+    const c0 = yb + 0.18 * h, c1 = yb + 1.18 * h, cm = (c0 + c1) / 2, ry = (c1 - c0) / 2;
+    for (let y = yb + sw * 0.5; y < c1; y += sw * 0.9) {
+      const t = (y - yb) / (c1 - yb); // 0 at the foot
+      const v = (y - cm) / ry;
+      // the outline wavers row to row (the crown's clumps, broken by ripples)
+      const half = y < c0 ? 0 : (w / 2) * Math.sqrt(Math.max(0, 1 - v * v)) * (tr.tall ? 0.9 : 1) * (0.7 + 0.55 * noise(ti * 2.3 + 11, y * 0.45));
+      // ripples: the image shears and breaks more the farther it is from the foot
+      const shear = (noise(ti * 3.1, y * 0.35) - 0.5) * w * 0.35 * t;
+      const dens = noise(ti * 7.7 + 40, y * 0.6);
+      const fade = 0.08 + 0.37 * t;
+      // the trunk's reflection, under the foot
+      if (y < c0 + sw && onWater(x + shear, y)) {
+        const col = mixRGB(trunk, waterColour(s, s.F / (y - s.HY), x), fade);
+        out.push({ x: x + shear, y, len: Math.max(1, w * 0.12), sw, col, t });
+      }
+      if (half < 0.6 || dens < 0.22 + 0.35 * t) continue; // gaps between ripples
+      const n = Math.max(1, Math.round((2 * half) / Math.max(3, w * 0.35)));
+      for (let k = 0; k < n; k++) {
+        const len = ((2 * half) / n) * (1.15 + 0.4 * noise(ti, y * 0.5, k));
+        const px = x - half + ((k + 0.5) * 2 * half) / n + shear;
+        const a = onWater(px - len * 0.45, y), b = onWater(px + len * 0.45, y);
+        if (!onWater(px, y) || (!a && !b)) continue;
+        // clip to the water's edge: shorten toward the side that is still on water
+        const L = a && b ? len : len * 0.5;
+        const cx = a && b ? px : a ? px - len * 0.2 : px + len * 0.2;
+        if (y > bankAt(rp, cx) - 3) continue; // the near bank hides the water
+        const col = shadeRGB(mixRGB(crown, waterColour(s, s.F / (y - s.HY), cx), fade), 0.92 + 0.1 * noise(ti, y * 0.9, k + 9));
+        out.push({ x: cx, y, len: L, sw, col, t });
+        // now and then a thin light ripple cuts across the image
+        if (noise(ti * 5.3, y * 0.8, k) > 0.66) {
+          out.push({ x: cx + L * 0.1, y: y + sw * 0.3, len: L * 0.8, sw: sw * 0.4, col: shadeRGB(waterColour(s, s.F / (y - s.HY), cx), 1.08), t });
+        }
+      }
+    }
+  });
+  return out;
+}
+
+function paintTreeReflections(s) {
+  noStroke();
+  for (const m of treeReflectionMarks(s)) {
+    fill(m.col[0], m.col[1], m.col[2], 215 - 90 * m.t);
+    const x0 = m.x - m.len / 2, x1 = m.x + m.len / 2, y0 = m.y - m.sw / 2, y1 = m.y + m.sw / 2;
+    beginShape();
+    vertex(X(x0), Y(y0));
+    vertex(X(x1), Y(y0));
+    vertex(X(x1), Y(y1));
+    vertex(X(x0), Y(y1));
+    endShape(CLOSE);
   }
 }
 
@@ -3718,6 +3836,10 @@ function oilRiver(s, O, out) {
         out.push(makeOilStroke(O, x, y1 + 0.4, 0, wid * random(0.4, 0.8), Math.max(0.7, sw * 0.35), { color: col, color2: col, relief: 0, soft: true }));
       }
     }
+  }
+  // the midground trees mirrored in it, before the glints that break across them
+  for (const m of treeReflectionMarks(s)) {
+    out.push(makeOilStroke(O, m.x, m.y, 0, m.len, m.sw * 1.15, { color: m.col, color2: shadeRGB(m.col, 1.04), relief: 0, soft: true }));
   }
   // glints: only in the sun's column
   for (let i = 0; i < 160; i++) {
