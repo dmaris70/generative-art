@@ -126,6 +126,8 @@ function setup() {
       vortex: { value: 1, min: 0, max: 1, step: 0.05, label: 'sun vortex', group: DI },
       vortexStretch: { value: 1.6, min: 1, max: 2.5, step: 0.05, label: 'vortex stretch', group: DI },
       fieldSweep: { value: 2.2, min: 0.8, max: 5, step: 0.1, label: 'field sweep', group: DI },
+      meadowUpright: { value: 0.65, min: 0, max: 1, step: 0.05, label: 'meadow strokes upright', group: DI },
+      depthScale: { value: 0.95, min: 0.3, max: 1.2, step: 0.05, label: 'meadow stroke size ∝ 1/zⁿ: n', group: DI },
       facetSize: { value: 1.1, min: 0.4, max: 2, step: 0.05, label: 'mountain facet size', group: DI },
       facetMix: { value: 0.5, min: 0, max: 1, step: 0.05, label: 'facets on fall line', group: DI },
 
@@ -150,6 +152,7 @@ function setup() {
       accentStrength: { value: 0.38, min: 0, max: 0.8, step: 0.01, label: 'accent strength', group: CO },
       scumble: { value: 2300, min: 0, max: 5000, step: 100, label: 'scumble strokes', group: CO },
       lostEdges: { value: 0.9, min: 0, max: 2, step: 0.05, label: 'lost-edge band', group: CO },
+      wildflowers: { value: 0.5, min: 0, max: 1.5, step: 0.05, label: 'wildflowers', group: CO },
 
       economy: { value: 0.7, min: 0, max: 1, step: 0.05, label: 'economy (leave the block-in)', group: MT },
       blockIn: { value: 0.6, min: 0, max: 1, step: 0.05, label: 'block-in simplification', group: MT },
@@ -158,6 +161,7 @@ function setup() {
       knife: { value: 200, min: 0, max: 600, step: 10, label: 'palette-knife lights', group: MT },
       sgraffito: { value: 90, min: 0, max: 400, step: 10, label: 'sgraffito scratches', group: MT },
       glaze: { value: 0.65, min: 0, max: 1, step: 0.05, label: 'final glazes', group: MT },
+      contour: { value: 0.5, min: 0, max: 1, step: 0.05, label: 'drawn contours (Prussian blue)', group: MT },
     },
     onReset: reset,
   });
@@ -2868,6 +2872,26 @@ function oilLimbPainterly(s, seg) {
     const path = [at(0.5, down * 0.85), at(stepI(W0 * 0.7), down * 0.75), at(Math.min(n - 1, stepI(W0 * 1.5)), down * 0.6)];
     if (Math.hypot(p1[0] - p0[0], p1[1] - p0[1]) > 1) oilStroke(markToOil({ kind: 'dark', path, w: W0 * 0.32, col: T2.crevice, col2: T2.dark, rel: 0 }));
   }
+  // drawn contour (van Gogh, Arles): a broken Prussian-blue line down the shaded edge,
+  // fainter and sparser on the lit one; the cut-ins below break it further
+  const kc = G.param('contour');
+  if (kc > 0 && W0 * U > 1.2) {
+    const mid = Math.floor(n / 2);
+    const pa = at(mid, 1), pb = at(mid, -1);
+    const shaded = Math.hypot(pa[0] - s.sunX, pa[1] - s.sunY) > Math.hypot(pb[0] - s.sunX, pb[1] - s.sunY) ? 1 : -1;
+    const col = mixRGB(PRUSSIAN, T.dark, 0.1);
+    for (const side of [shaded, -shaded]) {
+      const keep = (side === shaded ? 0.9 : 0.3) * Math.min(1, 0.4 + kc);
+      for (let i = 0; i < n - 1; i += stepI(W0 * random(1.6, 3.2))) {
+        if (random() > keep) continue;
+        const i1 = Math.min(n - 1, i + stepI(W0 * random(1.2, 2.6)));
+        if (i1 - i < 1) continue;
+        const path = [at(i, side * 0.96), at((i + i1) / 2, side * 0.99), at(i1, side * 0.96)];
+        const lw = Math.max(1, wAt((i + i1) / 2) * 0.1) * (0.6 + 0.8 * kc) * (side === shaded ? 1 : 0.7);
+        oilStroke(markToOil({ kind: 'edge', path, w: lw, col, col2: mixRGB(col, T.dark, 0.3), rel: 0 }));
+      }
+    }
+  }
   // cut-ins: the surrounding paint dragged back over the edge, here and there
   if (SURF && W0 * U > 3) {
     for (const side of [-1, 1]) {
@@ -3158,6 +3182,8 @@ function oilParams() {
     vortex: P('vortex'),
     stretch: P('vortexStretch'),
     sweep: P('fieldSweep'),
+    upright: P('meadowUpright'),
+    depthN: P('depthScale'),
     facet: P('facetSize'),
     facetMix: P('facetMix'),
     light: [Math.cos(la), Math.sin(la)], // the light in the room the canvas hangs in
@@ -3177,6 +3203,8 @@ function oilParams() {
     glaze: P('glaze'),
   };
 }
+// Van Gogh's drawing colour: the dark blue line round trunks and leaves (Arles, 1888)
+const PRUSSIAN = [40, 66, 132];
 const ACCENTS = {
   violet: [118, 92, 150],
   ochre: [196, 156, 74],
@@ -3249,6 +3277,7 @@ function oilBegin(s) {
   oilPeak(s, O, groups[2]);
   oilBrokenColour(s, O, groups[2]);
   oilScumble(s, O, groups[2]);
+  oilMeadowFlowers(s, O, groups[2]);
   oilObjects(s, O, groups[3]);
   oilSun(s, O, groups[4]);
 
@@ -3271,6 +3300,10 @@ function oilBegin(s) {
   // generated after the grass, so their counts don't reshuffle it
   const knives = oilKnife(s, O);
   const scratches = oilSgraffito(s, O);
+  // generated last, so they reshuffle none of the passes above
+  const flowers = oilBankFlowers(s, O);
+  const kc = G.param('contour');
+  if (kc > 0) for (const b of blades) b.line = b.w0 * U >= 1.6 && random() < 0.55 * kc;
   for (let i = 0; i < knives.length; i += 60) {
     const chunk = knives.slice(i, i + 60);
     queue.push(() => chunk.forEach(oilKnifeMark));
@@ -3281,6 +3314,11 @@ function oilBegin(s) {
       noStroke();
       chunk.forEach(oilBlade);
     });
+  }
+  // flowers among the grass: stems, then petals
+  for (let i = 0; i < flowers.length; i += 120) {
+    const chunk = flowers.slice(i, i + 120);
+    queue.push(() => chunk.forEach(oilStroke));
   }
   // sgraffito: scratched into the wet grass and bank with the brush handle, back to the ground
   queue.push(() => oilScratches(scratches));
@@ -3359,7 +3397,9 @@ function buildOilField(s) {
     if (y > yGround) {
       const z = s.F / Math.max(0.5, y - s.HY);
       const wx = ((x - s.CX) * z) / s.F;
-      const k = Math.max(0.13, Math.min(1.1, 1.2 / Math.sqrt(z)));
+      // marks shrink with depth close to perspective's 1/z (Field with Flowers near Arles:
+      // long blades in front, flecks at the back), not the gentle 1/√z of before
+      const k = Math.max(0.09, Math.min(1.1, 1.25 * Math.pow(z, -OP.depthN)));
       const rc = s.river.center(Math.min(z, s.river.zN));
       if (Math.abs(wx - rc) < s.river.halfW(z)) return { a: (noise(x * 0.03, y * 0.1) - 0.5) * 0.1, k: k * 0.7, kind: 'water' };
       return { a: (noise(x * 0.003, y * 0.02) - 0.5) * 0.12, k, kind: 'ground', z };
@@ -3465,7 +3505,12 @@ function oilLayer(s, O, out, scale, cover, edges, layer) {
         if (random() < OP.economy * (1 - busy) * (1 - focal)) continue;
       }
       const w = w0 * f.k;
-      const ratio = f.kind === 'ground' ? OP.l * OP.sweep : f.kind === 'leaf' || f.kind === 'bank' ? OP.l * 0.5 : f.kind === 'range' ? OP.l * 0.75 : f.kind === 'water' ? OP.l * 1.3 : OP.l;
+      // the meadow's marks change shape as well as size with depth: the far ones are
+      // shorter for their width, until they are flecks (gAsp: 1 near → ≈0.3 far)
+      const gAsp = f.kind === 'ground' ? Math.sqrt(Math.min(1, f.k / 1.1)) : 1;
+      const gFar = f.kind === 'ground' ? clamp01(Math.log(f.z / 1.5) / Math.log(Math.max(2, s.zGround / 1.5))) : 0;
+      const pUp = f.kind === 'ground' && !edges ? OP.upright * (1 - 0.4 * gFar) : 0;
+      const ratio = f.kind === 'ground' ? OP.l * (pUp * 1.3 + (1 - pUp) * OP.sweep) * gAsp : f.kind === 'leaf' || f.kind === 'bank' ? OP.l * 0.5 : f.kind === 'range' ? OP.l * 0.75 : f.kind === 'water' ? OP.l * 1.3 : OP.l;
       const len = w * ratio;
       const p = (cover * g * g) / (w * len);
       const n = Math.floor(p) + (random() < p - Math.floor(p) ? 1 : 0);
@@ -3475,7 +3520,19 @@ function oilLayer(s, O, out, scale, cover, edges, layer) {
         const jitterA = random(-1, 1) * OP.jitterA * (f.kind === 'range' ? 0.6 : f.kind === 'ground' ? 1.8 : 1);
         // meadow strokes vary in length, so they stop reading as contour lines
         const lk = f.kind === 'ground' ? random(0.45, 1.4) : random(0.75, 1.2);
-        const st = makeOilStroke(O, sx, sy, a + jitterA, len * lk, w * random(0.85, 1.1), {
+        let sa = a + jitterA;
+        let sl = len * lk;
+        if (pUp > 0) {
+          // upright dashes, as the field grows (van Gogh's field near Arles), leaning a
+          // little with the wind; the rest stay level, laying the colour in drifts
+          if (random() < pUp) {
+            sa = -Math.PI / 2 - 0.12 * s.sunSide + (noise(sx * 0.01, sy * 0.02, 5) - 0.5) * 0.6 + random(-0.12, 0.12);
+            sl = w * OP.l * 1.3 * gAsp * lk;
+          } else sl = w * OP.l * OP.sweep * gAsp * lk;
+        }
+        // the dashes carry their own colour, unblended: a touch of ochre, olive or light
+        const tint = pUp > 0 && random() < 0.6 ? [ACCENTS.ochre, ACCENTS.olive, s.C.light][Math.floor(random(3))] : null;
+        const st = makeOilStroke(O, sx, sy, sa, sl, w * random(0.85, 1.1), {
           relief: oilRelief(f) * leanRel,
           lean: leanBody,
           sample,
@@ -3487,10 +3544,10 @@ function oilLayer(s, O, out, scale, cover, edges, layer) {
           color2: f.kind === 'bank' ? shadeRGB(O.under(sx, sy), random(0.85, 1.05)) : undefined,
         });
         if (f.kind === 'ground') {
+          if (tint) st.body = mixRGB(st.body, tint, random(0.08, 0.18) * (1 - gFar));
           // the meadow greys a little with distance (aerial perspective on saturation)
-          const far = clamp01(Math.log(f.z / 1.5) / Math.log(Math.max(2, s.zGround / 1.5)));
-          st.body = desatRGB(st.body, 0.28 * far);
-          st.far = desatRGB(st.far, 0.28 * far);
+          st.body = desatRGB(st.body, 0.28 * gFar);
+          st.far = desatRGB(st.far, 0.28 * gFar);
         } else if (f.kind === 'bank') {
           // the dark bank is not one flat tone: broad, slow shifts warm/cool and up/down
           const nt = noise(sx * 0.005, sy * 0.008, 7.7);
@@ -3814,6 +3871,87 @@ function oilScumble(s, O, out) {
   }
 }
 
+// Wildflowers in the meadow (after Field with Flowers near Arles): small dabs of cream,
+// pink and pale yellow — 3–4 petal strokes round a centre, foreshortened — in drifts
+// (noise decides where they grow), denser and larger in front, gone by the middle
+// distance, and seen through the same air as the meadow.
+function oilMeadowFlowers(s, O, out) {
+  const amt = G.param('wildflowers');
+  const n = Math.round(900 * amt);
+  const tints = [[248, 242, 226], [248, 242, 226], [240, 200, 208], [240, 218, 120]];
+  for (let t = 0, made = 0; t < n * 4 && made < n; t++) {
+    const x = random(0, REF_W);
+    const y = random(s.HY + 25, REF_H);
+    const f = O.field(x, y);
+    if (f.kind !== 'ground' || f.z > 6.5) continue;
+    if (noise(x * 0.004, y * 0.012, 21) < 0.47 || random() > 1.4 / Math.sqrt(f.z)) continue;
+    const r = OP.w * 0.16 * f.k * random(0.7, 1.35);
+    if (r < 0.6) continue;
+    const base = tints[Math.floor(random(tints.length))];
+    // a flower in the meadow's own light: half its colour, half the field's
+    const col = s.seen(mixRGB(mixRGB(base, s.C.light, 0.2), O.under(x, y), 0.4), f.z, x, y);
+    const m = 3 + (random() < 0.5 ? 1 : 0);
+    const a0 = random(TWO_PI);
+    for (let j = 0; j < m; j++) {
+      const a = a0 + (j * TWO_PI) / m;
+      out.push(makeOilStroke(O, x + Math.cos(a) * r * 0.55, y + Math.sin(a) * r * 0.35, a, r * 1.1, r * 0.75, { color: col, color2: shadeRGB(col, 0.9), relief: 0.12, crisp: true }));
+    }
+    made++;
+  }
+}
+
+// Flowers on the bank among the grass (the irises along the foot of Field with Flowers
+// near Arles): violet-blue against the dark, the complement of the meadow's gold. A
+// curved stem, then three upright petals and two or three drooping falls; the petals on
+// the sun's side catch a little rim light; larger lower down the bank (nearer). In small
+// clumps, commoner toward the sun.
+function oilBankFlowers(s, O) {
+  const C = s.C;
+  const rp = s.repoussoir;
+  const out = [];
+  const amt = G.param('wildflowers');
+  const n = Math.round(90 * amt);
+  const stemCol = mixRGB(mixRGB(C.silhouette, PRUSSIAN, 0.35), ACCENTS.olive, 0.15);
+  for (let t = 0, made = 0; t < n * 6 && made < n; t++) {
+    const cx = random(rp.bank[0][0] + 10, rp.bank[rp.bank.length - 1][0] - 10);
+    const sunward = clamp01(1 - Math.abs(cx - s.sunX) / (REF_W * 0.8));
+    if (random() > 0.35 + 0.65 * sunward) continue;
+    const k = 2 + Math.floor(random(0, 6)); // a clump
+    for (let c = 0; c < k && made < n; c++) {
+      const x = cx + random(-26, 26);
+      const lip = bankAt(rp, x);
+      const y = lip + random(-2, 70);
+      if (y > REF_H - 4) continue;
+      const sc = 0.9 + clamp01((y - lip) / 70) * 1.4;
+      const r = 3.6 * sc * random(0.8, 1.2);
+      // the stem, curving a little, from the head down into the grass
+      const sl = r * random(3, 6);
+      const lean = random(-0.25, 0.25) - 0.1 * s.sunSide;
+      out.push(markToOil({ kind: 'edge', path: [[x, y], [x + Math.sin(lean) * sl * 0.5, y + sl * 0.5], [x + Math.sin(lean) * sl * 0.8, y + sl]], w: Math.max(0.6, r * 0.2), col: stemCol, col2: stemCol, rel: 0 }));
+      // contre-jour: deep blue-violet, darker away from the sun; only the sun's side of
+      // a flower near the light catches a rim
+      const hue = mixRGB(ACCENTS.violet, [62, 78, 156], random(0.4, 0.8));
+      const body = shadeRGB(mixRGB(hue, C.silhouette, 0.15), (0.5 + 0.35 * sunward) * random(0.9, 1.1));
+      const lit = mixRGB(body, C.light, 0.12 + 0.25 * sunward);
+      const sunSide = Math.sign(s.sunX - x) || 1;
+      // standards: up and out
+      for (const da of [-0.45, 0, 0.45]) {
+        const a = -Math.PI / 2 + da;
+        const col = da * sunSide > 0 ? lit : body;
+        out.push(makeOilStroke(O, x + Math.cos(a) * r * 0.55, y + Math.sin(a) * r * 0.55, a, r * 1.3, r * 0.7, { color: col, color2: shadeRGB(col, 0.88), relief: 0.15, crisp: true }));
+      }
+      // falls: drooping to either side
+      for (const sgn of random() < 0.5 ? [-1, 1] : [-1, 0, 1]) {
+        const a = Math.PI / 2 - sgn * 1.0;
+        const col = shadeRGB(sgn * sunSide > 0 ? lit : body, 0.85);
+        out.push(makeOilStroke(O, x + Math.cos(a) * r * 0.6, y + Math.sin(a) * r * 0.45, a, r * 1.2, r * 0.65, { color: col, color2: shadeRGB(col, 0.85), relief: 0.12, crisp: true }));
+      }
+      made++;
+    }
+  }
+  return out;
+}
+
 // Objects restated over the field: midground trees as dabs (dark mass, then lit dabs),
 // and glints on the water (grass and the framing tree are painted on their own, later).
 function oilObjects(s, O, out) {
@@ -4067,6 +4205,22 @@ function oilBlade(b) {
   };
   ribbon(b.col, b.a, -1, 1);
   if (b.w0 * U >= 2.2) ribbon(shadeRGB(b.col, 0.78), b.a * 0.55, -1, -0.1); // the fold
+  if (b.line) {
+    // drawn contour on the shaded edge (the side away from any sun rim), Prussian blue
+    const f = b.rim && nrm[Math.floor(n / 2)][0] * b.side > 0 ? -1 : 1;
+    const col = mixRGB(PRUSSIAN, b.col, 0.3);
+    fill(col[0], col[1], col[2], 210);
+    beginShape(TRIANGLE_STRIP);
+    for (let i = Math.floor(n * 0.08); i < n - 1; i++) {
+      const [x, y] = P[i];
+      const [nx, ny] = nrm[i];
+      const h = hw(i);
+      const r = Math.max(0.35 / U, h * 0.3);
+      vertex(X(x + nx * h * f), Y(y + ny * h * f));
+      vertex(X(x + nx * (h - r) * f), Y(y + ny * (h - r) * f));
+    }
+    endShape();
+  }
   if (b.rim) {
     // the rim on the edge facing the sun: + normal side if that points sunward
     const f = nrm[Math.floor(n / 2)][0] * b.side > 0 ? 1 : -1;
