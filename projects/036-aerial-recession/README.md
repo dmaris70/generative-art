@@ -406,6 +406,22 @@ under that screen point is water: the ray meets the plane at *z′ = F/(y − HY
   river's glitter. Jitter comes from noise, so the rest of the painting's random stream is
   untouched.
 
+## After *Field with Flowers near Arles* (van Gogh, 1888)
+
+Van Gogh's field gets its depth without haze, through mark size, mark direction and
+complementary colour. Four of his devices are adopted. Two are deliberately not: his high
+horizon and full saturation into the distance would remove the sun vortex and the aerial
+recession this piece is about.
+
+| device | measured on the painting | before | now |
+|---|---|---|---|
+| **1. Mark scale** | front leaves ≈150–300 px long, far flecks ≈3–6 px: length falls ≈40×, width ≈6×, so the marks change shape as well as size | meadow scale `1.2/√z`: ≈3× over the visible meadow (z ≈ 1.2–11), same shape throughout | scale `1.25·z^−n`, with *n* = 0.95 on the panel (*meadow stroke size ∝ 1/zⁿ*), ≈8× over the meadow; length ÷ width also shrinks with depth (×√(k/1.1), ≈0.3 at the back), so length falls ≈20× and far marks are flecks |
+| **2. Mark direction** | the field in short upright dashes; colour laid in level drifts | level strokes ±0.12 rad: a surface | 65 % of meadow strokes are upright dashes (*meadow strokes upright*), leaning a little with the wind, fewer toward the back; the rest stay level, laying the drifts; 60 % of the dashes carry a touch of unblended ochre, olive or light |
+| **3. Complementary accents** | violet irises against the yellow field; white and pink flecks | broken-colour dashes only | *wildflowers*: cream, pink and pale-yellow flowers of 3–4 petal strokes in noise-driven drifts in the near meadow, half in the field's own colour, seen through the same air; irises on the bank (curved stem, three standards, two or three falls) in clumps, deep blue-violet, darker away from the sun, rim-lit on the sun's side |
+| **4. Drawn contour** | a dark blue line along trunks and leaves, drawn over the paint | none in oil | *drawn contours (Prussian blue)*: a broken line down the shaded edge of every limb of the framing tree (sparser on the lit edge, broken further by the cut-ins), and a thin line on the shaded edge of ≈27 % of the larger grass blades |
+
+All four are oil-only and have panel controls; the watercolour medium is unchanged.
+
 ## How each technique is implemented
 
 | technique | where | rule |
