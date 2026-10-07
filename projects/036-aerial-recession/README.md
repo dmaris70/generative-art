@@ -395,6 +395,12 @@ under that screen point is water: the ray meets the plane at *z′ = F/(y − HY
   the scene moves, plants three of them. Candidate positions on land are scored by how
   much of their mirrored height lands on water, weighted toward nearer trees, and the best
   three that stand apart are kept. River-bank trees also stand a little closer to the water.
+- **Thin stretches.** On calm water a narrow ribbon would mirror only the trunk's foot,
+  because the crown's image falls below it, on grass. Ripples smear a reflection
+  vertically, so where the band of water in front of a tree is under 55 % of the mirrored
+  height, the whole tree is squeezed into that band: the trunk at its top, the crown below.
+  It is painted strong, with little water colour mixed in (4–20 %) and few ripple breaks.
+  Open water beyond the band, where the river curves back, mirrors as before.
 - **Both media.** Oil: `oilRiver` lays the marks as soft level strokes before the glints.
   Watercolour: `paintTreeReflections` lays them as translucent level bars after the
   river's glitter. Jitter comes from noise, so the rest of the painting's random stream is

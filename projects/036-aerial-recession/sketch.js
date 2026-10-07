@@ -1582,24 +1582,26 @@ function treeReflectionMarks(s) {
     const sw = Math.max(0.9, Math.min(3, h / 12)); // row spacing = stroke height
     // the crown's mirrored outline: an ellipse from 0.18h to 1.18h below the foot
     const c0 = yb + 0.18 * h, c1 = yb + 1.18 * h, cm = (c0 + c1) / 2, ry = (c1 - c0) / 2;
-    for (let y = yb + sw * 0.5; y < c1; y += sw * 0.9) {
-      const t = (y - yb) / (c1 - yb); // 0 at the foot
-      const v = (y - cm) / ry;
+    // One row of the reflection at screen row y, drawn with the outline the mirror gives
+    // at height yv (yv = y on open water; squeezed on a thin stretch, below). u: 0 at the
+    // foot → 1 at the far end of the image; fade: how much water colour mixes in; gap:
+    // how readily ripples break the row.
+    const row = (y, yv, rs, u, fade, gap) => {
+      const v = (yv - cm) / ry;
       // the outline wavers row to row (the crown's clumps, broken by ripples)
-      const half = y < c0 ? 0 : (w / 2) * Math.sqrt(Math.max(0, 1 - v * v)) * (tr.tall ? 0.9 : 1) * (0.7 + 0.55 * noise(ti * 2.3 + 11, y * 0.45));
+      const half = yv < c0 ? 0 : (w / 2) * Math.sqrt(Math.max(0, 1 - v * v)) * (tr.tall ? 0.9 : 1) * (0.7 + 0.55 * noise(ti * 2.3 + 11, yv * 0.45));
       // ripples: the image shears and breaks more the farther it is from the foot
-      const shear = (noise(ti * 3.1, y * 0.35) - 0.5) * w * 0.35 * t;
+      const shear = (noise(ti * 3.1, yv * 0.35) - 0.5) * w * 0.35 * u;
       const dens = noise(ti * 7.7 + 40, y * 0.6);
-      const fade = 0.08 + 0.37 * t;
       // the trunk's reflection, under the foot
-      if (y < c0 + sw && onWater(x + shear, y)) {
+      if (yv < c0 + rs && onWater(x + shear, y)) {
         const col = mixRGB(trunk, waterColour(s, s.F / (y - s.HY), x), fade);
-        out.push({ x: x + shear, y, len: Math.max(1, w * 0.12), sw, col, t });
+        out.push({ x: x + shear, y, len: Math.max(1, w * 0.12), sw: rs, col, t: u });
       }
-      if (half < 0.6 || dens < 0.22 + 0.35 * t) continue; // gaps between ripples
+      if (half < 0.6 || dens < gap) return; // gaps between ripples
       const n = Math.max(1, Math.round((2 * half) / Math.max(3, w * 0.35)));
       for (let k = 0; k < n; k++) {
-        const len = ((2 * half) / n) * (1.15 + 0.4 * noise(ti, y * 0.5, k));
+        const len = ((2 * half) / n) * (1.15 + 0.4 * noise(ti, yv * 0.5, k));
         const px = x - half + ((k + 0.5) * 2 * half) / n + shear;
         const a = onWater(px - len * 0.45, y), b = onWater(px + len * 0.45, y);
         if (!onWater(px, y) || (!a && !b)) continue;
@@ -1607,13 +1609,43 @@ function treeReflectionMarks(s) {
         const L = a && b ? len : len * 0.5;
         const cx = a && b ? px : a ? px - len * 0.2 : px + len * 0.2;
         if (y > bankAt(rp, cx) - 3) continue; // the near bank hides the water
-        const col = shadeRGB(mixRGB(crown, waterColour(s, s.F / (y - s.HY), cx), fade), 0.92 + 0.1 * noise(ti, y * 0.9, k + 9));
-        out.push({ x: cx, y, len: L, sw, col, t });
+        const col = shadeRGB(mixRGB(crown, waterColour(s, s.F / (y - s.HY), cx), fade), 0.92 + 0.1 * noise(ti, yv * 0.9, k + 9));
+        out.push({ x: cx, y, len: L, sw: rs, col, t: u });
         // now and then a thin light ripple cuts across the image
         if (noise(ti * 5.3, y * 0.8, k) > 0.66) {
-          out.push({ x: cx + L * 0.1, y: y + sw * 0.3, len: L * 0.8, sw: sw * 0.4, col: shadeRGB(waterColour(s, s.F / (y - s.HY), cx), 1.08), t });
+          out.push({ x: cx + L * 0.1, y: y + rs * 0.3, len: L * 0.8, sw: rs * 0.4, col: shadeRGB(waterColour(s, s.F / (y - s.HY), cx), 1.08), t: u });
         }
       }
+    };
+    // The band of water straight in front of the foot: the first run of water rows under
+    // the tree (any of three columns across the crown), if it starts near the foot.
+    const wet = (y) => onWater(x, y) || onWater(x - w * 0.25, y) || onWater(x + w * 0.25, y);
+    let yA = -1, yB = -1;
+    for (let y = yb + 0.5; y < c1; y += 0.5) {
+      if (wet(y)) {
+        if (yA < 0) {
+          if (y > yb + 0.45 * (c1 - yb)) break;
+          yA = y;
+        }
+        yB = y;
+      } else if (yA >= 0 && y - yB > 1.5) break;
+    }
+    const M = c1 - yb, T = yB - yA;
+    let from = yb + sw * 0.5;
+    if (yA >= 0 && T >= 1 && T < 0.55 * M) {
+      // A thin stretch. Calm water would show only the trunk's foot here; ripples smear the
+      // image vertically, so the band carries the whole tree squeezed into it — trunk at
+      // its top, crown below — painted strong, with little water mixed in and few breaks.
+      const rs = Math.max(0.7, Math.min(sw, T / 4));
+      for (let y = yA + rs * 0.5; y <= yB + 0.25; y += rs * 0.85) {
+        const u = (y - yA) / T;
+        row(y, yb + (0.1 + 0.8 * u) * M, rs, u * 0.5, 0.04 + 0.16 * u, 0.1 + 0.1 * u);
+      }
+      from = yB + sw; // past the band, open water (if the river comes back) mirrors as usual
+    }
+    for (let y = from; y < c1; y += sw * 0.9) {
+      const u = (y - yb) / M; // 0 at the foot
+      row(y, y, sw, u, 0.08 + 0.37 * u, 0.22 + 0.35 * u);
     }
   });
   return out;
