@@ -185,6 +185,103 @@ lists one); hatching uses `rotring`.
 bark brush (watercolour), canopy wash opacity, leaf hatch spacing and angle, midground
 trees on/off.
 
+### Second foundation: Etherington Brothers and Ran Art Blog
+
+Two more tutorials, read for what they instruct (text and drawings): the Etherington
+Brothers' *How To Draw A Tree* (Clip Studio Art Rocket) and Ran Art Blog's *Tree Drawing
+Guide*. Their rules, and what each became:
+
+| rule (as the tutorial draws or states it) | in the code |
+|---|---|
+| Begin with cylinders and pipes; trunks are cylinders (both) | already the trunk model; the trunk itself is now kept a straight cylinder |
+| A main movement with direction changes; elbowed olive and dead-wood limbs (Etherington; Ran) | limbs grow in straight runs broken by one or two **elbows** (0.2–0.4 rad), alternating left and right; an elbow that would head into the keep-clear zone bends the other way |
+| Broken stubs along old limbs (Etherington's figures) | short blunt **stubs** on thick limbs, pointing up or sideways, sized from the limb as finally drawn so a stub is never thicker than its wood |
+| Highlight · midtone · **shadow in the third quarter** · highlight (Etherington) | the darkest band moved from the edge to u = −0.48; a dim **reflected-light** strip, cooled by the sky, runs along the shadow edge |
+| **Invert the bark tone**: black lines in the light, light lines in the shadow (Etherington) | grooves and dashes on the shadow side are drawn lighter than their band about half the time, darker on the lit side |
+| Focus bark detail on the shadow side; more marks for darker values (Etherington; Ran) | secondary marks crowd toward the shadow side |
+| Broad primary strokes with smaller secondary **dashes** (Etherington) | ~7 short dashes per trunk-width of length between the grooves, on the same flow |
+| Bark runs like water; **bunching** at a direction change (Etherington) | on a bend, grooves and dashes are pushed toward the inside of the curve, in proportion to how sharply the limb turns |
+| Bark wraps around the form; ellipses bow down below the horizon and up above it, rounder the further from it (Etherington; Ran) | broken **cross-contour** arcs on upright limbs, bowing down below the horizon and up above it, depth ∝ distance from the horizon |
+| Roots spread and billow; avoid a flat-bottomed trunk (both) | not applicable here: the trunk's base is cut by the bottom of the frame |
+
+Checked across seeds 1–12: limb and leaf counts stay in the range of the previous
+generator (mean leaves per tree 579 vs. 530).
+
+## Oil methods — from five tutorials to code
+
+Sources: Leanne Rath, *Oil painting techniques for beginners*; Old Masters Academy,
+*Various oil painting methods*; David Shevlino in *Artists & Illustrators*, *How to
+master wet-into-wet*; Fine Art Tutorials, *A complete list of oil painting
+techniques*; Draw Paint Academy, *9 oil painting techniques*. Each was reduced to what
+it actually instructs, then mapped onto the oil engine.
+
+| technique (as the sources state it) | already in the engine | added here |
+|---|---|---|
+| **Block in** with large brushes, simplify, economise strokes; leave what is not needed (Shevlino, Fine Art Tutorials, Draw Paint Academy) | coarse first layer | the block-in samples a 5×5 average over the brush's footprint, so masses come out simple (*block-in simplification*). **Economy**: the second layer goes only where the underpainting has an edge or a value change, or near the sun; in flat sky and field the block-in is left standing (*economy*) |
+| **Fat over lean**: lean, thin paint first, fuller paint on top (Rath, Old Masters Academy) | — | the block-in is flatter (relief × 0.64) and slightly transparent; each later layer stands higher (*fat over lean*) |
+| **Wet into wet**: the brush lands in wet paint and drags it; strokes bleed into the neighbouring mass; load enough paint to lay it on, not sweep it (Shevlino) | bristles mix the stroke's two colours | after the block-in is down, the surface is read back; the later strokes' bristles carry the paint already on the canvas where they start, the body a trace of it (*wet-into-wet pickup*) |
+| **Thick highlights**, laid with a knife or scraper (Shevlino; impasto in all five) | impasto ridges, thickest at the sun | **palette-knife lights**: flat planes with straight sides, a raised lip on the side facing the room light, a shadow under the other, a ragged trailing end; only above the 88th percentile of value, measured per painting |
+| **Sgraffito**: scratch through the wet film to the layer below (Fine Art Tutorials) | — | short upward scratches through the grass at the bank's lip, back to a warm earth under-layer, commoner toward the sun |
+| **Glazing**: thin transparent colour over dry paint, last; colours mix optically (Old Masters Academy, Vermeer via Draw Paint Academy) | — | final glazes drawn as MULTIPLY (a glaze filters, never lightens): transparent gold radiating from the sun (zero at the white core), cool transparent blue deepening the shadowed foreground |
+| scumbling, dry brush, broken colour, chiaroscuro, sfumato / lost edges, value before temperature, complementary shadows | yes | — |
+
+**Measured, not assumed.** Each method was switched on alone over the same cached
+underpainting (seed 7) and compared with all methods off, as mean absolute pixel
+difference and the saturation of the sky:
+
+| method alone | mean Δ vs. off | effect |
+|---|---|---|
+| economy + block-in | 7.1 | sky and field strokes broader and more varied; the sun stays dense |
+| glazes | 2.6 | sky saturation +23 %, a richer gold halo, a deeper bank |
+| palette knife | 2.9 | flat lit planes in the halo and on the water |
+| sgraffito | — | a few warm stems in the grass |
+| block-in, fat over lean, pickup *without* economy | 0.3–0.4 | invisible: the later layers covered the block-in, which is why economy was added |
+| all together | 8.1 | sky saturation 0.209 → 0.256 |
+
+**Tried and removed: the toned ground (imprimatura).** As a transparent stain under the
+oil strokes it showed as tan holes between the sky strokes (the sources' toned ground
+lies under the *drawing*, before any colour); confined to the joins between masses it
+was entirely covered (Δ 0.1). Here the watercolour underpainting already plays the
+coloured underpainting of the layered method, so no separate ground was kept.
+
+Panel folder: *Oil · methods* — economy, block-in simplification, fat over lean,
+wet-into-wet pickup, palette-knife lights, sgraffito scratches, final glazes.
+
+## Tuned defaults (seed 4)
+
+`?seed=4` at the defaults, 2480 × 1720: [`preview.png`](preview.png).
+In the interface: *Presets → ★ Tuned painting (seed 4)* sets seed 4 and every setting to its default in one click.
+
+The defaults were set by looking, not guessing:
+
+1. **Composition.** Seeds 1–12 were rendered small and judged on the essay's rules. Seed 4
+   won: sun on the left third, focal peak on the right third, a full framing tree at the
+   right edge with its canopy across the top, and the river as an S-shaped leading line
+   from the lower left into the middle distance. Runner-up: seed 9 (an arching canopy,
+   but the peak sits dead centre).
+2. **Brushwork**, varied over one cached underpainting, each step kept or dropped by
+   eye. One problem remained in every step: the focal peak dissolved into the halo.
+3. **The focal peak.** Lowering the haze sharpened the field but did not bring the peak
+   back. The cause was the lost-edge pass, which melted the whole crest, summit
+   included. The summit now keeps a found edge: near the focal peak the crest is
+   restated with crisp strokes in the mountain's own colour, and it melts into the sky
+   everywhere else.
+
+| parameter | was | now | why |
+|---|---|---|---|
+| stroke width | 15 | 18 | the sky read as rice-grain dabs; larger strokes, calmer |
+| vortex stretch | 1.35 | 1.6 | longer orbits around the sun, fewer stroke ends |
+| economy | 0.5 | 0.7 | more of the broad block-in left standing in flat sky and field |
+| mountain facet size | 1 | 1.1 | broader planes on the near ranges |
+| lost-edge band | 1 | 0.9 | at 1.4 the peak vanished; slightly tighter than before |
+| final glazes | 0.5 | 0.65 | a fuller gold halo, a deeper foreground |
+| silhouette darkness | 0.4 | 0.5 | stronger contre-jour; the meadow reads lighter by contrast |
+| palette-knife lights | 140 | 200 | more solid paint in the brightest lights |
+| broken-colour strokes | 2600 | 2000 | fewer accents; less speckle |
+| scumble strokes | 1500 | 2300 | more dry-brushed veil in the halo and the far plain |
+| atmosphere (haze) | 1.0 | 0.72 | the middle distance was soft enough to be mushy; trees and field firmer |
+| mist | 0.6 | 0.45 | less veiling on the ranges |
+
 ## How each technique is implemented
 
 | technique | where | rule |

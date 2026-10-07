@@ -68,6 +68,9 @@ let taskIdx = 0;
 let R, U; // field rect on screen, and screen px per REF unit
 let brushK = 1; // brush scale currently applied (scaleBrushes compounds)
 let SURF = null; // sampler over the oil surface as it stood before the tree went on
+let WET = null; // sampler over the wet block-in, for later strokes to pick paint up from
+// the warm earth under-layer that sgraffito scratches back to (sienna-like)
+const IMPRIMATURA = [150, 94, 54];
 let UNDER = null; // cached underpainting {key, W, H, px, img} for oil repaints
 const SCENE_PARAMS = ['mood', 'sun', 'haze', 'ranges', 'mist', 'clouds', 'meander', 'trees', 'frame'];
 const UI = { status: '' };
@@ -84,18 +87,19 @@ function setup() {
   const IM = 'Oil · impasto & light';
   const CO = 'Oil · colour & texture';
   const TR = 'Trees · brushwork';
+  const MT = 'Oil · methods';
   G = GenArt.create({
     title: 'Aerial Recession',
     resetOnFinish: true, // a full repaint is heavy: sliders apply on release
-    closedGroups: [BR, DI, IM, CO, TR],
+    closedGroups: [BR, DI, IM, CO, MT, TR],
     params: {
       medium: { value: 1, options: { watercolour: 0, oil: 1 }, label: 'medium', group: SC },
       wcTrees: { value: 0, options: { 'wash (clean)': 0, 'drawn (charcoal + hatch)': 1 }, label: 'watercolour trees', group: SC },
       mood: { value: 0, options: { 'golden hour': 0, 'after the storm': 1, 'dawn mist': 2 }, label: 'mood', group: SC },
       sun: { value: 0.35, min: 0, max: 1, step: 0.01, label: 'sun height', group: SC },
-      haze: { value: 1.0, min: 0.3, max: 2.2, step: 0.05, label: 'atmosphere', group: SC },
+      haze: { value: 0.72, min: 0.3, max: 2.2, step: 0.05, label: 'atmosphere', group: SC },
       ranges: { value: 5, min: 3, max: 7, step: 1, label: 'mountain ranges', group: SC },
-      mist: { value: 0.6, min: 0, max: 1, step: 0.05, label: 'mist', group: SC },
+      mist: { value: 0.45, min: 0, max: 1, step: 0.05, label: 'mist', group: SC },
       clouds: { value: 0.55, min: 0, max: 1, step: 0.05, label: 'clouds', group: SC },
       meander: { value: 1.0, min: 0, max: 2, step: 0.05, label: 'river meander', group: SC },
       trees: { value: 0.6, min: 0, max: 1, step: 0.05, label: 'trees', group: SC },
@@ -104,7 +108,7 @@ function setup() {
 
       paintSeed: { value: 0, step: 1, label: 'paint seed (0 = scene)', group: 'Seeds' },
 
-      strokeSize: { value: 15, min: 5, max: 34, step: 0.5, label: 'stroke width', group: ST },
+      strokeSize: { value: 18, min: 5, max: 34, step: 0.5, label: 'stroke width', group: ST },
       strokeLength: { value: 3.1, min: 1.2, max: 7, step: 0.1, label: 'length ÷ width', group: ST },
       coverage: { value: 1, min: 0.3, max: 2.5, step: 0.05, label: 'coverage', group: ST },
       layers: { value: 3, min: 1, max: 3, step: 1, label: 'layers (coarse → edges)', group: ST },
@@ -120,16 +124,16 @@ function setup() {
       wetBlend: { value: 1, min: 0, max: 1, step: 0.05, label: 'two-colour load', group: BR },
 
       vortex: { value: 1, min: 0, max: 1, step: 0.05, label: 'sun vortex', group: DI },
-      vortexStretch: { value: 1.35, min: 1, max: 2.5, step: 0.05, label: 'vortex stretch', group: DI },
+      vortexStretch: { value: 1.6, min: 1, max: 2.5, step: 0.05, label: 'vortex stretch', group: DI },
       fieldSweep: { value: 2.2, min: 0.8, max: 5, step: 0.1, label: 'field sweep', group: DI },
-      facetSize: { value: 1, min: 0.4, max: 2, step: 0.05, label: 'mountain facet size', group: DI },
+      facetSize: { value: 1.1, min: 0.4, max: 2, step: 0.05, label: 'mountain facet size', group: DI },
       facetMix: { value: 0.5, min: 0, max: 1, step: 0.05, label: 'facets on fall line', group: DI },
 
       impasto: { value: 1.0, min: 0, max: 2, step: 0.05, label: 'impasto', group: IM },
       lightAngle: { value: -123, min: -180, max: 180, step: 1, label: 'room light angle°', group: IM },
       sunImpasto: { value: 1, min: 0, max: 2, step: 0.05, label: 'sun impasto', group: IM },
       haloRings: { value: 5, min: 2, max: 8, step: 1, label: 'halo tonal rings', group: IM },
-      silhouette: { value: 0.4, min: 0, max: 0.9, step: 0.05, label: 'silhouette darkness', group: IM },
+      silhouette: { value: 0.5, min: 0, max: 0.9, step: 0.05, label: 'silhouette darkness', group: IM },
       grass: { value: 1, min: 0, max: 2.5, step: 0.05, label: 'grass density (oil)', group: IM },
 
       barkBrush: { value: 0, options: { charcoal: 0, 'coloured pencil': 1, '2B': 2, crayon: 3, pastel: 4 }, label: 'bark brush (watercolour)', group: TR },
@@ -142,10 +146,18 @@ function setup() {
       hatchAngle: { value: 55, min: 0, max: 180, step: 1, label: 'leaf hatch angle°', group: TR },
       midTrees: { value: 1, options: { off: 0, on: 1 }, label: 'midground trees too', group: TR },
 
-      brokenColour: { value: 2600, min: 0, max: 8000, step: 100, label: 'broken-colour strokes', group: CO },
+      brokenColour: { value: 2000, min: 0, max: 8000, step: 100, label: 'broken-colour strokes', group: CO },
       accentStrength: { value: 0.38, min: 0, max: 0.8, step: 0.01, label: 'accent strength', group: CO },
-      scumble: { value: 1500, min: 0, max: 5000, step: 100, label: 'scumble strokes', group: CO },
-      lostEdges: { value: 1, min: 0, max: 2, step: 0.05, label: 'lost-edge band', group: CO },
+      scumble: { value: 2300, min: 0, max: 5000, step: 100, label: 'scumble strokes', group: CO },
+      lostEdges: { value: 0.9, min: 0, max: 2, step: 0.05, label: 'lost-edge band', group: CO },
+
+      economy: { value: 0.7, min: 0, max: 1, step: 0.05, label: 'economy (leave the block-in)', group: MT },
+      blockIn: { value: 0.6, min: 0, max: 1, step: 0.05, label: 'block-in simplification', group: MT },
+      fatOverLean: { value: 0.6, min: 0, max: 1, step: 0.05, label: 'fat over lean', group: MT },
+      wetPickup: { value: 0.5, min: 0, max: 0.8, step: 0.05, label: 'wet-into-wet pickup', group: MT },
+      knife: { value: 200, min: 0, max: 600, step: 10, label: 'palette-knife lights', group: MT },
+      sgraffito: { value: 90, min: 0, max: 400, step: 10, label: 'sgraffito scratches', group: MT },
+      glaze: { value: 0.65, min: 0, max: 1, step: 0.05, label: 'final glazes', group: MT },
     },
     onReset: reset,
   });
@@ -586,8 +598,24 @@ function buildRepoussoir(s) {
       let a = ang;
       const steps = 7;
       let pruned = false;
+      // a limb's gesture: long straight runs broken by an elbow or two where it changes
+      // direction, alternating left and right (Etherington: main movement, direction
+      // change; Ran: the elbowed olive and dead-wood branches) — not a steady wobble
+      // (the trunk itself stays a straight cylinder, Ran)
+      const elbowAt = new Set(depth > 0 ? [Math.floor(rnd(2, steps - 1))] : []);
+      if (depth > 0 && depth <= 2 && rnd(0, 1) < 0.45) elbowAt.add(Math.floor(rnd(2, steps)));
+      let esign = rnd(0, 1) < 0.5 ? -1 : 1;
+      const stubs = [];
       for (let k = 1; k <= steps; k++) {
-        a += rnd(-0.09, 0.09);
+        a += rnd(-0.06, 0.06);
+        if (elbowAt.has(k)) {
+          // bend the alternate way, unless that heads into the keep-clear zone
+          const e = rnd(0.2, 0.4);
+          const ahead = (aa) => clear(cx + Math.cos(aa) * len * 0.5, cy + Math.sin(aa) * len * 0.5);
+          if (ahead(a + esign * e) && !ahead(a - esign * e)) esign = -esign;
+          a += esign * e;
+          esign = -esign;
+        }
         if (depth >= 2) a += 0.03 * Math.sign(Math.cos(a)) * (k / steps); // thin limbs droop
         // A limb that sees the keep-clear zone ahead curves gently up and back toward the
         // edge, the way a tree grows around an obstacle; only if it cannot does it stop.
@@ -607,6 +635,10 @@ function buildRepoussoir(s) {
         cx = nx;
         cy = ny;
         p.push([cx, cy, w * (1 - (0.45 * k) / steps)]);
+        // a broken-off side branch: a short blunt stub (the knuckles along old limbs)
+        if (depth <= 2 && w > 6 && k < steps && rnd(0, 1) < 0.16) {
+          stubs.push([p.length - 1, a + (rnd(0, 1) < 0.5 ? -1 : 1) * rnd(0.6, 1.1), rnd(0.18, 0.28), rnd(2.5, 4.5)]);
+        }
       }
       if (p.length < 3) return; // a limb stopped at birth is simply not grown
       if (pruned) {
@@ -615,6 +647,18 @@ function buildRepoussoir(s) {
         for (let q = 0; q < m; q++) p[p.length - 1 - q][2] *= 0.12 + (0.88 * q) / m;
       }
       segs.push({ pts: p, depth });
+      for (const [idx, sa, fw, fl] of stubs) {
+        if (Math.sin(sa) > -0.1) continue; // stubs point up or sideways, not into the ground
+        // sized from the limb as finally drawn (after any end taper), so a stub is never
+        // thicker than the wood it grows from
+        const [sx, sy, lw] = p[Math.min(idx, p.length - 1)];
+        const sw = lw * fw;
+        if (sw < 1.2) continue;
+        const l = sw * fl;
+        const q = [[sx, sy, sw]];
+        for (let j = 1; j <= 3; j++) q.push([sx + (Math.cos(sa) * l * j) / 3, sy + (Math.sin(sa) * l * j) / 3, sw * (1 - 0.15 * j)]);
+        if (!clear(q[3][0], q[3][1])) segs.push({ pts: q, depth: depth + 2, stub: true });
+      }
       if (depth >= 5 || w < 1.5 || p.length < steps + 1) {
         tips.push([cx, cy, depth]);
         return;
@@ -746,6 +790,11 @@ function buildControls() {
       };
       inp.click();
     },
+    // the tuned painting (README, "Tuned defaults"): seed 4 with every setting at its default
+    tuned: () => {
+      G.setSeed(4);
+      G.setParams(G.defaults());
+    },
     resetStrokes: () => {
       const d = G.defaults();
       const out = {};
@@ -760,6 +809,7 @@ function buildControls() {
   seeds.add(act, 'paintNext').name('▶ paint seed');
   seeds.add(act, 'paintRandom').name('🎲 new hand (P)');
   const presets = gui.addFolder('Presets');
+  presets.add(act, 'tuned').name('★ Tuned painting (seed 4)');
   presets.add(act, 'save').name('Save preset (.json)');
   presets.add(act, 'load').name('Load preset…');
   presets.add(act, 'resetStrokes').name('Reset stroke settings');
@@ -1926,15 +1976,34 @@ function trunkMarks(s, P, opts = {}) {
   const wAt = (i) => pts[Math.max(0, Math.min(n - 1, Math.round(i)))][2];
   const ph = random(1000);
   const marks = [];
-  const path = (i0, i1, u, wander, phase) => {
+  // bunching: on a bend the bark lines crowd to the inside and spread on the outside
+  // (Etherington). bend[k] is the inside of the curve in u units (−1…1, signed), scaled
+  // by how sharply the limb turns there.
+  const bend = new Float32Array(n);
+  for (let k = 1; k < n - 1; k++) {
+    const [nx, ny] = polyNormal(pts, k);
+    const mx = (pts[k - 1][0] + pts[k + 1][0]) / 2 - pts[k][0];
+    const my = (pts[k - 1][1] + pts[k + 1][1]) / 2 - pts[k][1];
+    const seg = Math.hypot(pts[k + 1][0] - pts[k - 1][0], pts[k + 1][1] - pts[k - 1][1]) || 1;
+    bend[k] = Math.max(-1, Math.min(1, ((mx * nx + my * ny) * sig * 8) / seg));
+  }
+  for (let pass = 0; pass < 2; pass++) for (let k = 1; k < n - 1; k++) bend[k] = (bend[k - 1] + 2 * bend[k] + bend[k + 1]) / 4;
+  const path = (i0, i1, u, wander, phase, bunch = 0) => {
     const out = [];
     const steps = Math.max(2, Math.min(8, Math.round(i1 - i0)));
     for (let k = 0; k <= steps; k++) {
       const i = i0 + ((i1 - i0) * k) / steps;
-      const uu = u + (noise(phase + i * 0.35) - 0.5) * 2 * wander;
+      let uu = u + (noise(phase + i * 0.35) - 0.5) * 2 * wander;
+      if (bunch) uu += bunch * bend[Math.max(0, Math.min(n - 1, Math.round(i)))] * (1 - uu * uu) * 0.6;
       out.push(at(i, Math.max(-1.05, Math.min(1.05, uu))));
     }
     return out;
+  };
+  // bark marks change tone with the side they are on (Etherington: "invert the bark tone
+  // from light to dark" — black lines in the light, light lines in the shadow)
+  const barkCol = (u) => {
+    if (u < -1 / 3) return random() < 0.45 ? mixRGB(T.mid, T.light, 0.25) : T.crevice;
+    return u < 1 / 3 ? mixRGB(T.dark, T.mid, 0.25) : mixRGB(T.mid, T.dark, 0.45);
   };
   const stepI = (len) => Math.max(1, len / (total / (n - 1)));
 
@@ -1942,7 +2011,7 @@ function trunkMarks(s, P, opts = {}) {
   // drops the middle tone)
   const bands = lod === 'two'
     ? [{ u: -0.5, f: 0.55, col: T.dark, rel: 0 }, { u: 0.5, f: 0.55, col: mixRGB(T.mid, T.light, 0.6), rel: 0.15 }]
-    : [{ u: -2 / 3, f: 0.38, col: T.dark, rel: 0 }, { u: 0, f: 0.38, col: T.mid, rel: 0 }, { u: 2 / 3, f: 0.38, col: T.light, rel: 0.25 }];
+    : [{ u: -0.48, f: 0.38, col: T.dark, rel: 0 }, { u: 0.12, f: 0.38, col: T.mid, rel: 0 }, { u: 0.66, f: 0.38, col: T.light, rel: 0.25 }];
   const chunk = stepI(Math.max(8, Math.min(70, W0 * 1.4)));
   for (const b of bands) {
     for (let i = 0; i < n - 1; i += chunk * 0.8) {
@@ -1954,7 +2023,7 @@ function trunkMarks(s, P, opts = {}) {
 
   // the band boundaries, worked wet into wet: short strokes loaded with both tones
   if (lod !== 'two') {
-    for (const [ub, ca, cb] of [[-1 / 3, T.dark, T.mid], [1 / 3, T.mid, T.light]]) {
+    for (const [ub, ca, cb] of [[-0.1, T.dark, T.mid], [0.4, T.mid, T.light]]) {
       for (let i = random(0, 2); i < n - 1; i += stepI(W0 * random(0.35, 0.8))) {
         const len = stepI(W0 * random(0.5, 1.2));
         const col = mixRGB(ca, cb, random(0.35, 0.65));
@@ -1968,15 +2037,70 @@ function trunkMarks(s, P, opts = {}) {
   for (let k = 0; k < K; k++) {
     const u = -0.92 + (1.84 * (k + random(0.2, 0.8))) / K;
     const keep = u < -1 / 3 ? 0.95 : u < 1 / 3 ? 0.8 : 0.45;
-    const col = u < -1 / 3 ? T.crevice : u < 1 / 3 ? mixRGB(T.dark, T.mid, 0.25) : mixRGB(T.mid, T.dark, 0.35);
     let i = random(0, stepI(W0 * 0.6));
     while (i < n - 1) {
       const len = stepI(W0 * random(0.8, 2.6));
       const i1 = Math.min(n - 1, i + len);
       if (random() < keep) {
-        marks.push({ kind: 'groove', path: path(i, i1, u, 0.07, ph + k * 7.7), w: Math.max(0.7, wAt(i) * random(0.04, 0.085)), col, col2: mixRGB(col, T.crevice, 0.5), rel: 0.05 });
+        const col = barkCol(u);
+        marks.push({ kind: 'groove', path: path(i, i1, u, 0.07, ph + k * 7.7, 1), w: Math.max(0.7, wAt(i) * random(0.04, 0.085)), col, col2: mixRGB(col, T.dark, 0.4), rel: 0.05 });
       }
       i = i1 + stepI(W0 * random(0.15, 0.6));
+    }
+  }
+
+  // secondary dashes between the primary grooves (Etherington: "broad, primary strokes
+  // with smaller secondary dashes"), more of them where the value is darker (Ran: more
+  // marks for darker values), following the same flow and bunching on bends
+  if (lod !== 'two') {
+    const nd2 = Math.round((total / W0) * 7 * grooveK);
+    for (let j = 0; j < nd2; j++) {
+      const u = -0.95 + Math.pow(random(), 1.6) * 1.75; // crowded toward the shadow side
+      const len = stepI(W0 * random(0.12, 0.4));
+      const i = random(0, Math.max(0, n - 1 - len));
+      const col = barkCol(u);
+      marks.push({ kind: 'groove', path: path(i, i + len, u, 0.04, ph + 500 + j * 1.3, 1), w: Math.max(0.6, wAt(i) * random(0.025, 0.05)), col, col2: col, rel: 0.03 });
+    }
+  }
+
+  // reflected light: the shadow does not run to the edge — a dim strip of light bounced
+  // from sky and ground turns the far side of the cylinder (Etherington's highlight /
+  // midtone / shadow / highlight; "shadow shows in the third quarter")
+  if (lod !== 'two') {
+    const refl = mixRGB(mixRGB(T.dark, T.mid, 0.55), s.C.shadow, 0.2);
+    for (let i = random(0, 2); i < n - 1; i += stepI(W0 * random(0.5, 1.2))) {
+      if (random() < 0.3) continue;
+      const len = stepI(W0 * random(0.6, 1.8));
+      marks.push({ kind: 'light', path: path(i, Math.min(n - 1, i + len), -0.86, 0.04, ph + 700 + i), w: Math.max(0.6, wAt(i) * random(0.06, 0.1)), col: refl, col2: mixRGB(refl, T.dark, 0.3), rel: 0 });
+    }
+  }
+
+  // cross-contours: bark wraps around the cylinder (Etherington), and the rings are
+  // ellipses whose visible front bows down below eye level and up above it, rounder the
+  // further from the horizon (Ran: the cylinders against the horizon line). Only on
+  // near-upright limbs, broken into pieces, heaviest on the shadow side.
+  if (lod !== 'two' && W0 > 12) {
+    for (let i = random(1, 3); i < n - 1; i += stepI(W0 * random(0.7, 1.4))) {
+      const k = Math.round(i);
+      const ny = polyNormal(pts, k)[1];
+      if (Math.abs(ny) > 0.7) continue; // normal near vertical = limb near horizontal
+      const y = pts[k][1];
+      const r = Math.max(0.06, Math.min(0.35, Math.abs(y - s.HY) / 520));
+      const dir = y > s.HY ? 1 : -1; // screen y: below the horizon the front bows down
+      const hw = wAt(i) * 0.5;
+      let u = -0.98;
+      while (u < 0.55) {
+        const du = random(0.18, 0.45);
+        const u1 = Math.min(0.6, u + du);
+        const seg = [];
+        for (let q = 0; q <= 4; q++) {
+          const uu = u + ((u1 - u) * q) / 4;
+          const p0 = at(i, uu);
+          seg.push([p0[0], p0[1] + dir * r * hw * (1 - uu * uu)]);
+        }
+        if (random() < 0.75) marks.push({ kind: 'break', path: seg, w: Math.max(0.6, wAt(i) * random(0.025, 0.045)), col: barkCol((u + u1) / 2), col2: T.dark, rel: 0.03 });
+        u = u1 + random(0.06, 0.2);
+      }
     }
   }
 
@@ -2149,12 +2273,17 @@ function midTrunkMarks(s) {
 // Read the oil surface before the tree goes on: the colour the cut-ins and sky holes
 // need is the paint around and behind the tree, not the underpainting.
 function captureSurface() {
+  SURF = surfaceSampler();
+}
+
+// A sampler over the canvas as it stands now (REF coordinates in, RGB out).
+function surfaceSampler() {
   loadPixels();
   const d = pixelDensity();
   const W = Math.round(width * d);
   const H = Math.round(height * d);
   const px = new Uint8ClampedArray(pixels);
-  SURF = (x, y) => {
+  return (x, y) => {
     x = Math.max(4, Math.min(REF_W - 4, x));
     y = Math.max(4, Math.min(REF_H - 4, y));
     const cx = Math.min(W - 1, Math.max(0, Math.round(X(x) * d)));
@@ -2357,6 +2486,13 @@ function oilParams() {
     accent: P('accentStrength'),
     scumble: P('scumble'),
     lost: P('lostEdges'),
+    blockIn: P('blockIn'),
+    economy: P('economy'),
+    fol: P('fatOverLean'),
+    pickup: P('wetPickup'),
+    knife: P('knife'),
+    sgraffito: P('sgraffito'),
+    glaze: P('glaze'),
   };
 }
 const ACCENTS = {
@@ -2402,33 +2538,60 @@ function oilBegin(s) {
     }
     return [r / n, g / n, b / n];
   };
-  const O = { under, lum, field: buildOilField(s) };
+  // the block-in brush: a big brush averages what it covers, so masses come out simple
+  const underWide = (x, y, r) => {
+    let R0 = 0, G0 = 0, B0 = 0;
+    for (let j = -2; j <= 2; j++) {
+      for (let i = -2; i <= 2; i++) {
+        const c = under(x + (i * r) / 2, y + (j * r) / 2);
+        R0 += c[0]; G0 += c[1]; B0 += c[2];
+      }
+    }
+    return [R0 / 25, G0 / 25, B0 / 25];
+  };
+  const O = { under, underWide, lum, field: buildOilField(s) };
+  WET = null;
   if (PROFILE) window.OIL = O; // inspection hook for ?profile runs
 
   const groups = [
-    [], // body layers
+    [], // the block-in (lean)
+    [], // the later body layers (fatter; they pick up the wet block-in)
     [], // lost edges, broken colour, scumbles
     [], // objects
     [], // the sun and its halo
   ];
-  oilLayer(s, O, groups[0], 1.0, 1.2 * OP.coverage, false);
-  if (OP.layers >= 2) oilLayer(s, O, groups[0], 0.55, 0.8 * OP.coverage, false);
-  if (OP.layers >= 3) oilLayer(s, O, groups[0], 0.24, 1.0 * OP.coverage, true);
-  oilLostEdges(s, O, groups[1]);
-  oilBrokenColour(s, O, groups[1]);
-  oilScumble(s, O, groups[1]);
-  oilObjects(s, O, groups[2]);
-  oilSun(s, O, groups[3]);
+  oilLayer(s, O, groups[0], 1.0, 1.2 * OP.coverage, false, 0);
+  if (OP.layers >= 2) oilLayer(s, O, groups[1], 0.55, 0.8 * OP.coverage, false, 1);
+  if (OP.layers >= 3) oilLayer(s, O, groups[1], 0.24, 1.0 * OP.coverage, true, 2);
+  oilLostEdges(s, O, groups[2]);
+  oilBrokenColour(s, O, groups[2]);
+  oilScumble(s, O, groups[2]);
+  oilObjects(s, O, groups[3]);
+  oilSun(s, O, groups[4]);
 
   const queue = [];
-  for (const g of groups) {
+  groups.forEach((g, gi) => {
     for (let i = 0; i < g.length; i += 70) {
       const chunk = g.slice(i, i + 70);
       queue.push(() => chunk.forEach(oilStroke));
     }
-  }
+    if (gi === 0) {
+      // the block-in is down and wet: what the next strokes will drag through
+      queue.push(() => YIELD);
+      queue.push(() => {
+        WET = surfaceSampler();
+      });
+    }
+  });
   // the grass on the bank: turf, then clumps back to front, painted blade by blade
   const blades = oilGrass(s, O);
+  // generated after the grass, so their counts don't reshuffle it
+  const knives = oilKnife(s, O);
+  const scratches = oilSgraffito(s, O);
+  for (let i = 0; i < knives.length; i += 60) {
+    const chunk = knives.slice(i, i + 60);
+    queue.push(() => chunk.forEach(oilKnifeMark));
+  }
   for (let i = 0; i < blades.length; i += 220) {
     const chunk = blades.slice(i, i + 220);
     queue.push(() => {
@@ -2436,6 +2599,8 @@ function oilBegin(s) {
       chunk.forEach(oilBlade);
     });
   }
+  // sgraffito: scratched into the wet grass and bank with the brush handle, back to the ground
+  queue.push(() => oilScratches(scratches));
   // The found edge: the foreground tree, hard, on top of everything.
   // the trees, built on the trunk model and painted in oil: midground trunks two-tone,
   // then the front tree limb by limb; then its canopy and the midground canopies in
@@ -2458,6 +2623,8 @@ function oilBegin(s) {
   });
   for (const seg of segs) if (seg.pts[0][2] >= 2.5) queue.push(() => oilLimbPainterly(s, seg));
   queue.push(() => oilCanopy(s));
+  // the last, transparent layer over the dry painting
+  queue.push(() => oilGlazes(s));
   tasks.splice(taskIdx, 0, ...queue);
 }
 
@@ -2575,7 +2742,13 @@ function oilRelief(f) {
 // gets proportionally more, smaller strokes. With `edges`, strokes are only placed where
 // the underpainting has an edge, and laid along it — except on the far ranges, whose
 // edges are meant to be lost.
-function oilLayer(s, O, out, scale, cover, edges) {
+function oilLayer(s, O, out, scale, cover, edges, layer) {
+  // fat over lean: the block-in is thin paint (flatter, a little transparent, so the
+  // underpainting glows through); each later layer is fuller-bodied and stands higher
+  const leanRel = [1 - 0.6 * OP.fol, 1 - 0.25 * OP.fol, 1][layer];
+  const leanBody = layer === 0 ? 1 - 0.1 * OP.fol : 1;
+  const blockR = OP.w * 1.4;
+  const sample = layer === 0 && OP.blockIn > 0 ? (x, y) => mixRGB(O.under(x, y), O.underWide(x, y, blockR), OP.blockIn) : null;
   const w0 = OP.w * scale;
   const g = w0 * 0.8;
   for (let gy = -g; gy < REF_H + g; gy += g) {
@@ -2592,6 +2765,16 @@ function oilLayer(s, O, out, scale, cover, edges) {
         if (Math.hypot(gxv, gyv) < OP.edge) continue; // no edge here: leave the coarser passes
         a = Math.atan2(gyv, gxv) + Math.PI / 2; // along the edge
       }
+      if (layer === 1 && OP.economy > 0 && f.kind !== 'limb' && f.kind !== 'leaf' && f.kind !== 'grass') {
+        // economy: the second layer goes only where something is happening — an edge or
+        // a value change in the underpainting, or the sun. Elsewhere the block-in stands.
+        const h = 5;
+        const gxv = O.lum(O.under(x + h, y)) - O.lum(O.under(x - h, y));
+        const gyv = O.lum(O.under(x, y + h)) - O.lum(O.under(x, y - h));
+        const busy = clamp01(Math.hypot(gxv, gyv) / 14);
+        const focal = Math.exp(-Math.pow(Math.hypot(x - s.sunX, y - s.sunY) / 260, 2));
+        if (random() < OP.economy * (1 - busy) * (1 - focal)) continue;
+      }
       const w = w0 * f.k;
       const ratio = f.kind === 'ground' ? OP.l * OP.sweep : f.kind === 'leaf' || f.kind === 'bank' ? OP.l * 0.5 : f.kind === 'range' ? OP.l * 0.75 : f.kind === 'water' ? OP.l * 1.3 : OP.l;
       const len = w * ratio;
@@ -2602,7 +2785,10 @@ function oilLayer(s, O, out, scale, cover, edges) {
         const sy = y + (i ? random(-0.5, 0.5) * g : 0);
         const jitterA = random(-1, 1) * OP.jitterA * (f.kind === 'range' ? 0.6 : 1);
         out.push(makeOilStroke(O, sx, sy, a + jitterA, len * random(0.75, 1.2), w * random(0.85, 1.1), {
-          relief: oilRelief(f),
+          relief: oilRelief(f) * leanRel,
+          lean: leanBody,
+          sample,
+          pickup: layer > 0,
           angular: f.kind === 'range',
           soft: f.kind === 'far',
           // on the dark bank the bristles carry the stroke's own colour, so no pale
@@ -2632,8 +2818,9 @@ function makeOilStroke(O, x, y, a, len, w, opts) {
     const v = 1 + random(-amt, amt);
     return [c[0] * v * (1 + random(-0.03, 0.03)), c[1] * v * (1 + random(-0.03, 0.03)), c[2] * v * (1 + random(-0.03, 0.03))];
   };
-  const body = opts.color || jitter(O.under(x, y), OP.jitterC);
-  const far = opts.color2 || jitter(O.under(x + ca * len * 0.5, y + sa * len * 0.5), OP.jitterC * 1.8);
+  const samp = opts.sample || O.under;
+  const body = opts.color || jitter(samp(x, y), OP.jitterC);
+  const far = opts.color2 || jitter(samp(x + ca * len * 0.5, y + sa * len * 0.5), OP.jitterC * 1.8);
   return {
     P, w, body, far,
     relief: (opts.relief || 0) * G.param('impasto'),
@@ -2641,6 +2828,8 @@ function makeOilStroke(O, x, y, a, len, w, opts) {
     soft: !!opts.soft,
     scumble: !!opts.scumble,
     crisp: !!opts.crisp,
+    lean: opts.lean || 1,
+    pickup: !!opts.pickup,
   };
 }
 
@@ -2653,6 +2842,13 @@ function makeOilStroke(O, x, y, a, len, w, opts) {
 // on the near side. A scumble is bristles only — dry paint dragged over what is there.
 function oilStroke(st) {
   const [p0, p1, p2, p3] = st.P;
+  if (st.pickup && WET && OP && OP.pickup > 0) {
+    // wet into wet: the brush lands in wet paint and drags it along — the bristles carry
+    // the colour already on the canvas where the stroke starts, the body a trace of it
+    const w0 = WET(p0[0], p0[1]);
+    st.far = mixRGB(st.far, w0, OP.pickup);
+    st.body = mixRGB(st.body, w0, OP.pickup * 0.15);
+  }
   const N = 9;
   const C = [];
   for (let i = 0; i < N; i++) {
@@ -2692,7 +2888,7 @@ function oilStroke(st) {
     const off = st.w * 0.16 * rel;
     strip(-OP.light[0] * off, -OP.light[1] * off, shadeRGB(st.body, 0.5), 60 + 120 * Math.min(1, rel), 1);
   }
-  if (!st.scumble) strip(0, 0, st.body, st.crisp ? 255 : 255 * OP.body * (st.soft ? 0.85 : 1), 1);
+  if (!st.scumble) strip(0, 0, st.body, st.crisp ? 255 : 255 * OP.body * (st.soft ? 0.85 : 1) * (st.lean || 1), 1);
 
   // bristles
   const wpx = st.w * U;
@@ -2751,6 +2947,19 @@ function oilLostEdges(s, O, out) {
       const slope = (L.ridge[q + 2][1] - L.ridge[q - 2][1]) / 16;
       const above = O.under(x, y - 10);
       const below = O.under(x, y + 10);
+      // lost and found: the focal summit keeps a found edge. Near it the crest is restated
+      // with crisp strokes in the mountain's own colour, laid along the ridge on its sky
+      // side; everywhere else it melts into the sky.
+      const summit = Math.exp(-Math.pow((x - s.focalX) / 110, 2)) * (y < s.peakTop + 120 ? 1 : 0);
+      if (summit > 0.35) {
+        const fw = random(2.5, 4.5);
+        out.push(makeOilStroke(O, x, y + fw * 0.35, Math.atan(slope) + random(-0.05, 0.05), fw * random(3, 5), fw, {
+          color: shadeRGB(below, random(0.96, 1.02)),
+          color2: mixRGB(below, above, 0.15),
+          angular: true,
+        }));
+        continue;
+      }
       const w = random(7, 12) * (0.7 + 0.6 * L.air);
       out.push(makeOilStroke(O, x, y + random(-3, 3), Math.atan(slope) + random(-0.15, 0.15), w * random(2.5, 4), w, {
         color: mixRGB(above, below, random(0.35, 0.65)),
@@ -3030,6 +3239,185 @@ function oilBlade(b) {
     }
     endShape();
   }
+}
+
+// Palette-knife lights. The thickest lights are laid with a knife, not a brush: a flat
+// plane of paint with straight sides, a raised lip along the side that faces the room
+// light, a thin shadow under the opposite edge, and a ragged trailing end where the knife
+// lifted. They go only where the underpainting is brightest (above its ~88th percentile
+// of value, measured per painting so every mood gets its own top lights), and lie along
+// the local stroke direction — around the sun, across the water, along the facets.
+function oilKnife(s, O) {
+  const out = [];
+  const n = Math.round(OP.knife);
+  if (n <= 0) return out;
+  const pool = [];
+  for (let i = 0; i < 900; i++) pool.push(O.lum(O.under(random(0, REF_W), random(0, REF_H))));
+  pool.sort((a, b) => a - b);
+  const Lhi = pool[Math.floor(pool.length * 0.88)];
+  const Lmax = pool[pool.length - 1];
+  for (let t = 0; t < n * 14 && out.length < n; t++) {
+    const x = random(0, REF_W);
+    const y = random(0, REF_H);
+    const f = O.field(x, y);
+    if (f.kind === 'far' || f.kind === 'limb' || f.kind === 'leaf' || f.kind === 'bank' || f.kind === 'grass') continue;
+    const base = O.under(x, y);
+    const l = O.lum(base);
+    if (l < Lhi) continue;
+    const bright = clamp01((l - Lhi) / Math.max(1, Lmax - Lhi));
+    if (random() > 0.35 + 0.65 * bright) continue;
+    const len = OP.w * f.k * random(1.1, 2.1) * (f.kind === 'water' ? 0.7 : 1);
+    const wid = len * random(0.32, 0.5);
+    const col = mixRGB(base, [255, 249, 236], 0.1 + 0.2 * bright);
+    const tail = [];
+    for (let i = 0; i <= 5; i++) tail.push(random(0, random(0.15, 0.35)));
+    const drags = [0, 1, 2].map(() => [random(-0.7, 0.7), random(0.6, 1), random(0.2, 0.7), random(0.9, 1.06)]);
+    out.push({ x, y, a: f.a + random(-0.15, 0.15), len, wid, col, tail, drags });
+  }
+  return out;
+}
+
+function oilKnifeMark(k) {
+  const ca = Math.cos(k.a), sa = Math.sin(k.a);
+  const ux = ca, uy = sa, vx = -sa, vy = ca;
+  const hl = k.len / 2, hw = k.wid / 2;
+  // outline: a straight leading edge, straight sides, a ragged trailing edge
+  const P = [];
+  P.push([-hl, -hw], [-hl, hw]);
+  const steps = 5;
+  for (let i = 0; i <= steps; i++) {
+    const v = hw - (2 * hw * i) / steps;
+    P.push([hl - k.tail[i] * k.len, v]);
+  }
+  const at = (p, dx, dy) => [k.x + ux * p[0] + vx * p[1] + dx, k.y + uy * p[0] + vy * p[1] + dy];
+  const poly = (col, alpha, dx, dy) => {
+    fill(col[0], col[1], col[2], alpha);
+    beginShape();
+    for (const p of P) {
+      const q = at(p, dx, dy);
+      vertex(X(q[0]), Y(q[1]));
+    }
+    endShape(CLOSE);
+  };
+  noStroke();
+  const off = k.wid * 0.12;
+  poly(shadeRGB(k.col, 0.55), 70, -OP.light[0] * off, -OP.light[1] * off); // shadow under the far edge
+  poly(k.col, 255, 0, 0);
+  // the lip along the long side that faces the light, the drop along the other
+  const facing = vx * OP.light[0] + vy * OP.light[1] > 0 ? 1 : -1;
+  const lit = mixRGB(k.col, [255, 253, 246], 0.5);
+  strokeWeight(Math.max(0.6, k.wid * U * 0.07));
+  beginShape(LINES);
+  stroke(lit[0], lit[1], lit[2], 190);
+  let a0 = at([-hl, hw * 0.92 * facing], 0, 0), a1 = at([hl * 0.7, hw * 0.92 * facing], 0, 0);
+  vertex(X(a0[0]), Y(a0[1]));
+  vertex(X(a1[0]), Y(a1[1]));
+  const dk = shadeRGB(k.col, 0.7);
+  stroke(dk[0], dk[1], dk[2], 110);
+  a0 = at([-hl, -hw * 0.95 * facing], 0, 0);
+  a1 = at([hl * 0.75, -hw * 0.95 * facing], 0, 0);
+  vertex(X(a0[0]), Y(a0[1]));
+  vertex(X(a1[0]), Y(a1[1]));
+  // a few faint drag lines: the knife's own scratches in the flat
+  strokeWeight(Math.max(0.5, U * 0.5));
+  for (const [dv, d0, d1, sh] of k.drags) {
+    const v = dv * hw;
+    const c = shadeRGB(k.col, sh);
+    stroke(c[0], c[1], c[2], 90);
+    a0 = at([-hl * d0, v], 0, 0);
+    a1 = at([hl * d1, v], 0, 0);
+    vertex(X(a0[0]), Y(a0[1]));
+    vertex(X(a1[0]), Y(a1[1]));
+  }
+  endShape();
+  noStroke();
+}
+
+// Sgraffito: lines scratched through the wet paint with the brush handle, back to what
+// lies beneath — here a warm earth under-layer. In the grass at the bank's lip they read as
+// lit stems; they arc upward, are short and sparse, and are commoner toward the sun.
+function oilSgraffito(s, O) {
+  const out = [];
+  const rp = s.repoussoir;
+  const n = Math.round(OP.sgraffito);
+  for (let t = 0; t < n * 4 && out.length < n; t++) {
+    const x = random(rp.bank[0][0], rp.bank[rp.bank.length - 1][0]);
+    const sunward = clamp01(1 - Math.abs(x - s.sunX) / (REF_W * 0.75));
+    if (random() > 0.3 + 0.7 * sunward) continue;
+    const y = bankAt(rp, x) + random(-2, 26);
+    const len = random(7, 24);
+    const a = -Math.PI / 2 + (noise(x * 0.004, 9) - 0.5) * 0.76 - 0.12 * s.sunSide + random(-0.2, 0.2);
+    const curl = random(-0.5, 0.5);
+    const P = [];
+    for (let i = 0; i <= 5; i++) {
+      const u = i / 5;
+      const th = a + curl * u * u;
+      const last = P.length ? P[P.length - 1] : [x, y];
+      P.push(i === 0 ? [x, y] : [last[0] + (Math.cos(th) * len) / 5, last[1] + (Math.sin(th) * len) / 5]);
+    }
+    const col = mixRGB(IMPRIMATURA, O.under(x, y - len * 0.5), 0.3);
+    out.push({ P, col: mixRGB(col, s.C.light, 0.25 * sunward), w: random(0.5, 0.9) });
+  }
+  return out;
+}
+
+function oilScratches(list) {
+  beginShape(LINES);
+  for (const sc of list) {
+    stroke(sc.col[0], sc.col[1], sc.col[2], 200);
+    strokeWeight(Math.max(0.6, sc.w * U));
+    for (let i = 0; i < sc.P.length - 1; i++) {
+      vertex(X(sc.P[i][0]), Y(sc.P[i][1]));
+      vertex(X(sc.P[i + 1][0]), Y(sc.P[i + 1][1]));
+    }
+  }
+  endShape();
+  noStroke();
+}
+
+// Glazes: thin transparent colour over the dry painting, the old masters' last layer. A
+// glaze filters the light coming back off the paint, so it is drawn as MULTIPLY: it can
+// shift hue and deepen, never lighten. Two glazes: transparent gold radiating from the
+// sun (zero at the core, so the white stays white; strongest in the halo and fading
+// out across the sky and plain), and a cool transparent blue deepening the shadowed
+// foreground toward the bottom edge.
+function oilGlazes(s) {
+  const k = OP.glaze;
+  if (k <= 0) return;
+  const C = s.C;
+  const white = [255, 255, 255];
+  const gold = mixRGB([255, 206, 140], C.glow, 0.3);
+  const cool = mixRGB([176, 190, 228], C.shadow, 0.15);
+  blendMode(MULTIPLY);
+  noStroke();
+  const rings = [0, 90, 240, 480, 820, 1300];
+  const amt = [0, 0.18, 0.38, 0.28, 0.12, 0];
+  const seg = 48;
+  for (let r = 0; r < rings.length - 1; r++) {
+    const c0 = mixRGB(white, gold, amt[r] * k);
+    const c1 = mixRGB(white, gold, amt[r + 1] * k);
+    beginShape(TRIANGLE_STRIP);
+    for (let i = 0; i <= seg; i++) {
+      const th = (i / seg) * TWO_PI;
+      const cx = Math.cos(th), cy = Math.sin(th);
+      fill(c0[0], c0[1], c0[2]);
+      vertex(X(s.sunX + cx * rings[r]), Y(s.sunY + cy * rings[r] * 0.8));
+      fill(c1[0], c1[1], c1[2]);
+      vertex(X(s.sunX + cx * rings[r + 1]), Y(s.sunY + cy * rings[r + 1] * 0.8));
+    }
+    endShape();
+  }
+  const rp = s.repoussoir;
+  const deep = mixRGB(white, cool, 0.55 * k);
+  beginShape(TRIANGLE_STRIP);
+  for (const [x, y] of rp.bank) {
+    fill(255, 255, 255);
+    vertex(X(x), Y(y - 4));
+    fill(deep[0], deep[1], deep[2]);
+    vertex(X(x), Y(REF_H + 40));
+  }
+  endShape();
+  blendMode(BLEND);
 }
 
 // The sun: the thickest paint in the picture. A near-white core built up in loaded,
