@@ -3169,29 +3169,8 @@ function oilObjects(s, O, out) {
   const C = s.C;
   const rp = s.repoussoir;
 
-  // midground trees, far → near
-  for (const tr of s.trees) {
-    const x = s.gx(tr.wx, tr.z);
-    if (x < -40 || x > REF_W + 40) continue;
-    const y = s.gy(tr.z);
-    const sc = s.F / tr.z;
-    const w = tr.hW * sc * (tr.tall ? 0.5 : 1);
-    const h = tr.hW * sc * (tr.tall ? 2.3 : 1.15);
-    if (w < 5) continue;
-    const cy = y - h * 0.18 - h * 0.5;
-    const base = O.under(x, cy);
-    const dab = Math.max(1.6, w * 0.22);
-    const n = Math.round(5 + w * 0.35);
-    for (let i = 0; i < n; i++) {
-      const u = random(-0.45, 0.45), v = random(-0.45, 0.45);
-      out.push(makeOilStroke(O, x + u * w, cy + v * h, random(-0.6, 0.6) - (Math.PI / 2) * (tr.tall ? 1 : 0), dab * random(1.6, 2.6), dab, { color: shadeRGB(base, random(0.75, 0.95)), relief: 0.2 }));
-    }
-    const lit = mixRGB(base, mixRGB(C.foliageLit, C.light, 0.4), 0.45 * s.warmth + 0.15);
-    for (let i = 0; i < Math.round(n * 0.5); i++) {
-      const u = random(0, 0.4) * s.sunSide, v = random(-0.45, 0.1);
-      out.push(makeOilStroke(O, x + u * w, cy + v * h, random(-0.8, 0.8), dab * random(1.2, 2), dab * 0.8, { color: mixRGB(lit, base, random(0, 0.3)), relief: 0.35 }));
-    }
-  }
+  // midground trees, far → near (Ran Art Blog's guide, at a distance — see oilMidTree)
+  for (const tr of s.trees) oilMidTree(s, O, tr, out);
 
   // glints on the water: loaded paint, brightest under the sun
   const r = s.river;
@@ -3572,6 +3551,119 @@ function oilGlazes(s) {
   }
   endShape();
   blendMode(BLEND);
+}
+
+// A midground tree in oil, by the same guide as the framing tree, scaled to its distance:
+//  - basic shape first: a round crown is 3–7 overlapping sub-clumps inside its outline; a
+//    tall tree is a column narrowing to the top (the guide's pine: draw the form, fill it
+//    with random marks, then more marks on the shadow side and at the bottom)
+//  - each sub-clump is a sphere (circular transition), the crown darker toward its bottom
+//    (linear transition); light from the sun's side and from above
+//  - dark values first, then light; light marks soft, darks crisp
+//  - abstract marks at every angle, never a direction pattern; mark size set by distance
+//    ("big leaves, big marks" — a far tree gets small marks, a near one larger)
+//  - cool in the shadow, warm in the light, all a little desaturated — and, being in the
+//    middle distance, everything taken from the underpainting, which already carries the
+//    aerial perspective (less contrast, bluer, lighter with distance)
+//  - edge leaves only where the tree is big enough on screen to show them
+// Too-small trees (under 5 REF wide) keep the underpainting: distance removes detail.
+function oilMidTree(s, O, tr, out) {
+  const C = s.C;
+  const x = s.gx(tr.wx, tr.z);
+  if (x < -40 || x > REF_W + 40) return;
+  const y = s.gy(tr.z);
+  const sc = s.F / tr.z;
+  const w = tr.hW * sc * (tr.tall ? 0.5 : 1);
+  const h = tr.hW * sc * (tr.tall ? 2.3 : 1.15);
+  if (w < 5) return;
+  const air = s.aerial(tr.z);
+  const cy = y - h * 0.18 - h * 0.5;
+  const base = O.under(x, cy);
+  const desat = (c, k) => {
+    const l = 0.3 * c[0] + 0.59 * c[1] + 0.11 * c[2];
+    return [c[0] + (l - c[0]) * k, c[1] + (l - c[1]) * k, c[2] + (l - c[2]) * k];
+  };
+  const k = 1 - air; // contrast falls with distance
+  const dark = desat(mixRGB(shadeRGB(base, 1 - 0.32 * k), C.shadow, 0.12 * k), 0.15);
+  const lit = desat(mixRGB(base, mixRGB(C.foliageLit, C.light, 0.45 * s.warmth), (0.55 * s.warmth + 0.15) * k), 0.15);
+  const colourAt = (t) => (t < 0.45 ? mixRGB(dark, base, t / 0.45) : mixRGB(base, lit, (t - 0.45) / 0.55));
+  // light: from the sun's side and above, a little toward the viewer
+  const lx = Math.sign(s.sunX - x) || s.sunSide;
+  const L = [lx * 0.62, -0.62, 0.48];
+  const top = cy - h * 0.5, span = h;
+  const shade = (u, v, yy) => {
+    const nz = Math.sqrt(Math.max(0, 1 - Math.min(1, u * u + v * v)));
+    const lam = Math.max(0, u * L[0] + v * L[1] + nz * L[2]);
+    return clamp01(Math.pow(lam, 0.8) * (1 - 0.4 * clamp01((yy - top) / span)) + 0.05);
+  };
+  // sub-clumps: the basic shapes
+  const clumps = [];
+  if (tr.tall) {
+    const m = 3 + Math.round(h / 22);
+    for (let i = 0; i < m; i++) {
+      const t = (i + 0.5) / m; // 0 at the top
+      const r = w * (0.22 + 0.3 * t) * random(0.85, 1.1);
+      clumps.push({ x: x + random(-0.12, 0.12) * w, y: top + t * h * 0.95, r });
+    }
+  } else {
+    const m = Math.min(7, 3 + Math.round(w / 12));
+    for (let i = 0; i < m; i++) {
+      const a = random(TWO_PI), d = Math.sqrt(random()) * 0.42;
+      clumps.push({ x: x + Math.cos(a) * d * w, y: cy + Math.sin(a) * d * h * 0.85, r: w * random(0.26, 0.38) });
+    }
+  }
+  clumps.sort((p, q) => p.y - q.y); // top to bottom: lower clumps overlap the ones above
+  const sz0 = Math.max(1.1, Math.min(3.2, w * 0.075)); // mark size by distance
+  const nPer = (r) => Math.min(120, Math.round((r * r) / (sz0 * sz0) * 1.6) + 6);
+  const markAt = (cx, cyy, sz, col, crisp) => {
+    const a = random(TWO_PI); // abstract: every angle
+    const tick = random() < 0.25;
+    out.push(makeOilStroke(O, cx, cyy, a, sz * (tick ? random(1.1, 1.6) : random(0.6, 1.2)), sz * (tick ? random(0.25, 0.4) : random(0.5, 0.85)), {
+      color: col, color2: shadeRGB(col, random(0.88, 1.08)), relief: crisp ? 0.12 * k : 0, crisp, soft: !crisp,
+    }));
+  };
+  // the mass blocked in first, dark and broken, so no underpainting edge shows round it
+  for (const c of clumps) {
+    for (let i = 0; i < 3; i++) {
+      const a = random(TWO_PI), d = random(0, 0.3) * c.r;
+      out.push(makeOilStroke(O, c.x + Math.cos(a) * d, c.y + Math.sin(a) * d * 0.9, random(-0.6, 0.6) + (tr.tall ? -Math.PI / 2 : 0), c.r * random(1.2, 1.7), c.r * random(0.8, 1.1), {
+        color: shadeRGB(dark, random(0.9, 1)), color2: dark, relief: 0, soft: true,
+      }));
+    }
+  }
+  for (const pass of [0, 1]) {
+    for (const c of clumps) {
+      const n = nPer(c.r) * (pass === 0 ? 2 : 1);
+      for (let i = 0; i < n; i++) {
+        const a = random(TWO_PI), d = Math.sqrt(random());
+        if (d > 0.8 + 0.3 * noise(tr.ph + c.x * 0.1 + Math.cos(a), Math.sin(a))) continue;
+        const u = Math.cos(a) * d, v = Math.sin(a) * d;
+        const mx = c.x + u * c.r, my = c.y + v * c.r * 0.9;
+        const t = shade(u, v, my);
+        if (pass === 0 ? t > 0.45 : t <= 0.45) continue;
+        if (pass === 1 && random() > 0.45 + 0.55 * t) continue;
+        const col = colourAt(clamp01(t + random(pass === 0 ? -0.04 : -0.08, pass === 0 ? 0.3 : 0.08)));
+        markAt(mx, my, sz0 * Math.exp(random(-0.45, 0.4)), col, pass === 0 || random() < 0.4);
+      }
+    }
+  }
+  // edge leaves, only where the tree is big enough on screen to show them
+  if (w > 14) {
+    for (const c of clumps) {
+      const steps = Math.round(c.r * 0.4);
+      for (let q = 0; q < steps; q++) {
+        if (random() < 0.5) continue;
+        const a = (q / steps) * TWO_PI + random(-0.2, 0.2);
+        const ex = c.x + Math.cos(a) * c.r * 0.92, ey = c.y + Math.sin(a) * c.r * 0.82;
+        if (clumps.some((o) => o !== c && Math.hypot((ex - o.x) / o.r, (ey - o.y) / (o.r * 0.9)) < 0.95)) continue;
+        const sunward = Math.cos(a) * L[0] + Math.sin(a) * L[1] > 0.2;
+        const col = sunward && random() < 0.5 ? mixRGB(lit, base, random(0, 0.3)) : mixRGB(dark, base, random(0.1, 0.5));
+        const la = a + random(-0.6, 0.6) + 0.3;
+        const len = sz0 * random(1.2, 1.9);
+        out.push(makeOilStroke(O, ex + Math.cos(la) * len * 0.3, ey + Math.sin(la) * len * 0.3, la, len, len * 0.4, { color: col, color2: col, relief: 0, crisp: true }));
+      }
+    }
+  }
 }
 
 // The sun: the thickest paint in the picture. A near-white core built up in loaded,

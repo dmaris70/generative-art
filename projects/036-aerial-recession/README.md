@@ -237,6 +237,22 @@ its zone fully, and light marks thicken toward the lit pole.
 | contrast between highlights and shadows, not too little, not cartoonish | kept the contre-jour value range; lit crown tops now separate the clumps |
 | not applied | pen technique (nib size, hatching, stippling, white pens), drawing order for a right hand, photo reference advice, paper choice — about tools rather than the image |
 
+**Midground trees** (`oilMidTree`), by the same guide, scaled to distance:
+
+| the guide | midground trees |
+|---|---|
+| basic shapes first | a round crown is 3–7 overlapping sub-clumps; a tall tree is a column of clumps narrowing to the top (the guide's pine: form, random marks, then darker on the shadow side and at the bottom) |
+| circular and linear transitions | each sub-clump shaded as a sphere lit from the sun's side and above; the crown darker toward its bottom |
+| darks first, then lights; quick strokes read lighter | a dark broken block-in, dark crisp marks, then softer light marks thickening toward the lit side |
+| abstract marks, no pattern | marks at every angle, blobs and ticks mixed, log-normal sizes |
+| leaf size depends on distance | mark size ∝ the tree's width on screen (1.1–3.2 REF units) |
+| leaf type only at the edge | edge leaves only on trees wider than 14 REF units |
+| overlapping | sub-clumps painted top to bottom |
+| temperature; less saturated | cool shadow, warm light, desaturated 15 %; colours taken from the underpainting, which already carries the aerial perspective, and contrast scaled by (1 − air) |
+| distant objects show less | trees narrower than 5 REF units keep the underpainting |
+
+![midground trees, 2× detail (seed 4)](midground-detail.png)
+
 ## Oil methods — from five tutorials to code
 
 Sources: Leanne Rath, *Oil painting techniques for beginners*; Old Masters Academy,
