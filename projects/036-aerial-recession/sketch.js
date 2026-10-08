@@ -485,6 +485,20 @@ function buildRanges(s) {
       }
       raw.push([x, sum / norm]);
     }
+    if (big) {
+      // rounded summits and shoulders: the profile is smoothed (three box passes of
+      // ±28 px ≈ a Gaussian), then a faint crest texture is laid back on; the middle ranges
+      // otherwise rose as pointed tents
+      for (let pass = 0; pass < 3; pass++) {
+        const v = raw.map((p) => p[1]);
+        for (let q = 0; q < raw.length; q++) {
+          let acc = 0, cnt = 0;
+          for (let r = Math.max(0, q - 7); r <= Math.min(raw.length - 1, q + 7); r++) { acc += v[r]; cnt++; }
+          raw[q][1] = acc / cnt;
+        }
+      }
+      for (const p of raw) p[1] += 0.012 * (noise(p[0] * 0.05 + off, i * 13.1) - 0.5);
+    }
     let lo = Infinity;
     let hi = -Infinity;
     for (const p of raw) {
@@ -1065,7 +1079,9 @@ function buildTasks(s) {
   const raysAfter = Math.max(0, Math.floor(nR / 2) - 1);
   s.ranges.forEach((L, idx) => {
     T.push(() => paintRangeBody(s, L));
-    T.push(() => paintRangeLight(s, L));
+    // with big forms the light follows the planes (rangePlane); the per-peak shadow
+    // triangles read as pointed tents on every middle range
+    T.push(() => (G.param('mountainForm') === 1 ? paintRangePlanes(s, L) : paintRangeLight(s, L)));
     // in oil the pencil scree lines get sampled into the strokes as scratches: the oil
     // ranges carry their own form-following strokes instead
     if (L.t > 0.3 && !(G.param('medium') === 1 && G.param('mountainForm') === 1)) T.push(() => paintRangeTexture(s, L));
@@ -1269,6 +1285,39 @@ function paintRangeBody(s, L) {
   brush.fillTexture(0.55, 0.15);
   bpoly((poly.slice(0, L.ridge.length).concat([[REF_W + 30, L.base + 10], [-30, L.base + 10]])));
   brush.noFill();
+}
+
+// Light by planes, in the underpainting: the range is glazed in small cells, each lit by
+// the slope it belongs to (rangePlane: the crest smoothed with depth, crossed by spurs) —
+// warm where it turns to the sun, cool and darker where it turns away, a lit crest on the
+// sun's side — so the oil strokes that sample it inherit broad planes, not tents.
+function paintRangePlanes(s, L) {
+  const C = s.C;
+  const vis = 1 - L.air;
+  const warm = s.seen(mixRGB(mixRGB(L.local, C.light, 0.6), C.glow, 0.25), L.z * 0.7, s.sunX, L.base - L.amp);
+  const cool = s.seen(mixRGB(L.local, C.shadow, 0.65), L.z * 0.55, s.focalX, L.base - L.amp);
+  noStroke();
+  const cw = 5;
+  for (let x = -30; x < REF_W + 30; x += cw) {
+    const ry = L.ridge[Math.max(0, Math.min(L.ridge.length - 1, Math.round((x + 30) / 4)))][1];
+    const depth = Math.min(L.base + 8 - ry, 40 + L.amp * 0.9);
+    const ch = 5;
+    for (let y = ry; y < ry + depth; y += ch) {
+      const P = rangePlane(s, L, x + cw / 2, y + ch / 2);
+      const fade = 1 - clamp01((y - ry) / depth); // the planes soften toward the foot
+      const lk = (0.55 * P.lit + 0.4 * P.crest) * vis * (0.5 + 0.5 * fade) * s.warmth;
+      const sk = 0.6 * P.shade * (0.45 + 0.55 * vis) * (0.4 + 0.6 * fade);
+      if (lk > sk) fill(warm[0], warm[1], warm[2], 255 * Math.min(0.7, lk));
+      else fill(cool[0], cool[1], cool[2], 255 * Math.min(0.7, sk));
+      if (Math.max(lk, sk) < 0.03) continue;
+      beginShape();
+      vertex(X(x), Y(y));
+      vertex(X(x + cw + 0.5), Y(y));
+      vertex(X(x + cw + 0.5), Y(y + ch + 0.5));
+      vertex(X(x), Y(y + ch + 0.5));
+      endShape(CLOSE);
+    }
+  }
 }
 
 // Chiaroscuro: shadow faces away from the sun, warm glaze on faces toward it.
@@ -4685,17 +4734,17 @@ function oilClouds(s, O, out) {
           // 1. the glow just outside the edge: light scattered in the fringe of vapour
           if (random() < 0.7) {
             const gx = lb.x + Math.cos(a) * edge * 1.06 * lb.rx, gy = lb.y + Math.sin(a) * edge * 1.06 * lb.ry;
-            const gc = mixRGB(sky, rimC, Math.min(0.5, 0.12 + 0.35 * k2));
+            const gc = mixRGB(sky, rimC, Math.min(0.32, 0.08 + 0.22 * k2));
             const gk = O.field(gx, gy).kind;
             if (gk === 'sky' || gk === 'cloud') out.push(makeOilStroke(O, gx, gy, a + Math.PI / 2 + random(-0.2, 0.2), ms * random(1.4, 2.4), ms * random(0.5, 0.8), { color: gc, color2: sky, relief: 0, soft: true }));
           }
           // 2. the lining itself: a bright, slightly broken line on the edge, thickest
           // where the edge faces the sun most directly
-          if (random() > 0.55 + 0.45 * k2) continue;
-          const col = mixRGB(sky, rimC, Math.min(0.97, 0.45 + 0.6 * k2));
+          if (random() > 0.3 + 0.4 * k2) continue; // fewer, more broken
+          const col = mixRGB(sky, rimC, Math.min(0.85, 0.35 + 0.5 * k2));
           const ta = a + Math.PI / 2 + random(-0.12, 0.12);
           // a fine line: bright, but never thicker than a rigger's stroke
-          out.push(makeOilStroke(O, x, y, ta, ms * random(1, 1.8), Math.min(2.6, Math.max(0.9, ms * (0.1 + 0.14 * clamp01(k2)))) * random(0.8, 1.15), {
+          out.push(makeOilStroke(O, x, y, ta, ms * random(1, 1.8), Math.min(1.7, Math.max(0.7, ms * (0.06 + 0.08 * clamp01(k2)))) * random(0.8, 1.15), {
             color: col, color2: mixRGB(rimC, [255, 255, 250], 0.4), relief: 0.25 * CI * k2, crisp: true,
           }));
         }
