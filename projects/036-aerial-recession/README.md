@@ -609,6 +609,35 @@ everything else that used to go on last:
   wider and darker, with bristles breaking at the edges. The leaf's body then goes on
   inside it.
 
+## After Wilson (*Summer Evening*) and Friedrich (*Northern Landscape*): sky and mountains
+
+**Problems.** Two weak areas remained:
+
+- **Clouds.** They read as separate objects laid on the sky: crisp outlines, one shared
+  violet-grey, and the sun's swirl running into their edges.
+- **Mountains.** They had no form:
+  - the focal peak was a symmetric Gaussian bell (a sand pile);
+  - every range was evenly jagged ridged noise;
+  - the texture was crosshatched scratches unrelated to the slopes (2H pencil scree lines
+    in the underpainting, plus oil strokes that randomly took the fall line, a crossing
+    facet or the crest).
+
+### Sky and clouds as one
+
+| device | change |
+|---|---|
+| **1. Lost and found edges** (*cloud edges lost into the sky*, 0.8) | Strokes are laid across each cloud's outline, carrying the sky on one side and the cloud on the other. Now and then a little sky is dragged back inside. An edge is lost only where cloud and sky are close in value (≤ 55 levels of luminance apart). Against the bright sky near the sun the contrast keeps it found: Wilson's single hard edge. Silver linings appear only on found edges, on the side facing the sun |
+| **2. Cloud colour from the sky** | A cloud's body is now the local sky colour turned darker and cooler: warm grey near the light, cool grey away from it. Only a trace (10 %) of the shared violet remains. Lights mix 30 % of the local sky |
+| **4. Calm swirl at the clouds** | In and up to 1.6× around a cloud's lobes, the sun swirl relaxes up to 85 % toward level, so the cloud's own strokes describe it and the two stroke systems stop crossing at its edge. Cloud-body scumbles are reduced (65 → 40 %) so the shadowed body no longer looks moth-eaten |
+
+### Mountains with form (*mountain forms*: big forms (default) or jagged (before); a scene setting)
+
+| device | change |
+|---|---|
+| **5. Big-form silhouettes** | The two broad noise octaves carry the shape; finer ones contribute 14 % and only break the crest. The ridged sharpness is cut to 30 %. The focal peak is asymmetric: about 1.4× steeper on one side, a long shoulder and a lower second summit on the other (side chosen by seed), and a lightly broken crest. The random draws are unchanged, so trees, river and fields stay where they were |
+| **6. Planes from spurs** | Each point under a crest belongs to a slope: the crest's slope, smoothed over a width that grows with depth (10 px + 0.9 × depth). Spurs falling from the summits (a noise height field whose lateral slope alternates) cross it. Faces turned to the sun warm and lighten; faces turned away cool and darken; the crest is lit along the sun's side. All of it weakens with the range's air (far ranges at 45 %) |
+| **7. Texture by distance, following form** | One stroke direction per plane: steep faces along their fall line, gentle ones along the contour. Strokes are about 20 % larger, with lower relief (0.22 → 0.1). Far ranges get larger, softer, level strokes. In oil there are no pencil scree lines, and broken colour on the ranges is halved |
+
 ## How each technique is implemented
 
 | technique | where | rule |
