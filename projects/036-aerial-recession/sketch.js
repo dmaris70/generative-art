@@ -160,9 +160,10 @@ function setup() {
       wildflowers: { value: 0.5, min: 0, max: 1.5, step: 0.05, label: 'wildflowers', group: CO },
       meadowBroken: { value: 0.7, min: 0, max: 1, step: 0.05, label: 'meadow broken colour', group: CO },
       waterBroken: { value: 0.7, min: 0, max: 1, step: 0.05, label: 'water broken colour', group: CO },
+      fgPaint: { value: 1, min: 0, max: 1, step: 0.05, label: 'foreground painted with the rest', group: MT },
       cloudPaint: { value: 0.7, min: 0, max: 1, step: 0.05, label: 'cloud paint: thin shadows, thick lights', group: CO },
       overcast: { value: 0, min: 0, max: 1, step: 0.05, label: 'overcast deck', group: CO },
-      horizonBand: { value: 0.6, min: 0, max: 1.2, step: 0.05, label: 'bright horizon band', group: CO },
+      horizonBand: { value: 1.0, min: 0, max: 1.2, step: 0.05, label: 'bright horizon band', group: CO },
       cloudVolume: { value: 0.85, min: 0, max: 1, step: 0.05, label: 'cloud volume (oil)', group: CO },
       cloudShadows: { value: 0.7, min: 0, max: 1.2, step: 0.05, label: 'cloud shadows on the land', group: CO },
       windLines: { value: 0.6, min: 0, max: 1.5, step: 0.05, label: 'wind lines on the water', group: CO },
@@ -2904,6 +2905,22 @@ function markToOil(m) {
   };
 }
 
+// The foreground in the same paint as the rest. A late stroke on the tree, the canopy or
+// the bank is otherwise a clean, opaque, smooth mark — a vector shape laid over a
+// painting. With the foreground setting each one is painted like the strokes beneath it:
+// it picks up the wet paint where it lands, its body is not quite opaque, its ridge
+// catches the room light, and its bristles break where the brush runs dry.
+function fgPaint(st, rel = 0.1, dry = 0) {
+  const k = OP && OP.fg;
+  if (!k) return st;
+  st.pickup = true;
+  st.crisp = false;
+  st.lean = 1 - 0.1 * k;
+  st.relief = Math.max(st.relief, rel * k * G.param('impasto'));
+  if (dry > 0) st.dry = Math.min(0.85, OP.dry + dry * k);
+  return st;
+}
+
 // A mark in p5.brush: bands as watercolour washes, grooves in the bark brush, tapered
 // darks and edges in 2B with pointed pressure, light in coloured pencil.
 function drawMarkBrush(m) {
@@ -3025,9 +3042,9 @@ function oilLimbPainterly(s, seg) {
     const path = [];
     for (let j = 0; j <= k; j++) path.push(at(i + ((i1 - i) * j) / k, random(-0.04, 0.04)));
     const col = shadeRGB(mixRGB(T.mid, T.dark, random(0, 0.35)), random(0.92, 1.06));
-    oilStroke(markToOil({ kind: 'body', path, w: wAt((i + i1) / 2) * random(0.98, 1.06), col, col2: mixRGB(col, T.dark, 0.4), rel: 0 }));
+    oilStroke(fgPaint(markToOil({ kind: 'body', path, w: wAt((i + i1) / 2) * random(0.98, 1.06), col, col2: mixRGB(col, T.dark, 0.4), rel: 0 }), 0.14, 0.12));
   }
-  for (const m of marks) if (m.kind !== 'band' || m.w < W0 * 0.3) oilStroke(markToOil(m));
+  for (const m of marks) if (m.kind !== 'band' || m.w < W0 * 0.3) oilStroke(m.kind === 'dark' || m.kind === 'edge' ? markToOil(m) : fgPaint(markToOil(m), 0.1, 0.25));
   // the darkest accents go in the crotch, under a branch where it leaves its parent
   // (Ran's branch steps: light layer, midtones, then the darkest accents on the shadow
   // side and under the junctions)
@@ -3161,11 +3178,11 @@ function oilCanopy(s) {
         py += Math.sin(a) * size * random(0.35, 0.7);
         path.push([px, py]);
       }
-      oilStroke(markToOil({ kind: crisp ? 'leaf' : 'band', path, w: size * random(0.22, 0.4), col, col2: shadeRGB(col, random(0.85, 1.1)), rel: 0 }));
+      oilStroke(fgPaint(markToOil({ kind: crisp ? 'leaf' : 'band', path, w: size * random(0.22, 0.4), col, col2: shadeRGB(col, random(0.85, 1.1)), rel: 0 }), 0.12, 0.1));
     } else if (kind < 0.85) {
       const l = size * random(0.5, 1.1);
       path = [[x - Math.cos(a0) * l * 0.5, y - Math.sin(a0) * l * 0.5], [x + random(-0.15, 0.15) * l, y + random(-0.15, 0.15) * l], [x + Math.cos(a0) * l * 0.5, y + Math.sin(a0) * l * 0.5]];
-      oilStroke(markToOil({ kind: crisp ? 'leaf' : 'band', path, w: l * random(0.45, 0.8), col, col2: shadeRGB(col, random(0.85, 1.1)), rel: 0 }));
+      oilStroke(fgPaint(markToOil({ kind: crisp ? 'leaf' : 'band', path, w: l * random(0.45, 0.8), col, col2: shadeRGB(col, random(0.85, 1.1)), rel: 0 }), 0.12, 0.1));
     } else {
       const l = size * random(0.4, 0.8);
       path = [[x, y], [x + Math.cos(a0) * l * 0.5, y + Math.sin(a0) * l * 0.5], [x + Math.cos(a0) * l, y + Math.sin(a0) * l]];
@@ -3184,17 +3201,18 @@ function oilCanopy(s) {
       const Lm = lf.r * random(0.6, 1.0);
       const ang = random(-0.6, 0.6);
       const col = shadeRGB(core, random(0.78, 0.9)); // a touch deeper than the marks that go on it
-      oilStroke(markToOil({ kind: 'leaf', path: [[x - Math.cos(ang) * Lm * 0.5, y - Math.sin(ang) * Lm * 0.5], [x, y + random(-0.1, 0.1) * Lm], [x + Math.cos(ang) * Lm * 0.5, y + Math.sin(ang) * Lm * 0.5]], w: lf.r * random(0.38, 0.55), col, col2: shadeRGB(col, 0.85), rel: 0 }));
+      oilStroke(fgPaint(markToOil({ kind: 'leaf', path: [[x - Math.cos(ang) * Lm * 0.5, y - Math.sin(ang) * Lm * 0.5], [x, y + random(-0.1, 0.1) * Lm], [x + Math.cos(ang) * Lm * 0.5, y + Math.sin(ang) * Lm * 0.5]], w: lf.r * random(0.38, 0.55), col, col2: shadeRGB(col, 0.85), rel: 0 }), 0.06, 0.15));
     }
   }
   // leaf-mark size: big leaves, big marks; this tree is near, so its marks are large
-  const leafSize = 3.4;
+  // painted with the rest, a brush's mark, not a pen's: larger and fewer
+  const leafSize = 3.4 * (1 + 0.45 * OP.fg);
   // 2. the clumps as spheres, top to bottom (lower clumps overlap the undersides above)
   const clumps = clumpsAll.slice().sort((a, b) => a.y - b.y);
   for (const lf of clumps) {
     const rx = lf.r * 1.05, ry = lf.r * 0.85;
     const area = rx * ry;
-    const n = Math.max(10, Math.min(110, Math.round(area / 4.5)));
+    const n = Math.max(10, Math.min(110, Math.round(area / (4.5 * (1 + 0.7 * OP.fg)))));
     // dark values first, then light: two sweeps over the same clump
     for (const pass of [0, 1]) {
       for (let i = 0; i < n * (pass === 0 ? 2 : 1); i++) {
@@ -3253,7 +3271,9 @@ function oilCanopy(s) {
         if (facing < 0.35 || random() > 0.55 * facing) continue;
         const ex = lf.x + Math.cos(a) * lf.r * 0.82, ey = lf.y + Math.sin(a) * lf.r * 0.68;
         if (clumpsAll.some((o) => o !== lf && Math.hypot((ex - o.x) / o.r, (ey - o.y) / (o.r * 0.8)) < 0.9)) continue;
-        const len = leafSize * random(0.9, 1.6);
+        // the rim keeps a fine mark (a large one reads as confetti), and fewer of them
+        if (random() < 0.35 * OP.fg) continue;
+        const len = 3.4 * random(0.9, 1.6);
         const la = a + Math.PI / 2 + random(-0.4, 0.4); // along the edge
         oilStroke(markToOil({ kind: 'leaf', path: [[ex - Math.cos(la) * len * 0.5, ey - Math.sin(la) * len * 0.5], [ex, ey], [ex + Math.cos(la) * len * 0.5, ey + Math.sin(la) * len * 0.5]], w: len * random(0.35, 0.55), col: mixRGB(rim, lit, random(0, 0.4)), col2: rim, rel: 0 }));
       }
@@ -3365,6 +3385,7 @@ function oilParams() {
     sweep: P('fieldSweep'),
     upright: P('meadowUpright'),
     meadowBroken: P('meadowBroken'),
+    fg: P('fgPaint'),
     constructive: P('constructive'),
     fieldPlanes: P('fieldPlanes'),
     depthN: P('depthScale'),
@@ -3498,6 +3519,7 @@ function oilBegin(s) {
   oilLayer(s, O, groups[0], 1.0, 1.2 * OP.coverage, false, 0);
   if (OP.layers >= 2) oilLayer(s, O, groups[1], 0.55, 0.8 * OP.coverage, false, 1);
   if (OP.layers >= 3) oilLayer(s, O, groups[1], 0.24, 1.0 * OP.coverage, true, 2);
+  oilForegroundBlockIn(s, O, groups[1]);
   oilLostEdges(s, O, groups[2]);
   oilPeak(s, O, groups[2]);
   oilBrokenColour(s, O, groups[2]);
@@ -3603,6 +3625,8 @@ function oilBegin(s) {
     }
   });
   queue.push(() => oilCanopy(s));
+  // then the same late passes the rest of the painting had, over the foreground too
+  queue.push(() => oilForegroundUnify(s, O));
   // the last, transparent layer over the dry painting
   queue.push(() => oilGlazes(s));
   tasks.splice(taskIdx, 0, ...queue);
@@ -4987,6 +5011,27 @@ function oilBlade(b) {
     endShape();
   };
   ribbon(b.col, b.a, -1, 1);
+  // the blade painted, not filled: two or three bristle tracks along it, each a little
+  // lighter or darker than the body, breaking where the brush runs dry
+  if (OP.fg > 0 && b.w0 * U >= 1.3) {
+    const nbr = b.w0 * U >= 3 ? 3 : 2;
+    strokeWeight(Math.max(0.5, b.w0 * U * 0.18));
+    beginShape(LINES);
+    for (let q = 0; q < nbr; q++) {
+      const off = -0.5 + q / Math.max(1, nbr - 1);
+      const v = random(0.82, 1.18);
+      stroke(b.col[0] * v, b.col[1] * v, b.col[2] * v, 150 * OP.fg);
+      const ph = random(100);
+      for (let i = 0; i < n - 1; i++) {
+        if (noise(ph + i * 0.9) < OP.dry + 0.1) continue;
+        const h0 = hw(i) * off, h1 = hw(i + 1) * off;
+        vertex(X(P[i][0] + nrm[i][0] * h0), Y(P[i][1] + nrm[i][1] * h0));
+        vertex(X(P[i + 1][0] + nrm[i + 1][0] * h1), Y(P[i + 1][1] + nrm[i + 1][1] * h1));
+      }
+    }
+    endShape();
+    noStroke();
+  }
   if (b.strap) {
     // the lighter middle, then the dark edge on the side away from the sun
     const away = nrm[Math.floor(n / 2)][0] * b.side > 0 ? -1 : 1;
@@ -5166,6 +5211,135 @@ function oilScratches(list) {
 // sun (zero at the core, so the white stays white; strongest in the halo and fading
 // out across the sky and plain), and a cool transparent blue deepening the shadowed
 // foreground toward the bottom edge.
+// The foreground blocked in with the rest of the painting, not added after it. A painter
+// lays the tree's dark mass and the crown's masses in the first layers, in big strokes
+// that drag the wet sky at their edges; the detailed tree goes on over this later, and
+// lets it show between its marks.
+function oilForegroundBlockIn(s, O, out) {
+  const k = OP.fg;
+  if (k <= 0) return;
+  const rp = s.repoussoir;
+  const C = s.C;
+  const T = trunkTones(s);
+  for (const seg of rp.segs) {
+    if (seg.stub || seg.pts[0][2] < 2.5) continue;
+    const P = smoothLimb(jointed(seg, rp.segs));
+    let acc = 0;
+    for (let i = 1; i < P.length; i++) {
+      const [x0, y0, w0] = P[i - 1], [x1, y1] = P[i];
+      acc += Math.hypot(x1 - x0, y1 - y0);
+      const step = Math.max(OP.w * 0.6, w0 * 1.3);
+      if (acc < step) continue;
+      acc = 0;
+      const a = Math.atan2(y1 - y0, x1 - x0);
+      const col = shadeRGB(mixRGB(T.mid, T.dark, random(0.3, 0.6)), random(0.92, 1.06));
+      const st = makeOilStroke(O, x1, y1, a + random(-0.05, 0.05), step * random(1.3, 1.8), w0 * random(0.85, 1.0), { color: col, color2: mixRGB(col, T.dark, 0.3), relief: 0.1 * k, pickup: true });
+      out.push(st);
+    }
+  }
+  const foliage = shadeRGB(mixRGB(C.silhouette, C.foliage, 0.35), 0.92);
+  for (const lf of rp.leaves) {
+    if (random() > 0.55 * k) continue;
+    const col = shadeRGB(foliage, random(0.85, 1.05));
+    out.push(makeOilStroke(O, lf.x + random(-0.3, 0.3) * lf.r, lf.y + random(-0.3, 0.3) * lf.r, random(-0.7, 0.7), lf.r * random(1.2, 1.7), lf.r * random(0.8, 1.1), { color: col, color2: shadeRGB(col, 0.88), relief: 0.06 * k, pickup: true }));
+  }
+}
+
+// The late passes the rest of the painting had, over the foreground too. Broken colour,
+// impasto lights and scumbles were laid over the plain, the mountains and the sky, but
+// the tree, its crown, the midground crowns and the bank went on after them and stayed
+// clean. Here they get the same: unblended accents (violet in the darks, ochre and olive
+// in the lights), loaded strokes on the trunk's sun side, dry scumbles of light where
+// the sun reaches; each sampled from the paint now on the canvas, so it sits in it.
+function oilForegroundUnify(s, O) {
+  const k = OP.fg;
+  if (k <= 0) return;
+  const S = surfaceSampler();
+  const rp = s.repoussoir;
+  const T = trunkTones(s);
+  const lum = (c) => 0.3 * c[0] + 0.59 * c[1] + 0.11 * c[2];
+  const accent = (base) => {
+    const l = lum(base);
+    return l < 60 ? ACCENTS.violet : l < 100 ? (random() < 0.5 ? ACCENTS.violet : ACCENTS.olive) : random() < 0.55 ? ACCENTS.ochre : ACCENTS.orange;
+  };
+  const strokes = [];
+  // the trunk and limbs: accents across them, and impasto on the side facing the sun
+  for (const seg of rp.segs) {
+    if (seg.stub || seg.pts[0][2] < 3) continue;
+    const P = smoothLimb(jointed(seg, rp.segs));
+    for (let i = 1; i < P.length - 1; i++) {
+      const [x, y, w] = P[i];
+      const dx = P[i + 1][0] - P[i - 1][0], dy = P[i + 1][1] - P[i - 1][1];
+      const dl = Math.hypot(dx, dy) || 1;
+      const a = Math.atan2(dy, dx);
+      const nx = -dy / dl, ny = dx / dl;
+      if (random() > Math.min(0.9, (w / (OP.w * 0.5)) * 0.35)) continue;
+      // an accent: a long, thin, broken stroke along the wood, not a spot on it
+      if (random() < 0.45) {
+        const u = random(-0.7, 0.7);
+        const px = x + nx * u * w * 0.5, py = y + ny * u * w * 0.5;
+        const base = S(px, py);
+        const sw = Math.min(w * 0.16, OP.w * 0.18);
+        const st = makeOilStroke(O, px, py, a + random(-0.08, 0.08), sw * random(4, 6.5), sw, { color: mixRGB(base, accent(base), OP.accent * 0.5 * k), color2: base, relief: 0.12 * k });
+        st.dry = Math.min(0.85, OP.dry + 0.3);
+        strokes.push(st);
+      }
+      // a loaded light on the sun side
+      const side = (s.sunX - x) * nx + (s.sunY - y) * ny > 0 ? 1 : -1;
+      if (random() < 0.45 * k) {
+        const u = side * random(0.35, 0.8);
+        const px = x + nx * u * w * 0.5, py = y + ny * u * w * 0.5;
+        const base = S(px, py);
+        const sw = Math.min(w * 0.22, OP.w * 0.2);
+        const col = mixRGB(base, mixRGB(T.light, T.warm, 0.35), random(0.25, 0.45));
+        strokes.push(makeOilStroke(O, px, py, a + random(-0.12, 0.12), sw * random(2.5, 4), sw, { color: col, color2: mixRGB(col, base, 0.3), relief: 0.35 * k, crisp: true }));
+      }
+    }
+  }
+  // the crown: accents through the clumps
+  for (const lf of rp.leaves) {
+    if (random() > 0.35 * k) continue;
+    const x = lf.x + random(-0.6, 0.6) * lf.r, y = lf.y + random(-0.5, 0.5) * lf.r;
+    const base = S(x, y);
+    const sw = random(2.2, 4);
+    strokes.push(makeOilStroke(O, x, y, random(TWO_PI), sw * random(1.6, 2.4), sw, { color: mixRGB(base, accent(base), OP.accent * 0.6 * k), color2: base, relief: 0.12 * k, crisp: true }));
+  }
+  // the midground crowns: a few accents and a dry scumble of light on the sun side
+  for (const tr of s.trees) {
+    const x = s.gx(tr.wx, tr.z);
+    if (x < -20 || x > REF_W + 20) continue;
+    const sc = s.F / tr.z;
+    const w = tr.hW * sc * (tr.tall ? 0.5 : 1), h = tr.hW * sc * (tr.tall ? 2.3 : 1.15);
+    if (w < 8) continue;
+    const cy = s.gy(tr.z) - h * 0.68;
+    const lx = Math.sign(s.sunX - x) || 1;
+    const m = Math.round(w * 0.12 * k);
+    for (let i = 0; i < m; i++) {
+      const px = x + random(-0.4, 0.4) * w, py = cy + random(-0.4, 0.4) * h * 0.8;
+      const base = S(px, py);
+      const sw = Math.max(1.4, Math.min(3.5, w * 0.08));
+      strokes.push(makeOilStroke(O, px, py, random(TWO_PI), sw * 2, sw, { color: mixRGB(base, accent(base), OP.accent * 0.6 * (1 - s.treeAir(tr.z) * 0.6)), color2: base, relief: 0.1 * k, crisp: true }));
+    }
+    for (let i = 0; i < Math.round(m * 0.5); i++) {
+      const px = x + lx * random(0.1, 0.45) * w, py = cy + random(-0.45, 0.1) * h * 0.8;
+      const base = S(px, py);
+      const st = makeOilStroke(O, px, py, -Math.PI / 2 + random(-0.8, 0.8), w * random(0.25, 0.4), w * random(0.12, 0.2), { color: mixRGB(base, s.C.light, 0.25), color2: mixRGB(base, s.C.glow, 0.2) });
+      st.scumble = true;
+      strokes.push(st);
+    }
+  }
+  // the bank: accents in its dark, short upright strokes
+  const nB = Math.round(OP.broken * 0.08 * k);
+  for (let i = 0; i < nB; i++) {
+    const x = random(rp.bank[0][0], rp.bank[rp.bank.length - 1][0]);
+    const y = random(bankAt(rp, x) + 4, REF_H);
+    const base = S(x, y);
+    const sw = OP.w * random(0.12, 0.2);
+    strokes.push(makeOilStroke(O, x, y, -Math.PI / 2 + random(-0.4, 0.4), sw * random(2, 3), sw, { color: mixRGB(base, accent(base), OP.accent * 0.6 * k), color2: base, relief: 0.1 * k }));
+  }
+  strokes.forEach(oilStroke);
+}
+
 function oilGlazes(s) {
   const k = OP.glaze;
   if (k <= 0) return;
@@ -5287,7 +5461,8 @@ function oilMidTree(s, O, tr, out) {
     const ty = cy + h * 0.15;
     out.push(makeOilStroke(O, x, (y + 1 + ty) / 2, -Math.PI / 2, y + 1 - ty, tw, { color: tc, color2: tc, relief: 0, crisp: true, angular: true }));
   }
-  const sz0 = Math.max(1.1, Math.min(3.2, w * 0.075)); // mark size by distance
+  // mark size by distance; painted with the rest, the marks are a brush's width, not a pen's
+  const sz0 = Math.max(1.1, Math.min(3.2 + 1.8 * OP.fg, w * (0.075 + 0.045 * OP.fg)));
   const nPer = (r) => Math.min(120, Math.round((r * r) / (sz0 * sz0) * 1.6) + 6);
   // crown hatching (Cézanne): within a clump, some marks share one angle — a patch of
   // parallel strokes — in that clump's own green (yellow-, blue- or olive-green)
@@ -5300,7 +5475,7 @@ function oilMidTree(s, O, tr, out) {
     const tick = hatch || random() < 0.25;
     if (hatch) col = mixRGB(col, hatchTint, 0.18 * k);
     out.push(makeOilStroke(O, cx, cyy, a, sz * (tick ? random(1.1, 1.6) : random(0.6, 1.2)), sz * (tick ? random(0.25, 0.4) : random(0.5, 0.85)), {
-      color: col, color2: shadeRGB(col, random(0.88, 1.08)), relief: crisp ? 0.12 * k : 0, crisp, soft: !crisp,
+      color: col, color2: shadeRGB(col, random(0.88, 1.08)), relief: crisp ? 0.12 * k : 0, crisp, soft: !crisp, pickup: OP.fg > 0,
     }));
   };
   // the mass blocked in first, dark and broken, so no underpainting edge shows round it
