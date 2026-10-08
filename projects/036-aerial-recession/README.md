@@ -539,7 +539,45 @@ Three devices are adopted, all oil-only.
 |---|---|---|
 | **1. Thin shadows, thick lights** (*cloud paint: thin shadows, thick lights*, 0.7) | lit tops thick, dry-brushed, ridged; shadowed greys thin and scumbled, blue showing through | in a cloud's shadowed body, up to 65 % × setting of the strokes become scumbles: bristles only, broken, 35 % wider, the sky showing through. An opaque underlayer stays, so the cloud keeps its value. The lights are loaded and dragged with a drier brush (dry-brush breaks up to +0.35 × setting) and carry more impasto (relief up to +0.45 × setting) |
 | **2. Overcast deck** (*overcast deck*, 0 = off) | the right of the sky one broad grey veil dragged in wide diagonals over the blue, with gaps | a veil over the part of the sky away from the sun, in wide diagonal drags (60–140 × 14–26 px) of thin grey. 70 % are scumbles; gaps come from noise and stay open around the sun. Its lower edge stops 90 px above the skyline, and no drag may end on a mountain |
-| **3. Bright horizon band with a found skyline** (*bright horizon band*, 0.6) | a near-white strip of clear sky at the horizon under the deck; the headland crisp and dark against it | a strip of near-white, slightly warm sky, 38–68 px high, above a smoothed skyline (the highest crest over ±50 px), away from the sun's glow. It appears only where the skyline is low, so a tall peak gets no halo. Where a range meets it, the lost-edge pass restates the crest crisp and a little darker (counterchange); elsewhere edges still melt. The river mirrors the band |
+| **3. Bright horizon band with a found skyline** (*bright horizon band*, 1.0) | a near-white strip of clear sky at the horizon under the deck; the headland crisp and dark against it | a strip of near-white, slightly warm sky, 38–68 px high, above a smoothed skyline (the highest crest over ±50 px), away from the sun's glow. It appears only where the skyline is low, so a tall peak gets no halo. Where a range meets it, the lost-edge pass restates the crest crisp and a little darker (counterchange); elsewhere edges still melt. The river mirrors the band |
+
+## The foreground painted with the rest (sequence fix)
+
+**Problem.** The foreground looked artificial next to the painted sky, mountains and
+plain. The cause was the order of painting:
+
+- In oil, the underpainting held no framing tree at all. The oil passes painted clean sky
+  behind it, and the tree then went on **last**, as clean, opaque, smooth marks.
+- The midground crowns used marks 1–3 px wide, a pen's rather than a brush's, against 18 px
+  strokes everywhere else.
+- The grass blades were flat filled ribbons with no bristles.
+- None of these received the broken colour, impasto or scumble the rest of the painting got.
+
+**Fix.** The setting *foreground painted with the rest* (default 1; 0 restores the old
+behaviour) changes the process in three places:
+
+1. **Block-in with the rest.** In the second oil layer, with the body strokes, the trunk
+   and limbs are laid in as large strokes along their axis (≈ limb width, 1.3–1.8×
+   OP.w long). The crown is laid in as coarse dabs. Both pick up the wet sky at their
+   edges. The detailed tree later goes on over this and lets it show between its marks.
+2. **Late marks in the same paint.** Each stroke on the trunk, limbs and crown now:
+   - picks up the wet paint it lands in;
+   - is not quite opaque (lean 0.9);
+   - carries impasto, so its ridge catches the room light;
+   - breaks where the brush runs dry.
+
+   Dark accents and drawn contours stay crisp. Canopy marks are ≈ 45 % larger and fewer,
+   but the warm rim keeps a fine mark. Midground crown marks scale up to 5 px. Grass
+   blades get two or three bristle tracks, each a little lighter or darker, broken with
+   the dry-brush setting.
+3. **A unifying pass after the foreground**, before the final glazes. It samples the
+   finished surface and applies what the rest of the painting had:
+   - long, thin, broken accent strokes along the wood: violet in the darks, ochre and
+     olive in the lights;
+   - loaded impasto lights on the trunk's sun side;
+   - accents through the crown and the midground crowns, and dry scumbles of light on
+     their sun side;
+   - upright accent strokes in the bank.
 
 ## How each technique is implemented
 
