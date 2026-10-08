@@ -638,6 +638,24 @@ everything else that used to go on last:
 | **6. Planes from spurs** | Each point under a crest belongs to a slope: the crest's slope, smoothed over a width that grows with depth (10 px + 0.9 × depth). Spurs falling from the summits (a noise height field whose lateral slope alternates) cross it. Faces turned to the sun warm and lighten; faces turned away cool and darken; the crest is lit along the sun's side. All of it weakens with the range's air (far ranges at 45 %) |
 | **7. Texture by distance, following form** | One stroke direction per plane: steep faces along their fall line, gentle ones along the contour. Strokes are about 20 % larger, with lower relief (0.22 → 0.1). Far ranges get larger, softer, level strokes. In oil there are no pencil scree lines, and broken colour on the ranges is halved |
 
+**Follow-up: rounded middle ranges, thinner linings.**
+
+- **Rounded middle ranges.** Seed 11's middle ranges still rose as pointed tents, for two
+  reasons:
+  - The underpainting still drew one triangular shadow face per peak. With big forms it
+    is now lit by planes instead (`paintRangePlanes`): the range is glazed in 5 px cells,
+    each lit by its `rangePlane`. Faces turned to the sun are warm, faces turned away are
+    cool and darker, and the crest is lit on the sun's side. The oil strokes that sample
+    it inherit broad planes.
+  - The ridge profile itself rose to sharp summits. It is now smoothed (three box passes
+    of ±28 px, close to a Gaussian), with a faint crest texture laid back on, so summits
+    and shoulders are rounded.
+- **Thinner silver linings.**
+  - **Width:** at most 1.7 px wide (was 2.6).
+  - **Frequency:** about half as many strokes, more broken along the edge.
+  - **Strength:** the line mixes at most 85 % lining colour (was 97 %), and the glow
+    outside it at most 32 % (was 50 %).
+
 ## How each technique is implemented
 
 | technique | where | rule |
