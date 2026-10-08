@@ -528,6 +528,19 @@ devices are adopted.
     cloud's body.
 
 
+## After a Constable coastal oil sketch (clouds over a headland)
+
+The sketch's lesson is economy. Thick paint goes only where the light is: the lit cloud
+tops, in dry-brushed cream. Everything else is a thin, dragged layer the ground shows
+through. A bright strip of clear sky at the horizon sets off a dark land silhouette.
+Three devices are adopted, all oil-only.
+
+| device | in the sketch | now |
+|---|---|---|
+| **1. Thin shadows, thick lights** (*cloud paint: thin shadows, thick lights*, 0.7) | lit tops thick, dry-brushed, ridged; shadowed greys thin and scumbled, blue showing through | in a cloud's shadowed body, up to 65 % × setting of the strokes become scumbles: bristles only, broken, 35 % wider, the sky showing through. An opaque underlayer stays, so the cloud keeps its value. The lights are loaded and dragged with a drier brush (dry-brush breaks up to +0.35 × setting) and carry more impasto (relief up to +0.45 × setting) |
+| **2. Overcast deck** (*overcast deck*, 0 = off) | the right of the sky one broad grey veil dragged in wide diagonals over the blue, with gaps | a veil over the part of the sky away from the sun, in wide diagonal drags (60–140 × 14–26 px) of thin grey. 70 % are scumbles; gaps come from noise and stay open around the sun. Its lower edge stops 90 px above the skyline, and no drag may end on a mountain |
+| **3. Bright horizon band with a found skyline** (*bright horizon band*, 0.6) | a near-white strip of clear sky at the horizon under the deck; the headland crisp and dark against it | a strip of near-white, slightly warm sky, 38–68 px high, above a smoothed skyline (the highest crest over ±50 px), away from the sun's glow. It appears only where the skyline is low, so a tall peak gets no halo. Where a range meets it, the lost-edge pass restates the crest crisp and a little darker (counterchange); elsewhere edges still melt. The river mirrors the band |
+
 ## How each technique is implemented
 
 | technique | where | rule |
