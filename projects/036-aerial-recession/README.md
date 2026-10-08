@@ -504,6 +504,29 @@ devices are adopted.
 - **Silver lining.** It is drawn as broken, thin strokes along the outline on the sun's
   side, as light caught in the thinner fringe.
 
+**Third pass: stronger linings, more natural variety.**
+
+- **Cloud kinds.** Each cloud is given a kind, a thickness (0.7–1.25) and a shape from its
+  own random stream, so the scene's draws are untouched:
+  - *cumulus* (40 %): the two largest lobes push up 1–3 rounded towers;
+  - *stratocumulus* (32 %): lobes stretched 1.15–1.4× and flattened to 55–75 %, with one
+    more lobe at each end, making a long bank;
+  - *fractus* (28 %): smaller pieces drawn apart, with ragged outlines all round.
+
+  A thin cloud stays nearer the sky's own value; a thick one is darker.
+- **Cirrus.** One to four high, thin, combed wisps near the top of the sky, slanting with a
+  shared wind. They are painted first, so every other cloud stands in front of them, and
+  are lit warm toward the sun and fade at both ends.
+- **Silver linings.**
+  - **Reach.** A cloud catches light on its sun-facing edge out to about 640 px from the sun,
+    not 420.
+  - **Strength.** Thin and ragged clouds glow more, because more light passes through
+    their fringe.
+  - **Two parts.** A soft glow of scattered light just outside the edge, then a bright fine
+    line on the edge, never thicker than about 2.6 px, broken where the fringe is thicker.
+  - **Never** drawn over a range that stands in front of the cloud, or across another
+    cloud's body.
+
 
 ## How each technique is implemented
 
