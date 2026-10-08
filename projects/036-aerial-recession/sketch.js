@@ -4838,7 +4838,9 @@ function oilGrass(s, O) {
   const right = rp.bank[rp.bank.length - 1][0];
 
   // 1. turf
-  const nTurf = Math.round(3600 * dens);
+  // with the bank blocked in in big strokes (oilForegroundBlockIn), the turf is the
+  // finish on top, not the whole surface: fewer flicks, so the block-in shows between them
+  const nTurf = Math.round(3600 * dens * (1 - 0.45 * OP.fg));
   for (let i = 0; i < nTurf; i++) {
     const x = random(left, right);
     const lip = bankAt(rp, x);
@@ -5236,6 +5238,36 @@ function oilForegroundBlockIn(s, O, out) {
       const st = makeOilStroke(O, x1, y1, a + random(-0.05, 0.05), step * random(1.3, 1.8), w0 * random(0.85, 1.0), { color: col, color2: mixRGB(col, T.dark, 0.3), relief: 0.1 * k, pickup: true });
       out.push(st);
     }
+  }
+  // the grassy bank, blocked in the way a painter lays in a dark foreground: big, loaded
+  // strokes rising with the slope and leaning with the grass, in broad patches of warm
+  // (olive, ochre-brown) and cool (blue-violet) dark, a little lighter toward the lip and
+  // toward the sun, each dragging the wet paint it lands in
+  const bk = s.repoussoir.bank;
+  const warmD = mixRGB(mixRGB(C.silhouette, ACCENTS.olive, 0.45), BARK, 0.25);
+  const coolD = mixRGB(mixRGB(C.silhouette, C.shadow, 0.4), ACCENTS.violet, 0.06);
+  const nBank = Math.round(1100 * k);
+  for (let i = 0; i < nBank; i++) {
+    const x = random(bk[0][0], bk[bk.length - 1][0]);
+    const lip = bankAt(rp, x);
+    const y = lip + 4 + Math.pow(random(), 1.3) * (REF_H + 20 - lip);
+    if (y > REF_H + 10) continue;
+    const near = clamp01((y - lip) / 160);
+    const base = O.under(x, Math.min(REF_H - 4, y));
+    const patch = noise(x * 0.006, y * 0.01, 3.7);
+    const tint = patch > 0.5 ? warmD : coolD;
+    const toLip = 1 - clamp01((y - lip) / 70);
+    const sunw = clamp01(1 - Math.abs(x - s.sunX) / (REF_W * 0.7));
+    let col = mixRGB(base, tint, 0.5 + 0.35 * Math.abs(patch - 0.5) * 2);
+    col = mixRGB(col, mixRGB(C.light, C.glow, 0.5), 0.12 * toLip * (0.4 + 0.6 * sunw));
+    // broad value shifts across the bank (the patch), then each stroke its own step
+    col = shadeRGB(col, (0.9 + 0.35 * noise(x * 0.004 + 21, y * 0.008, 1.3)) * random(0.9, 1.1));
+    const slope = (bankAt(rp, x + 12) - bankAt(rp, x - 12)) / 24;
+    const lean = -Math.PI / 2 - 0.12 * s.sunSide + (noise(x * 0.004, y * 0.004, 9) - 0.5) * 0.7;
+    // near the lip the strokes follow the slope; lower down they rise with the grass
+    const a = toLip > 0.5 ? Math.atan(slope) + random(-0.2, 0.2) : lean + random(-0.3, 0.3);
+    const w = OP.w * random(0.45, 0.8) * (0.8 + 0.6 * near);
+    out.push(makeOilStroke(O, x, y, a, w * random(2, 3.2), w, { color: col, color2: mixRGB(col, base, 0.3), relief: 0.12 * k, pickup: true }));
   }
   const foliage = shadeRGB(mixRGB(C.silhouette, C.foliage, 0.35), 0.92);
   for (const lf of rp.leaves) {
