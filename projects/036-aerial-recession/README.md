@@ -684,6 +684,28 @@ Tuning record (seeds 4, 11, 1):
 - **Mist lozenges.** Single soft mist masses read as flat beige lozenges. They are now
   drifts of thin streaks.
 
+## Moonlit night (a fourth *mood*; after the fjord nocturne)
+
+*Mood → moonlit night* repaints the scene by moonlight. The palette drops into deep blue
+(zenith `#0a1230`), the land becomes a near-silhouette, and the "sun" becomes the moon. The
+new *Night* group holds *stars*, *moon size* and *warm window lights*; they have no effect in
+the daytime moods.
+
+| element | how it is painted |
+|---|---|
+| **Moon** | A small cool disc (radius 11 px × *moon size*) of crisp, loaded strokes with faint grey-blue maria. The halo rings are half the sun's radius, and the sky glow around it is tight (95 px falloff, 55 % strength) instead of the sun's broad one. *Sun height* sets its height. Crepuscular rays are off |
+| **Stars** (*stars*, 0.6) | Up to 1,100 pin-points of thick paint in the open sky, denser toward the zenith. Brightness is cubed-random, so most are faint and a few bright. About 12 % are faintly warm and 20 % faintly blue. None lie beside the moon (they fade within ~320 px of it) or low in the haze over the skyline. They go in with the moon, so the clouds cover them |
+| **Silver cloud edges** | The clouds keep their linings (on the side facing the moon), which now come out silver-white. The warm constants in the cloud passes switch to cool: the pink-gold belly glow becomes the shadow blue, and the lit tops lose half their warm white |
+| **Moon path** | The river already mirrors the sky above it, and its glints follow the light's column, so it carries the moon's reflection |
+| **Near-silhouette land** | Warmth falls to 0.22, so every "lit by the sun" term is weak and cool. Meadow broken colour, field planes, accents and wildflowers drop to about a third: colour sleeps at night. The room-light speculars on the paint ridges drop to 35 %. On a dark ground a near-white ridge light read as a scratch across the sky |
+| **Window lights** (*warm window lights*, 0.5) | By some midground trees (z 2.5–40), a cottage shows 1–3 lit windows: a tiny loaded orange-yellow dab with a faint warm halo. They are the only warm notes in the picture |
+
+Birds roost at night (no flocks).
+
+**Snow fix (applies to every mood).** By moonlight the snow on the high far ranges read as a
+continuous bright belt across the picture. Snow now lies only on some stretches of a crest,
+and the farther ranges show less of it through their air; the focal peak keeps its full cap.
+
 ## How each technique is implemented
 
 | technique | where | rule |

@@ -59,6 +59,17 @@ const MOODS = {
     foliage: '#283226', foliageLit: '#a59b7d', silhouette: '#15191c',
     light: '#f7ccb2', shadow: '#47506d', water: '#62708e', clouds: 0.7, rays: 0.6,
   },
+  // Night (the fjord nocturne): the whole scale drops into deep blue; the moon is a small
+  // cool disc with a tight halo, the clouds near it dark with silver edges, the land a
+  // near-silhouette whose lights are a cool grey-blue, never warm
+  'moonlit night': {
+    zenith: '#0a1230', upper: '#1a2850', horizon: '#3f537b', glow: '#a7bad9', sun: '#f3f0e3',
+    haze: '#34436a', cloudShadow: '#161d36', cloudLit: '#b4c2dc',
+    rockFar: '#2a3454', rockNear: '#151a24', groundFar: '#263044', groundNear: '#0f1419',
+    fields: ['#2b3643', '#25313a', '#333c49', '#202b32', '#2d3741'],
+    foliage: '#0c120f', foliageLit: '#3f4d5b', silhouette: '#05070a',
+    light: '#c2cee3', shadow: '#0f162b', water: '#1a253d', clouds: 0.8, rays: 0, night: 1,
+  },
 };
 
 let G;
@@ -89,14 +100,15 @@ function setup() {
   const TR = 'Trees · brushwork';
   const MT = 'Oil · methods';
   const MO = 'Mountains';
+  const NI = 'Night';
   G = GenArt.create({
     title: 'Aerial Recession',
     applyOnDemand: true, // a full repaint is heavy: settings repaint only on "Apply changes"
-    closedGroups: [BR, DI, IM, CO, MT, TR, MO],
+    closedGroups: [BR, DI, IM, CO, MT, TR, MO, NI],
     params: {
       medium: { value: 1, options: { watercolour: 0, oil: 1 }, label: 'medium', group: SC },
       wcTrees: { value: 0, options: { 'wash (clean)': 0, 'drawn (charcoal + hatch)': 1 }, label: 'watercolour trees', group: SC },
-      mood: { value: 0, options: { 'golden hour': 0, 'after the storm': 1, 'dawn mist': 2 }, label: 'mood', group: SC },
+      mood: { value: 0, options: { 'golden hour': 0, 'after the storm': 1, 'dawn mist': 2, 'moonlit night': 3 }, label: 'mood', group: SC },
       sun: { value: 0.35, min: 0, max: 1, step: 0.01, label: 'sun height', group: SC },
       haze: { value: 0.72, min: 0.3, max: 2.2, step: 0.05, label: 'atmosphere', group: SC },
       ranges: { value: 5, min: 3, max: 7, step: 1, label: 'mountain ranges', group: SC },
@@ -177,6 +189,9 @@ function setup() {
       windLines: { value: 0.6, min: 0, max: 1.5, step: 0.05, label: 'wind lines on the water', group: CO },
       sparkle: { value: 0.5, min: 0, max: 1.5, step: 0.05, label: 'sparkle (flecks of light)', group: CO },
       birds: { value: 1, min: 0, max: 3, step: 1, label: 'bird flocks', group: CO },
+      stars: { value: 0.6, min: 0, max: 1.5, step: 0.05, label: 'stars (night)', group: NI },
+      moonSize: { value: 1, min: 0.6, max: 1.8, step: 0.05, label: 'moon size (night)', group: NI },
+      windowLights: { value: 0.5, min: 0, max: 1.5, step: 0.05, label: 'warm window lights (night)', group: NI },
       fieldPlanes: { value: 0.6, min: 0, max: 1.2, step: 0.05, label: 'field colour planes', group: CO },
       peakTemperature: { value: 0.6, min: 0, max: 1.2, step: 0.05, label: 'peak warm / cool', group: CO },
       peakContour: { value: 0.6, min: 0, max: 1.2, step: 0.05, label: 'peak blue contour', group: MT },
@@ -356,6 +371,9 @@ function buildScene() {
   s.sunY = s.HY - 200; // provisional; set above the ridges once they exist
   // Lower sun → warmer, longer shadows, stronger glow.
   s.warmth = 1 - 0.55 * sunH;
+  // at night the "sun" is the moon: a cool, weak light — the warm terms all but vanish
+  s.night = !!C.night;
+  if (s.night) s.warmth = 0.22;
 
   // --- atmospheric perspective: transmittance with distance ---
   const k = 0.0125 * G.param('haze');
@@ -368,7 +386,8 @@ function buildScene() {
     const dx = (x - s.sunX) / 1.6;
     const dy = y - s.sunY;
     const d = Math.sqrt(dx * dx + dy * dy);
-    const g = Math.exp(-d / (210 + 140 * s.warmth)) * (0.75 + 0.25 * s.warmth);
+    // the moon's halo is tight and faint; the sun's broad and strong
+    const g = s.night ? Math.exp(-d / (95 * G.param('moonSize'))) * 0.55 : Math.exp(-d / (210 + 140 * s.warmth)) * (0.75 + 0.25 * s.warmth);
     c = mixRGB(c, C.glow, clamp01(g));
     const band = Math.exp(-Math.abs(y - s.HY) / 70) * 0.35 * s.warmth;
     return mixRGB(c, C.glow, band * Math.exp(-Math.abs(x - s.sunX) / 700));
@@ -1194,13 +1213,14 @@ function paintSkyGradient(s) {
 function paintSun(s) {
   noStroke();
   const C = s.C;
+  const k = s.night ? 0.6 * G.param('moonSize') : 1;
   for (let r = 150; r > 22; r -= 4) {
     const a = 6 * Math.pow(1 - r / 150, 1.6);
     fill(C.glow[0], C.glow[1], C.glow[2], a * 6);
-    circle(X(s.sunX), Y(s.sunY), r * 2 * U);
+    circle(X(s.sunX), Y(s.sunY), r * 2 * U * k);
   }
   fill(C.sun[0], C.sun[1], C.sun[2], 245);
-  circle(X(s.sunX), Y(s.sunY), 40 * U);
+  circle(X(s.sunX), Y(s.sunY), 40 * U * k);
 }
 
 function cloudLobe(lb, base) {
@@ -3523,6 +3543,7 @@ const ACCENTS = {
 // Read the finished underpainting back into memory and queue the oil passes.
 function oilBegin(s) {
   OP = oilParams();
+  OP.nightK = s.night ? 0.35 : 1;
   // the plain's fields by row, each given one temperature (or none) for the field planes
   {
     const rows = new Map();
@@ -3623,7 +3644,9 @@ function oilBegin(s) {
       if (kd === 'ground' || kd === 'water') shadeStroke(s, st, sh);
     }
   }
+  oilWindowLights(s, O, groups[3]);
   oilSun(s, O, groups[4]);
+  oilStars(s, O, groups[4]);
   // the sun and its rings lie behind the clouds: none of their strokes is laid where a
   // cloud stands, and the clouds are painted after them
   groups[4] = groups[4].filter((st) => !inCloud(s, (st.P[0][0] + st.P[3][0]) / 2, (st.P[0][1] + st.P[3][1]) / 2));
@@ -3769,7 +3792,11 @@ function rangeDetail(s, L, x, y, P) {
   // ranges stand higher and carry more of it, the near hills almost none
   const crestH = (L.base - ry) / Math.max(1, L.maxSpan);
   const high = clamp01((crestH - (0.82 - 0.4 * SN)) / 0.25);
-  const reachK = SN * high * clamp01(1 - 1.4 * L.t) * (L.isPeak ? 1.25 : 1);
+  // snow lies on some stretches of a crest and not others (wind, aspect), and the farthest
+  // ranges show less of it through their air — otherwise a high far range wore a
+  // continuous white belt (glaring by moonlight)
+  const gate = L.isPeak ? 1.25 : clamp01((noise(x * 0.005 + L.i * 3.1, 17.3) - 0.38) / 0.2) * (0.45 + 0.55 * (1 - L.air));
+  const reachK = SN * high * gate * clamp01(1 - 1.4 * L.t);
   // hollows between spurs hold the snow further down, the ribs shed it
   const sp = noise(x * 0.022 + P.d * 0.0035, L.i * 7.1 + 3.3);
   const hollow = clamp01((0.5 - sp) * 3);
@@ -3805,7 +3832,7 @@ function rangeDetail(s, L, x, y, P) {
 // warm on lit faces and lilac in shadow; strata; scree; a cloud's shadow).
 function mountainDetailColour(s, L, col, P, D, vis) {
   const C = s.C;
-  const litSnow = mixRGB([255, 251, 245], C.light, 0.12);
+  const litSnow = s.night ? shadeRGB(mixRGB([236, 240, 250], C.light, 0.5), 0.8) : mixRGB([255, 251, 245], C.light, 0.12);
   const shSnow = mixRGB([184, 196, 230], C.shadow, 0.2);
   // snow is the brightest thing on a mountain and carries through the air: it is seen
   // through a sixth of the haze its range is (at a half it sank into the pale peak)
@@ -4062,12 +4089,12 @@ function oilLayer(s, O, out, scale, cover, edges, layer) {
             const fd = s.fieldAt(((sx - s.CX) * f.z) / s.F, f.z);
             if (fd && fd.temp) {
               const ft = s.seen(fd.temp, f.z, sx, sy);
-              st.body = mixRGB(st.body, ft, OP.fieldPlanes * 0.45 * (1 - 0.5 * gFar));
-              st.far = mixRGB(st.far, ft, OP.fieldPlanes * 0.33 * (1 - 0.5 * gFar));
+              st.body = mixRGB(st.body, ft, OP.fieldPlanes * 0.45 * (1 - 0.5 * gFar) * OP.nightK);
+              st.far = mixRGB(st.far, ft, OP.fieldPlanes * 0.33 * (1 - 0.5 * gFar) * OP.nightK);
             }
           }
           if (tint) {
-            const k = (isUp || isCon ? random(0.2, 0.42) : random(0.08, 0.18)) * (1 - 0.7 * gFar);
+            const k = (isUp || isCon ? random(0.2, 0.42) : random(0.08, 0.18)) * (1 - 0.7 * gFar) * OP.nightK;
             // in the meadow's darker patches some dashes go violet, the shadow's complement
             const tc = isUp && O.lum(st.body) < 95 && random() < 0.25 ? ACCENTS.violet : tint;
             st.body = mixRGB(st.body, tc, k);
@@ -4226,8 +4253,8 @@ function oilStroke(st) {
   // (no specular on strokes under 4 px: a ridge that small can't catch a visible light,
   // and a 1 px highlight on a 3 px dab reads as a white dot)
   if (rel > 0.05 && !st.scumble && wpx >= 4) {
-    const spec = mixRGB(st.body, [255, 252, 244], 0.35 + 0.35 * Math.min(1, rel));
-    stroke(spec[0], spec[1], spec[2], 90 + 150 * Math.min(1, rel));
+    const spec = mixRGB(st.body, [255, 252, 244], (0.35 + 0.35 * Math.min(1, rel)) * OP.nightK);
+    stroke(spec[0], spec[1], spec[2], (90 + 150 * Math.min(1, rel)) * (0.5 + 0.5 * OP.nightK));
     strokeWeight(Math.max(0.5, wpx * 0.09));
     for (let i = 1; i < N - 2; i++) {
       const facing = normals[i][0] * OP.light[0] + normals[i][1] * OP.light[1] > 0 ? 1 : -1;
@@ -4495,7 +4522,7 @@ function oilBrokenColour(s, O, out) {
     const f = O.field(x, y);
     if (f.kind !== 'ground' && f.kind !== 'range') continue; // the bank's colour goes into its turf
     // the haze swallows broken colour on a mountain: on a far smooth face it reads as dashes
-    const fade = f.kind === 'range' ? (1 - f.air) * (OP.mform ? 0.5 : 1) : 1;
+    const fade = (f.kind === 'range' ? (1 - f.air) * (OP.mform ? 0.5 : 1) : 1) * OP.nightK;
     if (random() > fade * fade) continue;
     const base = O.under(x, y);
     const l = O.lum(base);
@@ -4532,7 +4559,7 @@ function oilScumble(s, O, out) {
 // (noise decides where they grow), denser and larger in front, gone by the middle
 // distance, and seen through the same air as the meadow.
 function oilMeadowFlowers(s, O, out) {
-  const amt = G.param('wildflowers');
+  const amt = G.param('wildflowers') * (s.night ? 0.3 : 1); // colour sleeps at night
   const n = Math.round(900 * amt);
   const tints = [[248, 242, 226], [248, 242, 226], [240, 200, 208], [240, 218, 120]];
   for (let t = 0, made = 0; t < n * 4 && made < n; t++) {
@@ -4651,7 +4678,7 @@ function oilHorizonBand(s, O, out) {
       if (f.kind !== 'sky' && f.kind !== 'cloud') continue;
       if (inCloud(s, x, y)) continue;
       const base = O.under(x, y);
-      const col = mixRGB(base, mixRGB(BAND_LIGHT, s.C.glow, 0.15), Math.min(0.8, 0.6 * k));
+      const col = mixRGB(base, mixRGB(BAND_LIGHT, s.C.glow, s.night ? 0.7 : 0.15), Math.min(0.8, 0.6 * k) * (s.night ? 0.35 : 1));
       out.push(makeOilStroke(O, x, y, random(-0.02, 0.02), random(34, 60), random(4, 6), { color: col, color2: mixRGB(col, base, 0.15), relief: 0.04, soft: true }));
     }
   }
@@ -4681,8 +4708,8 @@ function oilClouds(s, O, out) {
   const CI = G.param('cloudImpasto');
   const CP = G.param('cloudPaint');
   const C = s.C;
-  const warmLit = mixRGB(mixRGB(C.light, [255, 250, 240], 0.55), C.cloudLit, 0.15);
-  const baseGlow = mixRGB(mixRGB(C.cloudLit, C.glow, 0.5), [232, 186, 172], 0.35);
+  const warmLit = mixRGB(mixRGB(C.light, [255, 250, 240], s.night ? 0.3 : 0.55), C.cloudLit, 0.15);
+  const baseGlow = mixRGB(mixRGB(C.cloudLit, C.glow, 0.5), s.night ? C.shadow : [232, 186, 172], 0.35);
   // the overcast deck (the sketch's grey sky): a broad veil over the part of the sky away
   // from the sun, laid in wide diagonal drags of thin grey — scumbles, so the blue shows
   // between and through them — with open gaps; its lower edge stops above the horizon
@@ -4947,7 +4974,7 @@ function shadeStroke(s, st, sh) {
 // clouds — two shallow wing arcs each, the wings at different points of the beat — sized
 // by distance, paler the farther they are; never near the sun, never over the trees.
 function oilBirds(s, O, out) {
-  const nf = Math.round(G.param('birds'));
+  const nf = s.night ? 0 : Math.round(G.param('birds')); // they roost at night
   const C = s.C;
   for (let fI = 0, tries = 0; fI < nf && tries < 40; tries++) {
     const fx = random(REF_W * 0.12, REF_W * 0.88), fy = random(s.HY - 300, s.HY - 90);
@@ -5689,7 +5716,7 @@ function oilForegroundUnify(s, O) {
         const px = x + nx * u * w * 0.5, py = y + ny * u * w * 0.5;
         const base = S(px, py);
         const sw = Math.min(w * 0.16, OP.w * 0.18);
-        const st = makeOilStroke(O, px, py, a + random(-0.08, 0.08), sw * random(4, 6.5), sw, { color: mixRGB(base, accent(base), OP.accent * 0.5 * k), color2: base, relief: 0.12 * k });
+        const st = makeOilStroke(O, px, py, a + random(-0.08, 0.08), sw * random(4, 6.5), sw, { color: mixRGB(base, accent(base), OP.nightK * OP.accent * 0.5 * k), color2: base, relief: 0.12 * k });
         st.dry = Math.min(0.85, OP.dry + 0.3);
         strokes.push(st);
       }
@@ -5711,7 +5738,7 @@ function oilForegroundUnify(s, O) {
     const x = lf.x + random(-0.6, 0.6) * lf.r, y = lf.y + random(-0.5, 0.5) * lf.r;
     const base = S(x, y);
     const sw = random(2.2, 4);
-    strokes.push(makeOilStroke(O, x, y, random(TWO_PI), sw * random(1.6, 2.4), sw, { color: mixRGB(base, accent(base), OP.accent * 0.6 * k), color2: base, relief: 0.12 * k, crisp: true }));
+    strokes.push(makeOilStroke(O, x, y, random(TWO_PI), sw * random(1.6, 2.4), sw, { color: mixRGB(base, accent(base), OP.nightK * OP.accent * 0.6 * k), color2: base, relief: 0.12 * k, crisp: true }));
   }
   // the midground crowns: a few accents and a dry scumble of light on the sun side
   for (const tr of s.trees) {
@@ -5727,7 +5754,7 @@ function oilForegroundUnify(s, O) {
       const px = x + random(-0.4, 0.4) * w, py = cy + random(-0.4, 0.4) * h * 0.8;
       const base = S(px, py);
       const sw = Math.max(1.4, Math.min(3.5, w * 0.08));
-      strokes.push(makeOilStroke(O, px, py, random(TWO_PI), sw * 2, sw, { color: mixRGB(base, accent(base), OP.accent * 0.6 * (1 - s.treeAir(tr.z) * 0.6)), color2: base, relief: 0.1 * k, crisp: true }));
+      strokes.push(makeOilStroke(O, px, py, random(TWO_PI), sw * 2, sw, { color: mixRGB(base, accent(base), OP.nightK * OP.accent * 0.6 * (1 - s.treeAir(tr.z) * 0.6)), color2: base, relief: 0.1 * k, crisp: true }));
     }
     for (let i = 0; i < Math.round(m * 0.5); i++) {
       const px = x + lx * random(0.1, 0.45) * w, py = cy + random(-0.45, 0.1) * h * 0.8;
@@ -5744,7 +5771,7 @@ function oilForegroundUnify(s, O) {
     const y = random(bankAt(rp, x) + 4, REF_H);
     const base = S(x, y);
     const sw = OP.w * random(0.12, 0.2);
-    strokes.push(makeOilStroke(O, x, y, -Math.PI / 2 + random(-0.4, 0.4), sw * random(2, 3), sw, { color: mixRGB(base, accent(base), OP.accent * 0.6 * k), color2: base, relief: 0.1 * k }));
+    strokes.push(makeOilStroke(O, x, y, -Math.PI / 2 + random(-0.4, 0.4), sw * random(2, 3), sw, { color: mixRGB(base, accent(base), OP.nightK * OP.accent * 0.6 * k), color2: base, relief: 0.1 * k }));
   }
   strokes.forEach(oilStroke);
 }
@@ -5984,11 +6011,12 @@ function oilSun(s, O, out) {
   };
   const N = OP.rings;
   const rings = [];
+  const MK = s.night ? 0.5 * G.param('moonSize') : 1; // the moon's halo is a third the sun's
   for (let k = 0; k < N; k++) {
     const t = N === 1 ? 0 : k / (N - 1);
     rings.push({
-      r0: 170 * Math.pow(k / N, 1.6),
-      r1: 170 * Math.pow((k + 1) / N, 1.6),
+      r0: 170 * MK * Math.pow(k / N, 1.6),
+      r1: 170 * MK * Math.pow((k + 1) / N, 1.6),
       col: along(t),
       rel: (1 - 0.78 * t) * OP.sunImpasto,
       w: k === 0 ? [6, 9] : [5 + t, 8 + 2 * t],
@@ -6010,6 +6038,62 @@ function oilSun(s, O, out) {
       const len = k === 0 ? w * random(1.4, 2.2) : Math.max(w * 2, rr * random(0.35, 0.6));
       const col = mixRGB(g.col, O.under(x, y), k === 0 ? 0 : 0.18);
       out.push(makeOilStroke(O, x, y, a + Math.PI / 2, len, w, { color: col, color2: mixRGB(col, white, 0.3), relief: g.rel }));
+    }
+  }
+  if (s.night) {
+    // the moon's disc: a few loaded strokes, a hard edge, and faint grey-blue maria
+    const rm = 11 * G.param('moonSize');
+    for (let i = 0; i < 26; i++) {
+      const a = random(TWO_PI), rr = rm * Math.sqrt(random()) * 0.85;
+      const x = s.sunX + Math.cos(a) * rr, y = s.sunY + Math.sin(a) * rr;
+      const mare = noise(x * 0.12, y * 0.12, 9.9) > 0.58;
+      const col = mare ? mixRGB(C.sun, [168, 176, 196], 0.45) : mixRGB(white, C.sun, 0.4);
+      out.push(makeOilStroke(O, x, y, random(TWO_PI), rm * 0.6, rm * 0.4, { color: col, color2: mixRGB(col, white, 0.2), relief: 0.5 * OP.sunImpasto, crisp: true }));
+    }
+  }
+}
+
+// Stars (night only): pin-points of thick paint in the open sky — most faint, a few bright,
+// a few faintly warm or blue; none beside the moon, whose light drowns them, and fewer down
+// in the haze over the skyline. They go in with the moon, so the clouds cover them.
+function oilStars(s, O, out) {
+  if (!s.night) return;
+  const n = Math.round(1100 * G.param('stars'));
+  for (let i = 0; i < n; i++) {
+    const x = random(0, REF_W), y = s.HY * Math.pow(random(), 1.3);
+    if (O.field(x, y).kind !== 'sky') continue;
+    if (random() > clamp01((Math.hypot(x - s.sunX, y - s.sunY) - 60) / 260)) continue;
+    if (random() > clamp01((skylineY(s, x) - 30 - y) / 160)) continue;
+    const sky = O.under(x, y);
+    const mag = Math.pow(random(), 3);
+    const q = random();
+    const tint = q < 0.12 ? [255, 228, 192] : q < 0.32 ? [208, 224, 255] : [246, 246, 240];
+    const col = mixRGB(sky, tint, 0.35 + 0.6 * mag);
+    const w = 1.1 + 1.8 * mag;
+    out.push(makeOilStroke(O, x, y, random(TWO_PI), w * random(1.1, 1.5), w, { color: col, color2: col, relief: 0.12 * mag, crisp: true }));
+  }
+}
+
+// Warm window lights (night only): a cottage beside some of the midground trees shows one
+// to three lit windows — tiny loaded dabs of orange-yellow with a faint warm halo on the
+// dark around them, the only warm notes in the picture.
+function oilWindowLights(s, O, out) {
+  const WL = G.param('windowLights');
+  if (!s.night || WL <= 0) return;
+  const warm = [255, 194, 108];
+  for (const tr of s.trees) {
+    if (tr.z < 2.5 || tr.z > 40 || random() > 0.4 * WL) continue;
+    const side = random() < 0.5 ? -1 : 1;
+    const x0 = s.gx(tr.wx + side * tr.hW * random(1, 1.7), tr.z);
+    const sc = Math.max(0.45, Math.min(1.6, 9 / tr.z));
+    const y = s.gy(tr.z) - 3.4 * sc;
+    const m = 1 + Math.floor(random(3));
+    for (let j = 0; j < m; j++) {
+      const x = x0 + j * 4.4 * sc;
+      if (O.field(x, y).kind !== 'ground') continue;
+      const base = O.under(x, y);
+      out.push(makeOilStroke(O, x, y, 0, 9 * sc, 6 * sc, { color: mixRGB(base, warm, 0.22), color2: base, relief: 0, soft: true }));
+      out.push(makeOilStroke(O, x, y, Math.PI / 2, Math.max(1.6, 2 * sc), Math.max(1.1, 1.4 * sc), { color: mixRGB(warm, [255, 238, 196], 0.4), color2: warm, relief: 0.15, crisp: true }));
     }
   }
 }
