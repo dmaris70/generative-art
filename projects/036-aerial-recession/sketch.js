@@ -88,10 +88,11 @@ function setup() {
   const CO = 'Oil · colour & texture';
   const TR = 'Trees · brushwork';
   const MT = 'Oil · methods';
+  const MO = 'Mountains';
   G = GenArt.create({
     title: 'Aerial Recession',
-    resetOnFinish: true, // a full repaint is heavy: sliders apply on release
-    closedGroups: [BR, DI, IM, CO, MT, TR],
+    applyOnDemand: true, // a full repaint is heavy: settings repaint only on "Apply changes"
+    closedGroups: [BR, DI, IM, CO, MT, TR, MO],
     params: {
       medium: { value: 1, options: { watercolour: 0, oil: 1 }, label: 'medium', group: SC },
       wcTrees: { value: 0, options: { 'wash (clean)': 0, 'drawn (charcoal + hatch)': 1 }, label: 'watercolour trees', group: SC },
@@ -165,6 +166,11 @@ function setup() {
       cloudPaint: { value: 0.7, min: 0, max: 1, step: 0.05, label: 'cloud paint: thin shadows, thick lights', group: CO },
       overcast: { value: 0, min: 0, max: 1, step: 0.05, label: 'overcast deck', group: CO },
       horizonBand: { value: 1.0, min: 0, max: 1.2, step: 0.05, label: 'bright horizon band', group: CO },
+      snow: { value: 0.5, min: 0, max: 1, step: 0.05, label: 'snow (snowline)', group: MO },
+      couloirs: { value: 0.6, min: 0, max: 1, step: 0.05, label: 'couloirs (snow gullies)', group: MO },
+      rockDetail: { value: 0.6, min: 0, max: 1, step: 0.05, label: 'rock: buttresses, bands, scree', group: MO },
+      valleyMist: { value: 0.5, min: 0, max: 1, step: 0.05, label: 'valley mist in front of ranges', group: MO },
+      mountainShadows: { value: 0.6, min: 0, max: 1, step: 0.05, label: 'cloud shadows on mountains', group: MO },
       cloudEdges: { value: 0.8, min: 0, max: 1, step: 0.05, label: 'cloud edges lost into the sky', group: CO },
       cloudVolume: { value: 0.85, min: 0, max: 1, step: 0.05, label: 'cloud volume (oil)', group: CO },
       cloudShadows: { value: 0.7, min: 0, max: 1.2, step: 0.05, label: 'cloud shadows on the land', group: CO },
@@ -524,7 +530,7 @@ function buildRanges(s) {
       return [x, base - amp * (0.12 + 0.88 * h)];
     });
     const local = mixRGB(C.rockFar, C.rockNear, t);
-    out.push({ i, t, z, air, base, amp, ridge, local, peaks: findPeaks(ridge, s) });
+    out.push({ i, t, z, air, base, amp, ridge, local, isPeak: i === peakLayer, peaks: findPeaks(ridge, s) });
   }
   return out;
 }
@@ -1307,9 +1313,18 @@ function paintRangePlanes(s, L) {
       const fade = 1 - clamp01((y - ry) / depth); // the planes soften toward the foot
       const lk = (0.55 * P.lit + 0.4 * P.crest) * vis * (0.5 + 0.5 * fade) * s.warmth;
       const sk = 0.6 * P.shade * (0.45 + 0.55 * vis) * (0.4 + 0.6 * fade);
-      if (lk > sk) fill(warm[0], warm[1], warm[2], 255 * Math.min(0.7, lk));
+      const D = rangeDetail(s, L, x + cw / 2, y + ch / 2, P);
+      const detail = D.snow > 0.05 || D.rock > 0.1 || D.scree > 0.1 || D.shade > 0.05;
+      if (detail) {
+        // the detail sits in the underpainting too, so the oil strokes that sample it
+        // carry it: start from the range's own colour, lit by its plane
+        let base = mixRGB(mixRGB(L.local, warm, Math.min(0.7, lk)), cool, Math.min(0.7, sk));
+        base = s.seen(base, L.z * 0.6, x, y);
+        const c = mountainDetailColour(s, L, base, P, D, vis);
+        fill(c[0], c[1], c[2], 255 * Math.min(0.85, 0.35 + D.snow * 0.6 + D.rock * 0.3 + D.shade * 0.3));
+      } else if (lk > sk) fill(warm[0], warm[1], warm[2], 255 * Math.min(0.7, lk));
       else fill(cool[0], cool[1], cool[2], 255 * Math.min(0.7, sk));
-      if (Math.max(lk, sk) < 0.03) continue;
+      if (!detail && Math.max(lk, sk) < 0.03) continue;
       beginShape();
       vertex(X(x), Y(y));
       vertex(X(x + cw + 0.5), Y(y));
@@ -3590,6 +3605,8 @@ function oilBegin(s) {
   oilForegroundBlockIn(s, O, groups[1]);
   oilLostEdges(s, O, groups[2]);
   oilPeak(s, O, groups[2]);
+  oilSnow(s, O, groups[2]);
+  oilValleyMist(s, O, groups[2]);
   oilBrokenColour(s, O, groups[2]);
   oilHorizonBand(s, O, groups[2]);
   oilScumble(s, O, groups[2]);
@@ -3731,6 +3748,75 @@ function rangePlane(s, L, x, y) {
   const shade = clamp01(-toSun * 1.6);
   const crest = Math.exp(-d / (4 + 5 * L.t)) * (0.35 + 0.65 * clamp01(0.5 + toSun * 2));
   return { sl, lit, shade, d, crest };
+}
+
+// Mountain detail at a point under a range's crest (the Tatra and fjord studies): how much
+// snow lies there, whether rock is exposed, the strata, a scree fan, and a cloud's
+// shadow. Altitude is measured from the range's foot (0) to its typical crest (1).
+//  - snow lies above a snowline that the snow setting lowers; steep faces shed it; it
+//    reaches further down in hollows and in couloirs — gullies falling from the cols;
+//  - rock shows on steep faces above the scree: buttresses, crossed by faint bands;
+//  - scree fans spread below the gullies at the foot of the nearer ranges;
+//  - a cloud standing above a range shades a broad patch of it, so one slope can be in
+//    sun while the next is in shadow.
+function rangeDetail(s, L, x, y, P) {
+  const alt = (L.base - y) / Math.max(1, L.amp);
+  const SN = G.param('snow'), CO = G.param('couloirs'), RD = G.param('rockDetail');
+  if (L.maxSpan === undefined) L.maxSpan = Math.max(...L.ridge.map((p) => L.base - p[1]));
+  const ry = y - P.d;
+  // how high this stretch of crest stands: snow belongs to the summits and high crests,
+  // not to a fixed fraction of every range (that read as a level white band); the farther
+  // ranges stand higher and carry more of it, the near hills almost none
+  const crestH = (L.base - ry) / Math.max(1, L.maxSpan);
+  const high = clamp01((crestH - (0.82 - 0.4 * SN)) / 0.25);
+  const reachK = SN * high * clamp01(1 - 1.4 * L.t) * (L.isPeak ? 1.25 : 1);
+  // hollows between spurs hold the snow further down, the ribs shed it
+  const sp = noise(x * 0.022 + P.d * 0.0035, L.i * 7.1 + 3.3);
+  const hollow = clamp01((0.5 - sp) * 3);
+  const patch = 0.55 + 0.9 * noise(x * 0.045, y * 0.03, L.i * 2.2 + 2.2);
+  const reach = L.maxSpan * 0.32 * reachK * patch * (0.45 + 0.9 * hollow);
+  // couloirs: thin, broken gullies running down from the snowfield, a little past it
+  const cou = noise(x * 0.03 + P.d * 0.0025, L.i * 5.3 + 11);
+  const run = clamp01((noise(P.d * 0.06, x * 0.01, L.i + 4.4) - 0.42) * 4);
+  const gully = CO * reachK * clamp01(1 - Math.abs(cou - 0.5) / 0.012) * run *
+    clamp01((P.d - reach * 0.5) / 6) * clamp01((reach * 2.2 + 10 - P.d) / 12);
+  const steep = clamp01((Math.abs(P.sl) - 0.55) / 0.5);
+  // a snowfield too shallow to read as a patch would only rim the crest with a white line
+  let snow = reachK > 0 ? clamp01((reach - P.d) / 5) * (1 - 0.7 * steep) * clamp01((reach - 5) / 8) : 0;
+  snow = Math.max(snow, gully * 0.9);
+  const rock = RD * steep * clamp01((alt - 0.2) / 0.2) * (1 - snow);
+  const band = RD * (noise(y * 0.09 + noise(x * 0.01, L.i) * 2, L.i * 3.7) - 0.5) * clamp01(alt / 0.3) * (1 - snow);
+  const fan = clamp01(1 - Math.abs(noise(x * 0.012, L.i * 2.9 + 4) - 0.5) / (0.06 + 0.2 * clamp01(0.3 - alt)));
+  const scree = RD * L.t * clamp01((0.32 - alt) / 0.2) * fan * (1 - snow);
+  let shade = 0;
+  const MS = G.param('mountainShadows');
+  if (MS > 0) {
+    for (const c of s.clouds) {
+      const sx = (x - (c.cx + (c.cx - s.sunX) * 0.25)) / (c.w * 0.55);
+      const sy = (y - (L.base - L.amp * 0.55)) / (L.amp * 0.55);
+      const r = Math.hypot(sx, sy) / (0.75 + 0.4 * noise(c.lobes[0].ph + sx, sy + L.i));
+      if (r < 1) shade = Math.max(shade, 1 - clamp01((r - 0.6) / 0.4));
+    }
+    shade *= MS * (1 - 0.6 * L.air);
+  }
+  return { alt, snow, gully, rock, band, scree, shade };
+}
+// Colour a mountain colour by its detail (snow lit by the sun's side, blue in shadow; rock
+// warm on lit faces and lilac in shadow; strata; scree; a cloud's shadow).
+function mountainDetailColour(s, L, col, P, D, vis) {
+  const C = s.C;
+  const litSnow = mixRGB([255, 251, 245], C.light, 0.12);
+  const shSnow = mixRGB([184, 196, 230], C.shadow, 0.2);
+  // snow is the brightest thing on a mountain and carries through the air: it is seen
+  // through a sixth of the haze its range is (at a half it sank into the pale peak)
+  const snowC = s.seen(mixRGB(shSnow, litSnow, clamp01(0.5 + 0.5 * (P.lit - P.shade) + 0.3 * P.crest)), L.z * 0.16, s.sunX, L.base - L.amp);
+  let c = col;
+  if (D.rock > 0) c = mixRGB(c, s.seen(P.lit > P.shade ? mixRGB(BARK, C.light, 0.3) : mixRGB(C.shadow, ACCENTS.violet, 0.4), L.z * 0.8, s.focalX, L.base), 0.35 * D.rock * vis);
+  if (D.band) c = shadeRGB(c, 1 + 0.12 * D.band * vis);
+  if (D.scree > 0) c = mixRGB(c, s.seen(mixRGB(C.light, [170, 165, 150], 0.6), L.z * 0.8, s.focalX, L.base), 0.3 * D.scree * vis);
+  if (D.snow > 0) c = mixRGB(c, snowC, Math.min(0.95, D.snow * (0.8 + 0.2 * vis)));
+  if (D.shade > 0) c = mixRGB(shadeRGB(c, 1 - 0.25 * D.shade), C.shadow, 0.18 * D.shade);
+  return c;
 }
 
 function buildOilField(s) {
@@ -4001,6 +4087,11 @@ function oilLayer(s, O, out, scale, cover, edges, layer) {
           const sk = 0.3 * P.shade * vis;
           st.body = mixRGB(shadeRGB(mixRGB(st.body, warm, lk), 1 - 0.1 * sk), cool, sk);
           st.far = mixRGB(shadeRGB(mixRGB(st.far, warm, lk * 0.8), 1 - 0.1 * sk), cool, sk * 0.8);
+          const D = rangeDetail(s, f.L, sx, sy, P);
+          st.body = mountainDetailColour(s, f.L, st.body, P, D, vis);
+          st.far = mountainDetailColour(s, f.L, st.far, P, D, vis);
+          // exposed rock is painted with a flat brush: square ends, a found edge
+          if (D.rock > 0.45 && f.kind === 'range') { st.angular = true; st.crisp = true; }
         } else if (f.kind === 'bank') {
           // the dark bank is not one flat tone: broad, slow shifts warm/cool and up/down
           const nt = noise(sx * 0.005, sy * 0.008, 7.7);
@@ -4318,6 +4409,78 @@ function oilPeak(s, O, out) {
       const base = O.under(x, ry + 5);
       const slope = (R.ridge[i + 2][1] - R.ridge[i - 2][1]) / 16;
       out.push(makeOilStroke(O, x, ry + random(2.5, 5), Math.atan(slope), random(10, 16), random(3, 5), { color: shadeRGB(base, 0.93), color2: base, relief: 0, soft: true }));
+    }
+  });
+}
+
+// Snow in loaded paint (the Tatra study): the snowfields restated last on each range in
+// short, thick, crisp strokes of the snow colour, laid along the slope (across the fall
+// line on gentle faces, steeper on steep ones), so they read as the lightest, thickest paint
+// on the mountain rather than a tint the body strokes and the peak's passes have diluted.
+function oilSnow(s, O, out) {
+  if (G.param('snow') <= 0) return;
+  const at = (L, x) => L.ridge[Math.max(0, Math.min(L.ridge.length - 1, Math.round((x + 30) / 4)))][1];
+  for (const L of s.ranges) {
+    if (L.t > 0.72) continue; // the near hills carry none
+    if (L.maxSpan === undefined) L.maxSpan = Math.max(...L.ridge.map((p) => L.base - p[1]));
+    const vis = 1 - L.air;
+    const w0 = 2.4 + 3.2 * vis;
+    for (let i = 0; i < 3200; i++) {
+      const x = random(-10, REF_W + 10);
+      const y = at(L, x) + random(0.5, L.maxSpan * 0.42);
+      const f = O.field(x, y);
+      if (f.L !== L) continue; // a nearer range stands here
+      const P = rangePlane(s, L, x, y);
+      const D = rangeDetail(s, L, x, y, P);
+      if (D.snow < 0.35) continue;
+      const col = mountainDetailColour(s, L, O.under(x, y), P, { snow: Math.min(1, D.snow * 1.15), rock: 0, band: 0, scree: 0, shade: D.shade }, vis);
+      const a = Math.atan(P.sl) * (Math.abs(P.sl) > 0.6 ? 1.2 : 0.7) + random(-0.12, 0.12);
+      const w = w0 * random(0.8, 1.2);
+      out.push(makeOilStroke(O, x, y, a, w * random(1.8, 2.8), w, { color: col, color2: mixRGB(col, O.under(x, y), 0.25), relief: 0.3 + 0.25 * vis, crisp: true }));
+    }
+  }
+}
+
+// Valley mist (the fjord study's steam lying across the mountain): soft horizontal masses
+// of light vapour in front of a range, in its lower part and its valleys, lit warm on the
+// sun's side. They are laid over that range only, never over a nearer one, and are thin
+// paint (soft and partly scumbled), so the slope shows through their edges.
+function oilValleyMist(s, O, out) {
+  const VM = G.param('valleyMist');
+  if (VM <= 0) return;
+  const C = s.C;
+  s.ranges.forEach((L, li) => {
+    if (li === s.ranges.length - 1 && s.ranges.length > 2) return; // not on the nearest hills
+    // drifts of thin streaks, not single soft masses (those read as flat pills): each drift
+    // is a few short, low, mostly dry strokes strung along a slightly wavering line
+    const n = Math.round(70 * VM * (0.5 + 0.5 * (1 - L.air)));
+    for (let i = 0; i < n; i++) {
+      const x0 = random(-20, REF_W + 20);
+      const ry0 = L.ridge[Math.max(0, Math.min(L.ridge.length - 1, Math.round((x0 + 30) / 4)))][1];
+      const span = L.base - ry0;
+      if (span < 20) continue;
+      const band = noise(x0 * 0.006 + li * 9.1, 4.4);
+      if (band < 0.45) continue;
+      const y0 = L.base - span * (0.04 + 0.35 * Math.pow(random(), 1.6) * band);
+      const sunw = clamp01(1 - Math.abs(x0 - s.sunX) / (REF_W * 0.7));
+      const mistC = mixRGB(mixRGB(s.hazeAt(x0, y0), [244, 240, 232], 0.3), C.glow, 0.25 * sunw * s.warmth);
+      const k = VM * (band - 0.45) * 1.8;
+      const len = random(60, 180) * (0.6 + 0.6 * (1 - L.air));
+      const tilt = random(-0.04, 0.04);
+      const m = 3 + Math.floor(random(4));
+      for (let j = 0; j < m; j++) {
+        const u = (j / Math.max(1, m - 1) - 0.5) * len + random(-12, 12);
+        const x = x0 + u;
+        const y = y0 + u * tilt + random(-3, 3) + 4 * Math.sin(u * 0.03 + i);
+        const f = O.field(x, y);
+        if (f.L !== L) continue; // a nearer range stands here
+        const base = O.under(x, y);
+        const col = mixRGB(base, mistC, Math.min(0.42, 0.14 + 0.3 * k) * random(0.6, 1));
+        const w = random(3, 7) * (0.7 + 0.6 * (1 - L.air));
+        const st = makeOilStroke(O, x, y, tilt + random(-0.05, 0.05), w * random(6, 11), w, { color: col, color2: mixRGB(col, base, 0.45), relief: 0, soft: true });
+        if (random() < 0.75) st.scumble = true;
+        out.push(st);
+      }
     }
   });
 }

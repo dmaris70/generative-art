@@ -656,6 +656,34 @@ everything else that used to go on last:
   - **Strength:** the line mixes at most 85 % lining colour (was 97 %), and the glow
     outside it at most 32 % (was 50 %).
 
+## Mountain detail (after the fjord and Tatra studies) and the *Apply changes* button
+
+**Panel: settings no longer repaint on their own.** A full repaint takes minutes, so moving
+a slider now only records the value (and the URL). The *▶ Apply changes* button shows
+*● Apply changes (pending)* while edits wait, and starts one repaint when pressed. This is
+opt-in in the shared panel library (`applyOnDemand`), so other projects are unchanged.
+
+**Mountains** (new *Mountains* group). Every value below is a slider; 0 switches the device off.
+
+| device | how it is painted |
+|---|---|
+| **Snow** (*snow*, 0.5) | Snow belongs to the summits, not to a fixed height on every range. A stretch of crest carries snow only if it stands in the top part of its range's profile; the threshold drops as the setting rises. Farther ranges carry more (the near hills almost none) and the focal peak 25 % more. Below the crest it reaches down farther in the hollows between spurs and less on the ribs, with a patchy, noise-broken lower edge. Steep faces shed it. Lit snow is near-white on faces turned to the sun and blue-grey on faces turned away. It is seen through only a sixth of its range's haze (snow carries through the air), and the snowfields are restated last in short, thick, crisp strokes (`oilSnow`), so they stay the lightest, thickest paint on the mountain |
+| **Couloirs** (*couloirs*, 0.6) | Thin, broken snow gullies (about 2 % of a noise band wide) run down from each snowfield to about twice its depth, interrupted along their length |
+| **Rock** (*rock: buttresses, bands, scree*, 0.6) | Steep faces above the foot show rock: warm on lit faces, lilac-grey in shadow, painted with angular, crisp strokes. Faint horizontal strata cross it. Pale scree fans spread at the foot of the nearer ranges |
+| **Valley mist** (*valley mist in front of ranges*, 0.5) | Drifts of thin vapour lie across the lower slopes and valleys of each range (never the nearest hills): 3–6 short, narrow strokes strung along a slightly wavering line, 75 % of them dry scumbles, mixing at most 42 % mist into the slope. They are warmer on the sun's side and laid only where that range is the visible surface |
+| **Cloud shadows on mountains** (*cloud shadows on mountains*, 0.6) | Each cloud casts a soft patch of shade on the ranges, offset away from the sun, so one slope can be in light while the next is in shadow. It weakens with the range's air |
+
+Tuning record (seeds 4, 11, 1):
+
+- **Snow band.** The first version put snow at a fixed fraction of every range's height. It
+  read as a level white band with drips. Snow now follows summit height and the spurs.
+- **Crest lines.** A snowfield shallower than about 5 px only rimmed the crest with a white
+  line, so it is dropped.
+- **Invisible snow on the peak.** Seen through half the haze, the snow sank into the pale
+  focal peak. Hence the reduced haze and the final snow pass.
+- **Mist lozenges.** Single soft mist masses read as flat beige lozenges. They are now
+  drifts of thin streaks.
+
 ## How each technique is implemented
 
 | technique | where | rule |

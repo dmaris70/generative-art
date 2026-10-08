@@ -18,6 +18,8 @@
  *         count: { value: 1000, min: 100, max: 4000, step: 100, label: 'particles' },
  *       },
  *       onReset: reset,   // called on seed change / randomize / param tweak
+ *       applyOnDemand: true, // optional: param tweaks only mark the panel dirty; the
+ *                            // sketch repaints when "Apply changes" is pressed
  *     });
  *     reset();
  *   }
@@ -155,6 +157,10 @@
     };
 
     function applyReset() {
+      if (dirty) {
+        dirty = false;
+        if (applyCtl) applyCtl.name('▶ Apply changes');
+      }
       _rng = mulberry32(seed);
       syncURL();
       onReset();
@@ -172,7 +178,20 @@
     }
 
     // ---- GUI ----
-    let seedCtl, copyCtl;
+    let seedCtl, copyCtl, applyCtl;
+    let dirty = false;
+    // With applyOnDemand a parameter change is only recorded (and the URL updated); the
+    // repaint waits for the Apply button, so several settings can be changed at once.
+    function markDirty() {
+      dirty = true;
+      syncURL();
+      if (applyCtl) applyCtl.name('● Apply changes (pending)');
+    }
+    function applyNow() {
+      dirty = false;
+      if (applyCtl) applyCtl.name('▶ Apply changes');
+      applyReset();
+    }
 
     function setSeed(next) {
       seed = next >>> 0;
@@ -182,6 +201,9 @@
     }
 
     const ctrl = {
+      apply: function () {
+        applyNow();
+      },
       seed: String(seed),
       randomize: function () {
         setSeed((Math.random() * 4294967296) >>> 0);
@@ -243,6 +265,7 @@
           setSeed(s === null ? seed : s);
         });
       gui.add(ctrl, 'randomize').name('🎲 randomize');
+      if (config.applyOnDemand) applyCtl = gui.add(ctrl, 'apply').name('▶ Apply changes');
 
       // Params land in 'parameters' unless they declare a `group`, which gets its own
       // folder (created in first-seen order; names in config.closedGroups start closed).
@@ -266,7 +289,8 @@
         // `options` ({label: value}) renders a dropdown instead of a slider
         const c = d.options ? target.add(values, key, d.options) : target.add(values, key, d.min, d.max, d.step);
         c.name(d.label || key);
-        if (config.resetOnFinish && !d.options) c.onFinishChange(function () { applyReset(); });
+        if (config.applyOnDemand) c.onChange(function () { markDirty(); });
+        else if (config.resetOnFinish && !d.options) c.onFinishChange(function () { applyReset(); });
         else c.onChange(function () { applyReset(); });
       }
 
