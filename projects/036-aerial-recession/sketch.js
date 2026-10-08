@@ -179,6 +179,8 @@ function setup() {
       meadowBroken: { value: 0.7, min: 0, max: 1, step: 0.05, label: 'meadow broken colour', group: CO },
       waterBroken: { value: 0.7, min: 0, max: 1, step: 0.05, label: 'water broken colour', group: CO },
       fgPaint: { value: 1, min: 0, max: 1, step: 0.05, label: 'foreground painted with the rest', group: MT },
+      bankGreen: { value: 0.6, min: 0, max: 1, step: 0.05, label: 'bank: green of the grass', group: MT },
+      bankSand: { value: 0.35, min: 0, max: 1, step: 0.05, label: 'bank: sandy patches', group: MT },
       cloudPaint: { value: 0.7, min: 0, max: 1, step: 0.05, label: 'cloud paint: thin shadows, thick lights', group: CO },
       overcast: { value: 0, min: 0, max: 1, step: 0.05, label: 'overcast deck', group: CO },
       horizonBand: { value: 1.0, min: 0, max: 1.2, step: 0.05, label: 'bright horizon band', group: CO },
@@ -3688,6 +3690,7 @@ function oilBegin(s) {
   if (OP.layers >= 2) oilLayer(s, O, groups[1], 0.55, 0.8 * OP.coverage, false, 1);
   if (OP.layers >= 3) oilLayer(s, O, groups[1], 0.24, 1.0 * OP.coverage, true, 2);
   oilForegroundBlockIn(s, O, groups[1]);
+  oilSwordLeaves(s, O, groups[1]);
   oilLostEdges(s, O, groups[2]);
   oilPeak(s, O, groups[2]);
   oilSnow(s, O, groups[2]);
@@ -5241,8 +5244,10 @@ function oilGrass(s, O) {
   const out = [];
   if (dens <= 0) return out;
   const dark = mixRGB(C.silhouette, [0, 0, 0], OP.silhouette * 0.5);
-  const cool = mixRGB(dark, C.shadow, 0.35);
-  const warmDark = mixRGB(dark, ACCENTS.olive, 0.22);
+  const BG = G.param('bankGreen') * OP.nightK, BS = G.param('bankSand') * OP.nightK;
+  const gr = mixRGB(C.foliage, C.foliageLit, 0.35);
+  const cool = mixRGB(mixRGB(dark, C.shadow, 0.35), gr, 0.15 * BG);
+  const warmDark = mixRGB(mixRGB(dark, ACCENTS.olive, 0.22), gr, 0.35 * BG);
   const lit = mixRGB(mixRGB(C.foliageLit, C.glow, 0.35), C.light, 0.2 * s.warmth);
   const straw = mixRGB(ACCENTS.ochre, C.light, 0.3);
   const rimCol = mixRGB(C.light, C.glow, 0.45);
@@ -5279,6 +5284,7 @@ function oilGrass(s, O) {
     const depth = -Math.log(1 - random() * 0.985) * 70; // exponential: crowded at the lip
     const y = lip + 2 + depth;
     if (y > REF_H + 10) continue;
+    if (BS > 0 && random() < Math.min(0.92, 2.4 * BS * Math.sqrt(bankSandAt(x, y)))) continue; // open sand: few flicks
     const near = 1 + depth / 90; // lower on the bank = nearer = bigger
     const base = O.under(x, Math.min(REF_H - 4, y + 4));
     const t = random();
@@ -5375,7 +5381,8 @@ function oilGrass(s, O) {
   // arching over toward the side they lean to; the width holds along most of the leaf
   // and narrows to a point in its last third; a lighter middle, one dark edge (the side
   // away from the sun). Drawn last, on top of the thin blades, as they stand nearest.
-  const nSword = Math.round(7 * G.param('swordLeaves') * Math.sqrt(dens));
+  // (painted with the rest, they go into the body layer instead: oilSwordLeaves)
+  const nSword = OP.fg > 0 ? 0 : Math.round(7 * G.param('swordLeaves') * Math.sqrt(dens));
   for (let c = 0, tries = 0; c < nSword && tries < nSword * 8; tries++) {
     const x = random(left + 20, right - 20);
     const lip = bankAt(rp, x);
@@ -5655,6 +5662,10 @@ function oilScratches(list) {
 // lays the tree's dark mass and the crown's masses in the first layers, in big strokes
 // that drag the wet sky at their edges; the detailed tree goes on over this later, and
 // lets it show between its marks.
+// Where the bank's bare, sandy ground shows between the grass (the dunes study): broad
+// patches from noise, 0 (grass) → 1 (open sand).
+const bankSandAt = (x, y) => clamp01((noise(x * 0.007 + 11, y * 0.013, 4.4) - 0.56) / 0.1);
+
 function oilForegroundBlockIn(s, O, out) {
   const k = OP.fg;
   if (k <= 0) return;
@@ -5684,6 +5695,12 @@ function oilForegroundBlockIn(s, O, out) {
   const bk = s.repoussoir.bank;
   const warmD = mixRGB(mixRGB(C.silhouette, ACCENTS.olive, 0.45), BARK, 0.25);
   const coolD = mixRGB(mixRGB(C.silhouette, C.shadow, 0.4), ACCENTS.violet, 0.06);
+  // the dunes study: the near ground is green grass, not a brown-black silhouette — a sap
+  // green in the bank's own shadow, greener toward the lip and the sun — with patches of
+  // bare warm sand showing between the tufts (both muted at night)
+  const BG = G.param('bankGreen') * OP.nightK, BS = G.param('bankSand') * OP.nightK;
+  const greenD = mixRGB(mixRGB(C.foliage, C.foliageLit, 0.4), C.silhouette, 0.25);
+  const sand = mixRGB([212, 196, 150], C.light, 0.2);
   const nBank = Math.round(1100 * k);
   for (let i = 0; i < nBank; i++) {
     const x = random(bk[0][0], bk[bk.length - 1][0]);
@@ -5698,6 +5715,10 @@ function oilForegroundBlockIn(s, O, out) {
     const sunw = clamp01(1 - Math.abs(x - s.sunX) / (REF_W * 0.7));
     let col = mixRGB(base, tint, 0.5 + 0.35 * Math.abs(patch - 0.5) * 2);
     col = mixRGB(col, mixRGB(C.light, C.glow, 0.5), 0.12 * toLip * (0.4 + 0.6 * sunw));
+    // greener, and a step lighter: grass in shade, not a silhouette
+    if (BG > 0) col = shadeRGB(mixRGB(col, greenD, BG * (0.45 + 0.3 * toLip + 0.15 * sunw)), 1 + 0.22 * BG);
+    const sd = bankSandAt(x, y);
+    if (BS > 0 && sd > 0) col = mixRGB(col, shadeRGB(sand, 0.68 + 0.25 * toLip + 0.15 * sunw), Math.min(0.85, BS * Math.sqrt(sd) * 2.2));
     // broad value shifts across the bank (the patch), then each stroke its own step
     col = shadeRGB(col, (0.9 + 0.35 * noise(x * 0.004 + 21, y * 0.008, 1.3)) * random(0.9, 1.1));
     const slope = (bankAt(rp, x + 12) - bankAt(rp, x - 12)) / 24;
@@ -5745,6 +5766,71 @@ function oilForegroundBlockIn(s, O, out) {
     if (random() > 0.55 * k) continue;
     const col = shadeRGB(foliage, random(0.85, 1.05));
     out.push(makeOilStroke(O, lf.x + random(-0.3, 0.3) * lf.r, lf.y + random(-0.3, 0.3) * lf.r, random(-0.7, 0.7), lf.r * random(1.2, 1.7), lf.r * random(0.8, 1.1), { color: col, color2: shadeRGB(col, 0.88), relief: 0.06 * k, pickup: true }));
+  }
+}
+
+// Sword leaves (the irises' leaves of Field with Flowers near Arles), painted with the bank
+// instead of stamped on it. Drawn last as filled ribbons with a hard Prussian edge they
+// read as cut-out vector shapes ("thorn bushes"). Here each leaf goes into the body layer
+// as loaded strokes: the blade from the root to two-thirds, a narrower stroke to its point,
+// a lighter, drier stroke down its middle and a soft darker one along the edge away from
+// the sun. They pick up the wet block-in, and every later pass — the foreground accents
+// and scumbles, the glazes, the grass and flowers in front — goes over them.
+function oilSwordLeaves(s, O, out) {
+  const n0 = G.param('swordLeaves'), dens = G.param('grass');
+  if (OP.fg <= 0 || n0 <= 0 || dens <= 0) return;
+  const C = s.C;
+  const rp = s.repoussoir;
+  const lr = seededRand(G.seed ^ 0x5eed1eaf);
+  const r = (a, b) => a + (b - a) * lr();
+  const BG = G.param('bankGreen') * OP.nightK;
+  const dark = mixRGB(C.silhouette, [0, 0, 0], OP.silhouette * 0.5);
+  const leafG = mixRGB(mixRGB(C.foliage, C.foliageLit, 0.45), dark, 0.25);
+  const lit = mixRGB(mixRGB(C.foliageLit, C.glow, 0.35), C.light, 0.2 * s.warmth);
+  const left = rp.bank[0][0], right = rp.bank[rp.bank.length - 1][0];
+  const nSword = Math.round(7 * n0 * Math.sqrt(dens));
+  for (let c = 0, tries = 0; c < nSword && tries < nSword * 8; tries++) {
+    const x = r(left + 20, right - 20);
+    const lip = bankAt(rp, x);
+    const y = lip + r(45, Math.max(60, REF_H + 30 - lip));
+    if (y < lip + 40) continue;
+    c++;
+    const near = Math.min(2, 1 + (y - lip) / 110);
+    const sw = clamp01(1 - Math.abs(x - s.sunX) / (REF_W * 0.75));
+    const base = O.under(x, Math.min(REF_H - 4, y));
+    const body = mixRGB(mixRGB(base, dark, 0.25), leafG, 0.45 + 0.35 * BG);
+    const lean = -Math.PI / 2 - 0.12 * s.sunSide + (noise(x * 0.004, y * 0.004, 9) - 0.5) * 0.5;
+    const m = 3 + Math.floor(r(0, 3));
+    for (let i = 0; i < m; i++) {
+      const fan = (i / Math.max(1, m - 1) - 0.5) * r(1.2, 1.8);
+      const a = lean + fan * 0.8 + r(-0.1, 0.1);
+      const len = r(45, 95) * near * (1 - 0.3 * Math.abs(fan));
+      const curl = (a + Math.PI / 2) * r(1.1, 1.9);
+      const nn = 8;
+      const P = [[x + r(-3, 3) * near, y]];
+      for (let k = 1; k <= nn; k++) {
+        const t = k / nn, th = a + curl * t * t, [px, py] = P[k - 1];
+        P.push([px + (Math.cos(th) * len) / nn, py + (Math.sin(th) * len) / nn]);
+      }
+      const sub = (t0, t1) => P.slice(Math.round(t0 * nn), Math.round(t1 * nn) + 1);
+      const w0 = r(4.5, 8) * near;
+      const col = shadeRGB(body, r(0.88, 1.1));
+      out.push(fgPaint(markToOil({ kind: 'band', path: sub(0, 0.7), w: w0, col, col2: shadeRGB(col, 0.9), rel: 0 }), 0.16, 0.1));
+      out.push(fgPaint(markToOil({ kind: 'edge', path: sub(0.45, 1), w: w0 * 0.8, col, col2: col, rel: 0 }), 0.12, 0.15));
+      // the lighter middle, dry, so it breaks along the leaf
+      const mid = mixRGB(col, lit, 0.3 + 0.3 * sw);
+      out.push(fgPaint(markToOil({ kind: 'band', path: sub(0.12, 0.75), w: w0 * 0.32, col: mid, col2: col, rel: 0 }), 0.2, 0.35));
+      // the darker edge on the side away from the sun: soft, not a drawn line
+      const [ax, ay] = P[2], [bx, by] = P[6];
+      const d = Math.hypot(bx - ax, by - ay) || 1;
+      let nx = -(by - ay) / d, ny = (bx - ax) / d;
+      if (nx * s.sunSide > 0) { nx = -nx; ny = -ny; }
+      const edge = sub(0.08, 0.8).map(([px, py]) => [px + nx * w0 * 0.36, py + ny * w0 * 0.36]);
+      const ec = mixRGB(shadeRGB(col, 0.7), PRUSSIAN, 0.12);
+      const st = fgPaint(markToOil({ kind: 'band', path: edge, w: w0 * 0.28, col: ec, col2: col, rel: 0 }), 0.08, 0.2);
+      st.soft = true;
+      out.push(st);
+    }
   }
 }
 
