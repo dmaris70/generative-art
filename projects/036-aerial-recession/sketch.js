@@ -72,7 +72,7 @@ let WET = null; // sampler over the wet block-in, for later strokes to pick pain
 // the warm earth under-layer that sgraffito scratches back to (sienna-like)
 const IMPRIMATURA = [150, 94, 54];
 let UNDER = null; // cached underpainting {key, W, H, px, img} for oil repaints
-const SCENE_PARAMS = ['mood', 'sun', 'haze', 'ranges', 'mist', 'clouds', 'meander', 'trees', 'frame', 'rhyme'];
+const SCENE_PARAMS = ['mood', 'sun', 'haze', 'ranges', 'mist', 'clouds', 'meander', 'trees', 'frame', 'rhyme', 'cloudRows'];
 const UI = { status: '' };
 let PANEL_W = 0; // space kept clear for the control panel, fixed at each reset
 
@@ -101,6 +101,7 @@ function setup() {
       ranges: { value: 5, min: 3, max: 7, step: 1, label: 'mountain ranges', group: SC },
       mist: { value: 0.45, min: 0, max: 1, step: 0.05, label: 'mist', group: SC },
       clouds: { value: 0.55, min: 0, max: 1, step: 0.05, label: 'clouds', group: SC },
+      cloudRows: { value: 0, options: { off: 0, on: 1 }, label: 'cloud rows', group: SC },
       meander: { value: 1.0, min: 0, max: 2, step: 0.05, label: 'river meander', group: SC },
       trees: { value: 0.6, min: 0, max: 1, step: 0.05, label: 'trees', group: SC },
       frame: { value: 1.0, min: 0, max: 1, step: 0.05, label: 'repoussoir', group: SC },
@@ -135,6 +136,7 @@ function setup() {
 
       impasto: { value: 1.0, min: 0, max: 2, step: 0.05, label: 'impasto', group: IM },
       lightAngle: { value: -123, min: -180, max: 180, step: 1, label: 'room light angle°', group: IM },
+      cloudImpasto: { value: 1, min: 0, max: 2, step: 0.05, label: 'cloud impasto', group: IM },
       sunImpasto: { value: 1, min: 0, max: 2, step: 0.05, label: 'sun impasto', group: IM },
       haloRings: { value: 5, min: 2, max: 8, step: 1, label: 'halo tonal rings', group: IM },
       silhouette: { value: 0.5, min: 0, max: 0.9, step: 0.05, label: 'silhouette darkness', group: IM },
@@ -158,6 +160,11 @@ function setup() {
       wildflowers: { value: 0.5, min: 0, max: 1.5, step: 0.05, label: 'wildflowers', group: CO },
       meadowBroken: { value: 0.7, min: 0, max: 1, step: 0.05, label: 'meadow broken colour', group: CO },
       waterBroken: { value: 0.7, min: 0, max: 1, step: 0.05, label: 'water broken colour', group: CO },
+      cloudVolume: { value: 0.85, min: 0, max: 1, step: 0.05, label: 'cloud volume (oil)', group: CO },
+      cloudShadows: { value: 0.7, min: 0, max: 1.2, step: 0.05, label: 'cloud shadows on the land', group: CO },
+      windLines: { value: 0.6, min: 0, max: 1.5, step: 0.05, label: 'wind lines on the water', group: CO },
+      sparkle: { value: 0.5, min: 0, max: 1.5, step: 0.05, label: 'sparkle (flecks of light)', group: CO },
+      birds: { value: 1, min: 0, max: 3, step: 1, label: 'bird flocks', group: CO },
       fieldPlanes: { value: 0.6, min: 0, max: 1.2, step: 0.05, label: 'field colour planes', group: CO },
       peakTemperature: { value: 0.6, min: 0, max: 1.2, step: 0.05, label: 'peak warm / cool', group: CO },
       peakContour: { value: 0.6, min: 0, max: 1.2, step: 0.05, label: 'peak blue contour', group: MT },
@@ -374,6 +381,7 @@ function buildScene() {
   s.gx = (wx, z) => s.CX + (s.F * wx) / z;
 
   s.clouds = buildClouds(s);
+  if (G.param('cloudRows') === 1) arrangeCloudRows(s);
   s.ranges = buildRanges(s);
   // The sun hangs just above whatever ridge lies beneath it; at height 0 it touches the crest.
   let crest = s.HY;
@@ -1488,18 +1496,82 @@ function paintHedge(s, f) {
 
 // Cloud shadows on the plain: soft dark patches and the sunlit gaps between them —
 // chiaroscuro at the scale of the land itself. Drawn in world space, so they flatten with z.
+// A small seeded generator, for passes that must not touch the scene's own stream.
+function seededRand(seed) {
+  let h = seed >>> 0;
+  return () => {
+    h = (h + 0x6d2b79f5) | 0;
+    let t = Math.imul(h ^ (h >>> 15), 1 | h);
+    t ^= t + Math.imul(t ^ (t >>> 7), 61 | t);
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+// Cloud rows (Wivenhoe Park): the clouds gathered onto three receding rows, with blue
+// between them. Each cloud keeps its place over the ground and its shape, and moves to
+// the nearest row's depth, so it scales and drops as perspective requires. Its own
+// random stream: nothing else in the scene moves.
+function arrangeCloudRows(s) {
+  const rows = [3.2, 7, 16];
+  const lr = seededRand(G.seed ^ 0x7f4a7c15);
+  for (const c of s.clouds) {
+    let best = rows[0];
+    for (const r of rows) if (Math.abs(Math.log(c.z / r)) < Math.abs(Math.log(c.z / best))) best = r;
+    const z2 = best * Math.exp((lr() - 0.5) * 0.25);
+    const sc = c.z / z2;
+    const cx2 = s.CX + (c.cx - s.CX) * sc, cy2 = s.HY - (s.HY - c.cy) * sc;
+    // the place follows perspective; the size only part of the way (a far cloud brought
+    // forward would otherwise swell to a ball), and the row flattens with distance
+    const k = Math.min(1.5, Math.max(0.65, Math.sqrt(sc)));
+    const flat = z2 > 10 ? 0.75 : 1;
+    for (const lb of c.lobes) {
+      lb.x = cx2 + (lb.x - c.cx) * k;
+      lb.y = cy2 + (lb.y - c.cy) * k * flat;
+      lb.rx *= k;
+      lb.ry *= k * flat;
+    }
+    Object.assign(c, { cx: cx2, cy: cy2, w: c.w * k, h: c.h * k * flat, z: z2 });
+  }
+  s.clouds.sort((a, b) => b.z - a.z);
+}
+
+// Where the clouds' shadows fall on the plain (Wivenhoe Park: the land patterned light and
+// dark by the clouds above it). Each cloud in the sky casts its shadow down the sun's
+// rays: a cloud hc above the ground moves t = hc / tan(sun elevation) toward the viewer
+// and sideways away from the sun. Only those that land on the visible plain are kept.
+// Clouds overhead and behind the viewer (out of the picture) shade the near plain too: a
+// few such patches come from their own seeded stream. Returns world ellipses.
+function cloudShadowPatches(s) {
+  if (s._cloudShadows) return s._cloudShadows;
+  const out = [];
+  const tanE = Math.max(0.15, (s.HY - s.sunY) / s.F);
+  const ax = (s.sunX - s.CX) / s.F; // the sun's sideways offset per unit of depth
+  for (const c of s.clouds) {
+    const hc = ((s.HY - c.cy) * c.z) / s.F + 1; // ceiling above the eye, plus the eye's height
+    const t = hc / tanE;
+    const zs = c.z - t;
+    if (zs < 1 || zs > s.zGround) continue;
+    const ww = (c.w * c.z) / s.F, hw = (c.h * c.z) / s.F;
+    out.push({ wx: ((c.cx - s.CX) * c.z) / s.F - t * ax, z: zs, rw: ww * 0.45, rz: Math.max(0.35, ww * 0.25 + (hw / tanE) * 0.5), ph: c.lobes[0].ph, k: 1 });
+  }
+  const lr = seededRand(G.seed ^ 0x2c1b3c6d);
+  const nO = Math.round(3 * G.param('clouds') * s.C.clouds);
+  for (let i = 0; i < nO; i++) {
+    const z = 1.4 + lr() * 2.6;
+    const half = ((REF_W / 2) * z) / s.F;
+    const rw = 0.6 + lr() * 1.0;
+    out.push({ wx: (lr() * 2 - 1) * half, z, rw, rz: rw * (0.4 + lr() * 0.4), ph: lr() * 100, k: 0.85 });
+  }
+  s._cloudShadows = out;
+  return out;
+}
+
 function paintCloudShadows(s) {
   const C = s.C;
-  const n = Math.round(2 + 6 * G.param('clouds') * C.clouds);
-  for (let i = 0; i < n; i++) {
-    const z = Math.exp(random(Math.log(1.6), Math.log(s.zGround * 0.9)));
-    const half = ((REF_W / 2) * z) / s.F;
-    const wx = random(-half, half);
-    const rw = random(1.2, 3.2);
-    const rz = rw * random(0.5, 1.1);
+  for (const sp of cloudShadowPatches(s)) {
+    const { z, wx, rw, rz, ph } = sp;
     const poly = [];
     const N = 24;
-    const ph = random(100);
     for (let k = 0; k < N; k++) {
       const a = (k / N) * TWO_PI;
       const r = 0.7 + 0.5 * noise(ph + Math.cos(a), ph + Math.sin(a));
@@ -1508,7 +1580,7 @@ function paintCloudShadows(s) {
     }
     const col = mixRGB(groundColour(s, z, s.gx(wx, z)), C.shadow, 0.55);
     brush.noStroke();
-    brush.fill(toHex(col), 115 * (1 - s.aerial(z) * 0.6));
+    brush.fill(toHex(col), 115 * sp.k * (1 - s.aerial(z) * 0.6));
     brush.fillBleed(0.25, 'out');
     brush.fillTexture(0.3, 0.1);
     bpoly(poly);
@@ -3368,9 +3440,22 @@ function oilBegin(s) {
   oilPeak(s, O, groups[2]);
   oilBrokenColour(s, O, groups[2]);
   oilScumble(s, O, groups[2]);
+  oilClouds(s, O, groups[2]);
   oilMeadowFlowers(s, O, groups[2]);
   oilObjects(s, O, groups[3]);
+  // the clouds' shadows: every stroke laid on the plain or the water under a shadow is
+  // darkened and cooled where it lies, so the broken colour and texture survive under it
+  for (const g of [groups[0], groups[1], groups[2]]) {
+    for (const st of g) {
+      const mx = (st.P[0][0] + st.P[3][0]) / 2, my = (st.P[0][1] + st.P[3][1]) / 2;
+      const sh = cloudShadeAt(s, mx, my);
+      if (sh <= 0) continue;
+      const kd = O.field(mx, my).kind;
+      if (kd === 'ground' || kd === 'water') shadeStroke(s, st, sh);
+    }
+  }
   oilSun(s, O, groups[4]);
+  oilBirds(s, O, groups[4]);
 
   const queue = [];
   groups.forEach((g, gi) => {
@@ -3393,6 +3478,21 @@ function oilBegin(s) {
   const scratches = oilSgraffito(s, O);
   // generated last, so they reshuffle none of the passes above
   const flowers = oilBankFlowers(s, O);
+  // sparkle on the grass at the bank's lip, toward the sun (Constable's "snow")
+  {
+    const SP = G.param('sparkle');
+    const rp = s.repoussoir;
+    const spark = mixRGB([252, 246, 226], s.C.glow, 0.25);
+    for (let i = 0, made = 0; i < 400 && made < Math.round(70 * SP); i++) {
+      const x = random(rp.bank[0][0], rp.bank[rp.bank.length - 1][0]);
+      const sunw = clamp01(1 - Math.abs(x - s.sunX) / (REF_W * 0.6));
+      if (random() > sunw * sunw) continue;
+      const y = bankAt(rp, x) + random(-3, 2);
+      const sz = random(1, 2.4);
+      flowers.push(makeOilStroke(O, x, y, random(-0.8, 0.8) - Math.PI / 2, sz * 1.4, sz, { color: mixRGB(spark, O.under(x, y), random(0, 0.25)), color2: spark, relief: 0.35, crisp: true }));
+      made++;
+    }
+  }
   const kc = G.param('contour');
   if (kc > 0) for (const b of blades) b.line = !b.strap && b.w0 * U >= 1.6 && random() < 0.55 * kc;
   for (let i = 0; i < knives.length; i += 60) {
@@ -4113,13 +4213,162 @@ function oilBankFlowers(s, O) {
   return out;
 }
 
+// Clouds as lit volumes (Constable, Wivenhoe Park). Each lobe is a rounded mass painted
+// in its own strokes, curving round it, never along the sky's vortex:
+//  - a shadowed body, grey-violet, darker than the sky behind it at its base;
+//  - the side toward the sun lit, warm and crisp-edged; the edge away from it soft;
+//  - the flat base catching the low sun in warm pink-gold;
+//  - near the sun, where the cloud is between us and the light, a dark body with a bright
+//    rim (the silver lining);
+//  - farther clouds smaller and flatter (their place), and paler: the air between.
+// Shadow marks first, then the lit ones over them, thicker (impasto on the lights).
+function oilClouds(s, O, out) {
+  const CV = G.param('cloudVolume');
+  if (CV <= 0) return;
+  const CI = G.param('cloudImpasto');
+  const C = s.C;
+  const warmLit = mixRGB(mixRGB(C.light, [255, 250, 240], 0.55), C.cloudLit, 0.15);
+  const baseGlow = mixRGB(mixRGB(C.cloudLit, C.glow, 0.5), [232, 186, 172], 0.35);
+  for (const c of s.clouds) {
+    const air = clamp01(s.aerial(c.z * 3));
+    const dxs = s.sunX - c.cx, dys = s.sunY - c.cy;
+    const dl = Math.hypot(dxs, dys) || 1;
+    const Lx = dxs / dl, Ly = dys / dl;
+    const nearSun = Math.exp(-Math.pow(dl / 420, 2));
+    const base = c.cy + c.h * 0.14; // the flat base
+    const ms = Math.max(2.2, Math.min(12, c.w * 0.035));
+    for (const pass of [0, 1]) {
+      for (const lb of c.lobes) {
+        const n = Math.min(700, Math.round(((Math.PI * lb.rx * lb.ry) / (ms * ms)) * 3.2));
+        for (let i = 0; i < n; i++) {
+          const a = random(TWO_PI), d = Math.sqrt(random());
+          const edge = 0.82 + 0.28 * noise(lb.ph + Math.cos(a) * 1.3, lb.ph + Math.sin(a) * 1.3);
+          if (d > edge) continue;
+          const u = Math.cos(a) * d, v = Math.sin(a) * d;
+          const x = lb.x + u * lb.rx, y = lb.y + v * lb.ry;
+          if (y > base + random(-1, 1)) continue;
+          const f = O.field(x, y);
+          if (f.kind !== 'sky' && f.kind !== 'cloud') continue;
+          if (Math.hypot(x - s.sunX, y - s.sunY) < 70) continue;
+          const nz = Math.sqrt(Math.max(0, 1 - d * d));
+          const facing = u * Lx + v * Ly;
+          const lam = Math.max(0, facing) * 0.85 + nz * 0.2;
+          // an edge counts only where it is the cloud's outline, not where one lobe meets
+          // another inside the mass (no scalloped rings within the cloud)
+          const inner = c.lobes.some((o) => o !== lb && Math.hypot((x - o.x) / o.rx, (y - o.y) / o.ry) < 0.85);
+          // the silver lining: on the outline, on the side toward the sun, near the sun
+          const rim = inner ? 0 : Math.pow(d / edge, 6) * nearSun * clamp01(0.15 + facing);
+          const tt = clamp01(lam * (1 - 0.65 * nearSun) + rim);
+          if (pass === 0 ? tt >= 0.5 : tt < 0.5) continue;
+          const sky = s.sky(x, y);
+          // the shadowed body: a little darker than the sky and greyer, varied by the lobe's
+          // own turns (Constable's clouds are never one grey)
+          const shadow = shadeRGB(mixRGB(sky, mixRGB(C.cloudShadow, C.shadow, 0.35), 0.32), 0.9 + 0.1 * noise(x * 0.02, y * 0.02, 3));
+          const bw = clamp01((y - (base - c.h * 0.4)) / (c.h * 0.4)); // toward the base
+          const lit = mixRGB(mixRGB(warmLit, baseGlow, 0.6 * bw), sky, 0.15);
+          let col = mixRGB(shadow, lit, Math.pow(tt, 1.25));
+          // the edge away from the light is soft (lost in the sky); the lit edge is found
+          const outer = inner ? 0 : clamp01((d / edge - 0.8) / 0.2);
+          col = mixRGB(col, sky, outer * (1 - clamp01(lam * 1.6)) * 0.55);
+          col = mixRGB(col, sky, air * 0.65);
+          col = mixRGB(O.under(x, y), col, CV);
+          const ta = Math.atan2(v * lb.rx, u * lb.ry) + Math.PI / 2 + random(-0.35, 0.35); // round the lobe
+          // on the outline the light is drawn, not dabbed: long thin strokes along the edge
+          const rimLine = pass === 1 && !inner && d / edge > 0.85;
+          const len = ms * random(1.1, 1.9) * (pass ? 0.85 : 1.1) * (rimLine ? 1.5 : 1);
+          out.push(makeOilStroke(O, x, y, ta, len, ms * random(0.6, 0.95) * (rimLine ? 0.5 : 1), {
+            color: col,
+            color2: mixRGB(col, pass ? lit : shadow, 0.3),
+            relief: pass ? 0.22 * CI * tt * (1 - air) * (rimLine ? 0.4 : 1) : 0,
+            soft: pass === 0,
+            crisp: pass === 1 && lam > 0.5,
+          }));
+        }
+      }
+    }
+  }
+}
+
+// The clouds' shadows on the land, in oil (see cloudShadowPatches): how deep the shadow
+// is at a screen point on the ground plane, 0–1. The edge is irregular (lobed, like the
+// cloud that casts it) and soft over its outer fifth; it pales with distance.
+function cloudShadeAt(s, x, y) {
+  const CS = G.param('cloudShadows');
+  if (CS <= 0 || y <= s.HY + 0.5) return 0;
+  const z = s.F / (y - s.HY);
+  if (z > s.zGround) return 0;
+  const wx = ((x - s.CX) * z) / s.F;
+  let best = 0;
+  for (const sp of cloudShadowPatches(s)) {
+    const du = (wx - sp.wx) / sp.rw, dv = (z - sp.z) / sp.rz;
+    if (du * du + dv * dv > 1.6) continue;
+    const a = Math.atan2(dv, du);
+    const r = Math.hypot(du, dv) / (0.68 + 0.5 * noise(sp.ph + Math.cos(a) * 1.6, sp.ph + Math.sin(a) * 1.6));
+    if (r >= 1) continue;
+    best = Math.max(best, sp.k * (1 - clamp01((r - 0.75) / 0.25)));
+  }
+  return best * CS * (1 - 0.6 * s.aerial(z));
+}
+// Darken and cool a stroke in shadow (≈ 22 % at full depth), body and bristles alike.
+function shadeStroke(s, st, sh) {
+  const d = 0.32 * sh;
+  st.body = mixRGB(shadeRGB(st.body, 1 - d), s.C.shadow, d * 0.45);
+  st.far = mixRGB(shadeRGB(st.far, 1 - d), s.C.shadow, d * 0.45);
+}
+
+// Birds (Wivenhoe Park's rooks): one or more loose flocks of small dark ticks under the
+// clouds — two shallow wing arcs each, the wings at different points of the beat — sized
+// by distance, paler the farther they are; never near the sun, never over the trees.
+function oilBirds(s, O, out) {
+  const nf = Math.round(G.param('birds'));
+  const C = s.C;
+  for (let fI = 0, tries = 0; fI < nf && tries < 40; tries++) {
+    const fx = random(REF_W * 0.12, REF_W * 0.88), fy = random(s.HY - 300, s.HY - 90);
+    if (Math.hypot(fx - s.sunX, fy - s.sunY) < 220) continue;
+    const fk = O.field(fx, fy);
+    if (fk.kind !== 'sky' && fk.kind !== 'cloud') continue;
+    fI++;
+    const dist = random(); // 0 near → 1 far
+    const size = 7 - 4.5 * dist;
+    const m = 6 + Math.floor(random(0, 9));
+    const rx = random(50, 130), ry = random(14, 34), tilt = random(-0.35, 0.35);
+    for (let i = 0; i < m; i++) {
+      const u = random(-1, 1), v = random(-1, 1) * (1 - Math.abs(u) * 0.5);
+      const x = fx + u * rx * Math.cos(tilt) - v * ry * Math.sin(tilt);
+      const y = fy + u * rx * Math.sin(tilt) + v * ry * Math.cos(tilt);
+      const f = O.field(x, y);
+      if (f.kind !== 'sky' && f.kind !== 'cloud') continue;
+      if (Math.hypot(x - s.sunX, y - s.sunY) < 160) continue;
+      const sz = size * random(0.7, 1.15);
+      const beat = random(-0.25, 0.35); // wing tips up (+) or down (−)
+      const col = mixRGB(mixRGB(C.silhouette, [40, 36, 40], 0.3), s.sky(x, y), 0.25 + 0.45 * dist);
+      for (const side of [-1, 1]) {
+        const path = [[x, y], [x + side * sz * 0.28, y - sz * (0.22 + beat * 0.4)], [x + side * sz * 0.55, y - sz * (0.12 + beat)]];
+        out.push(markToOil({ kind: 'edge', path, w: Math.max(0.8, sz * 0.16), col, col2: col, rel: 0 }));
+      }
+    }
+  }
+}
+
 // Objects restated over the field: midground trees as dabs (dark mass, then lit dabs),
 // and glints on the water (grass and the framing tree are painted on their own, later).
 function oilObjects(s, O, out) {
 
   // the river first, as water; then the midground trees, far → near (oilMidTree)
+  const i0 = out.length;
   oilRiver(s, O, out);
-  for (const tr of s.trees) oilMidTree(s, O, tr, out);
+  for (let i = i0; i < out.length; i++) {
+    const st = out[i];
+    const sh = cloudShadeAt(s, (st.P[0][0] + st.P[3][0]) / 2, (st.P[0][1] + st.P[3][1]) / 2);
+    if (sh > 0) shadeStroke(s, st, sh);
+  }
+  for (const tr of s.trees) {
+    // a tree in a cloud's shadow is in it from foot to crown
+    const j0 = out.length;
+    oilMidTree(s, O, tr, out);
+    const sh = cloudShadeAt(s, s.gx(tr.wx, tr.z), s.gy(tr.z));
+    if (sh > 0) for (let i = j0; i < out.length; i++) shadeStroke(s, out[i], sh);
+  }
 
   // (the river is painted by oilRiver, before the trees)
 
@@ -4214,8 +4463,25 @@ function oilRiver(s, O, out) {
   for (const m of treeReflectionMarks(s)) {
     out.push(makeOilStroke(O, m.x, m.y, 0, m.len, m.sw * 1.15, { color: m.col, color2: shadeRGB(m.col, 1.04), relief: 0, soft: true }));
   }
-  // glints: only in the sun's column
-  for (let i = 0; i < 160; i++) {
+  // wind lines (Wivenhoe Park): long thin light streaks lying across the water, cutting
+  // the reflections — where a breath of wind roughens the surface it mirrors the bright sky
+  const WL = G.param('windLines');
+  for (let i = 0, tries = 0; i < Math.round(14 * WL) && tries < 200; tries++) {
+    const p = sm[Math.floor(random(2, sm.length - 2))];
+    const y = s.gy(p.z);
+    const xl = s.gx(p.wl, p.z), xr = s.gx(p.wr, p.z);
+    const wid = xr - xl;
+    if (wid < 14) continue;
+    const L = wid * random(0.3, 0.85);
+    const x = xl + L / 2 + random(0, wid - L);
+    if (y > bankAt(rp, x) - 3) continue;
+    i++;
+    const skyUp = s.sky(x, Math.max(4, 2 * s.HY - y - 60));
+    const col = mixRGB(waterColour(s, p.z, x), mixRGB(C.light, skyUp, 0.5), 0.5);
+    out.push(makeOilStroke(O, x, y + random(-0.5, 0.5), random(-0.01, 0.01), L, Math.max(0.6, Math.min(1.6, 3 / Math.sqrt(p.z))), { color: col, color2: mixRGB(col, waterColour(s, p.z, x), 0.3), relief: 0.05, crisp: true }));
+  }
+  // glints: only in the sun's column (more of them with the sparkle)
+  for (let i = 0; i < Math.round(160 * (1 + G.param('sparkle'))); i++) {
     const z = Math.exp(random(Math.log(0.9), Math.log(r.zN)));
     const wx = r.center(z) + random(-0.85, 0.85) * r.halfW(z);
     const x = s.gx(wx, z);
@@ -4810,6 +5076,21 @@ function oilMidTree(s, O, tr, out) {
         const u = Math.cos(a) * d, v = Math.sin(a) * d;
         const my = c.y + v * c.r * 0.9;
         markAt(c.x + u * c.r, my, sz0 * Math.exp(random(-0.3, 0.3)), mixRGB(colourAt(shade(u, v, my)), ROSE, random(0.3, 0.5) * k), true);
+      }
+    }
+  }
+  // sparkle: a few near-white flecks on the crown's sun-facing edge (Constable's "snow")
+  const SP = G.param('sparkle');
+  if (SP > 0 && w >= 7 && cloudShadeAt(s, x, y) < 0.05) {
+    const spark = mixRGB(mixRGB([252, 246, 226], C.glow, 0.25), base, air * 0.6);
+    for (const c of clumps) {
+      const m = Math.round(c.r * 0.06 * SP + random() * 0.4);
+      const toSun = Math.atan2(s.sunY - c.y, s.sunX - c.x);
+      for (let i = 0; i < m; i++) {
+        const a = toSun + random(-0.9, 0.9);
+        const ex = c.x + Math.cos(a) * c.r * random(0.7, 0.9), ey = c.y + Math.sin(a) * c.r * 0.8 * random(0.7, 0.9);
+        const sc = mixRGB(spark, lit, random(0.15, 0.45));
+        out.push(makeOilStroke(O, ex, ey, random(TWO_PI), sz0 * random(0.5, 0.85), sz0 * random(0.4, 0.6), { color: sc, color2: sc, relief: 0.3 * k, crisp: true }));
       }
     }
   }
