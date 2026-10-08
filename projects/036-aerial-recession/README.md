@@ -733,6 +733,25 @@ How it is built:
   which keeps the view open. The others carry foliage on their whole crown; with the main
   tree's rule their limbs ended bare, like dead fingers.
 
+## Viewpoints (*viewpoint*: low, eye level, high vantage)
+
+The horizon is always at the eye's height, so the viewpoint moves the eye and the horizon
+together. Everything below it (the ground plane's projection, the river, the fields, the
+trees, the bank) follows from the horizon line:
+
+| viewpoint | horizon | mountain height | effect |
+|---|---|---|---|
+| **low (looking up)** | 75 % down the picture | × 1.18 | a big sky; the plain squeezed into a narrow band; the ranges tower |
+| **eye level** (default) | 64.5 % (the lower third, as before) | × 1 | unchanged |
+| **high vantage (looking down)** | 50 % | × 0.74 | the plain and the river spread out below; the ranges sit lower against the horizon |
+
+The sun (or moon) is kept at least 70 px below the top edge.
+
+**Fix (all scenes).** In the sun's core, the impasto ridge shadows of the loaded strokes
+were drawn at half the paint's value. On near-white paint they made grey scribbles that
+read as a face in the sun. The shadow now lightens with the paint's value, up to 85 % of
+it on the whitest paint.
+
 ## How each technique is implemented
 
 | technique | where | rule |

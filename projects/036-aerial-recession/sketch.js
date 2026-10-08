@@ -83,7 +83,7 @@ let WET = null; // sampler over the wet block-in, for later strokes to pick pain
 // the warm earth under-layer that sgraffito scratches back to (sienna-like)
 const IMPRIMATURA = [150, 94, 54];
 let UNDER = null; // cached underpainting {key, W, H, px, img} for oil repaints
-const SCENE_PARAMS = ['mood', 'sun', 'haze', 'ranges', 'mist', 'clouds', 'meander', 'trees', 'frame', 'rhyme', 'cloudRows', 'mountainForm', 'fgTrees', 'fgLayout'];
+const SCENE_PARAMS = ['mood', 'sun', 'haze', 'ranges', 'mist', 'clouds', 'meander', 'trees', 'frame', 'rhyme', 'cloudRows', 'mountainForm', 'fgTrees', 'fgLayout', 'viewpoint'];
 const UI = { status: '' };
 let PANEL_W = 0; // space kept clear for the control panel, fixed at each reset
 
@@ -108,6 +108,7 @@ function setup() {
     params: {
       medium: { value: 1, options: { watercolour: 0, oil: 1 }, label: 'medium', group: SC },
       wcTrees: { value: 0, options: { 'wash (clean)': 0, 'drawn (charcoal + hatch)': 1 }, label: 'watercolour trees', group: SC },
+      viewpoint: { value: 1, options: { 'low (looking up)': 0, 'eye level': 1, 'high vantage (looking down)': 2 }, label: 'viewpoint', group: SC },
       mood: { value: 0, options: { 'golden hour': 0, 'after the storm': 1, 'dawn mist': 2, 'moonlit night': 3 }, label: 'mood', group: SC },
       sun: { value: 0.35, min: 0, max: 1, step: 0.01, label: 'sun height', group: SC },
       haze: { value: 0.72, min: 0.3, max: 2.2, step: 0.05, label: 'atmosphere', group: SC },
@@ -364,7 +365,13 @@ function buildScene() {
   const s = { C, rnd, sunH };
 
   // --- composition: thirds ---
-  s.HY = REF_H * (0.645 + rnd(-0.02, 0.02)); // horizon on (near) the lower third line
+  // The viewpoint moves the eye and the horizon together (the horizon is always at eye
+  // height): low — a big sky, the ground squeezed into a narrow band, the mountains
+  // towering; eye level — the horizon on the lower third; high vantage — the horizon near
+  // the middle, the plain spread out below and the ranges lower against it.
+  s.vp = G.param('viewpoint');
+  s.HY = REF_H * ([0.75, 0.645, 0.5][s.vp] + rnd(-0.02, 0.02));
+  s.vpAmp = [1.18, 1, 0.74][s.vp];
   s.CX = REF_W / 2;
   s.F = REF_H - s.HY; // focal length: ground at z = 1 meets the bottom edge
   s.sunSide = rng() < 0.5 ? -1 : 1; // -1: sun on the left third
@@ -422,7 +429,7 @@ function buildScene() {
   for (const L of s.ranges) {
     for (const p of L.ridge) if (Math.abs(p[0] - s.sunX) < 40) crest = Math.min(crest, p[1]);
   }
-  s.sunY = crest - 22 - 270 * sunH;
+  s.sunY = Math.max(70, crest - 22 - 270 * sunH);
   // The focal summit: the highest crest on the focal third, which the frame must not cover.
   s.peakTop = s.HY;
   for (const L of s.ranges) {
@@ -483,7 +490,7 @@ function buildRanges(s) {
     const t = N === 1 ? 1 : i / (N - 1);
     const z = zFar * Math.pow(zNear / zFar, t);
     const air = s.aerial(z);
-    const amp = (250 - 165 * t) * rnd(0.85, 1.15);
+    const amp = (250 - 165 * t) * rnd(0.85, 1.15) * s.vpAmp;
     const base = s.gy(z);
     const oct = 2 + Math.round(5 * (1 - air));
     // big forms: the shape is carried by the two broad octaves; the finer ones only break
@@ -4256,9 +4263,12 @@ function oilStroke(st) {
   noStroke();
   const rel = st.relief;
   if (rel > 0.02 && !st.scumble) {
-    // the ridge's shadow, cast away from the room light
+    // the ridge's shadow, cast away from the room light; on near-white paint (the sun's
+    // core, snow) a half-value shadow read as grey scribbles — a face in the sun — so the
+    // lighter the paint, the lighter its shadow
     const off = st.w * 0.16 * rel;
-    strip(-OP.light[0] * off, -OP.light[1] * off, shadeRGB(st.body, 0.5), 60 + 120 * Math.min(1, rel), 1);
+    const lum = 0.3 * st.body[0] + 0.59 * st.body[1] + 0.11 * st.body[2];
+    strip(-OP.light[0] * off, -OP.light[1] * off, shadeRGB(st.body, 0.5 + 0.35 * clamp01((lum - 170) / 70)), 60 + 120 * Math.min(1, rel), 1);
   }
   if (!st.scumble) strip(0, 0, st.body, st.crisp ? 255 : 255 * OP.body * (st.soft ? 0.85 : 1) * (st.lean || 1), 1);
 
