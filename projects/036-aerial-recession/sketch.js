@@ -83,7 +83,7 @@ let WET = null; // sampler over the wet block-in, for later strokes to pick pain
 // the warm earth under-layer that sgraffito scratches back to (sienna-like)
 const IMPRIMATURA = [150, 94, 54];
 let UNDER = null; // cached underpainting {key, W, H, px, img} for oil repaints
-const SCENE_PARAMS = ['mood', 'sun', 'haze', 'ranges', 'mist', 'clouds', 'meander', 'trees', 'frame', 'rhyme', 'cloudRows', 'mountainForm'];
+const SCENE_PARAMS = ['mood', 'sun', 'haze', 'ranges', 'mist', 'clouds', 'meander', 'trees', 'frame', 'rhyme', 'cloudRows', 'mountainForm', 'fgTrees', 'fgLayout'];
 const UI = { status: '' };
 let PANEL_W = 0; // space kept clear for the control panel, fixed at each reset
 
@@ -118,6 +118,8 @@ function setup() {
       meander: { value: 1.0, min: 0, max: 2, step: 0.05, label: 'river meander', group: SC },
       trees: { value: 0.6, min: 0, max: 1, step: 0.05, label: 'trees', group: SC },
       frame: { value: 1.0, min: 0, max: 1, step: 0.05, label: 'repoussoir', group: SC },
+      fgTrees: { value: 2, min: 1, max: 4, step: 1, label: 'foreground trees', group: SC },
+      fgLayout: { value: 0, options: { 'one side (a group)': 0, 'both sides': 1 }, label: 'foreground trees stand', group: SC },
       mountainForm: { value: 1, options: { 'jagged (before)': 0, 'big forms': 1 }, label: 'mountain forms', group: SC },
       rhyme: { value: 0, options: { off: 0, on: 1 }, label: 'tree rhymes the peak (experiment)', group: SC },
       grain: { value: 0.5, min: 0, max: 1.2, step: 0.05, label: 'paper / canvas grain', group: SC },
@@ -724,14 +726,16 @@ function buildRepoussoir(s) {
   const { rnd } = s;
   const amt = G.param('frame');
   const side = -s.sunSide; // shadow side
-  const edgeX = (u) => (side > 0 ? REF_W - u : u); // distance-from-edge → x
   const fromEdge = (x) => (side > 0 ? REF_W - x : x);
 
+  const both = G.param('fgLayout') === 1 && G.param('fgTrees') > 1;
   const bank = [];
   const ph = rnd(0, 100);
   for (let x = -20; x <= REF_W + 20; x += 6) {
     const u = clamp01(1 - fromEdge(x) / REF_W); // 1 at the tree side
-    const lift = (62 + 200 * Math.pow(u, 2.6)) * (0.3 + 0.7 * amt);
+    // with a tree on the far side too, the bank rises a little there as well
+    const u2 = both ? clamp01(fromEdge(x) / REF_W) : 0;
+    const lift = (62 + 200 * Math.max(Math.pow(u, 2.6), 0.6 * Math.pow(u2, 3.2))) * (0.3 + 0.7 * amt);
     const n = noise(ph + x * 0.004) * 46 + noise(ph + 9 + x * 0.025) * 14;
     bank.push([x, REF_H - lift - n + 24]);
   }
@@ -739,12 +743,15 @@ function buildRepoussoir(s) {
   // The limb tree is grown twice from the same random tape: once with the no-crossing rule,
   // once without. The crossing-free tree is kept unless steering round other limbs cost it
   // more than a sixth of its crown (a thin crown is a worse fault than one crossing).
-  const tape = [];
-  const taped = () => {
-    let i = 0;
-    return (lo, hi) => {
-      if (i >= tape.length) tape.push(rnd(0, 1));
-      return lo + (hi - lo) * tape[i++];
+  // one tape per tree: the two growths of a tree read the same random numbers
+  const tapes = (src) => {
+    const tape = [];
+    return () => {
+      let i = 0;
+      return (lo, hi) => {
+        if (i >= tape.length) tape.push(src(0, 1));
+        return lo + (hi - lo) * tape[i++];
+      };
     };
   };
   // the direction of the peak's near flank, rising from the tree's side to the summit
@@ -759,17 +766,22 @@ function buildRepoussoir(s) {
       if (Math.abs(x2 - ax) > 20) rhymeA = Math.atan2(ay - y2, ax - x2);
     }
   }
-  const growTree = (noCross, rnd) => {
+  // T: which edge the tree stands by, how far in its foot is (b0..b1), its scale (k for
+  // length, wk for girth), and how far into the picture its limbs may reach low down
+  const growTree = (noCross, rnd, T) => {
+    const side = T.side;
+    const edgeX = (u) => (side > 0 ? REF_W - u : u);
+    const fromEdge = (x) => (side > 0 ? REF_W - x : x);
     const segs = [];
     const tips = [];
     const forks = [];
-    const bx = edgeX(rnd(50, 120));
+    const bx = edgeX(rnd(T.b0, T.b1));
     const inward = -side;
     const nearPeak = (x, y) => Math.hypot((x - s.focalX) / 1.3, y - s.peakTop) < 150;
     const clear = (x, y) =>
       Math.hypot(x - s.sunX, y - s.sunY) < 170 ||
       nearPeak(x, y) ||
-      (fromEdge(x) > REF_W * 0.24 && y > REF_H * 0.3);
+      (fromEdge(x) > T.reach && y > REF_H * 0.3);
     // Limbs never cross one another (an X of two big limbs reads as a mistake): a step that
     // would cut through an existing limb turns aside, or the limb stops there.
     const cut = (ax, ay, bx, by, ox, oy) => {
@@ -793,7 +805,7 @@ function buildRepoussoir(s) {
       // only where the twigs can carry foliage: a bare fork low in the picture reads as a thorn
       const m = Math.max(3, Math.round(n0 * 0.72));
       const [ex, ey, ew] = p[m - 1];
-      if (ey > REF_H * 0.42 && fromEdge(ex) > REF_W * 0.2) return false;
+      if (ey > REF_H * 0.42 && fromEdge(ex) > T.leafReach) return false;
       let any = false;
       for (const da of [-0.55, 0.5]) {
         const ta = a + da + 0.15 * Math.sign(Math.cos(a)); // the twigs droop a little
@@ -917,7 +929,7 @@ function buildRepoussoir(s) {
         if (na < lo || na >= Math.PI / 2) na = lo + rnd(0, 0.25);
         // rhyme (Cézanne's pine): the inward secondary limbs turn toward the slope of the
         // peak's near flank, so the tree echoes the mountain (no extra draws: off = as before)
-        if (rhymeA !== null && depth === 1 && Math.cos(na) * inward > 0) na = Math.max(lo, Math.min(hi, na + (rhymeA - na) * 0.55));
+        if (rhymeA !== null && T.main && depth === 1 && Math.cos(na) * inward > 0) na = Math.max(lo, Math.min(hi, na + (rhymeA - na) * 0.55));
         grow(cx, cy, na, len * rnd(0.64, 0.84), w * rnd(0.52, 0.68), depth + 1, me);
       }
       if (segs.length === before && !twigFork(p, a, len, w, depth, me)) {
@@ -927,31 +939,58 @@ function buildRepoussoir(s) {
         tips.push([cx, cy, depth]);
       }
     };
-    grow(bx, REF_H + 30, -Math.PI / 2 + inward * rnd(0.05, 0.14), rnd(340, 420) * (0.75 + 0.25 * amt), rnd(36, 48), 0);
-    return { segs, tips, forks };
+    grow(bx, REF_H + 30, -Math.PI / 2 + inward * rnd(0.05, 0.14), rnd(340, 420) * (0.75 + 0.25 * amt) * T.k, rnd(36, 48) * T.wk, 0);
+    return { segs, tips, forks, fromEdge, leafReach: T.leafReach };
   };
-  let segs = [];
-  let tips = [];
-  let forks = [];
+  // The trees (the fjord and Tatra studies frame with groups, not a lone tree): the main
+  // tree by the shadow-side edge; the others either stand with it as a group — younger,
+  // thinner and shorter, their feet farther in along the bank, their crowns overlapping —
+  // or one stands by the far edge, smaller, so the view is framed from both sides.
+  const plan = [{ side, b0: 50, b1: 120, k: 1, wk: 1, reach: REF_W * 0.24, leafReach: REF_W * 0.2, main: true }];
+  // the other trees draw from their own stream, so adding one leaves the main tree as it was
+  const pr = seededRand(G.seed ^ 0x3a9e1f27);
+  const prnd = (a, b) => a + (b - a) * pr();
+  if (amt > 0.05) {
+    let j = 0;
+    for (let t = 1; t < G.param('fgTrees'); t++) {
+      if (both && t === 1) {
+        plan.push({ side: -side, b0: 25, b1: 85, k: prnd(0.62, 0.76), wk: prnd(0.5, 0.64), reach: REF_W * 0.15, leafReach: REF_W * 0.24 });
+      } else {
+        const b = 165 + 105 * j++ + prnd(0, 50);
+        plan.push({ side, b0: b, b1: b + 30, k: prnd(0.55, 0.74) - 0.06 * j, wk: prnd(0.42, 0.58), reach: b + REF_W * 0.12, leafReach: b + REF_W * 0.24 });
+      }
+    }
+  }
+  const segs = [];
+  const grown = [];
   if (amt > 0.05) {
     const crown = (t) => t.tips.length + 0.4 * t.forks.length;
-    const free = growTree(false, taped());
-    const tidy = growTree(true, taped());
-    ({ segs, tips, forks } = crown(tidy) >= 0.85 * crown(free) ? tidy : free);
+    for (const T of plan) {
+      const taped = tapes(T.main ? rnd : prnd);
+      const free = growTree(false, taped(), T);
+      const tidy = growTree(true, taped(), T);
+      const g = crown(tidy) >= 0.85 * crown(free) ? tidy : free;
+      // one list of limbs for all the trees: parents re-indexed into it
+      const off = segs.length;
+      for (const q of g.segs) segs.push({ ...q, parent: q.parent >= 0 ? q.parent + off : -1 });
+      grown.push(g);
+    }
   }
   // Foliage masses at tips and outer forks — high, and never over the sun.
   const leaves = [];
-  const nodes = tips.map((t) => [...t, 1]).concat(forks.map((f) => [...f, 0.4]));
-  for (const [x, y, d, weight] of nodes) {
-    if (y > REF_H * 0.42 && fromEdge(x) > REF_W * 0.2) continue;
-    const n = Math.round(rnd(6, 12) * amt * weight);
-    for (let k = 0; k < n; k++) {
-      const r = rnd(8, 24) * (d > 3 ? 1 : 1.35);
-      const lx = x + rnd(-42, 42);
-      const ly = y + rnd(-28, 18);
-      if (Math.hypot(lx - s.sunX, ly - s.sunY) < 160 + r) continue;
-      if (Math.hypot((lx - s.focalX) / 1.3, ly - s.peakTop) < 170 + r) continue;
-      leaves.push({ x: lx, y: ly, r, ph: rnd(0, 100) });
+  for (const g of grown) {
+    const nodes = g.tips.map((t) => [...t, 1]).concat(g.forks.map((f) => [...f, 0.4]));
+    for (const [x, y, d, weight] of nodes) {
+      if (y > REF_H * 0.42 && g.fromEdge(x) > g.leafReach) continue;
+      const n = Math.round(rnd(6, 12) * amt * weight);
+      for (let k = 0; k < n; k++) {
+        const r = rnd(8, 24) * (d > 3 ? 1 : 1.35);
+        const lx = x + rnd(-42, 42);
+        const ly = y + rnd(-28, 18);
+        if (Math.hypot(lx - s.sunX, ly - s.sunY) < 160 + r) continue;
+        if (Math.hypot((lx - s.focalX) / 1.3, ly - s.peakTop) < 170 + r) continue;
+        leaves.push({ x: lx, y: ly, r, ph: rnd(0, 100) });
+      }
     }
   }
   // A limb end that no foliage reached (the keep-clear zone emptied it) would taper to a
