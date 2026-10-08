@@ -762,6 +762,33 @@ it on the whitest paint.
 
 All three combine with every mood (including night) and every viewpoint.
 
+## The foreground painted in the first layers (after a dunes study)
+
+**Problem.** The sword leaves ("thorn bushes") were drawn after the painting was finished,
+as filled ribbons with a lighter middle and a hard Prussian-blue edge. On top of the brushed
+paint they read as cut-out vector shapes. The bank was a brown-black silhouette.
+
+**Change.**
+
+- **Sword leaves in the body layer** (`oilSwordLeaves`, with *foreground painted with the
+  rest* > 0). Each leaf is laid with the bank's block-in as loaded oil strokes:
+  - the blade from the root to two-thirds;
+  - a narrower stroke to its point;
+  - a lighter, drier stroke down its middle that breaks along the leaf;
+  - a soft darker stroke along the edge away from the sun, not a drawn line.
+
+  They pick up the wet block-in. Every later pass goes over them: foreground accents and
+  scumbles, the glazes, and the grass, flowers and sparkle in front. With *foreground
+  painted with the rest* at 0 the old ribbons return.
+- **A green bank** (*bank: green of the grass*, 0.6). The dunes study's near ground is
+  grass in shade, not a silhouette. The bank's block-in mixes toward a sap green (more
+  toward the lip and the sun) and is a step lighter. The turf flicks take the same green.
+- **Sandy patches** (*bank: sandy patches*, 0.35). Broad noise patches of bare warm sand
+  show between the tufts, lighter toward the lip and the sun, with few turf flicks on them.
+
+Both are muted at night. The leaves are placed from their own random stream, and the
+scene's geometry is unchanged. Brush jitter in the later passes does shift.
+
 ## How each technique is implemented
 
 | technique | where | rule |
