@@ -72,7 +72,7 @@ let WET = null; // sampler over the wet block-in, for later strokes to pick pain
 // the warm earth under-layer that sgraffito scratches back to (sienna-like)
 const IMPRIMATURA = [150, 94, 54];
 let UNDER = null; // cached underpainting {key, W, H, px, img} for oil repaints
-const SCENE_PARAMS = ['mood', 'sun', 'haze', 'ranges', 'mist', 'clouds', 'meander', 'trees', 'frame', 'rhyme', 'cloudRows'];
+const SCENE_PARAMS = ['mood', 'sun', 'haze', 'ranges', 'mist', 'clouds', 'meander', 'trees', 'frame', 'rhyme', 'cloudRows', 'mountainForm'];
 const UI = { status: '' };
 let PANEL_W = 0; // space kept clear for the control panel, fixed at each reset
 
@@ -105,6 +105,7 @@ function setup() {
       meander: { value: 1.0, min: 0, max: 2, step: 0.05, label: 'river meander', group: SC },
       trees: { value: 0.6, min: 0, max: 1, step: 0.05, label: 'trees', group: SC },
       frame: { value: 1.0, min: 0, max: 1, step: 0.05, label: 'repoussoir', group: SC },
+      mountainForm: { value: 1, options: { 'jagged (before)': 0, 'big forms': 1 }, label: 'mountain forms', group: SC },
       rhyme: { value: 0, options: { off: 0, on: 1 }, label: 'tree rhymes the peak (experiment)', group: SC },
       grain: { value: 0.5, min: 0, max: 1.2, step: 0.05, label: 'paper / canvas grain', group: SC },
 
@@ -164,6 +165,7 @@ function setup() {
       cloudPaint: { value: 0.7, min: 0, max: 1, step: 0.05, label: 'cloud paint: thin shadows, thick lights', group: CO },
       overcast: { value: 0, min: 0, max: 1, step: 0.05, label: 'overcast deck', group: CO },
       horizonBand: { value: 1.0, min: 0, max: 1.2, step: 0.05, label: 'bright horizon band', group: CO },
+      cloudEdges: { value: 0.8, min: 0, max: 1, step: 0.05, label: 'cloud edges lost into the sky', group: CO },
       cloudVolume: { value: 0.85, min: 0, max: 1, step: 0.05, label: 'cloud volume (oil)', group: CO },
       cloudShadows: { value: 0.7, min: 0, max: 1.2, step: 0.05, label: 'cloud shadows on the land', group: CO },
       windLines: { value: 0.6, min: 0, max: 1.5, step: 0.05, label: 'wind lines on the water', group: CO },
@@ -457,7 +459,11 @@ function buildRanges(s) {
     const amp = (250 - 165 * t) * rnd(0.85, 1.15);
     const base = s.gy(z);
     const oct = 2 + Math.round(5 * (1 - air));
-    const ridged = 1 - t; // far = sharp alpine, near = rolling
+    // big forms: the shape is carried by the two broad octaves; the finer ones only break
+    // the crest a little (Friedrich's and Wilson's mountains are a few large masses with
+    // rounded shoulders, not an evenly jagged saw)
+    const big = G.param('mountainForm') === 1;
+    const ridged = (1 - t) * (big ? 0.3 : 1); // far = sharper, near = rolling
     const feature = 230 + 180 * t;
     const off = rnd(0, 1000);
     const step = 4;
@@ -471,8 +477,9 @@ function buildRanges(s) {
         let n = noise(x * f + off, i * 31.7 + o * 9.1);
         const r = 1 - Math.abs(2 * n - 1);
         n = n * (1 - ridged) + r * r * ridged;
-        sum += a * n;
-        norm += a;
+        const wgt = big && o >= 2 ? 0.14 : 1;
+        sum += a * n * wgt;
+        norm += a * wgt;
         a *= 0.5;
         f *= 2.07;
       }
@@ -489,7 +496,16 @@ function buildRanges(s) {
       let h = (v - lo) / (hi - lo + 1e-6);
       if (i === peakLayer) {
         const d = (x - s.focalX) / peakW;
-        h = Math.max(h, 0.4 + 1.25 * Math.exp(-d * d) - 0.12 * Math.abs(d));
+        if (big) {
+          // an asymmetric summit: steeper on one side, a long shoulder and a lower second
+          // summit on the other, the crest a little broken — not a symmetric bell
+          const sd = hash2(G.seed % 9973, 7) < 0.5 ? -1 : 1;
+          const dd = d * (d * sd > 0 ? 0.72 : 1.4);
+          const main = 0.4 + 1.2 * Math.exp(-dd * dd) - 0.1 * Math.abs(dd);
+          const e = (d - sd * 1.2) / 0.5;
+          const second = 0.38 + 0.78 * Math.exp(-e * e);
+          h = Math.max(h, main + 0.035 * (noise(x * 0.04, 77.7) - 0.5), second);
+        } else h = Math.max(h, 0.4 + 1.25 * Math.exp(-d * d) - 0.12 * Math.abs(d));
       }
       return [x, base - amp * (0.12 + 0.88 * h)];
     });
@@ -1050,7 +1066,9 @@ function buildTasks(s) {
   s.ranges.forEach((L, idx) => {
     T.push(() => paintRangeBody(s, L));
     T.push(() => paintRangeLight(s, L));
-    if (L.t > 0.3) T.push(() => paintRangeTexture(s, L));
+    // in oil the pencil scree lines get sampled into the strokes as scratches: the oil
+    // ranges carry their own form-following strokes instead
+    if (L.t > 0.3 && !(G.param('medium') === 1 && G.param('mountainForm') === 1)) T.push(() => paintRangeTexture(s, L));
     T.push(() => paintRangeEdge(s, L));
     T.push(() => paintMist(s, L));
     if (idx === raysAfter) T.push(() => paintRays(s));
@@ -3385,6 +3403,7 @@ function oilParams() {
     sweep: P('fieldSweep'),
     upright: P('meadowUpright'),
     meadowBroken: P('meadowBroken'),
+    mform: P('mountainForm') === 1,
     fg: P('fgPaint'),
     constructive: P('constructive'),
     fieldPlanes: P('fieldPlanes'),
@@ -3634,6 +3653,37 @@ function oilBegin(s) {
 
 // The direction/scale field, from scene geometry. Returns {a, k, kind, ...} — stroke
 // angle, size multiplier and what is being painted — for a REF point.
+// The planes of a range (Friedrich, Wilson): a point under a crest belongs to a slope whose
+// direction is the crest's, smoothed over a width that grows with depth below it, crossed
+// by spurs running down from the summits (an alternation of faces). Returns the lateral
+// screen slope `sl` (dy/dx; + descends to the right), how far it turns to the sun (`lit`)
+// or away from it (`shade`), the depth below the crest `d`, and a lit-crest term.
+function rangePlane(s, L, x, y) {
+  if (!L.cum) {
+    L.cum = [0];
+    for (const p of L.ridge) L.cum.push(L.cum[L.cum.length - 1] + p[1]);
+  }
+  const n = L.ridge.length;
+  const idx = (xx) => Math.max(0, Math.min(n - 1, Math.round((xx + 30) / 4)));
+  const avg = (x0, x1) => {
+    const a = idx(Math.min(x0, x1)), b = Math.max(idx(Math.max(x0, x1)), a + 1);
+    return (L.cum[b] - L.cum[a]) / (b - a);
+  };
+  const ry = L.ridge[idx(x)][1];
+  const d = Math.max(0, y - ry);
+  const w = 10 + d * 0.9;
+  let sl = (avg(x, x + w) - avg(x - w, x)) / w;
+  // spurs: a height field of ridges falling from the crest, its lateral slope alternating
+  const sp = (xx) => noise(xx * 0.022 + d * 0.0035, L.i * 7.1 + 3.3);
+  const spurA = 26 * clamp01(d / 25) * (1 - 0.6 * L.air);
+  sl += ((sp(x + 3) - sp(x - 3)) / 6) * spurA;
+  const toSun = sl * s.sunSide; // descending toward the sun = facing it
+  const lit = clamp01(toSun * 1.6);
+  const shade = clamp01(-toSun * 1.6);
+  const crest = Math.exp(-d / (4 + 5 * L.t)) * (0.35 + 0.65 * clamp01(0.5 + toSun * 2));
+  return { sl, lit, shade, d, crest };
+}
+
 function buildOilField(s) {
   const rp = s.repoussoir;
   const limbSegs = [];
@@ -3693,7 +3743,18 @@ function buildOilField(s) {
         const slope = (ridgeAt(L, x + 10) - ridgeAt(L, x - 10)) / 20;
         if (L.air > 0.55) {
           // far: soft, level, small — it should melt, not be carved
-          return { a: (noise(x * 0.01, y * 0.01) - 0.5) * 0.25, k: 0.32 + 0.3 * (1 - L.air), kind: 'far' };
+          return { a: (noise(x * 0.01, y * 0.01) - 0.5) * 0.25, k: (0.32 + 0.3 * (1 - L.air)) * (OP.mform ? 1.3 : 1), kind: 'far', L, air: L.air };
+        }
+        if (OP.mform) {
+          // one direction per plane: steep faces along their fall line, gentle ones along
+          // the contour (near level, following the crest above) — never a random hatch
+          const P = rangePlane(s, L, x, y);
+          const steep = clamp01((Math.abs(P.sl) - 0.25) / 0.35);
+          const fallA = Math.atan2(Math.abs(P.sl) * 1.1 + 0.2, P.sl >= 0 ? 1 : -1);
+          const contA = Math.atan(P.sl) * 0.6;
+          const vx = Math.cos(fallA) * steep + Math.cos(contA) * (1 - steep) * (Math.cos(fallA) >= 0 ? 1 : -1);
+          const vy = Math.sin(fallA) * steep + Math.sin(contA) * (1 - steep) * (Math.cos(fallA) >= 0 ? 1 : -1);
+          return { a: Math.atan2(vy, vx), k: (0.3 + 0.45 * (1 - L.air)) * OP.facet, kind: 'range', air: L.air, L };
         }
         const k = (0.22 + 0.4 * (1 - L.air)) * OP.facet; // small facets: crags, not boulders
         const dir = slope >= 0 ? 1 : -1;
@@ -3702,7 +3763,7 @@ function buildOilField(s) {
         // craggy facets: the fall line, a crossing facet, or the crest — chosen per stroke
         const pick = noise(x * 0.09, y * 0.09, i * 3.3);
         const a = pick < OP.facetMix ? fall : pick < OP.facetMix + (1 - OP.facetMix) * 0.56 ? Math.PI - fall + 0.25 * dir : crest;
-        return { a, k, kind: 'range', air: L.air };
+        return { a, k, kind: 'range', air: L.air, L };
       }
     }
     // sky: the vortex around the sun
@@ -3718,7 +3779,18 @@ function buildOilField(s) {
     const lx = tx >= 0 ? 1 : -1;
     // far from the sun the vortex relaxes toward level: a steep tangent there read as
     // diagonal rain across the upper sky
-    const vtx = OP.vortex * (1 - 0.75 * clamp01((r - 320) / 420));
+    let vtx = OP.vortex * (1 - 0.75 * clamp01((r - 320) / 420));
+    // in and near a cloud the swirl calms toward level: the cloud's own strokes, not the
+    // sun's vortex, describe it, and the two stroke systems stop fighting at its edge
+    let near = 0;
+    for (const c of s.clouds) {
+      if (Math.abs(x - c.cx) > c.w || y < c.cy - c.h * 2.2 || y > c.cy + c.h * 1.2) continue;
+      for (const lb of c.lobes) {
+        const q = Math.hypot((x - lb.x) / lb.rx, (y - lb.y) / lb.ry);
+        if (q < 1.6) near = Math.max(near, clamp01((1.6 - q) / 0.7));
+      }
+    }
+    vtx *= 1 - 0.85 * near;
     const a = Math.atan2(ty * vtx, tx * vtx + lx * (1 - vtx));
     const kSky = 0.42 + 1.05 * clamp01(r / 700);
     for (const c of s.clouds) {
@@ -3736,7 +3808,7 @@ function oilRelief(f) {
     // beyond the halo the ridge fades: a bright edge on every dab read as scratches
     case 'sky': return f.r < 320 ? 0.15 + 0.55 * (1 - f.r / 320) : 0.12 * Math.exp(-(f.r - 320) / 160);
     case 'cloud': return 0.2;
-    case 'range': return 0.22;
+    case 'range': return OP.mform ? 0.1 : 0.22;
     case 'far': return 0;
     case 'ground': return 0.04; // flat meadow: no ridge highlight (it outlined every stroke)
     case 'water': return 0.1;
@@ -3869,6 +3941,17 @@ function oilLayer(s, O, out, scale, cover, edges, layer) {
           // the meadow greys a little with distance (aerial perspective on saturation)
           st.body = desatRGB(st.body, 0.28 * gFar);
           st.far = desatRGB(st.far, 0.28 * gFar);
+        } else if ((f.kind === 'range' || f.kind === 'far') && OP.mform && f.L) {
+          // light by plane: faces turned to the sun warm and lighter, faces turned away cool
+          // and darker, the crest lit along the sun's side; it all weakens with distance
+          const P = rangePlane(s, f.L, sx, sy);
+          const vis = (1 - f.air) * (f.kind === 'far' ? 0.45 : 1);
+          const warm = mixRGB(mixRGB(s.C.light, s.C.glow, 0.45), PEAK_WARM, 0.25);
+          const cool = mixRGB(s.C.shadow, PEAK_COOL, 0.35);
+          const lk = (0.3 * P.lit + 0.28 * P.crest) * vis;
+          const sk = 0.3 * P.shade * vis;
+          st.body = mixRGB(shadeRGB(mixRGB(st.body, warm, lk), 1 - 0.1 * sk), cool, sk);
+          st.far = mixRGB(shadeRGB(mixRGB(st.far, warm, lk * 0.8), 1 - 0.1 * sk), cool, sk * 0.8);
         } else if (f.kind === 'bank') {
           // the dark bank is not one flat tone: broad, slow shifts warm/cool and up/down
           const nt = noise(sx * 0.005, sy * 0.008, 7.7);
@@ -4200,7 +4283,7 @@ function oilBrokenColour(s, O, out) {
     const f = O.field(x, y);
     if (f.kind !== 'ground' && f.kind !== 'range') continue; // the bank's colour goes into its turf
     // the haze swallows broken colour on a mountain: on a far smooth face it reads as dashes
-    const fade = f.kind === 'range' ? 1 - f.air : 1;
+    const fade = f.kind === 'range' ? (1 - f.air) * (OP.mform ? 0.5 : 1) : 1;
     if (random() > fade * fade) continue;
     const base = O.under(x, y);
     const l = O.lum(base);
@@ -4466,9 +4549,12 @@ function oilClouds(s, O, out) {
       const lam = Math.max(0, facing) * 0.85 + nz * 0.2;
       const tt = clamp01(lam * (1 - 0.6 * nearSun));
       const sky = s.sky(x, y);
-      const shadow = shadeRGB(mixRGB(sky, violet, (0.32 + 0.3 * nearSun) * thick), lobeV[li] * (0.95 + 0.07 * noise(x * 0.015, y * 0.015, 3)) * (1 - 0.06 * (thick - 1)));
+      // the body is the sky it hangs in, turned darker and cooler (Wilson): warm grey near
+      // the light, cool grey away from it; only a trace of the shared violet
+      const cooled = mixRGB(mixRGB(sky, C.shadow, 0.24 + 0.1 * nearSun), violet, 0.1);
+      const shadow = shadeRGB(cooled, (0.86 - 0.05 * nearSun) * lobeV[li] * (0.95 + 0.07 * noise(x * 0.015, y * 0.015, 3)) * (1 - 0.07 * (thick - 1)));
       const bw = clamp01((y - (base - c.h * 0.4)) / (c.h * 0.4)); // toward the base
-      const lit = mixRGB(mixRGB(warmLit, baseGlow, 0.6 * bw), sky, 0.15);
+      const lit = mixRGB(mixRGB(warmLit, baseGlow, 0.6 * bw), sky, 0.3);
       // a smooth turn from shadow to light across the lobe, never salt and pepper
       let col = mixRGB(shadow, lit, tt * tt * (3 - 2 * tt));
       // the low sun warms the underside: a gradual glow toward the base, not a seam
@@ -4500,7 +4586,7 @@ function oilClouds(s, O, out) {
         // thin paint in the shadow (the sketch's grey dragged over the blue): a share of the
         // body strokes there are scumbles — bristles only, broken, the sky showing through.
         // A first, opaque underlayer stays, so the cloud holds its value.
-        if (CP > 0 && P.tt < 0.45 && random() < CP * 0.65 * (1 - P.tt / 0.45)) {
+        if (CP > 0 && P.tt < 0.45 && random() < CP * 0.4 * (1 - P.tt / 0.45)) {
           st.scumble = true;
           st.w *= 1.35;
         }
@@ -4530,6 +4616,45 @@ function oilClouds(s, O, out) {
     });
     // 3. the silver lining: near the sun, a drawn line of light along the cloud's outline on
     // the sun's side (and under the base, which the low sun lights from below)
+    // lost and found (Wilson): most of a cloud's outline is lost into the sky — strokes laid
+    // across it carry the sky on one side and the cloud on the other, and here and there
+    // the sky is dragged back into the cloud; only the side facing the sun near the light
+    // keeps a found edge
+    const CE = G.param('cloudEdges');
+    if (CE > 0) {
+      const foundReach = Math.exp(-Math.pow(dl / 640, 2));
+      c.lobes.forEach((lb, li) => {
+        const steps = Math.max(12, Math.round((lb.rx + lb.ry) * 0.5));
+        for (let q = 0; q < steps; q++) {
+          const a = (q / steps) * TWO_PI + random(-0.1, 0.1);
+          const edge = edgeAt(lb, a);
+          const ex = lb.x + Math.cos(a) * edge * lb.rx, ey = lb.y + Math.sin(a) * edge * lb.ry;
+          if (ey > base + 1 || !outline(lb, ex, ey)) continue;
+          const fk = O.field(ex, ey).kind;
+          if (fk !== 'sky' && fk !== 'cloud') continue;
+          const facing = Math.cos(a) * Lx + Math.sin(a) * Ly;
+          const found = foundReach * clamp01((facing - 0.15) * 2.5);
+          const ox = lb.x + Math.cos(a) * edge * 1.2 * lb.rx, oy = lb.y + Math.sin(a) * edge * 1.2 * lb.ry;
+          const skyOut = s.sky(ox, oy);
+          const P = shadeAtP(lb, li, Math.cos(a) * edge * 0.85, Math.sin(a) * edge * 0.85, edge * 0.85, edge, ex, ey);
+          // an edge is lost where cloud and sky are close in value; against the bright sky
+          // round the sun the contrast keeps it found (Wilson's one hard edge)
+          const lum = (c) => 0.3 * c[0] + 0.59 * c[1] + 0.11 * c[2];
+          const similar = clamp01(1 - Math.abs(lum(skyOut) - lum(P.col)) / 55);
+          if (random() > CE * (1 - found) * similar) continue;
+          const ta = Math.atan2(Math.sin(a) * lb.rx, Math.cos(a) * lb.ry) + Math.PI / 2;
+          const col = mixRGB(skyOut, P.col, random(0.45, 0.65));
+          out.push(makeOilStroke(O, ex, ey, ta + random(-0.2, 0.2), ms * random(1.8, 2.8), ms * random(1, 1.4), { color: col, color2: mixRGB(skyOut, P.col, 0.3), relief: 0, soft: true }));
+          if (random() < 0.2 * CE) {
+            // the sky dragged back into the cloud: a dry scumble just inside the outline
+            const ix = lb.x + Math.cos(a) * edge * 0.86 * lb.rx, iy = lb.y + Math.sin(a) * edge * 0.86 * lb.ry;
+            const st = makeOilStroke(O, ix, iy, ta + random(-0.3, 0.3), ms * random(1.6, 2.4), ms * random(0.9, 1.2), { color: mixRGB(skyOut, P.col, 0.6), color2: mixRGB(skyOut, P.col, 0.4) });
+            st.scumble = true;
+            out.push(st);
+          }
+        }
+      });
+    }
     // the silver lining reaches farther than the darkening does: a cloud well away from
     // the sun still catches light on the edge that faces it
     const rimReach = Math.exp(-Math.pow(dl / 640, 2));
@@ -4545,7 +4670,8 @@ function oilClouds(s, O, out) {
           if (y > base || !outline(lb, x, y)) continue;
           const facing = Math.cos(a) * Lx + Math.sin(a) * Ly;
           // thin and fractus clouds glow more: more light gets through their fringe
-          const k2 = Math.pow(rimReach, 0.8) * clamp01(facing * 1.3 + 0.2) * (1 - air * 0.5) * (1.25 - 0.25 * thick + 0.2 * ragged);
+          // a lining only on a found edge: the side facing the sun
+          const k2 = Math.pow(rimReach, 0.8) * clamp01((facing - 0.2) * 1.6) * (1 - air * 0.5) * (1.25 - 0.25 * thick + 0.2 * ragged);
           if (k2 < 0.06) continue;
           // only where the cloud is seen (never over a range in front of it), and broken
           // along the arc: the lining shows where the fringe is thin
