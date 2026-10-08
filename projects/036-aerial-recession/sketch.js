@@ -83,7 +83,7 @@ let WET = null; // sampler over the wet block-in, for later strokes to pick pain
 // the warm earth under-layer that sgraffito scratches back to (sienna-like)
 const IMPRIMATURA = [150, 94, 54];
 let UNDER = null; // cached underpainting {key, W, H, px, img} for oil repaints
-const SCENE_PARAMS = ['mood', 'sun', 'haze', 'ranges', 'mist', 'clouds', 'meander', 'trees', 'frame', 'rhyme', 'cloudRows', 'mountainForm', 'fgTrees', 'fgLayout', 'viewpoint'];
+const SCENE_PARAMS = ['mood', 'sun', 'haze', 'ranges', 'mist', 'clouds', 'meander', 'trees', 'frame', 'rhyme', 'cloudRows', 'mountainForm', 'fgTrees', 'fgLayout', 'viewpoint', 'sceneType'];
 const UI = { status: '' };
 let PANEL_W = 0; // space kept clear for the control panel, fixed at each reset
 
@@ -108,6 +108,7 @@ function setup() {
     params: {
       medium: { value: 1, options: { watercolour: 0, oil: 1 }, label: 'medium', group: SC },
       wcTrees: { value: 0, options: { 'wash (clean)': 0, 'drawn (charcoal + hatch)': 1 }, label: 'watercolour trees', group: SC },
+      sceneType: { value: 0, options: { 'river plain': 0, 'fjord / lake': 1, 'alpine valley': 2 }, label: 'scene', group: SC },
       viewpoint: { value: 1, options: { 'low (looking up)': 0, 'eye level': 1, 'high vantage (looking down)': 2 }, label: 'viewpoint', group: SC },
       mood: { value: 0, options: { 'golden hour': 0, 'after the storm': 1, 'dawn mist': 2, 'moonlit night': 3 }, label: 'mood', group: SC },
       sun: { value: 0.35, min: 0, max: 1, step: 0.01, label: 'sun height', group: SC },
@@ -372,6 +373,12 @@ function buildScene() {
   s.vp = G.param('viewpoint');
   s.HY = REF_H * ([0.75, 0.645, 0.5][s.vp] + rnd(-0.02, 0.02));
   s.vpAmp = [1.18, 1, 0.74][s.vp];
+  // The scene type: a river plain; a fjord or lake (the valley floor drowned — the water
+  // opens out a little way in front and runs to the foot of steeper, taller mountains,
+  // which it mirrors); an alpine valley (the nearer ranges rise steeply at both sides of
+  // the picture, a V that converges on the focal summit).
+  s.scene = G.param('sceneType');
+  s.vpAmp *= [1, 1.22, 1.15][s.scene];
   s.CX = REF_W / 2;
   s.F = REF_H - s.HY; // focal length: ground at z = 1 meets the bottom edge
   s.sunSide = rng() < 0.5 ? -1 : 1; // -1: sun on the left third
@@ -555,7 +562,10 @@ function buildRanges(s) {
           h = Math.max(h, main + 0.035 * (noise(x * 0.04, 77.7) - 0.5), second);
         } else h = Math.max(h, 0.4 + 1.25 * Math.exp(-d * d) - 0.12 * Math.abs(d));
       }
-      return [x, base - amp * (0.12 + 0.88 * h)];
+      // alpine valley: the walls rise toward the picture's sides, more on the nearer ranges
+      const vu = Math.abs(x - s.focalX) / REF_W;
+      const vlift = s.scene === 2 ? (60 + amp) * 2.2 * Math.pow(t, 1.2) * Math.pow(vu, 1.3) : 0;
+      return [x, base - amp * (0.12 + 0.88 * h) - vlift];
     });
     const local = mixRGB(C.rockFar, C.rockNear, t);
     out.push({ i, t, z, air, base, amp, ridge, local, isPeak: i === peakLayer, peaks: findPeaks(ridge, s) });
@@ -599,7 +609,15 @@ function buildRiver(s) {
     const m = A * env * Math.sin((TWO_PI * Math.log(z)) / lam + ph);
     return a + b * z + m; // world x
   };
-  const halfW = (z) => 0.2 + 0.05 * Math.log(z);
+  const riverW = (z) => 0.2 + 0.05 * Math.log(z);
+  // a lake: the river opens out between zL and zW until its shores leave the picture
+  const zL = 2.1, zW = Math.min(zN * 0.6, 5.5);
+  const halfW = s.scene !== 1 ? riverW : (z) => {
+    if (z <= zL) return riverW(z);
+    const full = ((REF_W / 2 + 260) * z) / s.F + Math.abs(center(z));
+    const e = clamp01(Math.log(z / zL) / Math.log(zW / zL));
+    return riverW(z) + (full - riverW(z)) * e * e * (3 - 2 * e);
+  };
   const samples = [];
   const n = 120;
   for (let i = 0; i <= n; i++) {
@@ -5132,7 +5150,7 @@ function oilRiver(s, O, out) {
       const x = xl + wid * random(0.2, 0.8);
       if (y1 < bankAt(rp, x) - 3) {
         const col = shadeRGB(waterColour(s, b.z, x), 0.72);
-        out.push(makeOilStroke(O, x, y1 + 0.4, 0, wid * random(0.4, 0.8), Math.max(0.7, sw * 0.35), { color: col, color2: col, relief: 0, soft: true }));
+        out.push(makeOilStroke(O, x, y1 + 0.4, 0, (s.scene === 1 ? Math.min(wid, 200) : wid) * random(0.4, 0.8), Math.max(0.7, sw * 0.35), { color: col, color2: col, relief: 0, soft: true }));
       }
     }
   }
@@ -5178,8 +5196,8 @@ function oilRiver(s, O, out) {
     const xl = s.gx(p.wl, p.z), xr = s.gx(p.wr, p.z);
     const wid = xr - xl;
     if (wid < 14) continue;
-    const L = wid * random(0.3, 0.85);
-    const x = xl + L / 2 + random(0, wid - L);
+    const L = (s.scene === 1 ? Math.min(wid, 240) : wid) * random(0.3, 0.85);
+    const x = Math.max(xl, -40) + L / 2 + random(0, Math.min(xr, REF_W + 40) - Math.max(xl, -40) - L);
     if (y > bankAt(rp, x) - 3) continue;
     i++;
     const skyUp = s.sky(x, Math.max(4, 2 * s.HY - y - 60));

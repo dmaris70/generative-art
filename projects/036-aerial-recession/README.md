@@ -752,6 +752,16 @@ were drawn at half the paint's value. On near-white paint they made grey scribbl
 read as a face in the sun. The shadow now lightens with the paint's value, up to 85 % of
 it on the whitest paint.
 
+## Scene types (*scene*: river plain, fjord / lake, alpine valley)
+
+| scene | how it is built |
+|---|---|
+| **river plain** (default) | As before |
+| **fjord / lake** | The valley floor is drowned. The river opens out a little in front of the viewer (from depth 2.1). Between there and about 5.5 (or 60 % of the way to the hills), its banks swing out with a smoothstep until they leave the picture, so the water runs to the foot of the mountains. The water mirrors whatever stands above the horizon at the same angle, so the ranges are reflected in it. Mountains are 22 % taller |
+| **alpine valley** | The nearer ranges rise toward the picture's sides: an extra lift of up to 1.1 × the range's height, growing with distance from the focal summit (power 1.35) and with nearness (power 1.3). The valley walls form a V that converges on the focal peak. Mountains are 15 % taller |
+
+All three combine with every mood (including night) and every viewpoint.
+
 ## How each technique is implemented
 
 | technique | where | rule |
