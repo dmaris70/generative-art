@@ -472,6 +472,23 @@ itself.
 Also: midground crowns are now re-centred on their trunks. A lopsided scatter of clumps
 could leave the trunk standing beside the crown as a bare pole.
 
+## After *Wivenhoe Park* (Constable, 1816)
+
+Constable's clouds are lit volumes, not pale patches: sunlit tops, grey-violet shadowed
+bodies (in places darker than the blue behind them), flat bases, and rows receding toward
+the horizon. The same clouds then pattern the land with light and shade. Here the lessons
+are translated to a low sun ahead of the viewer rather than his midday side-light. Six
+devices are adopted.
+
+| device | in the painting (≈2000 px reproduction) | now |
+|---|---|---|
+| **1. Volumetric clouds** (*cloud volume (oil)*, 0.85; *cloud impasto*, 1) | overlapping rounded lobes; lit tops near white, shadow bodies 20–35 % darker and grey-violet, flat darker bases; crisp lit edges, soft shadow edges | before, the oil sky repainted the clouds with vortex strokes, so they dissolved. Now each lobe is painted in its own strokes, curving round it. Each is lit as a sphere from the sun's direction: a grey-violet body a little darker than the sky, a warm crisp lit side, and a pink-gold glow on the flat base. Near the sun, a silver lining runs on the outline only, on the sun's side (never on the seams between lobes), drawn as long thin strokes. Edges away from the light melt into the sky. Distant clouds take more haze. Shadow marks go first, then lit marks with impasto |
+| **2. Cloud shadows on the land** (*cloud shadows on the land*, 0.7) | sunlit and shaded bands across the meadow, park and water | each cloud casts its shadow down the sun's rays (height ÷ tan elevation: with a low sun ahead, the shadows land nearer the viewer), plus a few from clouds overhead out of the picture. In oil, every stroke on the plain or water inside a shadow is darkened (up to ≈ 22 %) and cooled where it lies, so the broken colour survives under it. A midground tree in shadow is shaded foot to crown and loses its sparkle. The watercolour underpainting uses the same patches, so both media agree |
+| **3. Cloud rows** (*cloud rows*, scene toggle, off) | large clouds overhead, smaller flatter ones crowding the horizon in rows | when on, clouds gather onto three receding rows (depth 3.2, 7, 16) with blue between. Position follows perspective; size follows only √ of the change (clamped 0.65–1.5×), so a far cloud brought forward does not swell into a ball; the far row flattens. It has its own random stream, so nothing else in the scene moves |
+| **4. Wind lines** (*wind lines on the water*, 0.6) | long thin light streaks across the water, cutting the dark reflections | ≈ 14 × setting streaks, 30–85 % of the river's width, mirroring the light sky, laid after the tree reflections |
+| **5. Sparkle** (*sparkle (flecks of light)*, 0.5) | near-white flecks on sunlit leaf edges, grass and water | sparse near-white impasto flecks on the sun-facing edges of midground crowns (none in cloud shadow), on the grass at the bank's lip toward the sun, and more glints on the water in the sun's column |
+| **6. Birds** (*bird flocks*, 1) | rooks as tiny dark ticks under the clouds | loose flocks of 6–14 birds as two shallow wing arcs each, the wings at different points of the beat; sized and paled by distance; never near the sun or over the trees |
+
 ## How each technique is implemented
 
 | technique | where | rule |
