@@ -789,6 +789,36 @@ paint they read as cut-out vector shapes. The bank was a brown-black silhouette.
 Both are muted at night. The leaves are placed from their own random stream, and the
 scene's geometry is unchanged. Brush jitter in the later passes does shift.
 
+## Fixes: fjord reflections, red dots at night
+
+**Fjord / lake reflections.**
+
+- **Mirror line.** The lake mirrored about the horizon and mixed only half of the mirrored
+  colour into the water, so it read as a flat grey band. A lake's mountains stand on its
+  far shore, so the mirror line is now that shore. Seen from height *c*, a point *h* above
+  the water at distance *d* appears (*h* − *c*)/*d* above the horizon. Its reflection
+  appears (*h* + *c*)/*d* below. So each object mirrors about its own base, and the base of
+  these mountains is the shore.
+- **Mirror strength.** On a lake the water takes 80 % of the mirrored colour (50 % on a
+  river). Each dash is smeared up or down by up to 1.5 rows, as a ripple stretches a
+  reflection. Broken colour on the water is cut to 45 %, since it shattered the mirror.
+- **A deeper lake.** It now opens from depth 1.25 to about 3.2 (was 2.1 to 5.5). The
+  shallow band showed only the mirrored foot of the nearest hills; a deeper one mirrors
+  their crests and the sky.
+- **Far shore.** It is the hills' foot and gets no lit lip (that drew a continuous yellow
+  line along it).
+- **Wind lines.** On the lake they run dead level instead of arcing.
+
+**Night.**
+
+- **Red dots.** The "foliage complements" (rose and red-ochre flecks through the green,
+  after *Bank of the Seine*) became rust-red dots on the near-black blue crowns. They are
+  now off at night, in the framing trees and the midground trees: 6.2 % of crown pixels →
+  0 %.
+- **Pale slabs.** The palette knife lays its lights on the brightest eighth of the
+  underpainting. At night that is mid-grey water and bank, where flat pale slabs read as
+  scraps of paper. At night only the top 2.5 % (the moon's light) takes the knife.
+
 ## How each technique is implemented
 
 | technique | where | rule |

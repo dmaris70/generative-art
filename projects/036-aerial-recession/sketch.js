@@ -613,7 +613,9 @@ function buildRiver(s) {
   };
   const riverW = (z) => 0.2 + 0.05 * Math.log(z);
   // a lake: the river opens out between zL and zW until its shores leave the picture
-  const zL = 2.1, zW = Math.min(zN * 0.6, 5.5);
+  // (opened near the viewer: a shallow band of water shows only the mirrored foot of the
+  // nearest hills, a flat dark strip; a deeper one mirrors their crests and the sky above)
+  const zL = 1.25, zW = Math.min(zN * 0.35, 3.2);
   const halfW = s.scene !== 1 ? riverW : (z) => {
     if (z <= zL) return riverW(z);
     const full = ((REF_W / 2 + 260) * z) / s.F + Math.abs(center(z));
@@ -3448,8 +3450,9 @@ function oilCanopy(s) {
     }
   }
   // 3c. complements (Bank of the Seine): a few rose and red-ochre flecks through the green,
-  // inside the clumps, keeping the value of the leaves around them
-  {
+  // inside the clumps, keeping the value of the leaves around them — not at night, when
+  // colour sleeps (on the near-black blue crown they read as rust-red dots)
+  if (!s.night) {
     const fc = G.param('foliageComplements');
     for (const lf of clumpsAll) {
       const m = Math.round(lf.r * 0.22 * fc + random());
@@ -5123,18 +5126,23 @@ function oilRiver(s, O, out) {
       if (y > bankAt(rp, x) - 3) continue; // the bank hides the near water
       const near = Math.exp(-Math.pow((x - s.sunX) / 160, 2));
       // the water mirrors what stands above the horizon at the same angle (sky, glow, the
-      // hills), a touch darker than the thing itself, as a reflection always is
-      const ym = Math.max(4, 2 * s.HY - y);
+      // hills), a touch darker than the thing itself, as a reflection always is. A lake's
+      // mountains stand on its far shore, so there the mirror line is that shore: the ranges
+      // hang upside down from it, their colour carried strongly into the water (mirrored
+      // about the horizon, a lake showed only grey sky), each dash smeared a little up and
+      // down as a ripple stretches a reflection
+      const lake = s.scene === 1;
+      const ym = lake ? Math.max(4, 2 * s.gy(r.zN) - y + random(-1.5, 1.5) * dy) : Math.max(4, 2 * s.HY - y);
       // calm and wind-ruffled bands lie level across the water: the one cue a path lacks
       const band = 0.84 + 0.22 * noise(y * 0.09, 31.7) + 0.06 * noise(x * 0.02, y * 0.3);
-      let col = shadeRGB(mixRGB(waterColour(s, a.z, x), O.under(x, ym), 0.5), 0.9 * band);
+      let col = shadeRGB(mixRGB(waterColour(s, a.z, x), O.under(x, ym), lake ? 0.8 : 0.5), (lake ? 0.86 : 0.9) * band);
       // the bright horizon band, mirrored where the water sees it
       const hb = horizonBandAt(s, x, ym);
       if (hb > 0) col = mixRGB(col, BAND_LIGHT, Math.min(0.5, 0.4 * hb));
       // broken colour (Bank of the Seine): each dash is one unblended hue beside the next —
       // the mirrored sky, the colour of the bank beside the water (strongest in the rows
       // near it), lavender, salmon — muted by the same air as the water
-      const WB = G.param('waterBroken');
+      const WB = G.param('waterBroken') * (lake ? 0.45 : 1); // broken hues would shatter a lake's mirror
       if (WB > 0) {
         const q = random();
         const edgeD = Math.min(x - xl, xr - x) / Math.max(1, wid); // 0 at the bank
@@ -5178,6 +5186,7 @@ function oilRiver(s, O, out) {
       for (let x = xl + random(0, step); x < xr; x += step) {
         if (x < 0 || x > REF_W || y > bankAt(rp, x) - 4) continue;
         if (wet(x, y - dy - 1.5)) continue; // water above too: not the edge
+        if (s.scene === 1 && p.z > r.zN * 0.6) continue; // a lake's far shore is the hills' foot, not a lit lip
         const sunw = clamp01(1 - Math.abs(x - s.sunX) / (REF_W * 0.7));
         if (random() > 0.2 + 0.55 * sunw) continue; // broken, and mostly toward the sun
         const base = O.under(x, y - dy - 3);
@@ -5205,7 +5214,13 @@ function oilRiver(s, O, out) {
     i++;
     const skyUp = s.sky(x, Math.max(4, 2 * s.HY - y - 60));
     const col = mixRGB(waterColour(s, p.z, x), mixRGB(C.light, skyUp, 0.5), 0.5);
-    out.push(makeOilStroke(O, x, y + random(-0.5, 0.5), random(-0.01, 0.01), L, Math.max(0.6, Math.min(1.6, 3 / Math.sqrt(p.z))), { color: col, color2: mixRGB(col, waterColour(s, p.z, x), 0.3), relief: 0.05, crisp: true }));
+    const st = makeOilStroke(O, x, y + random(-0.5, 0.5), random(-0.01, 0.01), L, Math.max(0.6, Math.min(1.6, 3 / Math.sqrt(p.z))), { color: col, color2: mixRGB(col, waterColour(s, p.z, x), 0.3), relief: 0.05, crisp: true });
+    if (s.scene === 1) {
+      // on open water a wind line runs dead level; the brush's bend made long arcs of them
+      const [a0, , , a3] = st.P;
+      for (const q of [1, 2]) { st.P[q][0] = a0[0] + ((a3[0] - a0[0]) * q) / 3; st.P[q][1] = a0[1] + ((a3[1] - a0[1]) * q) / 3; }
+    }
+    out.push(st);
   }
   // glints: only in the sun's column (more of them with the sparkle)
   for (let i = 0; i < Math.round(160 * (1 + G.param('sparkle'))); i++) {
@@ -5531,7 +5546,10 @@ function oilKnife(s, O) {
   const pool = [];
   for (let i = 0; i < 900; i++) pool.push(O.lum(O.under(random(0, REF_W), random(0, REF_H))));
   pool.sort((a, b) => a - b);
-  const Lhi = pool[Math.floor(pool.length * 0.88)];
+  // the knife's lights go on the brightest paint; at night the top eighth of a dark canvas
+  // is mid-grey water and bank, where a flat pale slab reads as a scrap of paper — there
+  // only the moon's light (the top 2.5 %) takes the knife
+  const Lhi = pool[Math.floor(pool.length * (s.night ? 0.975 : 0.88))];
   const Lmax = pool[pool.length - 1];
   for (let t = 0; t < n * 14 && out.length < n; t++) {
     const x = random(0, REF_W);
@@ -6099,8 +6117,9 @@ function oilMidTree(s, O, tr, out) {
     }
   }
   hatchA = null;
-  // rose flecks through the crown (the complement of its green), fading with the air
-  const fc = G.param('foliageComplements');
+  // rose flecks through the crown (the complement of its green), fading with the air;
+  // none at night
+  const fc = s.night ? 0 : G.param('foliageComplements');
   if (fc > 0 && w >= 9) {
     for (const c of clumps) {
       const m = Math.round(nPer(c.r) * 0.05 * fc);
