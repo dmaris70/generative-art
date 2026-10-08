@@ -706,6 +706,33 @@ Birds roost at night (no flocks).
 continuous bright belt across the picture. Snow now lies only on some stretches of a crest,
 and the farther ranges show less of it through their air; the focal peak keeps its full cap.
 
+## Several foreground trees (*foreground trees*, *foreground trees stand*)
+
+The framing tree can now be a group. *Foreground trees* (1–4, default 2) sets how many.
+*Foreground trees stand* sets where:
+
+- **one side (a group)** (default): the others stand with the main tree by the shadow-side
+  edge. They are younger, with 42–58 % of its girth and 55–74 % of its height. Their feet
+  stand farther in along the bank (165 px + 105 px per tree), so the crowns overlap as one
+  group.
+- **both sides**: the second tree stands by the far, sun-side edge. It is smaller (50–64 %
+  girth, 62–76 % height), and the bank rises a little on that side too, so the view is
+  framed from both edges. Any further trees join the main group.
+
+How it is built:
+
+- **Same growth rules.** Each tree is grown by the same procedure as the main one: the
+  crossing-free rule, elbows, stubs, twig forks, and the keep-clear zones around the sun
+  and the focal peak. Each tree has its own reach into the picture.
+- **One limb list.** All the trees' limbs go into one list (parents re-indexed), so every
+  later pass treats them as one framing mass: bark, canopy, foreground block-in and
+  unification.
+- **Stable main tree.** The extra trees draw from their own random stream, so adding or
+  removing one leaves the main tree exactly as it was.
+- **Full crowns.** The main tree keeps its rule of no low foliage far into the picture,
+  which keeps the view open. The others carry foliage on their whole crown; with the main
+  tree's rule their limbs ended bare, like dead fingers.
+
 ## How each technique is implemented
 
 | technique | where | rule |
