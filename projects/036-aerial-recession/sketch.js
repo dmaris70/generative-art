@@ -3432,6 +3432,8 @@ function oilBegin(s) {
     [], // lost edges, broken colour, scumbles
     [], // objects
     [], // the sun and its halo
+    [], // the clouds: in front of the sun and its halo
+    [], // birds, in front of everything in the sky
   ];
   oilLayer(s, O, groups[0], 1.0, 1.2 * OP.coverage, false, 0);
   if (OP.layers >= 2) oilLayer(s, O, groups[1], 0.55, 0.8 * OP.coverage, false, 1);
@@ -3440,7 +3442,6 @@ function oilBegin(s) {
   oilPeak(s, O, groups[2]);
   oilBrokenColour(s, O, groups[2]);
   oilScumble(s, O, groups[2]);
-  oilClouds(s, O, groups[2]);
   oilMeadowFlowers(s, O, groups[2]);
   oilObjects(s, O, groups[3]);
   // the clouds' shadows: every stroke laid on the plain or the water under a shadow is
@@ -3455,7 +3456,11 @@ function oilBegin(s) {
     }
   }
   oilSun(s, O, groups[4]);
-  oilBirds(s, O, groups[4]);
+  // the sun and its rings lie behind the clouds: none of their strokes is laid where a
+  // cloud stands, and the clouds are painted after them
+  groups[4] = groups[4].filter((st) => !inCloud(s, (st.P[0][0] + st.P[3][0]) / 2, (st.P[0][1] + st.P[3][1]) / 2));
+  oilClouds(s, O, groups[5]);
+  oilBirds(s, O, groups[6]);
 
   const queue = [];
   groups.forEach((g, gi) => {
@@ -3474,7 +3479,7 @@ function oilBegin(s) {
   // the grass on the bank: turf, then clumps back to front, painted blade by blade
   const blades = oilGrass(s, O);
   // generated after the grass, so their counts don't reshuffle it
-  const knives = oilKnife(s, O);
+  const knives = oilKnife(s, O).filter((k) => !inCloud(s, k.x, k.y)); // no knife light over a cloud
   const scratches = oilSgraffito(s, O);
   // generated last, so they reshuffle none of the passes above
   const flowers = oilBankFlowers(s, O);
@@ -4213,6 +4218,15 @@ function oilBankFlowers(s, O) {
   return out;
 }
 
+// Whether a point lies inside a cloud's mass (any lobe, above its flat base).
+function inCloud(s, x, y) {
+  for (const c of s.clouds) {
+    if (y > c.cy + c.h * 0.14 + 2 || Math.abs(x - c.cx) > c.w) continue;
+    for (const lb of c.lobes) if (Math.hypot((x - lb.x) / lb.rx, (y - lb.y) / lb.ry) < 1) return true;
+  }
+  return false;
+}
+
 // Clouds as lit volumes (Constable, Wivenhoe Park). Each lobe is a rounded mass painted
 // in its own strokes, curving round it, never along the sky's vortex:
 //  - a shadowed body, grey-violet, darker than the sky behind it at its base;
@@ -4237,51 +4251,91 @@ function oilClouds(s, O, out) {
     const nearSun = Math.exp(-Math.pow(dl / 420, 2));
     const base = c.cy + c.h * 0.14; // the flat base
     const ms = Math.max(2.2, Math.min(12, c.w * 0.035));
-    for (const pass of [0, 1]) {
+    // seen against the light the body is a cooler grey-violet; each lobe a step lighter or
+    // darker than its neighbours, the lower, nearer lobes lighter (Constable's masses)
+    const violet = mixRGB(mixRGB(C.cloudShadow, C.shadow, 0.35), [124, 120, 156], 0.5 * nearSun);
+    const lobeV = c.lobes.map((lb) => 0.93 + 0.1 * noise(lb.ph, 7.3) + 0.05 * clamp01((lb.y - c.cy) / (c.h + 1)));
+    // the lobe's outline: broad turns plus small puffs on the upper side (a cumulus top is
+    // cauliflower; its base is flat)
+    const edgeAt = (lb, a) => 0.8 + 0.24 * noise(lb.ph + Math.cos(a) * 1.3, lb.ph + Math.sin(a) * 1.3) + 0.14 * Math.max(0, -Math.sin(a)) * (noise(lb.ph + 40 + Math.cos(a) * 4.5, Math.sin(a) * 4.5) - 0.35);
+    const outline = (lb, x, y) => !c.lobes.some((o) => o !== lb && Math.hypot((x - o.x) / o.rx, (y - o.y) / o.ry) < 0.85);
+    const shadeAtP = (lb, li, u, v, d, edge, x, y) => {
+      const nz = Math.sqrt(Math.max(0, 1 - d * d));
+      const facing = u * Lx + v * Ly;
+      const lam = Math.max(0, facing) * 0.85 + nz * 0.2;
+      const tt = clamp01(lam * (1 - 0.6 * nearSun));
+      const sky = s.sky(x, y);
+      const shadow = shadeRGB(mixRGB(sky, violet, 0.32 + 0.3 * nearSun), lobeV[li] * (0.95 + 0.07 * noise(x * 0.015, y * 0.015, 3)));
+      const bw = clamp01((y - (base - c.h * 0.4)) / (c.h * 0.4)); // toward the base
+      const lit = mixRGB(mixRGB(warmLit, baseGlow, 0.6 * bw), sky, 0.15);
+      // a smooth turn from shadow to light across the lobe, never salt and pepper
+      let col = mixRGB(shadow, lit, tt * tt * (3 - 2 * tt));
+      // the low sun warms the underside: a gradual glow toward the base, not a seam
+      col = mixRGB(col, baseGlow, 0.3 * bw * bw * (0.4 + 0.6 * nearSun) * (1 - air));
+      // the edge away from the light is soft (lost in the sky); the lit edge is found
+      const outer = outline(lb, x, y) ? clamp01((d / edge - 0.8) / 0.2) : 0;
+      col = mixRGB(col, sky, outer * (1 - clamp01(lam * 1.6)) * 0.55 * (1 - 0.7 * nearSun));
+      col = mixRGB(col, sky, air * 0.65 * (1 - 0.5 * nearSun));
+      return { col, tt, lam, lit, shadow, sky };
+    };
+    c.lobes.forEach((lb, li) => {
+      // 1. the body: dense, overlapping strokes round the lobe, each its own continuous tone
+      const n = Math.min(900, Math.round(((Math.PI * lb.rx * lb.ry) / (ms * ms)) * 4));
+      for (let i = 0; i < n; i++) {
+        const a = random(TWO_PI), d = Math.sqrt(random());
+        const edge = edgeAt(lb, a);
+        if (d > edge) continue;
+        const u = Math.cos(a) * d, v = Math.sin(a) * d;
+        const x = lb.x + u * lb.rx, y = lb.y + v * lb.ry;
+        if (y > base + random(-1, 1)) continue;
+        const f = O.field(x, y);
+        if (f.kind !== 'sky' && f.kind !== 'cloud') continue;
+        const P = shadeAtP(lb, li, u, v, d, edge, x, y);
+        const col = mixRGB(O.under(x, y), P.col, CV);
+        const ta = Math.atan2(v * lb.rx, u * lb.ry) + Math.PI / 2 + random(-0.35, 0.35); // round the lobe
+        out.push(makeOilStroke(O, x, y, ta, ms * random(1.3, 2.1), ms * random(0.8, 1.1), {
+          color: col, color2: mixRGB(col, P.shadow, 0.2), relief: 0, soft: nearSun < 0.35,
+        }));
+      }
+      // 2. the lights: loaded strokes only where the lobe turns to the sun, thicker paint
+      for (let i = 0; i < n * 0.45; i++) {
+        const a = random(TWO_PI), d = Math.sqrt(random());
+        const edge = edgeAt(lb, a);
+        if (d > edge * 0.97) continue;
+        const u = Math.cos(a) * d, v = Math.sin(a) * d;
+        const x = lb.x + u * lb.rx, y = lb.y + v * lb.ry;
+        if (y > base) continue;
+        const f = O.field(x, y);
+        if (f.kind !== 'sky' && f.kind !== 'cloud') continue;
+        const P = shadeAtP(lb, li, u, v, d, edge, x, y);
+        if (P.tt < 0.55) continue;
+        const col = mixRGB(O.under(x, y), mixRGB(P.col, P.lit, 0.25), CV);
+        const ta = Math.atan2(v * lb.rx, u * lb.ry) + Math.PI / 2 + random(-0.3, 0.3);
+        out.push(makeOilStroke(O, x, y, ta, ms * random(1, 1.6), ms * random(0.55, 0.8), {
+          color: col, color2: P.lit, relief: 0.22 * CI * P.tt * (1 - air), crisp: P.lam > 0.5,
+        }));
+      }
+    });
+    // 3. the silver lining: near the sun, a drawn line of light along the cloud's outline on
+    // the sun's side (and under the base, which the low sun lights from below)
+    if (nearSun > 0.12) {
+      const rimC = mixRGB(mixRGB(C.sun, [255, 250, 236], 0.55), C.glow, 0.2);
       for (const lb of c.lobes) {
-        const n = Math.min(700, Math.round(((Math.PI * lb.rx * lb.ry) / (ms * ms)) * 3.2));
-        for (let i = 0; i < n; i++) {
-          const a = random(TWO_PI), d = Math.sqrt(random());
-          const edge = 0.82 + 0.28 * noise(lb.ph + Math.cos(a) * 1.3, lb.ph + Math.sin(a) * 1.3);
-          if (d > edge) continue;
-          const u = Math.cos(a) * d, v = Math.sin(a) * d;
+        const steps = Math.max(10, Math.round((lb.rx + lb.ry) * 0.35));
+        for (let k = 0; k < steps; k++) {
+          const a = (k / steps) * TWO_PI;
+          const edge = edgeAt(lb, a);
+          const u = Math.cos(a) * edge * 0.96, v = Math.sin(a) * edge * 0.96;
           const x = lb.x + u * lb.rx, y = lb.y + v * lb.ry;
-          if (y > base + random(-1, 1)) continue;
-          const f = O.field(x, y);
-          if (f.kind !== 'sky' && f.kind !== 'cloud') continue;
-          if (Math.hypot(x - s.sunX, y - s.sunY) < 70) continue;
-          const nz = Math.sqrt(Math.max(0, 1 - d * d));
-          const facing = u * Lx + v * Ly;
-          const lam = Math.max(0, facing) * 0.85 + nz * 0.2;
-          // an edge counts only where it is the cloud's outline, not where one lobe meets
-          // another inside the mass (no scalloped rings within the cloud)
-          const inner = c.lobes.some((o) => o !== lb && Math.hypot((x - o.x) / o.rx, (y - o.y) / o.ry) < 0.85);
-          // the silver lining: on the outline, on the side toward the sun, near the sun
-          const rim = inner ? 0 : Math.pow(d / edge, 6) * nearSun * clamp01(0.15 + facing);
-          const tt = clamp01(lam * (1 - 0.65 * nearSun) + rim);
-          if (pass === 0 ? tt >= 0.5 : tt < 0.5) continue;
-          const sky = s.sky(x, y);
-          // the shadowed body: a little darker than the sky and greyer, varied by the lobe's
-          // own turns (Constable's clouds are never one grey)
-          const shadow = shadeRGB(mixRGB(sky, mixRGB(C.cloudShadow, C.shadow, 0.35), 0.32), 0.9 + 0.1 * noise(x * 0.02, y * 0.02, 3));
-          const bw = clamp01((y - (base - c.h * 0.4)) / (c.h * 0.4)); // toward the base
-          const lit = mixRGB(mixRGB(warmLit, baseGlow, 0.6 * bw), sky, 0.15);
-          let col = mixRGB(shadow, lit, Math.pow(tt, 1.25));
-          // the edge away from the light is soft (lost in the sky); the lit edge is found
-          const outer = inner ? 0 : clamp01((d / edge - 0.8) / 0.2);
-          col = mixRGB(col, sky, outer * (1 - clamp01(lam * 1.6)) * 0.55);
-          col = mixRGB(col, sky, air * 0.65);
-          col = mixRGB(O.under(x, y), col, CV);
-          const ta = Math.atan2(v * lb.rx, u * lb.ry) + Math.PI / 2 + random(-0.35, 0.35); // round the lobe
-          // on the outline the light is drawn, not dabbed: long thin strokes along the edge
-          const rimLine = pass === 1 && !inner && d / edge > 0.85;
-          const len = ms * random(1.1, 1.9) * (pass ? 0.85 : 1.1) * (rimLine ? 1.5 : 1);
-          out.push(makeOilStroke(O, x, y, ta, len, ms * random(0.6, 0.95) * (rimLine ? 0.5 : 1), {
-            color: col,
-            color2: mixRGB(col, pass ? lit : shadow, 0.3),
-            relief: pass ? 0.22 * CI * tt * (1 - air) * (rimLine ? 0.4 : 1) : 0,
-            soft: pass === 0,
-            crisp: pass === 1 && lam > 0.5,
+          if (y > base || !outline(lb, x, y)) continue;
+          const facing = Math.cos(a) * Lx + Math.sin(a) * Ly;
+          const k2 = nearSun * clamp01(facing * 1.4 + 0.1) * (1 - air * 0.6);
+          // broken, as light caught in the cloud's thinner fringe, not a drawn outline
+          if (k2 < 0.1 || random() > 0.35 + 0.45 * k2) continue;
+          const col = mixRGB(s.sky(x, y), rimC, Math.min(0.85, 0.25 + 0.55 * k2));
+          const ta = a + Math.PI / 2 + random(-0.15, 0.15);
+          out.push(makeOilStroke(O, x, y, ta, ms * random(0.9, 1.8), Math.max(0.8, ms * random(0.16, 0.28)), {
+            color: col, color2: rimC, relief: 0.15 * CI * k2, crisp: true,
           }));
         }
       }
