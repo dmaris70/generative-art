@@ -489,6 +489,22 @@ devices are adopted.
 | **5. Sparkle** (*sparkle (flecks of light)*, 0.5) | near-white flecks on sunlit leaf edges, grass and water | sparse near-white impasto flecks on the sun-facing edges of midground crowns (none in cloud shadow), on the grass at the bank's lip toward the sun, and more glints on the water in the sun's column |
 | **6. Birds** (*bird flocks*, 1) | rooks as tiny dark ticks under the clouds | loose flocks of 6–14 birds as two shallow wing arcs each, the wings at different points of the beat; sized and paled by distance; never near the sun or over the trees |
 
+**Second pass on the clouds.**
+
+- **Depth order.** The sun and its tonal rings now lie behind the clouds. No sun, halo or
+  palette-knife stroke is laid inside a cloud, and the clouds are painted after the sun,
+  with the birds after them.
+- **Shading.** Near the sun the clouds no longer smudge:
+  - each lobe is shaded continuously from its grey-violet body to its lit side, with no
+    two-pass salt-and-pepper;
+  - each lobe is a value step apart from its neighbours, the lower ones lighter;
+  - the body is a cooler, clearer grey-violet seen against the light;
+  - the underside warms gradually toward the base;
+  - the outline carries small puffs on its upper side (a cumulus top).
+- **Silver lining.** It is drawn as broken, thin strokes along the outline on the sun's
+  side, as light caught in the thinner fringe.
+
+
 ## How each technique is implemented
 
 | technique | where | rule |
