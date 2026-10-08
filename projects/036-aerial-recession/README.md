@@ -593,6 +593,22 @@ behaviour) changes the process in three places:
 - **Turf.** It becomes the finish on top: 45 % fewer flicks (× the setting), so the
   block-in shows between them.
 
+**The bushes and the other elements, blocked in too.** The same treatment now reaches
+everything else that used to go on last:
+
+- **Midground trees and bushes.** In the second oil layer, each crown is laid in as
+  2–6 big loaded dabs, kept well inside its outline (a column of them for a poplar), in
+  the crown's own dark and dragging the wet meadow at their edges. Trees at least 6 px
+  wide also get their trunk as one stroke. The late marks then go on over the block-in:
+  the dark marks stay crisp, the light ones break where the brush runs dry, so the
+  block-in shows through them.
+- **Midground trunks.** Painted with wet pickup, lean opacity, impasto and dry breaks
+  (dark accents stay crisp).
+- **Irises.** Petals painted the same way.
+- **Sword leaves.** Each leaf is first laid in as one loaded stroke along it, a little
+  wider and darker, with bristles breaking at the edges. The leaf's body then goes on
+  inside it.
+
 ## How each technique is implemented
 
 | technique | where | rule |

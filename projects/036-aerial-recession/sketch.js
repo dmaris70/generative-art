@@ -3610,7 +3610,7 @@ function oilBegin(s) {
   const mid = midTrunkMarks(s);
   for (let i = 0; i < mid.length; i += 80) {
     const chunk = mid.slice(i, i + 80);
-    queue.push(() => chunk.forEach((m) => oilStroke(markToOil(m))));
+    queue.push(() => chunk.forEach((m) => oilStroke(m.kind === 'dark' || m.kind === 'edge' ? markToOil(m) : fgPaint(markToOil(m), 0.06, 0.2))));
   }
   // the front tree limb by limb, thick → thin, then its canopy: each branch, extended back
   // into its parent, is painted over the parent's end, so the fork has no seam
@@ -4299,13 +4299,13 @@ function oilBankFlowers(s, O) {
       for (const da of [-0.45, 0, 0.45]) {
         const a = -Math.PI / 2 + da;
         const col = da * sunSide > 0 ? lit : body;
-        out.push(makeOilStroke(O, x + Math.cos(a) * r * 0.55, y + Math.sin(a) * r * 0.55, a, r * 1.3, r * 0.7, { color: col, color2: shadeRGB(col, 0.88), relief: 0.15, crisp: true }));
+        out.push(fgPaint(makeOilStroke(O, x + Math.cos(a) * r * 0.55, y + Math.sin(a) * r * 0.55, a, r * 1.3, r * 0.7, { color: col, color2: shadeRGB(col, 0.88), relief: 0.15, crisp: true }), 0.18, 0.1));
       }
       // falls: drooping to either side
       for (const sgn of random() < 0.5 ? [-1, 1] : [-1, 0, 1]) {
         const a = Math.PI / 2 - sgn * 1.0;
         const col = shadeRGB(sgn * sunSide > 0 ? lit : body, 0.85);
-        out.push(makeOilStroke(O, x + Math.cos(a) * r * 0.6, y + Math.sin(a) * r * 0.45, a, r * 1.2, r * 0.65, { color: col, color2: shadeRGB(col, 0.85), relief: 0.12, crisp: true }));
+        out.push(fgPaint(makeOilStroke(O, x + Math.cos(a) * r * 0.6, y + Math.sin(a) * r * 0.45, a, r * 1.2, r * 0.65, { color: col, color2: shadeRGB(col, 0.85), relief: 0.12, crisp: true }), 0.15, 0.1));
       }
       made++;
     }
@@ -5012,7 +5012,13 @@ function oilBlade(b) {
     }
     endShape();
   };
-  ribbon(b.col, b.a, -1, 1);
+  if (b.strap && OP.fg > 0) {
+    // a sword leaf blocked in first: one loaded stroke along it, a touch wider and darker,
+    // its bristles breaking at the edges; the leaf's body then goes on inside it
+    oilStroke(fgPaint(markToOil({ kind: 'band', path: P, w: b.w0 * 1.15, col: shadeRGB(b.col, 0.88), col2: b.col, rel: 0 }), 0.14, 0.2));
+    noStroke();
+    ribbon(b.col, b.a * 0.85, -0.82, 0.82);
+  } else ribbon(b.col, b.a, -1, 1);
   // the blade painted, not filled: two or three bristle tracks along it, each a little
   // lighter or darker than the body, breaking where the brush runs dry
   if (OP.fg > 0 && b.w0 * U >= 1.3) {
@@ -5269,6 +5275,39 @@ function oilForegroundBlockIn(s, O, out) {
     const w = OP.w * random(0.45, 0.8) * (0.8 + 0.6 * near);
     out.push(makeOilStroke(O, x, y, a, w * random(2, 3.2), w, { color: col, color2: mixRGB(col, base, 0.3), relief: 0.12 * k, pickup: true }));
   }
+  // the midground trees and bushes: each crown laid in as a few big loaded dabs inside
+  // its outline (a column of them for a poplar), in the crown's own dark, and the trunk
+  // of the larger ones as one stroke, all dragging the wet meadow at their edges
+  for (const tr of s.trees) {
+    const x = s.gx(tr.wx, tr.z);
+    if (x < -40 || x > REF_W + 40) continue;
+    const y = s.gy(tr.z);
+    const sc = s.F / tr.z;
+    const w = tr.hW * sc * (tr.tall ? 0.5 : 1);
+    const h = tr.hW * sc * (tr.tall ? 2.3 : 1.15);
+    if (w < 3) continue;
+    const cy = y - h * 0.18 - h * 0.5;
+    const base = s.seenTree(mixRGB(C.foliage, C.silhouette, 0.3), tr.z, x, cy);
+    const m = tr.tall ? 3 + Math.round(h / (w * 0.9)) : 2 + Math.round(w / 14);
+    for (let i = 0; i < m; i++) {
+      const col = shadeRGB(base, random(0.82, 1.0));
+      if (tr.tall) {
+        const t0 = (i + 0.5) / m;
+        const yy = cy - h * 0.45 + t0 * h * 0.9;
+        out.push(makeOilStroke(O, x + random(-0.12, 0.12) * w, yy, -Math.PI / 2 + random(-0.25, 0.25), (h / m) * 1.6, w * 0.6 * (0.6 + 0.4 * Math.sqrt(t0)), { color: col, color2: shadeRGB(col, 0.88), relief: 0.05 * k, pickup: true }));
+      } else {
+        // kept well inside the crown's outline, so no block-in bristle shows past its edge
+        const a = random(TWO_PI), d = Math.sqrt(random()) * 0.2;
+        out.push(makeOilStroke(O, x + Math.cos(a) * d * w, cy + Math.sin(a) * d * h * 0.8, random(-0.6, 0.6), w * random(0.38, 0.52), h * random(0.26, 0.36), { color: col, color2: shadeRGB(col, 0.88), relief: 0.05 * k, pickup: true }));
+      }
+    }
+    if (w >= 6) {
+      const tw = Math.max(1, w * 0.1);
+      const top = cy + h * 0.15;
+      const tc = s.seenTree(mixRGB(C.silhouette, C.shadow, 0.2), tr.z, x, y);
+      out.push(makeOilStroke(O, x, (y + top) / 2, -Math.PI / 2, y - top, tw * 1.3, { color: tc, color2: tc, pickup: true }));
+    }
+  }
   const foliage = shadeRGB(mixRGB(C.silhouette, C.foliage, 0.35), 0.92);
   for (const lf of rp.leaves) {
     if (random() > 0.55 * k) continue;
@@ -5509,6 +5548,7 @@ function oilMidTree(s, O, tr, out) {
     out.push(makeOilStroke(O, cx, cyy, a, sz * (tick ? random(1.1, 1.6) : random(0.6, 1.2)), sz * (tick ? random(0.25, 0.4) : random(0.5, 0.85)), {
       color: col, color2: shadeRGB(col, random(0.88, 1.08)), relief: crisp ? 0.12 * k : 0, crisp, soft: !crisp, pickup: OP.fg > 0,
     }));
+    if (OP.fg > 0 && !crisp) out[out.length - 1].dry = Math.min(0.85, OP.dry + 0.25 * OP.fg);
   };
   // the mass blocked in first, dark and broken, so no underpainting edge shows round it
   for (const c of clumps) {
