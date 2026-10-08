@@ -160,6 +160,9 @@ function setup() {
       wildflowers: { value: 0.5, min: 0, max: 1.5, step: 0.05, label: 'wildflowers', group: CO },
       meadowBroken: { value: 0.7, min: 0, max: 1, step: 0.05, label: 'meadow broken colour', group: CO },
       waterBroken: { value: 0.7, min: 0, max: 1, step: 0.05, label: 'water broken colour', group: CO },
+      cloudPaint: { value: 0.7, min: 0, max: 1, step: 0.05, label: 'cloud paint: thin shadows, thick lights', group: CO },
+      overcast: { value: 0, min: 0, max: 1, step: 0.05, label: 'overcast deck', group: CO },
+      horizonBand: { value: 0.6, min: 0, max: 1.2, step: 0.05, label: 'bright horizon band', group: CO },
       cloudVolume: { value: 0.85, min: 0, max: 1, step: 0.05, label: 'cloud volume (oil)', group: CO },
       cloudShadows: { value: 0.7, min: 0, max: 1.2, step: 0.05, label: 'cloud shadows on the land', group: CO },
       windLines: { value: 0.6, min: 0, max: 1.5, step: 0.05, label: 'wind lines on the water', group: CO },
@@ -3498,6 +3501,7 @@ function oilBegin(s) {
   oilLostEdges(s, O, groups[2]);
   oilPeak(s, O, groups[2]);
   oilBrokenColour(s, O, groups[2]);
+  oilHorizonBand(s, O, groups[2]);
   oilScumble(s, O, groups[2]);
   oilMeadowFlowers(s, O, groups[2]);
   oilObjects(s, O, groups[3]);
@@ -3948,7 +3952,7 @@ function oilStroke(st) {
   // bristles
   const wpx = st.w * U;
   const nb = Math.max(2, Math.min(OP.bristles, Math.round(wpx / 1.6)));
-  const dry = st.scumble ? Math.min(0.9, OP.dry + 0.25) : OP.dry;
+  const dry = st.dry !== undefined ? st.dry : st.scumble ? Math.min(0.9, OP.dry + 0.25) : OP.dry;
   const aLo = (st.scumble ? 70 : st.soft ? 40 : 120) * OP.bristleA;
   const aHi = Math.min(255, (st.scumble ? 160 : st.soft ? 90 : 215) * OP.bristleA);
   strokeWeight(Math.max(0.5, (wpx / nb) * (st.scumble ? 0.55 : 0.7)));
@@ -4012,6 +4016,16 @@ function oilLostEdges(s, O, out) {
           color: shadeRGB(below, random(0.96, 1.02)),
           color2: mixRGB(below, above, 0.15),
           angular: true,
+        }));
+        continue;
+      }
+      // against the bright horizon band the skyline is a found edge (counterchange): the
+      // range a touch darker, its crest restated crisp; elsewhere it melts
+      const band = y <= skylineY(s, x) + 18 ? horizonBandAt(s, x, Math.min(y, skylineY(s, x)) - 6) : 0;
+      if (band > 0.25) {
+        const fw = random(2, 3.5);
+        out.push(makeOilStroke(O, x, y + fw * 0.45, Math.atan(slope) + random(-0.04, 0.04), fw * random(3, 5), fw, {
+          color: shadeRGB(below, 0.9 - 0.08 * band), color2: shadeRGB(below, 0.95), angular: true,
         }));
         continue;
       }
@@ -4275,6 +4289,55 @@ function oilBankFlowers(s, O) {
   return out;
 }
 
+// The bright band of clear sky at the horizon (the light strip under the sketch's deck):
+// a few tens of pixels of near-white, slightly warm sky just above the skyline — whatever
+// range forms it at that x — strongest away from the sun's own glow. Returns 0–1.
+function skylineY(s, x) {
+  if (!s._sky1) {
+    // the skyline (highest crest of any range), then its envelope over ±50 px, so a band
+    // above it is a smooth strip, not a ribbon following every peak
+    const raw = [];
+    for (let xx = -60; xx <= REF_W + 60; xx += 4) {
+      let y = s.HY;
+      for (const R of s.ranges) y = Math.min(y, R.ridge[Math.max(0, Math.min(R.ridge.length - 1, Math.round((xx + 30) / 4)))][1]);
+      raw.push(y);
+    }
+    s._sky1 = raw.map((_, i) => Math.min(...raw.slice(Math.max(0, i - 12), i + 13)));
+  }
+  return s._sky1[Math.max(0, Math.min(s._sky1.length - 1, Math.round((x + 60) / 4)))];
+}
+function horizonBandAt(s, x, y) {
+  const HB = G.param('horizonBand');
+  if (HB <= 0) return 0;
+  const top = skylineY(s, x);
+  const H = 38 + 30 * noise(x * 0.004, 17.3);
+  const d = top - y; // height above the skyline
+  if (d < 0 || d > H) return 0;
+  const away = 1 - Math.exp(-Math.pow((x - s.sunX) / 320, 2));
+  // a band at the horizon, not a halo round a tall peak: it fades where the skyline
+  // stands high above the horizon line
+  const lowSky = 1 - clamp01((s.HY - top - 150) / 110);
+  const u = d / H;
+  return HB * away * lowSky * (1 - u * u) * (0.75 + 0.35 * noise(x * 0.01, 5.5));
+}
+const BAND_LIGHT = [250, 245, 232];
+function oilHorizonBand(s, O, out) {
+  if (G.param('horizonBand') <= 0) return;
+  for (let x = -10; x < REF_W + 10; x += random(8, 14)) {
+    const top = skylineY(s, x);
+    for (let y = top - 3; y > top - 72; y -= random(3, 5)) {
+      const k = horizonBandAt(s, x, y);
+      if (k < 0.04) continue;
+      const f = O.field(x, y);
+      if (f.kind !== 'sky' && f.kind !== 'cloud') continue;
+      if (inCloud(s, x, y)) continue;
+      const base = O.under(x, y);
+      const col = mixRGB(base, mixRGB(BAND_LIGHT, s.C.glow, 0.15), Math.min(0.8, 0.6 * k));
+      out.push(makeOilStroke(O, x, y, random(-0.02, 0.02), random(34, 60), random(4, 6), { color: col, color2: mixRGB(col, base, 0.15), relief: 0.04, soft: true }));
+    }
+  }
+}
+
 // Whether a point lies inside a cloud's mass (any lobe, above its flat base).
 function inCloud(s, x, y) {
   for (const c of s.clouds) {
@@ -4297,9 +4360,40 @@ function oilClouds(s, O, out) {
   const CV = G.param('cloudVolume');
   if (CV <= 0) return;
   const CI = G.param('cloudImpasto');
+  const CP = G.param('cloudPaint');
   const C = s.C;
   const warmLit = mixRGB(mixRGB(C.light, [255, 250, 240], 0.55), C.cloudLit, 0.15);
   const baseGlow = mixRGB(mixRGB(C.cloudLit, C.glow, 0.5), [232, 186, 172], 0.35);
+  // the overcast deck (the sketch's grey sky): a broad veil over the part of the sky away
+  // from the sun, laid in wide diagonal drags of thin grey — scumbles, so the blue shows
+  // between and through them — with open gaps; its lower edge stops above the horizon
+  const OV = G.param('overcast');
+  if (OV > 0) {
+    const side = -s.sunSide; // away from the sun
+    const deck = mixRGB(mixRGB(C.cloudShadow, [150, 152, 164], 0.55), C.shadow, 0.15);
+    const deckLit = mixRGB(deck, [236, 232, 224], 0.35);
+    const n = Math.round(2600 * OV);
+    for (let i = 0; i < n; i++) {
+      const x = random(-40, REF_W + 40), y = random(-20, s.HY * 0.62);
+      const f = O.field(x, y);
+      if (f.kind !== 'sky' && f.kind !== 'cloud') continue;
+      const across = clamp01(0.5 + side * (x - s.sunX) / (REF_W * 0.7)); // 0 at the sun's side
+      // the deck's lower edge stops well above the skyline, leaving the clear strip below it
+      const floor = Math.min(s.HY * 0.62, skylineY(s, x) - 90);
+      const low = clamp01((floor - y) / (s.HY * 0.22));
+      const gaps = noise(x * 0.0035 + 13, y * 0.006, 4.2) * 0.75 + noise(x * 0.012, y * 0.02, 8.1) * 0.25;
+      const sunGap = 1 - Math.exp(-Math.pow(Math.hypot((x - s.sunX) / 1.4, y - s.sunY) / 300, 2));
+      const k = OV * Math.pow(across, 0.8) * low * sunGap * clamp01((gaps - 0.32) / 0.25);
+      if (k < 0.05 || random() > 0.4 + 0.6 * k) continue;
+      const sky = s.sky(x, y);
+      const col = mixRGB(sky, mixRGB(deck, deckLit, noise(x * 0.01, y * 0.01, 2)), 0.3 + 0.45 * k);
+      const st = makeOilStroke(O, x, y, -0.42 * side + random(-0.18, 0.18), random(60, 140), random(14, 26), { color: col, color2: mixRGB(col, sky, 0.3), relief: 0 });
+      // both ends in the sky: a drag never crosses onto a mountain
+      if ([st.P[0], st.P[3]].some(([px, py]) => { const k2 = O.field(px, py).kind; return (k2 !== 'sky' && k2 !== 'cloud') || py > skylineY(s, px) - 40; })) continue;
+      if (random() < 0.7) st.scumble = true; else st.soft = true;
+      out.push(st);
+    }
+  }
   // cirrus first: high and far, behind every other cloud — combed strands of thin paint,
   // lit warm on the side toward the sun, fading at both ends
   for (const wsp of s.wisps || []) {
@@ -4376,9 +4470,17 @@ function oilClouds(s, O, out) {
         const P = shadeAtP(lb, li, u, v, d, edge, x, y);
         const col = mixRGB(O.under(x, y), P.col, CV);
         const ta = Math.atan2(v * lb.rx, u * lb.ry) + Math.PI / 2 + random(-0.35, 0.35); // round the lobe
-        out.push(makeOilStroke(O, x, y, ta, ms * random(1.3, 2.1), ms * random(0.8, 1.1), {
+        const st = makeOilStroke(O, x, y, ta, ms * random(1.3, 2.1), ms * random(0.8, 1.1), {
           color: col, color2: mixRGB(col, P.shadow, 0.2), relief: 0, soft: nearSun < 0.35,
-        }));
+        });
+        // thin paint in the shadow (the sketch's grey dragged over the blue): a share of the
+        // body strokes there are scumbles — bristles only, broken, the sky showing through.
+        // A first, opaque underlayer stays, so the cloud holds its value.
+        if (CP > 0 && P.tt < 0.45 && random() < CP * 0.65 * (1 - P.tt / 0.45)) {
+          st.scumble = true;
+          st.w *= 1.35;
+        }
+        out.push(st);
       }
       // 2. the lights: loaded strokes only where the lobe turns to the sun, thicker paint
       for (let i = 0; i < n * 0.45; i++) {
@@ -4394,9 +4496,12 @@ function oilClouds(s, O, out) {
         if (P.tt < 0.55) continue;
         const col = mixRGB(O.under(x, y), mixRGB(P.col, P.lit, 0.25), CV);
         const ta = Math.atan2(v * lb.rx, u * lb.ry) + Math.PI / 2 + random(-0.3, 0.3);
-        out.push(makeOilStroke(O, x, y, ta, ms * random(1, 1.6), ms * random(0.55, 0.8), {
-          color: col, color2: P.lit, relief: 0.22 * CI * P.tt * (1 - air), crisp: P.lam > 0.5,
-        }));
+        // thick light: loaded paint dragged with a drier brush, so its ridges break up
+        const st = makeOilStroke(O, x, y, ta, ms * random(1, 1.6) * (1 + 0.4 * CP), ms * random(0.55, 0.8), {
+          color: col, color2: mixRGB(P.lit, [255, 252, 244], 0.25 * CP), relief: (0.22 + 0.45 * CP) * CI * P.tt * (1 - air), crisp: P.lam > 0.5,
+        });
+        if (CP > 0) st.dry = Math.min(0.85, OP.dry + 0.35 * CP);
+        out.push(st);
       }
     });
     // 3. the silver lining: near the sun, a drawn line of light along the cloud's outline on
@@ -4564,6 +4669,9 @@ function oilRiver(s, O, out) {
       // calm and wind-ruffled bands lie level across the water: the one cue a path lacks
       const band = 0.84 + 0.22 * noise(y * 0.09, 31.7) + 0.06 * noise(x * 0.02, y * 0.3);
       let col = shadeRGB(mixRGB(waterColour(s, a.z, x), O.under(x, ym), 0.5), 0.9 * band);
+      // the bright horizon band, mirrored where the water sees it
+      const hb = horizonBandAt(s, x, ym);
+      if (hb > 0) col = mixRGB(col, BAND_LIGHT, Math.min(0.5, 0.4 * hb));
       // broken colour (Bank of the Seine): each dash is one unblended hue beside the next —
       // the mirrored sky, the colour of the bank beside the water (strongest in the rows
       // near it), lavender, salmon — muted by the same air as the water
