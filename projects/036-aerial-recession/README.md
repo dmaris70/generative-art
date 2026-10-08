@@ -579,6 +579,20 @@ behaviour) changes the process in three places:
      their sun side;
    - upright accent strokes in the bank.
 
+**The grassy bank, blocked in too.** The bank was a dark underpainting covered by about
+3,600 fine turf flicks and blades, which read as dense hatching rather than paint.
+
+- **Block-in.** It now gets the same treatment as the tree, in the second oil layer:
+  - about 1,100 big loaded strokes, each 0.45–0.8 × the stroke width wide and 2–3.2×
+    as long, a little larger lower down (nearer);
+  - near the lip they follow the slope; lower down they rise and lean with the grass;
+  - they lie in broad noise-driven patches of warm dark (olive, bark) and cool dark
+    (blue-violet), with slow value shifts across the bank and a little light toward the
+    lip on the sun's side;
+  - each stroke drags the wet paint it lands in.
+- **Turf.** It becomes the finish on top: 45 % fewer flicks (× the setting), so the
+  block-in shows between them.
+
 ## How each technique is implemented
 
 | technique | where | rule |
