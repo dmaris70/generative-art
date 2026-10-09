@@ -1,4 +1,8 @@
-# 036 — Aerial Recession
+# 036 — Oil Landscape v1
+
+*(formerly "Aerial Recession"; the folder keeps its name so existing links still work.)*
+Its watercolour sister, on the same scene engine, is
+[037 — Watercolor Landscape v1](../037-watercolor-landscape/).
 
 **Mechanism (one sentence):** one camera over one ground plane, one low sun, and one
 transmittance term `1 − e^(−k·z)` decide the size, colour, contrast, detail and edge of
@@ -875,7 +879,7 @@ painting unaffordable or ruin it outright:
 | fine detail | 0–1 | cost of the marks |
 | sun height | 0.05–0.85 | at the extremes the sun sits on the crest or leaves the picture |
 | atmosphere | 0.4–1.6 | beyond, the scene vanishes in haze or loses all depth |
-| medium | oil 80 %, watercolour 20 % | |
+| medium | always oil | the watercolour painting has its own project, 037 |
 
 The shared panel library gained `G.shuffle(pick)` for this. It takes an optional `pick(key,
 def)` that returns a value to override the draw for a key. Every value it sets goes into
