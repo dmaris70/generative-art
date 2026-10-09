@@ -181,6 +181,7 @@ function setup() {
       hatchSpacing: { value: 7, min: 3, max: 16, step: 0.5, label: 'leaf hatch spacing', group: TR },
       hatchAngle: { value: 55, min: 0, max: 180, step: 1, label: 'leaf hatch angle°', group: TR },
       midTrees: { value: 1, options: { off: 0, on: 1 }, label: 'midground trees too', group: TR },
+      canopyBrush: { value: 1, options: { 'leaf marks (before)': 0, 'snow-study strokes': 1 }, label: 'canopy brush', group: TR },
       canopyDetail: { value: 0.6, min: 0.2, max: 1, step: 0.05, label: 'canopy detail (1 = finest, as before)', group: TR },
 
       brokenColour: { value: 2000, min: 0, max: 8000, step: 100, label: 'broken-colour strokes', group: CO },
@@ -3424,7 +3425,85 @@ function oilCanopy(s) {
   const leafSize = 3.4 * (1 + 0.45 * OP.fg) * CDk;
   // 2. the clumps as spheres, top to bottom (lower clumps overlap the undersides above)
   const clumps = clumpsAll.slice().sort((a, b) => a.y - b.y);
-  for (const lf of clumps) {
+  // the snow study's brushwork: a clump is not hundreds of leaf marks but a few broad
+  // planes — a shadow plane, a mid plane and a lit plane, each two to four long loaded
+  // strokes swept across the clump in one direction for the whole crown, flat and opaque,
+  // dry and ragged at their ends; and one dark blue calligraphic stroke curving under it,
+  // as the study draws its shadows. Value stays the sphere's; only the mark changes.
+  const BROAD = G.param('canopyBrush') === 1;
+  const sweep = -0.35 * rp.side + random(-0.15, 0.15); // the crown's one stroke direction
+  const blueDark = mixRGB(core, PRUSSIAN, 0.32);
+  const plane = (lf, u0, v0, t, len, w, dry, crispy) => {
+    const rx = lf.r * 1.05, ry = lf.r * 0.85;
+    const cx = lf.x + u0 * rx, cy = lf.y + v0 * ry;
+    const a = sweep + random(-0.25, 0.25);
+    const bow = random(-0.18, 0.18) * len;
+    const path = [];
+    for (let k = 0; k <= 4; k++) {
+      const q = k / 4 - 0.5;
+      path.push([cx + Math.cos(a) * len * q - Math.sin(a) * bow * (1 - 4 * q * q), cy + Math.sin(a) * len * q + Math.cos(a) * bow * (1 - 4 * q * q)]);
+    }
+    const col = colourAt(Math.max(0, Math.min(1, t + random(-0.05, 0.05))));
+    const st = fgPaint(markToOil({ kind: crispy ? 'leaf' : 'band', path, w, col, col2: shadeRGB(col, random(0.88, 1.08)), rel: 0 }), 0.18, dry);
+    oilStroke(st);
+  };
+  if (BROAD) {
+    // planes at the scale of the crown's masses (the clusters), not of each clump: larger
+    // strokes, each mass with its own sweep, laid dark to light so the lit plane sits on top
+    for (const c of clusters) {
+      const cs = sweep + random(-0.55, 0.55);
+      // enough strokes to overlap into a plane (no dark gaps outlining each one)
+      const N = Math.max(7, Math.min(70, Math.round(Math.pow(c.r / 10, 2) * 1.4)));
+      const marks = [];
+      for (let i = 0; i < N * 3 && marks.length < N; i++) {
+        const a = random(TWO_PI), d = Math.sqrt(random()) * 0.9;
+        const u = Math.cos(a) * d, v = Math.sin(a) * d;
+        const x = c.x + u * c.r, y = c.y + v * c.r * 0.75;
+        // only inside the painted crown: on or near one of its clumps
+        if (!clumpsAll.some((o) => Math.hypot((x - o.x) / o.r, (y - o.y) / (o.r * 0.8)) < 0.9)) continue;
+        const t = shadeAt(u * 0.9, v * 0.9, y);
+        // the planes' values pushed apart a little: the study's light and shadow are
+        // separate shapes, not a gradient
+        const tp = t < 0.42 ? t * 0.75 : Math.min(1, t * 1.12 + 0.05);
+        marks.push({ x, y, t: tp });
+      }
+      marks.sort((p0, p1) => p0.t - p1.t);
+      for (const m of marks) {
+        const len = c.r * random(0.32, 0.62) * (m.t > 0.6 ? 0.8 : 1);
+        const w = len * random(0.45, 0.65);
+        const ang = cs + random(-0.3, 0.3);
+        const bow = random(-0.15, 0.15) * len;
+        const path = [];
+        for (let k = 0; k <= 4; k++) {
+          const q = k / 4 - 0.5;
+          path.push([m.x + Math.cos(ang) * len * q - Math.sin(ang) * bow * (1 - 4 * q * q), m.y + Math.sin(ang) * len * q + Math.cos(ang) * bow * (1 - 4 * q * q)]);
+        }
+        const col = colourAt(Math.max(0, Math.min(1, m.t + random(-0.04, 0.04))));
+        // soft-edged, wet into wet: the strokes merge into planes rather than standing as
+        // outlined lozenges; only the lit plane keeps a little relief
+        const st = fgPaint(markToOil({ kind: 'band', path, w, col, col2: shadeRGB(col, random(0.9, 1.06)), rel: 0 }), m.t > 0.6 ? 0.14 : 0.04, m.t > 0.6 ? 0.4 : 0.2);
+        oilStroke(st);
+      }
+      // the calligraphic darks: one or two curved blue-black strokes under the mass
+      const nd = random() < 0.5 ? 1 : 2;
+      for (let j = 0; j < nd; j++) {
+        const a0 = Math.PI * random(0.2, 0.8);
+        const path = [];
+        for (let k = 0; k <= 5; k++) {
+          const aa = a0 + (k / 5 - 0.5) * random(0.6, 1.0);
+          path.push([c.x + Math.cos(aa) * c.r * random(0.55, 0.75), c.y + Math.sin(aa) * c.r * 0.55]);
+        }
+        if (!clumpsAll.some((o) => Math.hypot((path[2][0] - o.x) / o.r, (path[2][1] - o.y) / (o.r * 0.8)) < 1)) continue;
+        oilStroke(fgPaint(markToOil({ kind: 'edge', path, w: Math.max(2, c.r * random(0.05, 0.09)), col: blueDark, col2: core, rel: 0 }), 0.1, 0.3));
+      }
+    }
+    // tip clumps outside the masses still get their paint: one stroke each
+    for (const lf of rp.leaves) {
+      if (clusters.some((c) => Math.hypot(lf.x - c.x, lf.y - c.y) < c.r * 0.85)) continue;
+      plane(lf, 0, 0, shadeAt(0, 0, lf.y), lf.r * random(1.2, 1.7), lf.r * random(0.5, 0.7), 0.25, true);
+    }
+  }
+  for (const lf of BROAD ? [] : clumps) {
     const rx = lf.r * 1.05, ry = lf.r * 0.85;
     const area = rx * ry;
     const n = Math.max(6, Math.min(110, Math.round(area / (4.5 * (1 + 0.7 * OP.fg)) / Math.pow(CDk, 1.6))));
@@ -3462,6 +3541,16 @@ function oilCanopy(s) {
       // an outer edge only: not inside any other clump
       if (clumpsAll.some((o) => o !== lf && Math.hypot((ex - o.x) / o.r, (ey - o.y) / (o.r * 0.8)) < 0.95)) continue;
       if (random() < 1 - 0.6 * CD) continue; // fewer edge leaves with less detail
+      if (BROAD) {
+        // the edge is broken by the brush, not by drawn leaves: a short dry stroke swept out
+        if (random() < 0.7) continue;
+        const len = lf.r * random(0.45, 0.8);
+        const la = a + random(-0.5, 0.5);
+        const col = mixRGB(core, mid, random(0.2, 0.6));
+        const st = fgPaint(markToOil({ kind: 'band', path: [[ex - Math.cos(la) * len * 0.4, ey - Math.sin(la) * len * 0.4], [ex, ey], [ex + Math.cos(la) * len * 0.6, ey + Math.sin(la) * len * 0.6]], w: lf.r * random(0.14, 0.22), col, col2: core, rel: 0 }), 0.08, 0.55);
+        oilStroke(st);
+        continue;
+      }
       const nl = 1 + Math.floor(random(0, 2.5));
       for (let q = 0; q < nl; q++) {
         const la = a + random(-0.7, 0.7) + 0.3; // outward, and drooping
@@ -3488,7 +3577,8 @@ function oilCanopy(s) {
         if (clumpsAll.some((o) => o !== lf && Math.hypot((ex - o.x) / o.r, (ey - o.y) / (o.r * 0.8)) < 0.9)) continue;
         // the rim keeps a fine mark (a large one reads as confetti), and fewer of them
         if (random() < 0.35 * OP.fg) continue;
-        const len = 3.4 * random(0.9, 1.6);
+        if (BROAD && random() < 0.75) continue; // fewer, longer touches of light
+        const len = BROAD ? lf.r * random(0.35, 0.6) : 3.4 * random(0.9, 1.6);
         const la = a + Math.PI / 2 + random(-0.4, 0.4); // along the edge
         oilStroke(markToOil({ kind: 'leaf', path: [[ex - Math.cos(la) * len * 0.5, ey - Math.sin(la) * len * 0.5], [ex, ey], [ex + Math.cos(la) * len * 0.5, ey + Math.sin(la) * len * 0.5]], w: len * random(0.35, 0.55), col: mixRGB(rim, lit, random(0, 0.4)), col2: rim, rel: 0 }));
       }
@@ -3501,7 +3591,7 @@ function oilCanopy(s) {
     const fc = G.param('foliageComplements');
     for (const lf of clumpsAll) {
       // as many flecks per area as before: fewer when the marks are larger
-      const m = Math.floor((lf.r * 0.22 * fc) / (CDk * CDk) + random());
+      const m = Math.floor((lf.r * 0.22 * fc * (BROAD ? 0.25 : 1)) / (CDk * CDk) + random());
       for (let k = 0; k < m; k++) {
         const a = random(TWO_PI), d = Math.sqrt(random()) * 0.75;
         const u = Math.cos(a) * d, v = Math.sin(a) * d;

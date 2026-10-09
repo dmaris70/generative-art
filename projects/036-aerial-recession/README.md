@@ -881,6 +881,32 @@ The shared panel library gained `G.shuffle(pick)` for this. It takes an optional
 def)` that returns a value to override the draw for a key. Every value it sets goes into
 the URL, so a shuffled painting you like can be kept with *copy link* or *Save preset*.
 
+## Canopy brushwork after the snow study (*canopy brush*: snow-study strokes, default)
+
+The crowns were painted as hundreds of leaf-sized marks: squiggles, blobs and ticks,
+edge leaves and rim dabs. The snow study paints every form in a few broad, loaded planes,
+with dark blue calligraphy for its shadows. With *canopy brush* on *snow-study strokes*:
+
+- **Planes per mass.** Strokes are laid per crown mass (the clusters of clumps), not per
+  clump:
+  - 7–70 strokes, depending on the mass's size, each 0.32–0.62 × its radius long and about
+    half as wide;
+  - they overlap and are laid dark to light, so the lit plane sits on the shadow plane;
+  - they are soft-edged and wet into wet (they pick up the paint under them), so they merge
+    into planes instead of standing as outlined lozenges;
+  - only the lit plane keeps a little relief and dry-brushed ends.
+- **One sweep per mass.** The crown has one stroke direction, leaning away from its edge,
+  and each mass turns it by up to ±0.55 rad (±0.3 per stroke).
+- **Separated values.** Light and shadow are pushed slightly apart (shadow × 0.75, light
+  × 1.12 + 0.05), so they read as separate shapes, as in the study, not a gradient.
+- **Calligraphic darks.** One or two curved blue-black strokes (the crown's core with
+  Prussian blue) run under each mass.
+- **Edges.** The edge is broken by short dry strokes swept outward, not drawn leaves. The
+  rim light is fewer, longer touches. The rose flecks drop to a quarter.
+
+*Leaf marks (before)* restores the previous crown. *Canopy detail* still sets the leaf
+marks' size in that mode.
+
 ## How each technique is implemented
 
 | technique | where | rule |
