@@ -1,0 +1,97 @@
+{
+ "batch": 15,
+ "by": "Dimitris",
+ "saved": "2026-09-23T17:11:50.149Z",
+ "kept": [
+  {
+   "seed": 15535548,
+   "place": "aoraki",
+   "register": "passage",
+   "rescued": false
+  },
+  {
+   "seed": 15582856,
+   "place": "meije",
+   "register": "clearing",
+   "rescued": false
+  },
+  {
+   "seed": 15606510,
+   "place": "huashan",
+   "register": "clearing",
+   "rescued": false
+  },
+  {
+   "seed": 15701126,
+   "place": "invented",
+   "register": "clearing",
+   "rescued": false
+  },
+  {
+   "seed": 15712953,
+   "place": "robson",
+   "register": "clearing",
+   "rescued": false
+  },
+  {
+   "seed": 15772088,
+   "place": "brenta",
+   "register": "clearing",
+   "rescued": false
+  },
+  {
+   "seed": 15819396,
+   "place": "invented",
+   "register": "clearing",
+   "rescued": false
+  },
+  {
+   "seed": 15854877,
+   "place": "castillo",
+   "register": "clearing",
+   "rescued": false
+  },
+  {
+   "seed": 16079590,
+   "place": "brenta",
+   "register": "passage",
+   "rescued": false
+  },
+  {
+   "seed": 16197860,
+   "place": "invented",
+   "register": "clearing",
+   "rescued": false
+  },
+  {
+   "seed": 16221514,
+   "place": "machapuchare",
+   "register": "clearing",
+   "rescued": false
+  },
+  {
+   "seed": 16529016,
+   "place": "urriellu",
+   "register": "clearing",
+   "rescued": false
+  }
+ ],
+ "culled_by_claude": [
+  15511894,
+  15559202,
+  15594683,
+  15618337,
+  15677472,
+  15807569,
+  15914012,
+  16103244,
+  16115071,
+  16209687,
+  16245168,
+  16292476,
+  16422573,
+  16564497,
+  16611805,
+  16623632
+ ]
+}

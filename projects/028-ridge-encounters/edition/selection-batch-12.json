@@ -1,0 +1,74 @@
+{
+ "batch": 12,
+ "by": "Dimitris",
+ "saved": "2026-09-23T16:52:01.294Z",
+ "kept": [
+  {
+   "seed": 11010666,
+   "place": "invented",
+   "register": "clearing",
+   "rescued": false
+  },
+  {
+   "seed": 11042505,
+   "place": "kinabalu",
+   "register": "clearing",
+   "rescued": false
+  },
+  {
+   "seed": 11053118,
+   "place": "alpamayo",
+   "register": "passage",
+   "rescued": false
+  },
+  {
+   "seed": 11233539,
+   "place": "arthurs",
+   "register": "clearing",
+   "rescued": false
+  },
+  {
+   "seed": 11626220,
+   "place": "jorasses",
+   "register": "passage",
+   "rescued": false
+  },
+  {
+   "seed": 11902158,
+   "place": "napali",
+   "register": "clearing",
+   "rescued": false
+  },
+  {
+   "seed": 11912771,
+   "place": "castillo",
+   "register": "clearing",
+   "rescued": false
+  },
+  {
+   "seed": 11923384,
+   "place": "fitzroy",
+   "register": "passage",
+   "rescued": false
+  },
+  {
+   "seed": 12008288,
+   "place": "invented",
+   "register": "exposure",
+   "rescued": false
+  }
+ ],
+ "culled_by_claude": [
+  11031892,
+  11127409,
+  11297217,
+  11307830,
+  11382121,
+  11424573,
+  11477638,
+  11583768,
+  11796028,
+  11880932,
+  11976449
+ ]
+}

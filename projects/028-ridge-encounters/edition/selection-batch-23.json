@@ -1,0 +1,201 @@
+{
+ "batch": 23,
+ "by": "Dimitris",
+ "saved": "2026-09-24T16:16:19.307Z",
+ "kept": [
+  {
+   "seed": 25882603,
+   "place": "trango",
+   "register": "clearing",
+   "rescued": false
+  },
+  {
+   "seed": 25897004,
+   "place": "denali",
+   "register": "clearing",
+   "rescued": false
+  },
+  {
+   "seed": 25911405,
+   "place": "invented",
+   "register": "exposure",
+   "rescued": false
+  },
+  {
+   "seed": 26026613,
+   "place": "invented",
+   "register": "exposure",
+   "rescued": false
+  },
+  {
+   "seed": 26069816,
+   "place": "darrans",
+   "register": "clearing",
+   "rescued": false
+  },
+  {
+   "seed": 26156222,
+   "place": "hotaka",
+   "register": "clearing",
+   "rescued": false
+  },
+  {
+   "seed": 26170623,
+   "place": "meije",
+   "register": "exposure",
+   "rescued": false
+  },
+  {
+   "seed": 26228227,
+   "place": "simien",
+   "register": "clearing",
+   "rescued": false
+  },
+  {
+   "seed": 26271430,
+   "place": "arthurs",
+   "register": "clearing",
+   "rescued": false
+  },
+  {
+   "seed": 26285831,
+   "place": "trango",
+   "register": "clearing",
+   "rescued": false
+  },
+  {
+   "seed": 26343435,
+   "place": "drakensberg",
+   "register": "clearing",
+   "rescued": false
+  },
+  {
+   "seed": 26357836,
+   "place": "drakensberg",
+   "register": "whiteout",
+   "rescued": false
+  },
+  {
+   "seed": 26372237,
+   "place": "invented",
+   "register": "clearing",
+   "rescued": false
+  },
+  {
+   "seed": 26386638,
+   "place": "invented",
+   "register": "clearing",
+   "rescued": false
+  },
+  {
+   "seed": 26401039,
+   "place": "jorasses",
+   "register": "clearing",
+   "rescued": false
+  },
+  {
+   "seed": 26458643,
+   "place": "toubkal",
+   "register": "exposure",
+   "rescued": false
+  },
+  {
+   "seed": 26487445,
+   "place": "napali",
+   "register": "clearing",
+   "rescued": false
+  },
+  {
+   "seed": 26545049,
+   "place": "invented",
+   "register": "clearing",
+   "rescued": false
+  },
+  {
+   "seed": 26617054,
+   "place": "liathach",
+   "register": "clearing",
+   "rescued": false
+  },
+  {
+   "seed": 26674658,
+   "place": "besseggen",
+   "register": "passage",
+   "rescued": false
+  },
+  {
+   "seed": 26689059,
+   "place": "invented",
+   "register": "clearing",
+   "rescued": false
+  },
+  {
+   "seed": 26775465,
+   "place": "invented",
+   "register": "exposure",
+   "rescued": false
+  },
+  {
+   "seed": 26789866,
+   "place": "trecime",
+   "register": "clearing",
+   "rescued": false
+  },
+  {
+   "seed": 26818668,
+   "place": "cinto",
+   "register": "clearing",
+   "rescued": false
+  },
+  {
+   "seed": 26833069,
+   "place": "huayhuash",
+   "register": "clearing",
+   "rescued": false
+  },
+  {
+   "seed": 26933876,
+   "place": "huashan",
+   "register": "clearing",
+   "rescued": false
+  },
+  {
+   "seed": 27063485,
+   "place": "urriellu",
+   "register": "clearing",
+   "rescued": false
+  },
+  {
+   "seed": 27207495,
+   "place": "arthurs",
+   "register": "passage",
+   "rescued": false
+  },
+  {
+   "seed": 27236297,
+   "place": "invented",
+   "register": "passage",
+   "rescued": false
+  }
+ ],
+ "culled_by_claude": [
+  25983410,
+  25997811,
+  26141821,
+  26199425,
+  26213826,
+  26242628,
+  26329034,
+  26429841,
+  26473044,
+  26516247,
+  26530648,
+  26559450,
+  26732262,
+  26847470,
+  26919475,
+  26991480,
+  27005881,
+  27020282
+ ]
+}

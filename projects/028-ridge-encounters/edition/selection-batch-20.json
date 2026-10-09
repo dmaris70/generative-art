@@ -1,0 +1,111 @@
+{
+ "batch": 20,
+ "by": "Dimitris",
+ "saved": "2026-09-23T19:38:49.543Z",
+ "kept": [
+  {
+   "seed": 21700097,
+   "place": "invented",
+   "register": "clearing",
+   "rescued": false
+  },
+  {
+   "seed": 21713826,
+   "place": "lyskamm",
+   "register": "clearing",
+   "rescued": false
+  },
+  {
+   "seed": 21933490,
+   "place": "invented",
+   "register": "passage",
+   "rescued": false
+  },
+  {
+   "seed": 22166883,
+   "place": "invented",
+   "register": "clearing",
+   "rescued": false
+  },
+  {
+   "seed": 22249257,
+   "place": "nevis",
+   "register": "clearing",
+   "rescued": false
+  },
+  {
+   "seed": 22262986,
+   "place": "toubkal",
+   "register": "clearing",
+   "rescued": false
+  },
+  {
+   "seed": 22317902,
+   "place": "invented",
+   "register": "clearing",
+   "rescued": false
+  },
+  {
+   "seed": 22414005,
+   "place": "stetind",
+   "register": "passage",
+   "rescued": false
+  },
+  {
+   "seed": 22661127,
+   "place": "lyskamm",
+   "register": "clearing",
+   "rescued": false
+  },
+  {
+   "seed": 22688585,
+   "place": "aoraki",
+   "register": "clearing",
+   "rescued": false
+  },
+  {
+   "seed": 22702314,
+   "place": "astraka",
+   "register": "clearing",
+   "rescued": false
+  },
+  {
+   "seed": 22743501,
+   "place": "invented",
+   "register": "clearing",
+   "rescued": false
+  },
+  {
+   "seed": 22825875,
+   "place": "watzmann",
+   "register": "clearing",
+   "rescued": false
+  },
+  {
+   "seed": 22921978,
+   "place": "huayhuash",
+   "register": "passage",
+   "rescued": false
+  },
+  {
+   "seed": 22963165,
+   "place": "cinto",
+   "register": "clearing",
+   "rescued": false
+  }
+ ],
+ "culled_by_claude": [
+  21741284,
+  21919761,
+  22029593,
+  22070780,
+  22084509,
+  22400276,
+  22441463,
+  22468921,
+  22784688,
+  22798417,
+  22880791,
+  22935707
+ ]
+}

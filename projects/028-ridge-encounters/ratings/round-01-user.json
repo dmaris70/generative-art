@@ -1,0 +1,295 @@
+{
+ "round": 1,
+ "by": "Dimitris",
+ "saved": "2026-09-21T20:07:49.391Z",
+ "ratings": [
+  {
+   "id": "invented-31007",
+   "claude": 4,
+   "user": 4,
+   "note": ""
+  },
+  {
+   "id": "invented-32550",
+   "claude": 4,
+   "user": 3,
+   "note": ""
+  },
+  {
+   "id": "invented-34093",
+   "claude": 2,
+   "user": 2,
+   "note": ""
+  },
+  {
+   "id": "aoraki-31108",
+   "claude": 2,
+   "user": 2,
+   "note": ""
+  },
+  {
+   "id": "aoraki-32651",
+   "claude": 3,
+   "user": 4,
+   "note": ""
+  },
+  {
+   "id": "aoraki-34194",
+   "claude": 3,
+   "user": 3,
+   "note": ""
+  },
+  {
+   "id": "astraka-31209",
+   "claude": 2,
+   "user": 3,
+   "note": "the left is very good"
+  },
+  {
+   "id": "astraka-32752",
+   "claude": 2,
+   "user": 2,
+   "note": ""
+  },
+  {
+   "id": "astraka-34295",
+   "claude": 4,
+   "user": 4,
+   "note": ""
+  },
+  {
+   "id": "brenta-31310",
+   "claude": 4,
+   "user": 3,
+   "note": "too detailed "
+  },
+  {
+   "id": "brenta-32853",
+   "claude": 2,
+   "user": 2,
+   "note": ""
+  },
+  {
+   "id": "brenta-34396",
+   "claude": 1,
+   "user": 1,
+   "note": ""
+  },
+  {
+   "id": "darrans-31411",
+   "claude": 3,
+   "user": 3,
+   "note": ""
+  },
+  {
+   "id": "darrans-32954",
+   "claude": 2,
+   "user": 2,
+   "note": ""
+  },
+  {
+   "id": "darrans-34497",
+   "claude": 3,
+   "user": 2,
+   "note": ""
+  },
+  {
+   "id": "eiger-31512",
+   "claude": 2,
+   "user": 2,
+   "note": ""
+  },
+  {
+   "id": "eiger-33055",
+   "claude": 4,
+   "user": 4,
+   "note": ""
+  },
+  {
+   "id": "eiger-34598",
+   "claude": 4,
+   "user": 4,
+   "note": ""
+  },
+  {
+   "id": "k2-31613",
+   "claude": 3,
+   "user": 3,
+   "note": ""
+  },
+  {
+   "id": "k2-33156",
+   "claude": 4,
+   "user": 4,
+   "note": ""
+  },
+  {
+   "id": "k2-34699",
+   "claude": 3,
+   "user": 3,
+   "note": ""
+  },
+  {
+   "id": "liathach-31714",
+   "claude": 4,
+   "user": 4,
+   "note": ""
+  },
+  {
+   "id": "liathach-33257",
+   "claude": 4,
+   "user": 4,
+   "note": ""
+  },
+  {
+   "id": "liathach-34800",
+   "claude": 4,
+   "user": 4,
+   "note": ""
+  },
+  {
+   "id": "nevis-31815",
+   "claude": 3,
+   "user": 4,
+   "note": ""
+  },
+  {
+   "id": "nevis-33358",
+   "claude": 2,
+   "user": 2,
+   "note": ""
+  },
+  {
+   "id": "nevis-34901",
+   "claude": 4,
+   "user": 4,
+   "note": ""
+  },
+  {
+   "id": "olympus-31916",
+   "claude": 4,
+   "user": 4,
+   "note": ""
+  },
+  {
+   "id": "olympus-33459",
+   "claude": 2,
+   "user": 2,
+   "note": ""
+  },
+  {
+   "id": "olympus-35002",
+   "claude": 3,
+   "user": 3,
+   "note": ""
+  },
+  {
+   "id": "robson-32017",
+   "claude": 5,
+   "user": 4,
+   "note": ""
+  },
+  {
+   "id": "robson-33560",
+   "claude": 1,
+   "user": 1,
+   "note": ""
+  },
+  {
+   "id": "robson-35103",
+   "claude": 2,
+   "user": 3,
+   "note": "i like texture"
+  },
+  {
+   "id": "roraima-32118",
+   "claude": 3,
+   "user": 3,
+   "note": ""
+  },
+  {
+   "id": "roraima-33661",
+   "claude": 2,
+   "user": 3,
+   "note": ""
+  },
+  {
+   "id": "roraima-35204",
+   "claude": 2,
+   "user": 2,
+   "note": ""
+  },
+  {
+   "id": "stetind-32219",
+   "claude": 2,
+   "user": 2,
+   "note": ""
+  },
+  {
+   "id": "stetind-33762",
+   "claude": 4,
+   "user": 4,
+   "note": ""
+  },
+  {
+   "id": "stetind-35305",
+   "claude": 2,
+   "user": 2,
+   "note": ""
+  },
+  {
+   "id": "taygetos-32320",
+   "claude": 3,
+   "user": 3,
+   "note": ""
+  },
+  {
+   "id": "taygetos-33863",
+   "claude": 3,
+   "user": 3,
+   "note": ""
+  },
+  {
+   "id": "taygetos-35406",
+   "claude": 4,
+   "user": 4,
+   "note": ""
+  },
+  {
+   "id": "trollveggen-32421",
+   "claude": 2,
+   "user": 2,
+   "note": ""
+  },
+  {
+   "id": "trollveggen-33964",
+   "claude": 3,
+   "user": 3,
+   "note": ""
+  },
+  {
+   "id": "trollveggen-35507",
+   "claude": 2,
+   "user": 3,
+   "note": "i like the antithesis of the two images "
+  },
+  {
+   "id": "watzmann-32522",
+   "claude": 3,
+   "user": 3,
+   "note": ""
+  },
+  {
+   "id": "watzmann-34065",
+   "claude": 3,
+   "user": 4,
+   "note": ""
+  },
+  {
+   "id": "watzmann-35608",
+   "claude": 4,
+   "user": 3,
+   "note": ""
+  }
+ ]
+}

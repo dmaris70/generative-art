@@ -1,0 +1,19 @@
+# macOS
+.DS_Store
+
+# Claude Code session config
+.claude/
+
+# Editor
+.vscode/
+.idea/
+
+# Node (if a project ever adds a build step)
+node_modules/
+dist/
+
+# Local server / logs
+*.log
+
+# Isometric Strata rendered assets (produced by tools/strata-export.mjs; large)
+projects/011-isometric-strata/export/

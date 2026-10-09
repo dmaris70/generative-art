@@ -1,0 +1,77 @@
+{
+ "batch": 13,
+ "by": "Dimitris",
+ "saved": "2026-09-23T16:53:01.447Z",
+ "kept": [
+  {
+   "seed": 12132870,
+   "place": "olympus",
+   "register": "exposure",
+   "rescued": false
+  },
+  {
+   "seed": 12242240,
+   "place": "ushba",
+   "register": "exposure",
+   "rescued": false
+  },
+  {
+   "seed": 12384421,
+   "place": "triglav",
+   "register": "exposure",
+   "rescued": false
+  },
+  {
+   "seed": 12482854,
+   "place": "liathach",
+   "register": "clearing",
+   "rescued": false
+  },
+  {
+   "seed": 12985956,
+   "place": "denali",
+   "register": "clearing",
+   "rescued": false
+  },
+  {
+   "seed": 12996893,
+   "place": "astraka",
+   "register": "clearing",
+   "rescued": false
+  },
+  {
+   "seed": 13029704,
+   "place": "hotaka",
+   "register": "exposure",
+   "rescued": false
+  },
+  {
+   "seed": 13084389,
+   "place": "ushba",
+   "register": "passage",
+   "rescued": false
+  },
+  {
+   "seed": 13095326,
+   "place": "invented",
+   "register": "clearing",
+   "rescued": false
+  }
+ ],
+ "culled_by_claude": [
+  12198492,
+  12231303,
+  12275051,
+  12406295,
+  12439106,
+  12515665,
+  12592224,
+  12625035,
+  12712531,
+  12778153,
+  12920334,
+  12942208,
+  13018767,
+  13139074
+ ]
+}

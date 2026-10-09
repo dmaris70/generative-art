@@ -1,0 +1,331 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Contact Sheet — Generative Art</title>
+  <style>
+    :root {
+      --bg: #0b0b0e;
+      --fg: #ececef;
+      --muted: #8b8b96;
+      --card: #16161b;
+      --border: #26262e;
+      --accent: #d8b4fe;
+    }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; padding: 0; }
+    body {
+      background: var(--bg); color: var(--fg);
+      font: 15px/1.5 ui-sans-serif, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      -webkit-font-smoothing: antialiased;
+    }
+    header {
+      position: sticky; top: 0; z-index: 20;
+      background: rgba(11,11,14,.86); backdrop-filter: blur(8px);
+      border-bottom: 1px solid var(--border);
+      padding: 14px 20px;
+    }
+    .bar { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 14px; max-width: 1500px; margin: 0 auto; }
+    .bar h1 { font-size: 1rem; margin: 0 8px 0 0; letter-spacing: -0.01em; font-weight: 600; }
+    .bar a.home { color: var(--accent); text-decoration: none; opacity: .8; font-size: 13px; }
+    .bar a.home:hover { opacity: 1; }
+    label { color: var(--muted); font-size: 12px; display: inline-flex; align-items: center; gap: 6px; }
+    select, input, button {
+      font: inherit; font-size: 13px;
+      background: var(--card); color: var(--fg);
+      border: 1px solid var(--border); border-radius: 8px;
+      padding: 5px 9px;
+    }
+    input[type=number] { width: 96px; }
+    button { cursor: pointer; }
+    button:hover { border-color: var(--accent); color: var(--accent); }
+    button.primary { border-color: #3a3a46; }
+    .spacer { flex: 1 1 auto; }
+    .note { color: var(--muted); font-size: 12px; }
+    main { max-width: 1500px; margin: 0 auto; padding: 20px 20px 80px; }
+    .sheet {
+      display: grid; gap: 14px;
+      grid-template-columns: repeat(auto-fill, minmax(var(--tile, 300px), 1fr));
+    }
+    .tile {
+      position: relative; display: block;
+      background: var(--card); border: 1px solid var(--border); border-radius: 12px;
+      overflow: hidden; text-decoration: none; color: inherit;
+      aspect-ratio: 4 / 3;
+      transition: border-color .15s ease, transform .15s ease;
+    }
+    .tile:hover { border-color: var(--accent); transform: translateY(-2px); }
+    .tile iframe { width: 100%; height: 100%; border: 0; display: block; pointer-events: none; background: #101015; }
+    .tile .tag {
+      position: absolute; left: 8px; bottom: 8px;
+      background: rgba(11,11,14,.72); color: var(--fg);
+      border: 1px solid var(--border); border-radius: 999px;
+      padding: 2px 9px; font-size: 11px; font-variant-numeric: tabular-nums;
+      pointer-events: none;
+    }
+    .tile .open {
+      position: absolute; right: 8px; bottom: 8px; opacity: 0;
+      background: rgba(11,11,14,.72); border: 1px solid var(--border); border-radius: 999px;
+      padding: 2px 9px; font-size: 11px; color: var(--accent);
+      transition: opacity .15s ease; pointer-events: none;
+    }
+    .tile:hover .open { opacity: 1; }
+    .tile .pending {
+      position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
+      color: var(--muted); font-size: 12px;
+    }
+    footer { max-width: 1500px; margin: 0 auto; padding: 0 20px 60px; color: var(--muted); font-size: 13px; }
+    footer a { color: var(--accent); }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="bar">
+      <a class="home" href="./">← gallery</a>
+      <h1>Contact sheet</h1>
+
+      <label>piece
+        <select id="piece"></select>
+      </label>
+      <label>versions
+        <select id="count">
+          <option>6</option><option>12</option><option selected>24</option>
+          <option>48</option><option>100</option>
+        </select>
+      </label>
+      <label>seeds
+        <select id="mode">
+          <option value="seq">sequential</option>
+          <option value="rand">random</option>
+        </select>
+      </label>
+      <label id="from-wrap">from
+        <input type="number" id="from" min="0" step="1" value="1" />
+      </label>
+      <label>size
+        <select id="size">
+          <option value="220">small</option>
+          <option value="300" selected>medium</option>
+          <option value="440">large</option>
+        </select>
+      </label>
+
+      <span class="spacer"></span>
+      <button id="reroll" class="primary">🎲 reroll</button>
+      <button id="copy">Copy link</button>
+    </div>
+    <div class="bar" style="margin-top:8px"><span class="note" id="note"></span></div>
+  </header>
+
+  <main>
+    <div class="sheet" id="sheet"></div>
+  </main>
+
+  <footer>
+    Each tile is the piece itself, running live at a different seed — click one to open it
+    full size with its parameter panel. Parameters carry over from wherever you launched
+    this, so a sheet always shows one recipe across many seeds.
+  </footer>
+
+  <script>
+    const qs = new URLSearchParams(location.search);
+    const el = (id) => document.getElementById(id);
+    const sheet = el('sheet');
+
+    // Any p_* in this page's URL is a parameter override to apply to every tile.
+    const paramPairs = [...qs.entries()].filter(([k]) => k.startsWith('p_'));
+
+    let projects = [];
+    let seeds = [];
+
+    const state = {
+      slug: qs.get('p') || '',
+      count: parseInt(qs.get('n') || '24', 10),
+      mode: qs.get('mode') === 'rand' ? 'rand' : 'seq',
+      from: parseInt(qs.get('from') || '1', 10) || 0,
+      size: parseInt(qs.get('size') || '300', 10),
+    };
+
+    const rand32 = () => Math.floor(Math.random() * 4294967296);
+
+    function buildSeeds() {
+      seeds = [];
+      if (state.mode === 'rand') {
+        for (let i = 0; i < state.count; i++) seeds.push(rand32());
+      } else {
+        for (let i = 0; i < state.count; i++) seeds.push(state.from + i);
+      }
+    }
+
+    function tileURL(seed, gui) {
+      const u = new URL('projects/' + state.slug + '/', location.href);
+      u.searchParams.set('seed', String(seed));
+      for (const [k, v] of paramPairs) u.searchParams.set(k, v);
+      if (!gui) u.searchParams.set('gui', '0');
+      return u.toString();
+    }
+
+    // Load tiles a few at a time — 100 p5 sketches starting at once would stall the tab.
+    let queue = [], active = 0;
+    const MAX_ACTIVE = 3;
+
+    function enqueue(tile) {
+      if (tile.dataset.queued) return; // never load a tile twice
+      tile.dataset.queued = '1';
+      queue.push({ tile: tile, seed: Number(tile.dataset.seed) });
+    }
+
+    function pump() {
+      while (active < MAX_ACTIVE && queue.length) {
+        const job = queue.shift();
+        if (!job.tile.isConnected) continue;
+        active++;
+        const frame = document.createElement('iframe');
+        frame.setAttribute('loading', 'lazy');
+        frame.setAttribute('scrolling', 'no');
+        frame.src = tileURL(job.seed, false);
+        frame.addEventListener('load', () => {
+          active--;
+          const ph = job.tile.querySelector('.pending');
+          if (ph) ph.remove();
+          // same origin: hide the sketch's own "← gallery" link inside the tile
+          try {
+            const d = frame.contentDocument;
+            const s = d.createElement('style');
+            s.textContent = 'a.back{display:none!important}';
+            d.head.appendChild(s);
+          } catch (e) { /* ignore */ }
+          pump();
+        });
+        frame.addEventListener('error', () => { active--; pump(); });
+        job.tile.insertBefore(frame, job.tile.firstChild);
+      }
+    }
+
+    const io = new IntersectionObserver((entries) => {
+      for (const e of entries) {
+        if (!e.isIntersecting) continue;
+        io.unobserve(e.target);
+        enqueue(e.target);
+        pump();
+      }
+    }, { rootMargin: '400px' });
+
+    function render() {
+      sheet.style.setProperty('--tile', state.size + 'px');
+      sheet.innerHTML = '';
+      queue = [];
+      if (!state.slug) {
+        sheet.innerHTML = '<p class="note">Pick a piece above.</p>';
+        return;
+      }
+      for (const seed of seeds) {
+        const a = document.createElement('a');
+        a.className = 'tile';
+        a.href = tileURL(seed, true);
+        a.target = '_blank';
+        a.rel = 'noopener';
+        a.dataset.seed = String(seed);
+        a.innerHTML =
+          '<div class="pending">…</div>' +
+          '<span class="tag">' + seed + '</span>' +
+          '<span class="open">open ↗</span>';
+        sheet.appendChild(a);
+        io.observe(a);
+      }
+      // Safety net: a tab that never composites (background, hidden pane) gets no
+      // intersection callbacks, so prime the first screenful by hand.
+      setTimeout(() => {
+        if (sheet.querySelector('iframe')) return;
+        [...sheet.querySelectorAll('.tile')].slice(0, 6).forEach(enqueue);
+        pump();
+      }, 1200);
+      syncURL();
+      note();
+    }
+
+    function note() {
+      const p = projects.find((x) => x.slug === state.slug);
+      const bits = [];
+      if (p && p.title) bits.push(p.title);
+      bits.push(seeds.length + ' versions');
+      if (paramPairs.length) {
+        bits.push('parameters: ' + paramPairs.map(([k, v]) => k.slice(2) + ' ' + v).join(' · '));
+      } else {
+        bits.push('default parameters');
+      }
+      el('note').textContent = bits.join('  ·  ');
+    }
+
+    function syncURL() {
+      const u = new URL(location.href);
+      u.searchParams.set('p', state.slug);
+      u.searchParams.set('n', String(state.count));
+      u.searchParams.set('mode', state.mode);
+      u.searchParams.set('size', String(state.size));
+      if (state.mode === 'seq') u.searchParams.set('from', String(state.from));
+      else u.searchParams.delete('from');
+      history.replaceState(null, '', u.toString());
+    }
+
+    function refresh() {
+      buildSeeds();
+      render();
+    }
+
+    // --- controls ---
+    el('count').value = String(state.count);
+    el('mode').value = state.mode;
+    el('from').value = String(state.from);
+    el('size').value = String(state.size);
+    el('from-wrap').style.display = state.mode === 'seq' ? '' : 'none';
+
+    el('piece').addEventListener('change', (e) => { state.slug = e.target.value; refresh(); });
+    el('count').addEventListener('change', (e) => { state.count = parseInt(e.target.value, 10); refresh(); });
+    el('size').addEventListener('change', (e) => { state.size = parseInt(e.target.value, 10); render(); });
+    el('from').addEventListener('change', (e) => {
+      state.from = parseInt(e.target.value, 10) || 0;
+      state.mode = 'seq';
+      refresh();
+    });
+    el('mode').addEventListener('change', (e) => {
+      state.mode = e.target.value;
+      el('from-wrap').style.display = state.mode === 'seq' ? '' : 'none';
+      refresh();
+    });
+    el('reroll').addEventListener('click', () => {
+      if (state.mode === 'seq') state.from = rand32() >>> 8; // a fresh stretch of seed space
+      el('from').value = String(state.from);
+      refresh();
+    });
+    el('copy').addEventListener('click', (e) => {
+      const btn = e.currentTarget;
+      navigator.clipboard.writeText(location.href).then(() => {
+        btn.textContent = 'Copied ✓';
+        setTimeout(() => { btn.textContent = 'Copy link'; }, 1200);
+      }, () => {});
+    });
+
+    fetch('projects.json')
+      .then((r) => r.json())
+      .then((data) => {
+        projects = data.projects || [];
+        const sel = el('piece');
+        sel.innerHTML = '';
+        for (const p of projects) {
+          const o = document.createElement('option');
+          o.value = p.slug;
+          o.textContent = p.title || p.slug;
+          sel.appendChild(o);
+        }
+        if (!state.slug && projects.length) state.slug = projects[0].slug;
+        sel.value = state.slug;
+        refresh();
+      })
+      .catch((err) => {
+        sheet.innerHTML = '<p class="note">Could not load projects.json — ' + err + '</p>';
+      });
+  </script>
+</body>
+</html>
