@@ -6422,7 +6422,40 @@ function oilMidTree(s, O, tr, out) {
       }));
     }
   }
-  for (const pass of [0, 1]) {
+  // snow-study brushwork (canopy brush): the same as the framing tree's crown, at this
+  // tree's scale — each clump a few broad, overlapping, soft strokes laid dark to light in
+  // one sweep for the whole tree (upright for a poplar), the values pushed apart into
+  // planes; one curved blue-black stroke under a crown large enough to show it
+  const BROAD = G.param('canopyBrush') === 1;
+  if (BROAD) {
+    const sweep = tr.tall ? -Math.PI / 2 + random(-0.25, 0.25) : -0.3 * Math.sign(s.CX - x || 1) + random(-0.5, 0.5);
+    for (const c of clumps) {
+      const N = Math.max(2, Math.min(16, Math.round(2 + c.r / 3.2)));
+      const marks = [];
+      for (let i = 0; i < N * 3 && marks.length < N; i++) {
+        const a = random(TWO_PI), d = Math.sqrt(random()) * 0.8;
+        const u = Math.cos(a) * d, v = Math.sin(a) * d;
+        const my = c.y + v * c.r * 0.9;
+        const t = shade(u, v, my);
+        marks.push({ x: c.x + u * c.r, y: my, t: t < 0.42 ? t * 0.75 : Math.min(1, t * 1.12 + 0.05) });
+      }
+      marks.sort((p0, p1) => p0.t - p1.t);
+      for (const m of marks) {
+        const len = Math.max(1.6, c.r * random(0.5, 0.9) * (m.t > 0.6 ? 0.8 : 1));
+        const col = colourAt(clamp01(m.t + random(-0.04, 0.04)));
+        const st = makeOilStroke(O, m.x, m.y, sweep + random(-0.3, 0.3), len, len * random(0.45, 0.65), {
+          color: col, color2: shadeRGB(col, random(0.9, 1.06)), relief: m.t > 0.6 ? 0.1 * k : 0, soft: true, pickup: OP.fg > 0,
+        });
+        if (m.t > 0.6) st.dry = Math.min(0.85, OP.dry + 0.2);
+        out.push(st);
+      }
+    }
+    if (w >= 8 && !tr.tall) {
+      const blue = mixRGB(dark, PRUSSIAN, 0.3 * k);
+      out.push(makeOilStroke(O, x + random(-0.1, 0.1) * w, cy + h * 0.28, random(-0.15, 0.15), w * random(0.5, 0.8), Math.max(1, w * 0.07), { color: blue, color2: dark, relief: 0, crisp: false }));
+    }
+  }
+  for (const pass of BROAD ? [] : [0, 1]) {
     for (const c of clumps) {
       if (CH > 0 && w >= 6) {
         const hh = hash2(Math.round(c.x * 3), Math.round(c.y * 3));
@@ -6449,7 +6482,7 @@ function oilMidTree(s, O, tr, out) {
   const fc = s.night ? 0 : G.param('foliageComplements');
   if (fc > 0 && w >= 9) {
     for (const c of clumps) {
-      const m = Math.round(nPer(c.r) * 0.05 * fc);
+      const m = Math.round(nPer(c.r) * 0.05 * fc * (BROAD ? 0.25 : 1));
       for (let i = 0; i < m; i++) {
         const a = random(TWO_PI), d = Math.sqrt(random()) * 0.75;
         const u = Math.cos(a) * d, v = Math.sin(a) * d;
@@ -6473,8 +6506,9 @@ function oilMidTree(s, O, tr, out) {
       }
     }
   }
-  // edge leaves, only where the tree is big enough on screen to show them
-  if (w > 14) {
+  // edge leaves, only where the tree is big enough on screen to show them (not with the
+  // snow-study brush, whose edges the broad strokes break on their own)
+  if (w > 14 && !BROAD) {
     for (const c of clumps) {
       const steps = Math.round(c.r * 0.4);
       for (let q = 0; q < steps; q++) {
