@@ -149,6 +149,32 @@
         if (api.gui) api.gui.controllersRecursive().forEach(function (c) { c.updateDisplay(); });
         applyReset();
       },
+      // A new seed and a random value for every setting (a dropdown picks one of its options,
+      // a slider a value on its step within its range), then one reset. `pick(key, def)` may
+      // return a value to override the uniform draw for a key (to keep a setting in a sane or
+      // affordable range), or undefined to leave it to the draw.
+      shuffle: function (pick) {
+        for (const k in defs) {
+          const d = defs[k];
+          let v = pick ? pick(k, d) : undefined;
+          if (v === undefined) {
+            if (d.options) {
+              const opts = Object.values(d.options);
+              v = opts[Math.floor(Math.random() * opts.length)];
+            } else if (typeof d.value === 'number' && typeof d.min === 'number' && typeof d.max === 'number') {
+              v = d.min + Math.random() * (d.max - d.min);
+              if (d.step) v = d.min + Math.round((v - d.min) / d.step) * d.step;
+              v = Math.min(d.max, Math.max(d.min, Number(v.toFixed(6))));
+            } else continue;
+          }
+          values[k] = v;
+        }
+        seed = (Math.random() * 4294967296) >>> 0;
+        ctrl.seed = String(seed);
+        if (seedCtl) seedCtl.updateDisplay();
+        if (api.gui) api.gui.controllersRecursive().forEach(function (c) { c.updateDisplay(); });
+        applyReset();
+      },
       defaults: function () {
         const out = {};
         for (const k in defs) out[k] = defs[k].value;
