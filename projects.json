@@ -3,11 +3,19 @@
   "author": "dmaris70",
   "projects": [
     {
-      "slug": "036-aerial-recession",
-      "title": "Aerial Recession — computed landscape",
+      "slug": "037-watercolor-landscape",
+      "title": "Watercolor Landscape v1 — the same landscape in watercolour",
       "year": 2026,
       "tools": ["p5.js", "p5.brush"],
-      "description": "The classical rules of landscape depth computed instead of painted: one camera over one ground plane sizes every field, tree, cloud and river bend by 1/z; one transmittance term 1 − e^(−kz) cools, flattens, simplifies and un-inks whatever recedes; one low sun on a third line splits peaks into lit and shadow faces and throws long shadows, while a dark repoussoir tree frames the light. Watercolour, graphite and charcoal from p5.brush, painted back to front.",
+      "description": "The scene engine of Oil Landscape v1, repainted by a watercolourist: light to dark, far to near, with the paper as the only white. Graded skies laid wet into wet, clouds dropped into the damp sky, mountains as washes with hard-edged shadow glazes, granulation, backruns, lifted lights, dry brush, sponge, rigger grass blown by a wind field, white gouache snow, sepia pen hatching, spatter and salt — every p5.brush watercolour tool (fillBleed, fillTexture, wash, hatchArray, massArray, custom brushes, fields) used for what it does best. Five moods, three scene types, three viewpoints.",
+      "thumb": ""
+    },
+    {
+      "slug": "036-aerial-recession",
+      "title": "Oil Landscape v1 — computed landscape in oil",
+      "year": 2026,
+      "tools": ["p5.js", "p5.brush"],
+      "description": "The classical rules of landscape depth computed instead of painted, then laid in oil: one camera over one ground plane sizes every field, tree, cloud and river bend by 1/z; one transmittance term 1 − e^(−kz) cools, flattens and simplifies whatever recedes; a low sun (or the moon, or an overcast) splits peaks into lit and shadow planes. The underpainting is read back and repainted in thousands of directional oil strokes with bristles, impasto, scumbles and glazes. Five moods, three scene types, three viewpoints, a framing group of trees. Formerly \"Aerial Recession\".",
       "thumb": ""
     },
     {
