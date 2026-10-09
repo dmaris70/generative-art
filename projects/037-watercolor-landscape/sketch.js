@@ -98,6 +98,18 @@ let WP = null; // the watercolour settings, frozen when a painting starts
 const UI = { status: '' };
 const PAPER = [246, 241, 230]; // cold-pressed paper, warm white
 const SEPIA = [74, 52, 38];
+// A sixth mood, the watercolour's own: a clear summer day after the American watercolour
+// tradition (Homer's Adirondack sheets) — a saturated blue sky with the clouds left as paper,
+// full greens, near-black conifers, warm rust in the vegetation. The sun is high and out of
+// sight; the light is cool and clear (warmth is set low when the painting starts).
+MOODS['summer day'] = {
+  zenith: '#2a5aa6', upper: '#4f84c4', horizon: '#c9dbe6', glow: '#eef2f2', sun: '#fffdf6',
+  haze: '#8fa9c6', cloudShadow: '#6f7f9e', cloudLit: '#fbfaf4',
+  rockFar: '#566a9a', rockNear: '#2e3f52', groundFar: '#5e8a3e', groundNear: '#2c5a26',
+  fields: ['#6f9a3c', '#4f7f2e', '#9aa548', '#3f6e2c', '#86933c'],
+  foliage: '#1d4a2c', foliageLit: '#79ae46', silhouette: '#0f1d26',
+  light: '#fff6dc', shadow: '#28406a', water: '#2a5a9e', clouds: 1.25, rays: 0, summer: 1,
+};
 
 function setup() {
   createCanvas(windowWidth, windowHeight, WEBGL);
@@ -115,13 +127,13 @@ function setup() {
     params: {
       sceneType: { value: 0, options: { 'river plain': 0, 'fjord / lake': 1, 'alpine valley': 2 }, label: 'scene', group: SC },
       viewpoint: { value: 1, options: { 'low (looking up)': 0, 'eye level': 1, 'high vantage (looking down)': 2 }, label: 'viewpoint', group: SC },
-      mood: { value: 0, options: { 'golden hour': 0, 'after the storm': 1, 'dawn mist': 2, 'moonlit night': 3, 'late snow': 4 }, label: 'mood', group: SC },
-      sun: { value: 0.35, min: 0, max: 1, step: 0.01, label: 'sun height', group: SC },
-      haze: { value: 0.72, min: 0.3, max: 2.2, step: 0.05, label: 'atmosphere', group: SC },
+      mood: { value: 5, options: { 'golden hour': 0, 'after the storm': 1, 'dawn mist': 2, 'moonlit night': 3, 'late snow': 4, 'summer day': 5 }, label: 'mood', group: SC },
+      sun: { value: 0.7, min: 0, max: 1, step: 0.01, label: 'sun height', group: SC },
+      haze: { value: 0.6, min: 0.3, max: 2.2, step: 0.05, label: 'atmosphere', group: SC },
       ranges: { value: 5, min: 3, max: 7, step: 1, label: 'mountain ranges', group: SC },
       mountainForm: { value: 1, options: { jagged: 0, 'big forms': 1 }, label: 'mountain forms', group: SC },
-      mist: { value: 0.45, min: 0, max: 1, step: 0.05, label: 'mist', group: SC },
-      clouds: { value: 0.55, min: 0, max: 1, step: 0.05, label: 'clouds', group: SC },
+      mist: { value: 0.25, min: 0, max: 1, step: 0.05, label: 'mist', group: SC },
+      clouds: { value: 0.75, min: 0, max: 1, step: 0.05, label: 'clouds', group: SC },
       cloudRows: { value: 0, options: { off: 0, on: 1 }, label: 'cloud rows', group: SC },
       meander: { value: 1.0, min: 0, max: 2, step: 0.05, label: 'river meander', group: SC },
       trees: { value: 0.6, min: 0, max: 1, step: 0.05, label: 'trees', group: SC },
@@ -133,24 +145,24 @@ function setup() {
       paintSeed: { value: 0, step: 1, label: 'paint seed (0 = scene)', group: 'Seeds' },
 
       paper: { value: 0, options: { 'cold pressed (NOT)': 0, rough: 1, 'hot pressed (smooth)': 2 }, label: 'paper', group: WC },
-      wetness: { value: 0.6, min: 0, max: 1, step: 0.05, label: 'wetness (bleed of the washes)', group: WC },
-      load: { value: 1, min: 0.5, max: 1.6, step: 0.05, label: 'pigment load', group: WC },
-      granulation: { value: 0.5, min: 0, max: 1, step: 0.05, label: 'granulation', group: WC },
-      backruns: { value: 0.55, min: 0, max: 1, step: 0.05, label: 'backruns / hard edges', group: WC },
+      wetness: { value: 0.45, min: 0, max: 1, step: 0.05, label: 'wetness (bleed of the washes)', group: WC },
+      load: { value: 1.25, min: 0.5, max: 1.6, step: 0.05, label: 'pigment load', group: WC },
+      granulation: { value: 0.4, min: 0, max: 1, step: 0.05, label: 'granulation', group: WC },
+      backruns: { value: 0.65, min: 0, max: 1, step: 0.05, label: 'backruns / hard edges', group: WC },
       glazes: { value: 2, min: 1, max: 3, step: 1, label: 'glazes over dry paint', group: WC },
       variegation: { value: 0.6, min: 0, max: 1, step: 0.05, label: 'variegated drops (wet-in-wet)', group: WC },
-      lifting: { value: 0.6, min: 0, max: 1, step: 0.05, label: 'lifted lights (sun, mist, glints)', group: WC },
-      horizonBand: { value: 0.8, min: 0, max: 1.2, step: 0.05, label: 'lifted horizon band', group: WC },
+      lifting: { value: 0.4, min: 0, max: 1, step: 0.05, label: 'lifted lights (sun, mist, glints)', group: WC },
+      horizonBand: { value: 0.4, min: 0, max: 1.2, step: 0.05, label: 'lifted horizon band', group: WC },
 
-      pencil: { value: 0.45, min: 0, max: 1, step: 0.05, label: 'graphite underdrawing', group: WT },
+      pencil: { value: 0.2, min: 0, max: 1, step: 0.05, label: 'graphite underdrawing', group: WT },
       dryBrush: { value: 0.6, min: 0, max: 1, step: 0.05, label: 'dry brush', group: WT },
       planes: { value: 0.7, min: 0, max: 1.2, step: 0.05, label: 'flat-brush planes on the mountains', group: WT },
       sponge: { value: 0.6, min: 0, max: 1, step: 0.05, label: 'sponge texture (foliage)', group: WT },
       rigger: { value: 0.7, min: 0, max: 1.5, step: 0.05, label: 'rigger: grass, twigs', group: WT },
       massing: { value: 0.5, min: 0, max: 1, step: 0.05, label: 'massing in the darkest foreground', group: WT },
-      penInk: { value: 0.3, min: 0, max: 1, step: 0.05, label: 'pen and wash (hatching)', group: WT },
-      spatter: { value: 0.5, min: 0, max: 1, step: 0.05, label: 'spatter', group: WT },
-      salt: { value: 0.3, min: 0, max: 1, step: 0.05, label: 'salt texture', group: WT },
+      penInk: { value: 0, min: 0, max: 1, step: 0.05, label: 'pen and wash (hatching)', group: WT },
+      spatter: { value: 0.25, min: 0, max: 1, step: 0.05, label: 'spatter', group: WT },
+      salt: { value: 0.1, min: 0, max: 1, step: 0.05, label: 'salt texture', group: WT },
       gouache: { value: 0.6, min: 0, max: 1, step: 0.05, label: 'white gouache (snow, stars, sparkle)', group: WT },
       wobble: { value: 2, min: 0, max: 6, step: 0.5, label: 'hand wobble of the lines', group: WT },
       cloudShadows: { value: 0.7, min: 0, max: 1.2, step: 0.05, label: 'cloud shadows on the land', group: WT },
@@ -1708,6 +1720,8 @@ function matColour(s) {
 function buildTasks(s) {
   // the settings are frozen here: some passes decide what to queue from them
   WP = wcParams();
+  // the summer day's light is high and cool: none of the warm low-sun terms
+  if (s.C.summer) s.warmth = 0.12;
   // solid lines are mixed toward the paper by day; at night that would make them glow
   WP.lineLift = s.night ? 0 : 1;
   const T = [];
@@ -1734,7 +1748,8 @@ function buildTasks(s) {
   stage('clouds');
   for (const c of s.clouds) T.push(() => wcCloud(s, c));
   T.push(() => wcCirrus(s));
-  T.push(() => wcSunMoon(s));
+  if (s.C.summer) T.push(() => wcSkyAccents(s));
+  if (!s.C.summer) T.push(() => wcSunMoon(s));
   stage('mountains');
   s.ranges.forEach((L) => {
     T.push(() => wcRangeBody(s, L));
@@ -1827,6 +1842,44 @@ function skyBandColour(s, y) {
   }
   return c.map((v) => v / w);
 }
+// By day the sky is laid wet in level bands (as at any time), and the clouds are then taken
+// back to the paper — lifted with a damp sponge and tissue, scraped at their brightest —
+// with a hard top and a softer halo (wcCloud); only their undersides are painted. Over the
+// dried blue a few level strokes of deeper colour give the sky its banding.
+function stripPoly(x0, y0, x1, h, ph) {
+  const top = [], bot = [];
+  const n = Math.max(3, Math.round((x1 - x0) / 24));
+  for (let k = 0; k <= n; k++) {
+    const t = k / n;
+    // the stroke is set down and lifted off: thin at both ends, the lift-off longer
+    const taper = Math.min(1, t / 0.12, (1 - t) / 0.3);
+    const hh = h * (0.25 + 0.75 * Math.max(0, taper));
+    const x = x0 + (x1 - x0) * t;
+    const yc = y0 + h / 2 + (noise(ph + t * 2.3, 9.1) - 0.5) * h * 0.4;
+    top.push([x, yc - hh / 2 + (noise(ph + k * 0.31, 1.1) - 0.5) * h * 0.3]);
+    bot.push([x, yc + hh / 2 + (noise(ph + k * 0.31, 5.3) - 0.5) * h * 0.35]);
+  }
+  return top.concat(bot.reverse());
+}
+function wcSkyAccents(s) {
+  const n = 8;
+  for (let i = 0, tries = 0; i < n && tries < 200; tries++) {
+    const y = random(-10, s.HY * 0.75);
+    const x = random(-40, REF_W + 40);
+    if (inCloud(s, x, y)) continue;
+    // run left and right until a cloud (or a length) stops the brush
+    let a = x, b = x;
+    const maxL = random(90, 320);
+    while (a > -60 && x - a < maxL * 0.4 && !inCloud(s, a - 8, y)) a -= 8;
+    while (b < REF_W + 60 && b - a < maxL && !inCloud(s, b + 8, y)) b += 8;
+    if (b - a < 60) continue;
+    i++;
+    const h = random(16, 36);
+    const col = mixRGB(s.sky(x, y), s.C.zenith, random(0.15, 0.4));
+    if (i < 4) wfill(stripPoly(a + 6, y - h / 2, b - 6, h, x * 0.01), col, 120, { bleed: 0.06, dir: 'in', ang: 0, tex: 0.2, border: 0.6, scatter: false });
+    else wwash(stripPoly(a + 6, y - h / 2, b - 6, h, x * 0.01), col, 45 * WP.load);
+  }
+}
 function wcSkyTasks(s) {
   const C = s.C;
   const T = [];
@@ -1837,7 +1890,7 @@ function wcSkyTasks(s) {
       const h = (H + 60) / nb;
       const y0 = -60 + b * h - (b ? h * 0.45 : 0), y1 = -60 + (b + 1) * h + h * 0.3;
       const col = skyBandColour(s, (y0 + y1) / 2);
-      wfill(rrect(-90, y0, REF_W + 90, y1, 0.08, b * 3.7 + 1), col, s.night ? 175 : s.winter ? 150 : 135, {
+      wfill(rrect(-90, y0, REF_W + 90, y1, 0.08, b * 3.7 + 1), col, s.night ? 175 : s.winter ? 150 : C.summer ? 230 : 135, {
         bleed: 0.45, dir: 'out', ang: 0, tex: 0.06 + 0.2 * WP.gran, border: 0.05, scatter: false,
       });
     });
@@ -1882,10 +1935,52 @@ function wcCloud(s, c) {
   const lit = mixRGB(mixRGB(C.cloudLit, C.glow, near * 0.5), PAPER, 0.35);
   const base = c.cy + c.h * 0.14;
   const flat = (P, b) => P.map(([x, y]) => [x, Math.min(b, y)]);
-  wfill(flat(unionPoly(c.lobes, 40, 0.18), base), mixRGB(sky, lit, 0.5), 70, { bleed: 0.45, tex: 0.1, border: 0.06, scatter: false });
+  // on a summer day the clouds are the paper (lifted out of the sky's wash); under a low
+  // sun, a storm light or the moon they keep their painted, coloured bodies
+  const reserved = !!s.C.summer;
+  if (!reserved) wfill(flat(unionPoly(c.lobes, 40, 0.18), base), mixRGB(sky, lit, 0.5), 70, { bleed: 0.45, tex: 0.1, border: 0.06, scatter: false });
+  else {
+    // taken back to the paper lobe by lobe (scraped clean); the lobes overlap, so the outline
+    // is their union
+    for (const lb of c.lobes) wwash(flat(blobPoly(lb.x, lb.y, lb.rx, lb.ry, lb.ph, 48, 0.24), base), PAPER, 250);
+    if (s.warmth > 0.3) for (const lb of c.lobes) wwash(flat(blobPoly(lb.x, lb.y, lb.rx, lb.ry, lb.ph, 48, 0.24), base), mixRGB(PAPER, lit, 0.6), 25 * s.warmth);
+  }
   const sh = c.lobes.map((lb) => ({ x: lb.x - Lx * lb.rx * 0.22, y: lb.y + lb.ry * 0.32, rx: lb.rx * 0.8, ry: lb.ry * 0.62 }));
-  wfill(flat(unionPoly(sh, 40, 0.25), base + 2), body, 120 * thick * (1 - 0.45 * air), { bleed: 0.24, dir: 'in', tex: 0.15 + 0.3 * WP.gran, border: 0.3 + 0.4 * WP.back });
-  if (!s.winter && near > 0.12 && WP.lift > 0) {
+  if (reserved) {
+    // the shade is the cloud's belly: a flat-bottomed band of grey along its base, its top
+    // pushed up into the cloud in soft bumps, laid wet so it melts upward; found where the
+    // cloud stands just above its base
+    const hb = c.h * random(0.28, 0.42);
+    const runs = [];
+    let run = null;
+    for (let x = c.cx - c.w; x <= c.cx + c.w; x += 6) {
+      if (inCloud(s, x, base - 3)) {
+        if (run) run[1] = x;
+        else run = [x, x];
+      } else if (run) {
+        runs.push(run);
+        run = null;
+      }
+    }
+    if (run) runs.push(run);
+    runs.forEach(([a, b], i) => {
+      if (b - a < 10) return;
+      const top = [], bot = [];
+      for (let x = a; x <= b; x += 8) {
+        const t = (x - a) / Math.max(1, b - a);
+        const k = Math.min(1, t / 0.15, (1 - t) / 0.15);
+        top.push([x, base - hb * (0.35 + 0.65 * noise(x * 0.02, c.cy * 0.01)) * (0.3 + 0.7 * k) + Lx * (x - c.cx) * 0.02]);
+        bot.push([x, base + 1]);
+      }
+      const poly = top.concat(bot.reverse());
+      const op = 190 * thick * (1 - 0.45 * air);
+      if (i < 2) wfill(poly, body, op, { bleed: 0.22, dir: 'in', ang: -Math.PI / 2, tex: 0.15 + 0.3 * WP.gran, border: 0.25 + 0.4 * WP.back });
+      else wwash(poly, body, op * 0.5);
+      // the darkest grey along the very base
+      wwash(stripPoly(a + 4, base - hb * 0.3, b - 4, hb * 0.3, a * 0.01), mixRGB(body, s.C.shadow, 0.25), 70 * thick * (1 - 0.5 * air));
+    });
+  } else wfill(flat(unionPoly(sh, 40, 0.25), base + 2), body, 120 * thick * (1 - 0.45 * air), { bleed: 0.24, dir: 'in', tex: 0.15 + 0.3 * WP.gran, border: 0.3 + 0.4 * WP.back });
+  if (!reserved && near > 0.12 && WP.lift > 0) {
     const tops = c.lobes.map((lb) => ({ x: lb.x + Lx * lb.rx * 0.3, y: lb.y - lb.ry * 0.38 + Ly * lb.ry * 0.2, rx: lb.rx * 0.6, ry: lb.ry * 0.4 }));
     wlift(flat(unionPoly(tops, 32, 0.2), base), 0.75 * near * WP.lift, { bleed: 0.12 });
   }
@@ -2205,7 +2300,7 @@ function wcGroundTasks(s) {
       const ym = (y0 + y1) / 2;
       const z = s.F / Math.max(1, ym - s.HY);
       const col = s.seen(mixRGB(C.groundFar, C.groundNear, b / (nb - 1)), z, s.CX, ym);
-      for (const poly of bandOutsideLake(lake, Math.max(yT, y0), y1, 0.03, b * 3.3)) wfill(poly, col, 105, { bleed: 0.3, dir: 'out', ang: 0, tex: 0.12 + 0.35 * WP.gran, border: 0.18 });
+      for (const poly of bandOutsideLake(lake, Math.max(yT, y0), y1, 0.03, b * 3.3)) wfill(poly, col, 105, { bleed: 0.3, dir: 'out', ang: 0, tex: 0.12 + 0.35 * WP.gran, border: C.summer ? 0.05 : 0.18 });
     }
   });
   // the far woods along the foot of the mountains: one dark band, wet, its top broken into
@@ -2256,6 +2351,10 @@ function wcGroundTasks(s) {
       wfill(poly, s.seen(mixRGB(C.shadow, C.groundNear, 0.4), z, s.gx(sp.wx, z), s.gy(z)), 55 * WP.cloudShadows * sp.k * (1 - 0.6 * s.aerial(z)), { bleed: 0.3, dir: 'out', tex: 0.1, border: 0.12 });
     }
   });
+  // the near vegetation, wet into wet: patches of greens dropped side by side, a warm rust
+  // or ochre here and there, the darks dropped into them while wet, then touches of the
+  // brush for the growth itself
+  if (!s.winter) T.push(() => wcVegetation(s, yT));
   // texture: level dry-brush streaks across the middle distance; rigger flicks of grass in
   // front, drawn through the wind field
   T.push(() => {
@@ -2300,24 +2399,127 @@ function wcGroundTasks(s) {
   }
   return T;
 }
+const RUST = [150, 70, 40];
+const OCHRE = [176, 138, 62];
+function wcVegetation(s, yT) {
+  vegWet = 0;
+  const C = s.C;
+  const rp = s.repoussoir;
+  const y0 = yT + (REF_H - yT) * 0.3;
+  // a few wet drops of colour (fills)
+  for (let i = 0; i < 10; i++) {
+    const x = random(-40, REF_W + 40);
+    const y = y0 + (REF_H - y0) * random(0.3, 1);
+    if (onWater(s, x, y)) continue;
+    const z = s.F / Math.max(1, y - s.HY);
+    const col = s.seen(i % 5 === 0 ? mixRGB(RUST, C.foliage, 0.45) : i % 5 === 1 ? mixRGB(OCHRE, C.foliageLit, 0.45) : mixRGB(C.foliage, C.silhouette, 0.1 * (i % 3)), z, x, y);
+    const rx = random(90, 220) / Math.sqrt(z), ry = rx * random(0.2, 0.35);
+    wfill(blobPoly(x, y, rx, ry, random(100), 16, 0.6), col, 170 * WP.vari + 40, { bleed: 0.35, dir: 'out', tex: 0.3, border: 0.4 });
+  }
+  // the growth built up in masses: many overlapping upright strokes of a darker green laid
+  // over the light first wash, closest together at the foot of a mass, the light first wash
+  // left showing between the masses and at their tops; a little rust or ochre in some
+  for (let i = 0; i < 60; i++) {
+    const y = y0 + (REF_H + 20 - y0) * Math.pow(random(), 0.45);
+    const x = random(-40, REF_W + 40);
+    if (onWater(s, x, y) || (rp.bank.length && y > bankAt(rp, x) + 30)) continue;
+    const z = s.F / Math.max(1, y - s.HY);
+    const near = clamp01(1.4 / z);
+    if (near < 0.25) continue;
+    const r = random();
+    const fam = r < 0.75 ? mixRGB(C.foliage, C.foliageLit, random(0, 0.45)) : r < 0.88 ? mixRGB(RUST, C.foliage, 0.5) : mixRGB(OCHRE, C.foliage, 0.45);
+    vegMass(s, x, y, (60 + 200 * near) * random(0.6, 1.3), fam, near, z);
+  }
+}
+// one mass of growth: a body of darker green laid in one stroke, its top broken into
+// upright tips, then upright strokes over its top edge and beyond it, densest at its foot
+let vegWet = 0;
+function vegMass(s, x, y, W, fam, near, z) {
+  const H = W * random(0.2, 0.36);
+  const nr = Math.min(1, near);
+  const top = [], bot = [];
+  const n = Math.max(6, Math.round(W / 7));
+  for (let k = 0; k <= n; k++) {
+    const t = k / n;
+    const env = Math.sin(Math.PI * t);
+    const px = x - W / 2 + W * t;
+    top.push([px, y - H * env * (0.45 + 0.55 * random()) - (k % 2 ? random(0, H * 0.25) : 0)]);
+    // the foot is ragged and nearly level: grass, not a mound
+    bot.push([px, y + H * (0.04 + 0.1 * random()) * Math.sqrt(env)]);
+  }
+  const body = top.concat(bot.reverse());
+  const col0 = s.seen(shadeRGB(fam, 0.85), z, x, y);
+  if (W > 120 && vegWet < 12) {
+    vegWet++;
+    wfill(body, col0, 200, { bleed: 0.12, dir: 'in', ang: -Math.PI / 2, tex: 0.3, border: 0.45 });
+  } else wwash(body, col0, 150);
+  const m = Math.round(14 + 22 * nr);
+  for (let j = 0; j < m; j++) {
+    const u = random(-0.5, 0.5);
+    const px = x + u * W;
+    const env = 1 - 4 * u * u;
+    const foot = y - H * env * random(0.1, 0.6);
+    const len = H * random(0.4, 1) * (0.4 + 0.6 * env);
+    const a = -Math.PI / 2 + random(-0.4, 0.4) + u * 0.5;
+    const col = s.seen(shadeRGB(fam, random(0.65, 1.1)), z, px, foot);
+    wwash(markPoly(markLine(px, foot, px + Math.cos(a) * len, foot + Math.sin(a) * len, 0.25, 5), Math.max(0.8, W * random(0.012, 0.03)), px * 0.03 + j, 0.4), col, 130 + 50 * nr);
+  }
+}
 function wcTreeLine(s) {
   const C = s.C;
   const yT = groundTop(s);
   const z = s.zGround * 0.9;
-  const col = s.seen(mixRGB(mixRGB(C.foliage, C.silhouette, 0.35), PRUSSIAN, 0.1), z, s.CX, yT);
+  const col = s.seen(mixRGB(mixRGB(C.foliage, C.silhouette, 0.45), PRUSSIAN, 0.12), z, s.CX, yT);
+  // the far woods are spruce and fir: a dark band whose top is a row of spires, now and then
+  // one standing far above the rest (laid in one wet stroke, the spires pulled up from it)
   const top = [];
-  for (let x = -40; x <= REF_W + 40; x += 12) {
-    const h = 3 + 9 * Math.pow(noise(x * 0.01, 8.8), 2) * (s.winter ? 0.5 : 1);
-    top.push([x, yT - h - 3 * noise(x * 0.08, 2.2)]);
+  const tall = [];
+  let x = -50;
+  while (x < REF_W + 50) {
+    const w = random(4, 10);
+    const base = 4 + 9 * noise(x * 0.008, 8.8);
+    let hs = base + random(5, 16) * (s.winter ? 0.6 : 1);
+    if (random() < 0.07) {
+      hs += random(18, 40);
+      tall.push([x, hs, w]);
+    }
+    top.push([x - w, yT - base], [x - w * 0.25, yT - hs * 0.75], [x, yT - hs], [x + w * 0.3, yT - hs * 0.7], [x + w, yT - base]);
+    x += w * random(1.4, 2.6);
   }
-  const poly = top.concat([[REF_W + 40, yT + 4], [-40, yT + 4]]);
-  wfill(poly, col, 210, { bleed: 0.1, dir: 'out', ang: Math.PI / 2, tex: 0.2 + 0.3 * WP.gran, border: 0.4 });
-  // crowns standing proud of the band, single touches of the brush
-  for (let i = 0; i < 40; i++) {
-    const x = random(-20, REF_W + 20);
-    const r = random(3, 8);
-    wwash(blobPoly(x, yT - r * 0.6 - 4 * noise(x * 0.01, 8.8), r, r * 0.7, random(50), 10, 0.5), mixRGB(col, C.silhouette, random(0, 0.25)), 150);
+  const poly = top.concat([[REF_W + 50, yT + 4], [-50, yT + 4]]);
+  wfill(poly, col, 240, { bleed: 0.05, dir: 'in', ang: Math.PI / 2, tex: 0.2 + 0.3 * WP.gran, border: 0.45 });
+  // the tall spires restated darker: a shaft and short tiers of branches
+  for (const [tx, hs, w] of tall) {
+    wline('rigger', mixRGB(col, C.silhouette, 0.3), 0.3, tx, yT - 2, tx, yT - hs - 2);
+    for (let k = 0; k < 6; k++) {
+      const ty = yT - hs * (0.3 + 0.7 * (k / 6)) - 1;
+      const tw = w * (1.8 - 1.2 * (k / 6)) * random(0.6, 1.2);
+      wwash(markPoly(markLine(tx - tw, ty + 1, tx + tw, ty + random(-1, 2), 0.15, 4), random(1.4, 2.6), tx + k), mixRGB(col, C.silhouette, 0.2), 210);
+    }
   }
+}
+// A pine on the plain, the way a watercolourist writes it: a thin trunk, then tiers of
+// branches as horizontal touches of a loaded brush, drooping a little, longer below, with
+// the sky showing between them; the lit tops of the tiers a lighter green dropped in wet.
+function wcPine(s, tr, x, y, w, h, dark, lit) {
+  wline('rigger', mixRGB(dark, s.C.silhouette, 0.3), Math.min(1.2, 0.2 + w * 0.03), x, y + 1, x + random(-0.5, 0.5), y - h);
+  const n = Math.max(4, Math.min(10, Math.round(h / 14)));
+  const lx = Math.sign(s.sunX - x) || s.sunSide;
+  for (let k = 0; k < n; k++) {
+    if (k > 0 && random() < 0.18) continue; // a gap: sky through the tree
+    const t = k / (n - 1);
+    const ty = y - h * (0.18 + 0.8 * t);
+    const reach = w * (1.15 - 0.85 * t) * random(0.6, 1.35);
+    const thick = Math.max(0.8, h * 0.035 * (1.2 - 0.6 * t)) * random(0.8, 1.3);
+    for (const side of [-1, 1]) {
+      if (random() < 0.2) continue;
+      const len = reach * random(0.5, 1.1);
+      const P = markLine(x, ty, x + side * len, ty + len * random(0.05, 0.25), 0.2, 5);
+      wwash(markPoly(P, thick, x * 0.1 + k + side, 0.6), dark, 215);
+      if (side === lx && random() < 0.7) wwash(markPoly(P.slice(1).map(([px, py]) => [px, py - thick * 0.5]), thick * 0.5, x * 0.1 + k + 5, 0.6), lit, 150);
+    }
+  }
+  wwash(markPoly(markLine(x, y - h * 1.02, x, y - h * 0.85, 0.1, 3), Math.max(0.6, w * 0.08), x), dark, 200);
 }
 // Late snow: snow lying in the furrows of a ploughed field, converging on one point on the
 // horizon — white gouache over the brown wash, ragged and broken, a cold edge here and
@@ -2376,6 +2578,7 @@ function wcWater(s) {
   const lake = s.scene === 1;
   const ys = s.gy(r.zN);
   const cl = (x) => Math.max(-220, Math.min(REF_W + 220, x));
+  const day = !s.night && !s.winter;
   const seg = Math.max(10, Math.ceil(sm.length / 6));
   for (let i = 0; i < sm.length - 1; i += seg) {
     const part = sm.slice(i, Math.min(sm.length, i + seg + 1));
@@ -2385,7 +2588,12 @@ function wcWater(s) {
     const ym = Math.max(2, Math.min(s.HY, lake ? 2 * ys - y : 2 * s.HY - y));
     // water reads bluer than the sky it mirrors (the zenith's colour comes back off it)
     const col = mixRGB(mixRGB(s.sky(x, ym), C.zenith, lake ? 0.4 : 0.2), C.water, 0.4);
-    wfill(poly, col, 210, { bleed: 0.16, dir: 'out', ang: 0, tex: 0.08, border: 0.45 });
+    if (day) {
+      // by day the river's light is the paper: the land's washes are taken back off it
+      // (standing in for painting round it), and it is only tinted before the strokes
+      if (!lake) wwash(poly, PAPER, 245);
+      wfill(poly, mixRGB(col, PAPER, 0.35), 90, { bleed: 0.12, dir: 'out', ang: 0, tex: 0.05, border: 0.3 });
+    } else wfill(poly, col, 210, { bleed: 0.16, dir: 'out', ang: 0, tex: 0.08, border: 0.45 });
   }
   if (lake) {
     // the ranges mirrored, nearest last: each a glaze the shape of the range hanging upside
@@ -2430,6 +2638,57 @@ function wcWater(s) {
     if (h < 4 || !onWater(s, x, y + 3)) continue;
     const col = shadeRGB(s.seenTree(mixRGB(C.foliage, C.silhouette, 0.3), tr.z, x, y), 0.9);
     wwash(markPoly(markLine(x, y + 1, x + random(-1, 1), y + h * 0.85, 0.03), Math.min(6, 0.6 + w * 0.3), tr.ph), col, 110);
+  }
+  wcWaterStrips(s);
+}
+// By day the water is written in horizontal strokes: the sky's blue (deeper than the sky
+// itself) broken by streaks of untouched paper, and at each bank the dark of the vegetation
+// mirrored, pulled out across the water in level strokes that break up as they go.
+function wcWaterStrips(s) {
+  const r = s.river;
+  if (!r || s.night || s.winter) return;
+  const C = s.C;
+  const ys = s.gy(r.zN);
+  const lake = s.scene === 1;
+  let y = ys + 1;
+  while (y < REF_H + 4) {
+    const z = s.F / Math.max(1, y - s.HY);
+    const h = Math.max(1, Math.min(9, (s.F / z) * 0.022)) * random(0.7, 1.3);
+    // the runs of water along this row
+    const runs = [];
+    let run = null;
+    for (let x = -40; x <= REF_W + 40; x += 3) {
+      if (onWater(s, x, y + h / 2)) {
+        if (run) run[1] = x;
+        else run = [x, x];
+      } else if (run) {
+        runs.push(run);
+        run = null;
+      }
+    }
+    if (run) runs.push(run);
+    const ym = Math.max(2, Math.min(s.HY, lake ? 2 * ys - y : 2 * s.HY - y));
+    for (const [a, b] of runs) {
+      const wdt = b - a;
+      if (wdt < 2) continue;
+      const blue = mixRGB(mixRGB(s.sky(s.CX, ym), C.zenith, 0.45), C.water, 0.3);
+      // the banks' reflections: dark, from each edge inward
+      const refl = s.seen(mixRGB(C.foliage, C.silhouette, 0.35), z, a, y);
+      for (const side of [-1, 1]) {
+        if (random() < 0.25) continue;
+        const len = wdt * random(0.08, 0.4);
+        const x0 = side < 0 ? a - 1 : b + 1 - len;
+        wwash(stripPoly(x0, y, x0 + len, h, a * 0.05 + y), refl, 200);
+      }
+      // the sky in it, broken
+      let x = a;
+      while (x < b) {
+        const x1 = Math.min(b, x + random(0.15, 0.6) * Math.max(30, wdt));
+        if (random() < 0.62) wwash(stripPoly(x, y, x1, h * random(0.6, 1), x * 0.04 + y * 0.1), blue, 150);
+        x = x1 + random(2, 20);
+      }
+    }
+    y += h * random(1.1, 1.8);
   }
 }
 // lights on the water: dry-brush skips leaving paper in the light's column, wind lines
@@ -2481,6 +2740,12 @@ function wcMidTree(s, tr) {
     wwash(blobPoly(x - lx * len * 0.45, y + 0.6, len * 0.5, Math.max(1, w * 0.1), tr.ph, 12, 0.25), s.seen(mixRGB(C.shadow, C.groundNear, 0.45), tr.z, x, y), 60 * (1 - air));
   }
   if (w > 3) wline('rigger', s.seenTree(C.silhouette, tr.z, x, y), Math.min(1.5, 0.25 + w * 0.04), x, y + 1, x + random(-0.5, 0.5), cy + h * 0.2);
+  // the tall trees are pines; on a summer day a third of the others too
+  const pine = tr.tall || (s.C.summer && Math.abs(Math.sin(tr.ph * 12.9898)) < 0.35);
+  if (pine && !s.winter && h * (tr.tall ? 1 : 1.7) > 12) {
+    wcPine(s, tr, x, y, w * (tr.tall ? 1.2 : 0.75), h * (tr.tall ? 1 : 1.7), mixRGB(dark, s.C.silhouette, 0.15), lit);
+    return;
+  }
   const poly = tr.tall ? blobPoly(x, cy, w * 0.5, h * 0.5, tr.ph, 16, 0.3) : blobPoly(x, cy, w * 0.56, h * 0.48, tr.ph, 18, 0.36);
   // the nearer crowns are wet blots that dry with a hard rim; the far ones single glazes
   if (w > 12) wfill(poly, crown, 150 + 60 * (1 - air), { bleed: 0.18, dir: 'out', tex: 0.25 + 0.3 * WP.gran, border: 0.1 + 0.55 * (1 - air) });
@@ -2565,6 +2830,18 @@ function wcBankDetail(s) {
   const base = bankBase(s);
   const dark = s.winter ? [92, 76, 58] : mixRGB(C.silhouette, C.foliage, 0.35);
   const lit = s.winter ? [186, 164, 124] : mixRGB(C.foliageLit, C.light, 0.25 * s.warmth);
+  // the bank's growth: masses of overlapping upright strokes along its lip and below,
+  // dark greens with a little rust, the bank's first wash showing between them
+  if (!s.winter) {
+    for (let i = 0; i < 16; i++) {
+      const x = left + (right - left) * ((i + random(0.1, 0.9)) / 16);
+      const y = bankAt(rp, x) + random(4, 120);
+      if (y > REF_H + 8) continue;
+      const near = 1 + (y - bankAt(rp, x)) / 160;
+      const fam = random() < 0.85 ? mixRGB(dark, base, random(0.2, 0.6)) : mixRGB(RUST, dark, 0.45);
+      vegMass(s, x, y, random(70, 160) * near, fam, near, 0.8);
+    }
+  }
   if (WP.rigger > 0) {
     brush.field('wind');
     // a new gust for the bank (the field recomputed at a later time)
@@ -2586,7 +2863,7 @@ function wcBankDetail(s) {
   }
   if (!s.winter) {
     const leafC = mixRGB(mixRGB(C.foliage, C.foliageLit, 0.25), C.silhouette, 0.2);
-    for (let c = 0; c < 7; c++) {
+    for (let c = 0; c < 4; c++) {
       const x = random(left + 30, right - 30);
       const y = bankAt(rp, x) + random(50, Math.max(60, REF_H - bankAt(rp, x)));
       const near = Math.min(2, 1 + (y - bankAt(rp, x)) / 120);
@@ -2682,23 +2959,33 @@ function wcFramingTasks(s) {
   }
   if (!rp.leaves.length || s.winter) return T; // late snow: bare trees
   const clusters = canopyClusters(rp.leaves);
-  const lit = mixRGB(mixRGB(C.foliageLit, C.light, 0.3 * s.warmth), C.foliage, 0.25);
-  const midC = mixRGB(C.foliage, C.foliageLit, 0.4);
-  const darkC = mixRGB(mixRGB(C.foliage, C.silhouette, 0.3), PRUSSIAN, 0.08);
+  const lit = mixRGB(mixRGB(C.foliageLit, C.light, 0.3 * s.warmth), C.foliage, 0.35);
+  const midC = mixRGB(C.foliage, C.foliageLit, 0.3);
+  const darkC = mixRGB(mixRGB(C.foliage, C.silhouette, s.C.summer ? 0.45 : 0.3), PRUSSIAN, 0.08);
   // the biggest masses get a wet wash; the rest are glazed
   const wetSet = new Set(clusters.slice().sort((a, b) => b.r - a.r).slice(0, 10));
   for (const c of clusters) {
     T.push(() => {
       const dxs = s.sunX - c.x, dys = s.sunY - c.y, dl = Math.hypot(dxs, dys) || 1;
       const Lx = dxs / dl, Ly = dys / dl;
-      const outline = blobPoly(c.x, c.y, c.r, c.r * 0.78, c.ph, 26, 0.7);
-      if (wetSet.has(c)) wfill(outline, lit, 150, { bleed: 0.34, dir: 'out', tex: 0.3, border: 0.3 });
-      else wwash(outline, lit, 110);
-      // the clumps: mid green on the shadow side of each, never centred, broken outlines
-      for (const lf of c.members) wwash(blobPoly(lf.x - Lx * lf.r * 0.2, lf.y - Ly * lf.r * 0.2, lf.r * 1.05, lf.r * 0.8, lf.ph, 16, 0.8), midC, 80);
+      // one light wash under the biggest masses only, so the sky still shows through the rest
+      const outline = blobPoly(c.x, c.y, c.r * 0.85, c.r * 0.6, c.ph, 26, 0.8);
+      if (wetSet.has(c)) wfill(outline, lit, 140, { bleed: 0.3, dir: 'out', tex: 0.3, border: 0.35 });
+      else wwash(outline, mixRGB(lit, midC, 0.4), 90);
+      // the clumps written as touches of a loaded brush, laid level and drooping a little at
+      // the tips (a tier of foliage), light on the sunward top, dark beneath and away
       for (const lf of c.members) {
-        if (random() > 0.6) continue;
-        wwash(blobPoly(lf.x - Lx * lf.r * 0.45, lf.y - Ly * lf.r * 0.45 + lf.r * 0.2, lf.r * 0.6, lf.r * 0.4, lf.ph + 7, 14, 0.9), darkC, 100);
+        const k = 2 + Math.round(lf.r / 12);
+        for (let i = 0; i < k; i++) {
+          const ox = lf.x + random(-0.7, 0.7) * lf.r, oy = lf.y + random(-0.45, 0.45) * lf.r;
+          const up = (oy - lf.y) / lf.r; // -1 top … 1 bottom
+          const toward = ((ox - lf.x) * Lx + (oy - lf.y) * Ly) / lf.r;
+          const col = toward > 0.25 && up < 0.2 ? lit : up > 0.25 || toward < -0.3 ? darkC : midC;
+          const len = lf.r * random(1.2, 2.4);
+          const dir = random() < 0.5 ? -1 : 1;
+          const P = markLine(ox - (dir * len) / 2, oy, ox + (dir * len) / 2, oy + len * random(0.05, 0.22), 0.25, 5);
+          wwash(markPoly(P, lf.r * random(0.35, 0.6), ox * 0.07 + oy * 0.03, 0.9), shadeRGB(col, random(0.88, 1.12)), col === darkC ? 150 : 105);
+        }
       }
       if (WP.sponge > 0) {
         const k = Math.round((3 + c.r / 10) * WP.sponge);
