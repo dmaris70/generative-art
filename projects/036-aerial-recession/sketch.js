@@ -1,4 +1,4 @@
-// 036 — Aerial Recession
+// 036 — Oil Landscape v1 (formerly Aerial Recession)
 //
 // A landscape built the way the masters built depth, with every rule computed rather
 // than painted by eye:
@@ -113,7 +113,7 @@ function setup() {
   const MO = 'Mountains';
   const NI = 'Night';
   G = GenArt.create({
-    title: 'Aerial Recession',
+    title: 'Oil Landscape v1',
     applyOnDemand: true, // a full repaint is heavy: settings repaint only on "Apply changes"
     closedGroups: [BR, DI, IM, CO, MT, TR, MO, NI],
     params: {
@@ -1119,7 +1119,7 @@ function buildControls() {
       const blob = new Blob([JSON.stringify({ piece: '036-aerial-recession', seed: G.seed, params: G.params }, null, 2)], { type: 'application/json' });
       const a = document.createElement('a');
       a.href = URL.createObjectURL(blob);
-      a.download = 'aerial-recession-' + G.seed + '.json';
+      a.download = 'oil-landscape-v1-' + G.seed + '.json';
       a.click();
       setTimeout(() => URL.revokeObjectURL(a.href), 1000);
     },
@@ -1154,7 +1154,7 @@ function buildControls() {
       const r = (a, b) => a + Math.random() * (b - a);
       const step = (v, d) => (d.step ? Number((d.min + Math.round((v - d.min) / d.step) * d.step).toFixed(6)) : v);
       const guard = {
-        medium: () => (Math.random() < 0.8 ? 1 : 0), // mostly oil, now and then watercolour
+        medium: () => 1, // this is the oil project (the watercolour sister is 037)
         paintSeed: () => 1 + Math.floor(Math.random() * 999999),
         strokeSize: (d) => step(r(9, d.max), d),
         coverage: (d) => step(r(0.6, 1.6), d),
@@ -6726,7 +6726,7 @@ function keyPressed() {
   if (key === 'r' || key === 'R') G.randomize();
   if ((key === 'p' || key === 'P') && window.AR_ACTIONS) window.AR_ACTIONS.paintRandom();
   if ((key === 'x' || key === 'X') && window.AR_ACTIONS) window.AR_ACTIONS.shuffleAll();
-  if (key === 's' || key === 'S') saveCanvas('aerial-recession-' + G.seed, 'png');
+  if (key === 's' || key === 'S') saveCanvas('oil-landscape-v1-' + G.seed, 'png');
 }
 
 function windowResized() {
