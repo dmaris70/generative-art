@@ -907,6 +907,17 @@ with dark blue calligraphy for its shadows. With *canopy brush* on *snow-study s
 *Leaf marks (before)* restores the previous crown. *Canopy detail* still sets the leaf
 marks' size in that mode.
 
+**Midground trees.** The same setting paints the midground crowns the same way, at each
+tree's scale:
+- each clump is 2–16 broad, overlapping, soft strokes (0.5–0.9 × the clump's radius),
+  laid dark to light with the values pushed apart;
+- one sweep per tree (upright for a poplar);
+- a short blue-black stroke under a round crown at least 8 px wide;
+- no edge leaves and no crown hatching; the rose flecks drop to a quarter.
+
+Near and middle distance now share one brush language instead of a broad framing tree
+over a speckled plain.
+
 ## How each technique is implemented
 
 | technique | where | rule |
