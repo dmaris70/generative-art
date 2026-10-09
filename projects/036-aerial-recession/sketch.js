@@ -4645,46 +4645,98 @@ function oilSnow(s, O, out) {
   }
 }
 
-// Snow lying in the furrows of a ploughed field (late snow): long broken white stripes
-// running into the field toward one vanishing point on the horizon, widening toward us,
-// over the warm brown earth — the study's foreground.
+// Snow lying in the furrows of a ploughed field (late snow), as the study paints it: not
+// ruled lines but furrows of different lengths at uneven spacing, bending a little as they
+// run toward the horizon, their snow swelling into broad drifts and breaking off in long
+// gaps; loaded white with blue-white and grey in it, ragged where the brush runs dry; dark
+// and red-orange plough streaks in the brown between them; loose snow patches in front.
 function oilFurrows(s, O, out) {
   const FS = G.param('furrowSnow');
   if (!s.winter || FS <= 0) return;
   const vx = s.focalX + (noise(G.seed % 997, 3.3) - 0.5) * REF_W * 0.3;
-  const y0 = s.gy(s.zGround * 0.8);
+  const yTop = s.gy(s.zGround * 0.8);
+  const tTop = (yTop - s.HY) / (REF_H - s.HY);
   const snow = mixRGB([238, 240, 244], s.C.light, 0.3);
   const cold = mixRGB(s.C.shadow, [120, 132, 168], 0.5);
-  const n = Math.round(14 * FS);
-  for (let k = 0; k < n; k++) {
-    const xb = -REF_W * 0.4 + (REF_W * 1.8 * (k + random(0.15, 0.85))) / n; // where it meets the bottom edge
-    const ph = random(100);
-    const a = Math.atan2(REF_H - s.HY, xb - vx);
-    const sinA = Math.abs(Math.sin(a)) || 1e-3;
-    for (let y = y0; y < REF_H; ) {
-      const t = (y - s.HY) / (REF_H - s.HY);
-      // the furrow wanders a little and its snow swells and thins along it
-      const x = vx + (xb - vx) * t + (noise(ph, y * 0.012) - 0.5) * 30 * t;
-      const w = (1.4 + 13 * Math.pow(t, 1.3)) * (0.45 + 0.9 * noise(ph + 5, y * 0.03));
-      const step = Math.max(2, w * random(1.6, 2.6));
-      // broken, and more broken in the distance
-      if (noise(ph + y * 0.015) > 0.3 + 0.25 * (1 - t)) {
-        const f = O.field(x, y);
-        if (f.kind === 'ground') {
-          const base = O.under(x, y);
-          const z = s.F / Math.max(0.5, y - s.HY);
-          const col = s.seen(mixRGB(snow, base, random(0.05, 0.18)), z, x, y);
-          const st = makeOilStroke(O, x, y, a + random(-0.05, 0.05), step * 1.25, w, { color: col, color2: mixRGB(col, base, 0.3), relief: 0.25, crisp: random() < 0.4 });
-          out.push(st);
-          // the furrow's cold side: a thin blue-grey shadow along one edge of the snow
-          if (w > 3 && random() < 0.6) {
-            const off = w * 0.45;
-            const sc = s.seen(mixRGB(cold, base, 0.35), z, x, y);
-            out.push(makeOilStroke(O, x + off * Math.sin(a), y - off * Math.cos(a), a, step * 1.1, w * 0.3, { color: sc, color2: base, relief: 0.05, soft: true }));
-          }
+  const umber = [74, 50, 40], rust = [176, 98, 62];
+  const yAt = (t) => s.HY + t * (REF_H - s.HY);
+  // a furrow: where it meets the bottom edge, how it bends and wanders, where it starts/ends
+  const furrow = (xb) => {
+    const t0 = random() < 0.55 ? tTop + random(0, 0.08) : tTop + random(0.08, 0.5) * (1 - tTop);
+    const t1 = random() < 0.6 ? 1.04 : t0 + random(0.25, 0.7) * (1 - t0);
+    return { xb, t0, t1, bend: random(-1, 1) * REF_W * 0.07, ph: random(100) };
+  };
+  const posAt = (f, t) => vx + (f.xb - vx) * t + f.bend * t * t + (noise(f.ph, t * 3) - 0.5) * 46 * t;
+  const zAt = (y) => s.F / Math.max(0.5, y - s.HY);
+  // 1. plough streaks in the earth: thin, broken, darker or rusty, laid first
+  const nS = Math.round(34 * FS);
+  for (let k = 0; k < nS; k++) {
+    const f = furrow(-REF_W * 0.5 + random() * REF_W * 2);
+    const tint = random() < 0.35 ? rust : umber;
+    for (let t = f.t0; t < Math.min(1.02, f.t1); ) {
+      const w = (1 + 8 * Math.pow(t, 1.2)) * random(0.6, 1.2);
+      const y = yAt(t), x = posAt(f, t);
+      const len = w * random(4, 8);
+      if (noise(f.ph + 2, t * 7) > 0.4 && O.field(x, y).kind === 'ground') {
+        const base = O.under(x, y);
+        const col = s.seen(mixRGB(base, tint, random(0.35, 0.6)), zAt(y), x, y);
+        const a = Math.atan2(yAt(t + 0.01) - y, posAt(f, t + 0.01) - x);
+        out.push(makeOilStroke(O, x, y, a, len, w * 0.5, { color: col, color2: base, relief: 0.08, soft: true }));
+      }
+      t += (len * 0.8) / (REF_H - s.HY) * Math.abs(Math.sin(Math.atan2(REF_H - s.HY, Math.abs(f.xb - vx) + 1))) + 0.004;
+    }
+  }
+  // 2. the snow in the furrows: uneven spacing, own lengths, drifts and gaps
+  const nF = Math.round((13 + 8 * random()) * FS);
+  const xbs = [];
+  for (let k = 0; k < nF; k++) xbs.push(-REF_W * 0.2 + random() * REF_W * 1.4);
+  for (const xb of xbs) {
+    const f = furrow(xb);
+    for (let t = f.t0; t < Math.min(1.04, f.t1); ) {
+      const y = yAt(t), x = posAt(f, t);
+      // the snow swells and thins along the furrow, and lies in drifts here and there
+      let w = (2 + 24 * Math.pow(t, 1.2)) * (0.35 + 1.1 * noise(f.ph + 5, t * 4));
+      const drift = noise(f.ph + 9, t * 2.6) > 0.62;
+      if (drift) w *= random(1.8, 2.8);
+      const a = Math.atan2(yAt(t + 0.01) - y, posAt(f, t + 0.01) - x);
+      const len = w * random(3.2, 5.6);
+      const gap = noise(f.ph + 1, t * 6.5) < 0.27 + 0.12 * (1 - t);
+      if (!gap && O.field(x, y).kind === 'ground') {
+        const base = O.under(x, y);
+        const q = random();
+        const tone = q < 0.62 ? snow : q < 0.84 ? mixRGB(snow, cold, 0.35) : mixRGB(snow, base, 0.45);
+        const col = s.seen(mixRGB(tone, base, random(0.03, 0.15)), zAt(y), x, y);
+        const st = makeOilStroke(O, x + random(-0.2, 0.2) * w, y, a + random(-0.08, 0.08), len, w * random(0.75, 1.1), { color: col, color2: mixRGB(col, base, 0.35), relief: 0.3, crisp: random() < 0.3 });
+        if (random() < 0.45) st.dry = Math.min(0.85, OP.dry + 0.35); // ragged, dry-brushed edges
+        out.push(st);
+        // a drift spreads sideways in a second, shorter stroke
+        if (drift && random() < 0.7) {
+          const off = w * random(0.4, 0.8) * (random() < 0.5 ? -1 : 1);
+          out.push(makeOilStroke(O, x + off * Math.sin(a), y - off * Math.cos(a), a + random(-0.25, 0.25), len * 0.6, w * 0.7, { color: col, color2: base, relief: 0.25 }));
+        }
+        // the furrow's cold side: a soft blue-grey shadow along one edge, not everywhere
+        if (w > 4 && random() < 0.35) {
+          const off = w * 0.5;
+          const sc = s.seen(mixRGB(cold, base, 0.35), zAt(y), x, y);
+          out.push(makeOilStroke(O, x + off * Math.sin(a), y - off * Math.cos(a), a, len * 0.8, w * 0.28, { color: sc, color2: base, relief: 0.05, soft: true }));
         }
       }
-      y += step * sinA * 0.95 + 0.5;
+      // strokes overlap by more than half, so a furrow's snow runs on, not as a chain of beads
+      t += Math.max(0.0035, ((len * 0.38) / (REF_H - s.HY)) * Math.abs(Math.sin(a)));
+    }
+  }
+  // 3. loose patches of snow in the near field, between the furrows
+  const nP = Math.round(26 * FS);
+  for (let k = 0; k < nP; k++) {
+    const t = 0.55 + 0.45 * Math.sqrt(random());
+    const y = yAt(t), x = random(-20, REF_W + 20);
+    if (O.field(x, y).kind !== 'ground') continue;
+    const base = O.under(x, y);
+    const r = (3 + 16 * t * t) * random(0.6, 1.3);
+    const m = 2 + Math.floor(random(4));
+    for (let j = 0; j < m; j++) {
+      const col = s.seen(mixRGB(random() < 0.7 ? snow : mixRGB(snow, cold, 0.3), base, random(0.05, 0.25)), zAt(y), x, y);
+      out.push(makeOilStroke(O, x + random(-1, 1) * r, y + random(-0.3, 0.3) * r, random(-0.3, 0.3), r * random(1.2, 2.2), r * random(0.4, 0.7), { color: col, color2: base, relief: 0.25 }));
     }
   }
 }
