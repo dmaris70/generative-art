@@ -1146,6 +1146,25 @@ function buildControls() {
       G.setSeed(4);
       G.setParams(G.defaults());
     },
+    // everything at once: a new scene seed, a new hand, every dropdown and slider drawn at
+    // random over its range — except where a value would make the painting unaffordable
+    // (a tiny brush laid at full coverage runs to millions of strokes) or ruin it outright
+    shuffleAll: () => {
+      const r = (a, b) => a + Math.random() * (b - a);
+      const step = (v, d) => (d.step ? Number((d.min + Math.round((v - d.min) / d.step) * d.step).toFixed(6)) : v);
+      const guard = {
+        medium: () => (Math.random() < 0.8 ? 1 : 0), // mostly oil, now and then watercolour
+        paintSeed: () => 1 + Math.floor(Math.random() * 999999),
+        strokeSize: (d) => step(r(9, d.max), d),
+        coverage: (d) => step(r(0.6, 1.6), d),
+        layers: () => (Math.random() < 0.75 ? 3 : 2),
+        fineDetail: (d) => step(r(0, 1), d),
+        grass: (d) => step(r(0.3, 1.8), d),
+        sun: (d) => step(r(0.05, 0.85), d),
+        haze: (d) => step(r(0.4, 1.6), d),
+      };
+      G.shuffle((k, d) => (guard[k] ? guard[k](d) : undefined));
+    },
     resetStrokes: () => {
       const d = G.defaults();
       const out = {};
@@ -1153,6 +1172,9 @@ function buildControls() {
       G.setParams(out);
     },
   };
+  // the big shuffle sits on the panel's face, under the painting readout
+  const shuf = gui.add(act, 'shuffleAll').name('🔀 shuffle everything (X)');
+  kids.insertBefore(shuf.domElement, st.domElement.nextSibling);
   seeds.add(act, 'scenePrev').name('◀ scene seed');
   seeds.add(act, 'sceneNext').name('▶ scene seed');
   seeds.add(act, 'sceneRandom').name('🎲 new scene');
@@ -6527,6 +6549,7 @@ function fieldRect(W, H) {
 function keyPressed() {
   if (key === 'r' || key === 'R') G.randomize();
   if ((key === 'p' || key === 'P') && window.AR_ACTIONS) window.AR_ACTIONS.paintRandom();
+  if ((key === 'x' || key === 'X') && window.AR_ACTIONS) window.AR_ACTIONS.shuffleAll();
   if (key === 's' || key === 'S') saveCanvas('aerial-recession-' + G.seed, 'png');
 }
 

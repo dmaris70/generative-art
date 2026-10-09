@@ -856,6 +856,31 @@ is painted and before the trees go on, up to 9,000 small marks are laid over it:
 - **Placement:** they gather where the value changes across 4 px (where forms meet), and
   are few in the sky (12 %) and on the far ranges (30 %).
 
+## 🔀 Shuffle everything (button, or key `X`)
+
+One press draws a new scene seed and paint seed, and a random value for every setting in
+the panel: mood, scene, viewpoint, trees, mountains, every brush, stroke, colour and
+method slider. It then repaints once (it does not wait for *Apply*). Dropdowns pick any of
+their options; sliders draw uniformly over their whole range, on their step.
+
+A few settings are held inside narrower bounds, because their extremes either make the
+painting unaffordable or ruin it outright:
+
+| setting | shuffled within | why |
+|---|---|---|
+| stroke width | 9–34 (range 5–34) | the stroke count grows as 1/width²: a 5 px brush at full coverage runs to millions of strokes |
+| coverage | 0.6–1.6 (range 0.3–2.5) | the same cost; below 0.6 the canvas shows through in holes |
+| layers | 3 (75 %) or 2 | one layer leaves the picture unfinished |
+| grass density | 0.3–1.8 | cost of the blades |
+| fine detail | 0–1 | cost of the marks |
+| sun height | 0.05–0.85 | at the extremes the sun sits on the crest or leaves the picture |
+| atmosphere | 0.4–1.6 | beyond, the scene vanishes in haze or loses all depth |
+| medium | oil 80 %, watercolour 20 % | |
+
+The shared panel library gained `G.shuffle(pick)` for this. It takes an optional `pick(key,
+def)` that returns a value to override the draw for a key. Every value it sets goes into
+the URL, so a shuffled painting you like can be kept with *copy link* or *Save preset*.
+
 ## How each technique is implemented
 
 | technique | where | rule |
@@ -933,7 +958,7 @@ back, or reset the stroke settings to their defaults while keeping the scene. A
 The seed fixes everything else: which third the sun takes, ridge noise, field layout,
 tree positions, the framing tree's growth, and every brush jitter.
 
-Keys: `R` new scene · `P` new paint seed · `S` save PNG. `?seed=…` (plus the `p_…` params the panel writes into
+Keys: `R` new scene · `P` new paint seed · `X` shuffle everything · `S` save PNG. `?seed=…` (plus the `p_…` params the panel writes into
 the URL) reproduces a picture exactly. `?profile` records per-pass timings in
 `window.PROFILE`; `?stop=N` halts after pass N to inspect an intermediate state.
 
