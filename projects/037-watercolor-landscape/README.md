@@ -9,7 +9,37 @@ white.
 Original composition, painted with [p5.brush](https://github.com/acamposuribe/p5.brush)
 (2.2.3, p5 2.x WEBGL). It is not a copy of any painting.
 
-![seed 4, summer day, watercolour](preview.png)
+![seed 4, Dürer valley, alpine valley, watercolour](preview.png)
+
+## v4: after Albrecht Dürer's *View of Trento* (c. 1495)
+
+The reference is an early watercolour heightened with bodycolour. Each technique in it was
+analysed and adapted. The town and the boat are subject matter, not technique, so they were
+left out, and the composition stays the engine's own. The result is a seventh mood,
+**Dürer valley**, which is now the default, with the alpine valley as the default scene.
+
+| # | Technique in the reference | v3 | v4 implementation (`paint6`) |
+|---|---|---|---|
+| 1 | The sky is mostly bare warm paper. Blue-grey is scumbled in level, half-dry passes that thicken toward the top and the corners (a vignette); there are no cut-out clouds. | saturated blue sky, white paper clouds | `wcSkyDurer`: a pale warm wash, then up to 44 wet, granulating, irregular patches. Their density follows `skyVignette` (height × distance from the centre), so the middle low sky stays paper. Clouds are soft grey drifts with pale tops. |
+| 2 | Mountains in strong local colour, nearly bodycolour: teal and blue-green near, one rose-violet range, pale blue far, misting out on one side | translucent blue-grey glazes | palette per range, with the middle range mixed 50 % toward violet (`durerRangeTint`). Every range but the farthest gets a second dense layer over its wash. |
+| 3 | The mountains are modelled by thin strokes running down the gullies | shadow-plane glazes only | `wcStriations`: up to 150 strokes per near range along each slope's fall line (`rangePlane`). They gather in the shade, with a lighter one now and then on a lit rib. |
+| 4 | Round trees, dark blue-green, built of small stippled dabs with lighter tops | pines and broad touches | no pines in this mood; `wcStipple` dabs each crown, dark low and away from the light, lighter on top |
+| 5 | A broad, still, pale grey-blue river with soft vertical reflections and a few level lights | broken horizontal Homer strokes | `wcWaterDurer`: an even grey-blue wash, feathered vertical reflections, and faint level lights |
+| 6 | Flat ochre sandbars and a sandy foreground with soft edges | none | up to three sandbars in the river (one wet), and a sandy bank (`SAND`) |
+| 7 | Meadows as light yellow-green and ochre patches, with no tufts | grass masses | the plain is meadow drops only; the bank keeps five green masses, with rigger grass cut to 35 % |
+| 8 | A limited palette: teal, ochre/sand, warm cream, a violet accent, grey-blue | summer greens | the mood palette (`MOODS['Dürer valley']`) |
+| 9 | Old paper: an uneven warm tone and foxing spots | clean sheet | `wcAgedSheet` (one wet warm tone and four soft patches) and `wcFoxing` (26 small brown spots in the sky) |
+| 10 | No pencil lay-in shows | pencil at 0.2 | the lay-in is skipped in this mood |
+
+Defaults changed:
+- mood: Dürer valley
+- scene: alpine valley
+- atmosphere: 0.5
+- foreground trees: 1
+
+The other six moods are unchanged and can be picked from the panel, summer day among
+them. Known gap: the shared engine fixes the river's width, so the valley's river is
+narrower than Dürer's. The **fjord / lake** scene gives the broad still water instead.
 
 ## v2: after Winslow Homer's *The Blue Boat* (1892)
 
@@ -89,6 +119,9 @@ bars and a render took over 15 minutes. The current painter's counts (measured):
 
 | Painting (v3) | Fills | Washes | Strokes (`wline`/`wstroke`) |
 |---|---|---|---|
+| v4 default: seed 4, Dürer valley, alpine valley | 208 | 10,511 | 217 |
+| v4: seed 4, Dürer valley, fjord / lake | 177 | 7,757 | 261 |
+| v4: seed 4, summer day, river plain (one framing tree) | 213 | 11,187 | 263 |
 | seed 4, summer day (default) | 214 | 14,090 | 366 |
 | seed 4, golden hour | 246 | 19,640 | 422 |
 | seed 4, moonlit night | 225 | 13,043 | 373 |
@@ -182,7 +215,7 @@ The rest of the README list was left out deliberately:
 
 | Group | Parameter (default) | Effect |
 |---|---|---|
-| Scene | scene, viewpoint, mood (golden hour, after the storm, dawn mist, moonlit night, late snow, **summer day**, the default), sun, atmosphere, ranges, mountain forms, mist, clouds, cloud rows, river meander, trees, framing trees, foreground trees, stand, tree rhymes the peak | as in 036 (the same engine) |
+| Scene | scene, viewpoint, mood (golden hour, after the storm, dawn mist, moonlit night, late snow, summer day, **Dürer valley**, the default); scene default: alpine valley, sun, atmosphere, ranges, mountain forms, mist, clouds, cloud rows, river meander, trees, framing trees, foreground trees, stand, tree rhymes the peak | as in 036 (the same engine) |
 | Watercolour · washes | paper (cold pressed) | rough granulates more and breaks dry brush more; hot pressed hardly granulates |
 | | wetness (0.45) | how far the washes bleed |
 | | pigment load (1.25) | opacity of every wash |
