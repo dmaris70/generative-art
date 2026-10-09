@@ -1,0 +1,65 @@
+{
+ "batch": 9,
+ "by": "Dimitris",
+ "saved": "2026-09-23T16:23:33.913Z",
+ "kept": [
+  {
+   "seed": 7769852,
+   "place": "olympus",
+   "register": "passage",
+   "rescued": false
+  },
+  {
+   "seed": 7789798,
+   "place": "tetons",
+   "register": "passage",
+   "rescued": false
+  },
+  {
+   "seed": 7829690,
+   "place": "liathach",
+   "register": "clearing",
+   "rescued": false
+  },
+  {
+   "seed": 8098961,
+   "place": "amadablam",
+   "register": "clearing",
+   "rescued": false
+  },
+  {
+   "seed": 8118907,
+   "place": "tetons",
+   "register": "passage",
+   "rescued": false
+  },
+  {
+   "seed": 8208664,
+   "place": "watzmann",
+   "register": "clearing",
+   "rescued": false
+  },
+  {
+   "seed": 8328340,
+   "place": "nevis",
+   "register": "clearing",
+   "rescued": false
+  }
+ ],
+ "culled_by_claude": [
+  7739933,
+  7749906,
+  7849636,
+  7869582,
+  7999231,
+  8039123,
+  8079015,
+  8108934,
+  8168772,
+  8218637,
+  8278475,
+  8408124,
+  8477935,
+  8577665
+ ]
+}

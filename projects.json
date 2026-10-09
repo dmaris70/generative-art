@@ -1,0 +1,185 @@
+{
+  "title": "Generative Art",
+  "author": "dmaris70",
+  "projects": [
+    {
+      "slug": "036-aerial-recession",
+      "title": "Aerial Recession — computed landscape",
+      "year": 2026,
+      "tools": ["p5.js", "p5.brush"],
+      "description": "The classical rules of landscape depth computed instead of painted: one camera over one ground plane sizes every field, tree, cloud and river bend by 1/z; one transmittance term 1 − e^(−kz) cools, flattens, simplifies and un-inks whatever recedes; one low sun on a third line splits peaks into lit and shadow faces and throws long shadows, while a dark repoussoir tree frames the light. Watercolour, graphite and charcoal from p5.brush, painted back to front.",
+      "thumb": ""
+    },
+    {
+      "slug": "031-ruled-continuum",
+      "title": "Ruled Continuum — curve stitching",
+      "year": 2026,
+      "tools": ["p5.js"],
+      "description": "Nothing curved is ever drawn: bundles of straight glissandi, anchored to rails moving in opposite phase, pile into caustic sweeps that read as continuous curves though every mark is straight — doubly-ruled surfaces massed into a field. Ink at low opacity on a faint metric ground; the seed fixes every rail forever, so the same integer rebuilds the same architecture to the last filament.",
+      "thumb": ""
+    },
+    {
+      "slug": "030-drawn-spectra",
+      "title": "Drawn Spectra — the gesture as score",
+      "year": 2026,
+      "tools": ["p5.js"],
+      "description": "A time × frequency plane read the way a score is read: freehand arc-bundles — glissandi, trembling held tones, staccato flecks — stand in for sound events, each strand independently hand-tremored so a sweep reads as a breathing band rather than a wire. Black ink on a faint staff-ruled ground; colour, when it enters, maps pitch to hue.",
+      "thumb": ""
+    },
+    {
+      "slug": "029-ramus",
+      "title": "Ramus — branching gesture",
+      "year": 2026,
+      "tools": ["p5.js"],
+      "description": "A single tapered stroke that cannot stop dividing: heading, thickness and a shared noise-field pass down through each generation as the line ramifies into a calligraphic arborescence, thick at the root and hairline at the tips. Ink on paper, with a sanguine accent reserved for a minority of branches; no grid — the whole tree is the biography of one gesture.",
+      "thumb": ""
+    },
+    {
+      "slug": "016-load-paths",
+      "title": "Load Paths — beyond the founder",
+      "year": 2026,
+      "tools": [
+        "p5.js",
+        "plotter",
+        "structural"
+      ],
+      "description": "Cover drawing for the essay “Beyond the Founder”, built on the author's own image: strength lies in systems that remain unseen — how weight is distributed, how elements depend on one another. A uniform load enters along the top edge and has to reach the ground. Catchments follow a power law, so one support answers for a third of the field and compresses its paths twenty times over into a black root, while the many small supports to the right keep almost their full width and the load descends plumb. No tone is drawn: every grey in the plate is accumulated line density, and the voids are what the concentration costs. Stroke-only, black on white; press V for plotter-ready SVG.",
+      "thumb": ""
+    },
+    {
+      "slug": "015-score-wall",
+      "title": "Score Wall — sign→sound (UPIC / Oramics)",
+      "year": 2026,
+      "tools": [
+        "canvas",
+        "graphic-score"
+      ],
+      "description": "The drawing is a playable graphic score: arcs on a time × frequency plane, generated from the seed, with a read-head that sweeps left to right and inks each arc as it passes — the sign→sound reading mechanism itself. Closes the loop with the image half: UPIC and Oramics turn drawings into sound; this turns sound-rules into a score. Drives DMCF Radio's score grammar (SYS-011).",
+      "thumb": ""
+    },
+    {
+      "slug": "014-program-wall",
+      "title": "Program Wall — executed code",
+      "year": 2026,
+      "tools": [
+        "canvas",
+        "algorithmic",
+        "cellular-automaton"
+      ],
+      "description": "The executed program is the drawing. A code-native listing (sc140, where the title is the program) is tokenised into a byte stream — or, for data-driven works, seeded — and run as a per-row cellular automaton whose rule bytes come from the listing itself. Every cell is plotted in execution order; in the radio's live view the program executes at the pace of the recording. Drives DMCF Radio's program grammar (SYS-005 / SYS-014).",
+      "thumb": ""
+    },
+    {
+      "slug": "013-phase-wall",
+      "title": "Phase Wall — Reich process",
+      "year": 2026,
+      "tools": [
+        "canvas",
+        "phase",
+        "asemic"
+      ],
+      "description": "Enacts the tape-phase rule: two identical asemic loops laid down pass by pass, one advancing slightly faster so it drifts out of phase — unison at the top, interference below. The moire is computed by running two clocks at different rates, not drawn. Drives DMCF Radio's live phase view for Reich's Come Out / It's Gonna Rain (phase offset bound to the playhead).",
+      "thumb": ""
+    },
+    {
+      "slug": "012-ductus-wall",
+      "title": "Ductus Wall — Praktika",
+      "year": 2026,
+      "tools": [
+        "p5.js",
+        "asemic",
+        "finite-pen"
+      ],
+      "description": "The law of «Πρακτικά»: a single seed is the sole organ — it draws the format, the hand, the weather, the rests and the breaks of an asemic manuscript, then a finite pen writes until the ink runs dry, unsigned and unfinished. The same engine drives DMCF Radio's live ductus view (seed = hash of the airing record).",
+      "thumb": ""
+    },
+    {
+      "slug": "011-isometric-strata",
+      "title": "Isometric Strata",
+      "year": 2026,
+      "tools": ["p5.js"],
+      "description": "Generative architectural drawing sheets: a hand-drawn axonometric of a building on its site — Mexican-modern patio mat, deconstructivist tower, geodesic expo mast or brutalist mosaic block — inside a full title block, floor scale, legend tallied from the geometry, scale bar and specification, on textured graph paper. R for a new sheet.",
+      "thumb": ""
+    },
+    {
+      "slug": "010-plotter-interrupt",
+      "title": "Plotter Interrupt",
+      "year": 2026,
+      "tools": ["p5.js", "plotter"],
+      "description": "A field of irregular dotted rulings and heavy fragmented bars, with a void where the pen never came down. The menu down the left is a real HP-GL program whose every value is measured off the drawing beside it. Stroke-only; press V for plotter-ready SVG.",
+      "thumb": ""
+    },
+    {
+      "slug": "009-watercolor-painter",
+      "title": "Watercolor Painter",
+      "year": 2026,
+      "tools": ["p5.js"],
+      "description": "A watercolour painting studio: drop any image (photo or line art), then pick a colour and click any region to paint it — real bleed, RYB colour mixing at seams, and paper tooth. Also auto-colours the whole image.",
+      "thumb": ""
+    },
+    {
+      "slug": "008-watercolor-tree",
+      "title": "Watercolor Tree",
+      "year": 2026,
+      "tools": ["p5.js"],
+      "description": "Colours a line drawing with the watercolour technique — drop a tree PNG on the canvas to paint it. Also a standalone generative watercolour tree.",
+      "thumb": ""
+    },
+    {
+      "slug": "007-watercolor-landscape",
+      "title": "Watercolor Landscape",
+      "year": 2026,
+      "tools": ["p5.js"],
+      "description": "A generative watercolour landscape — outlined shape-trees (conifers + round crowns), a sun disc and layered noise-ridge hills — using the watercolor module's shapes technique.",
+      "thumb": ""
+    },
+    {
+      "slug": "006-grid-collapse",
+      "title": "Grid Collapse",
+      "year": 2026,
+      "tools": ["p5.js"],
+      "description": "An ordered grid dissolving into randomness across a noise-warped front — after Tyler Hobbs' 'structure from randomness'.",
+      "thumb": ""
+    },
+    {
+      "slug": "005-differential-growth",
+      "title": "Differential Growth",
+      "year": 2026,
+      "tools": ["p5.js"],
+      "description": "A closed line that grows, repels itself and folds into organic coral-like boundaries. Animated; R reseeds.",
+      "thumb": ""
+    },
+    {
+      "slug": "004-flow-ribbons",
+      "title": "Flow Ribbons",
+      "year": 2026,
+      "tools": ["p5.js"],
+      "description": "Non-overlapping flow-field ribbons with variable-scale zones, turbulence regions and crisp polygon edges — after Tyler Hobbs' Fidenza.",
+      "thumb": ""
+    },
+    {
+      "slug": "003-watercolor",
+      "title": "Watercolor",
+      "year": 2026,
+      "tools": ["p5.js"],
+      "description": "Watercolour shapes bled from geometric polygons on textured paper — reimplements the watercolorizer / Tyler Hobbs evolution algorithm.",
+      "thumb": ""
+    },
+    {
+      "slug": "002-particle-life",
+      "title": "Particle Life",
+      "year": 2026,
+      "tools": ["p5.js"],
+      "description": "Life-like clustering from a seeded species×species attraction matrix. Tune it live; R for a new universe.",
+      "thumb": ""
+    },
+    {
+      "slug": "001-flow-field",
+      "title": "Flow Field",
+      "year": 2026,
+      "tools": ["p5.js"],
+      "description": "Particles advected through a Perlin-noise vector field. Live params + reproducible seed.",
+      "thumb": ""
+    }
+  ]
+}

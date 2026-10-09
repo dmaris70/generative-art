@@ -1,0 +1,518 @@
+{
+ "set": 1,
+ "made": "2026-09-21",
+ "rubric": "v6",
+ "note": "Both pairs in every matchup were rated 3 or 4 by Dimitris in rounds 4\u20135 (looming excluded). Claude predicts which he will prefer; the prediction is hidden in the page until he has chosen.",
+ "matchups": [
+  {
+   "n": 1,
+   "a": {
+    "id": "matterhorn-124222",
+    "img": "round-05/pairs/124222.png"
+   },
+   "b": {
+    "id": "eiger-87246",
+    "img": "round-05/pairs/87246.png"
+   },
+   "claude": "A",
+   "why": "the veiled face has more air than the blade",
+   "his_scores": [
+    4,
+    4
+   ]
+  },
+  {
+   "n": 2,
+   "a": {
+    "id": "invented-152703",
+    "img": "round-04/pairs/152703.png"
+   },
+   "b": {
+    "id": "darrans-163509",
+    "img": "round-05/pairs/163509.png"
+   },
+   "claude": "B",
+   "why": "a pale tower in distance over a described mesa",
+   "his_scores": [
+    3,
+    3
+   ]
+  },
+  {
+   "n": 3,
+   "a": {
+    "id": "lyskamm-89557",
+    "img": "round-05/pairs/89557.png"
+   },
+   "b": {
+    "id": "denali-127707",
+    "img": "round-04/pairs/127707.png"
+   },
+   "claude": "B",
+   "why": "the cloud-filled valley with spires is the larger space",
+   "his_scores": [
+    3,
+    4
+   ]
+  },
+  {
+   "n": 4,
+   "a": {
+    "id": "aoraki-61051",
+    "img": "round-04/pairs/61051.png"
+   },
+   "b": {
+    "id": "alpamayo-108960",
+    "img": "round-04/pairs/108960.png"
+   },
+   "claude": "A",
+   "why": "veil and one lit outcrop over a described range",
+   "his_scores": [
+    4,
+    3
+   ]
+  },
+  {
+   "n": 5,
+   "a": {
+    "id": "nevis-121458",
+    "img": "round-04/pairs/121458.png"
+   },
+   "b": {
+    "id": "invented-129790",
+    "img": "round-04/pairs/129790.png"
+   },
+   "claude": "B",
+   "why": "rolling ground to far peaks: more space, less shape",
+   "his_scores": [
+    3,
+    4
+   ]
+  },
+  {
+   "n": 6,
+   "a": {
+    "id": "badile-133466",
+    "img": "round-05/pairs/133466.png"
+   },
+   "b": {
+    "id": "drakensberg-128844",
+    "img": "round-05/pairs/128844.png"
+   },
+   "claude": "A",
+   "why": "the blur crossing the cut over plain dark ridges",
+   "his_scores": [
+    3,
+    3
+   ]
+  },
+  {
+   "n": 7,
+   "a": {
+    "id": "invented-101112",
+    "img": "round-05/pairs/101112.png"
+   },
+   "b": {
+    "id": "darrans-156869",
+    "img": "round-04/pairs/156869.png"
+   },
+   "claude": "B",
+   "why": "veiled peak and lit cloud over a dark tooth",
+   "his_scores": [
+    3,
+    4
+   ]
+  },
+  {
+   "n": 8,
+   "a": {
+    "id": "trango-154786",
+    "img": "round-04/pairs/154786.png"
+   },
+   "b": {
+    "id": "brenta-90213",
+    "img": "round-04/pairs/90213.png"
+   },
+   "claude": "A",
+   "why": "pure soft veils over a speckled tear",
+   "his_scores": [
+    3,
+    3
+   ]
+  },
+  {
+   "n": 9,
+   "a": {
+    "id": "napali-100628",
+    "img": "round-04/pairs/100628.png"
+   },
+   "b": {
+    "id": "cinto-131155",
+    "img": "round-05/pairs/131155.png"
+   },
+   "claude": "A",
+   "why": "a plain under dark cloud: weather over space",
+   "his_scores": [
+    4,
+    4
+   ]
+  },
+  {
+   "n": 10,
+   "a": {
+    "id": "alpamayo-78002",
+    "img": "round-05/pairs/78002.png"
+   },
+   "b": {
+    "id": "robson-65217",
+    "img": "round-04/pairs/65217.png"
+   },
+   "claude": "B",
+   "why": "the near-empty grey field over mild slopes",
+   "his_scores": [
+    3,
+    3
+   ]
+  },
+  {
+   "n": 11,
+   "a": {
+    "id": "stetind-138122",
+    "img": "round-04/pairs/138122.png"
+   },
+   "b": {
+    "id": "invented-80313",
+    "img": "round-05/pairs/80313.png"
+   },
+   "claude": "A",
+   "why": "a wide valley over a streaky blur",
+   "his_scores": [
+    3,
+    3
+   ]
+  },
+  {
+   "n": 12,
+   "a": {
+    "id": "urriellu-125624",
+    "img": "round-04/pairs/125624.png"
+   },
+   "b": {
+    "id": "eiger-111043",
+    "img": "round-04/pairs/111043.png"
+   },
+   "claude": "B",
+   "why": "a calm detailed range over rock pattern",
+   "his_scores": [
+    3,
+    4
+   ]
+  },
+  {
+   "n": 13,
+   "a": {
+    "id": "taygetos-146454",
+    "img": "round-04/pairs/146454.png"
+   },
+   "b": {
+    "id": "olympus-150620",
+    "img": "round-04/pairs/150620.png"
+   },
+   "claude": "A",
+   "why": "layered ridges in mist: depth of air",
+   "his_scores": [
+    4,
+    4
+   ]
+  },
+  {
+   "n": 14,
+   "a": {
+    "id": "invented-168131",
+    "img": "round-05/pairs/168131.png"
+   },
+   "b": {
+    "id": "invented-119375",
+    "img": "round-04/pairs/119375.png"
+   },
+   "claude": "B",
+   "why": "far spires behind a slope over a crisp massif",
+   "his_scores": [
+    3,
+    3
+   ]
+  },
+  {
+   "n": 15,
+   "a": {
+    "id": "invented-142288",
+    "img": "round-04/pairs/142288.png"
+   },
+   "b": {
+    "id": "cinto-91868",
+    "img": "round-05/pairs/91868.png"
+   },
+   "claude": "B",
+   "why": "he has raised this kind of veiled far place before",
+   "his_scores": [
+    4,
+    4
+   ]
+  },
+  {
+   "n": 16,
+   "a": {
+    "id": "invented-179686",
+    "img": "round-05/pairs/179686.png"
+   },
+   "b": {
+    "id": "drakensberg-92296",
+    "img": "round-04/pairs/92296.png"
+   },
+   "claude": "B",
+   "why": "a face dissolving into emptiness",
+   "his_scores": [
+    3,
+    3
+   ]
+  },
+  {
+   "n": 17,
+   "a": {
+    "id": "urriellu-175064",
+    "img": "round-05/pairs/175064.png"
+   },
+   "b": {
+    "id": "watzmann-170442",
+    "img": "round-05/pairs/170442.png"
+   },
+   "claude": "B",
+   "why": "the veiled peak in the V over a dark tower",
+   "his_scores": [
+    3,
+    4
+   ]
+  },
+  {
+   "n": 18,
+   "a": {
+    "id": "triglav-165820",
+    "img": "round-05/pairs/165820.png"
+   },
+   "b": {
+    "id": "machapuchare-140399",
+    "img": "round-05/pairs/140399.png"
+   },
+   "claude": "B",
+   "why": "pale soft wall and range over a slick flank",
+   "his_scores": [
+    3,
+    4
+   ]
+  },
+  {
+   "n": 19,
+   "a": {
+    "id": "invented-113126",
+    "img": "round-04/pairs/113126.png"
+   },
+   "b": {
+    "id": "meije-86047",
+    "img": "round-04/pairs/86047.png"
+   },
+   "claude": "A",
+   "why": "two pale pillars in an empty field",
+   "his_scores": [
+    4,
+    3
+   ]
+  },
+  {
+   "n": 20,
+   "a": {
+    "id": "aoraki-126533",
+    "img": "round-05/pairs/126533.png"
+   },
+   "b": {
+    "id": "fitzroy-147332",
+    "img": "round-05/pairs/147332.png"
+   },
+   "claude": "A",
+   "why": "a veiled peak over a rippled floor: something happens",
+   "his_scores": [
+    4,
+    3
+   ]
+  },
+  {
+   "n": 21,
+   "a": {
+    "id": "machapuchare-105734",
+    "img": "round-05/pairs/105734.png"
+   },
+   "b": {
+    "id": "invented-94179",
+    "img": "round-05/pairs/94179.png"
+   },
+   "claude": "B",
+   "why": "a wide calm range over flat grey",
+   "his_scores": [
+    3,
+    4
+   ]
+  },
+  {
+   "n": 22,
+   "a": {
+    "id": "fitzroy-131873",
+    "img": "round-04/pairs/131873.png"
+   },
+   "b": {
+    "id": "invented-161198",
+    "img": "round-05/pairs/161198.png"
+   },
+   "claude": "B",
+   "why": "a wide basin under sky over a black blade",
+   "his_scores": [
+    3,
+    3
+   ]
+  },
+  {
+   "n": 23,
+   "a": {
+    "id": "alpamayo-110356",
+    "img": "round-05/pairs/110356.png"
+   },
+   "b": {
+    "id": "cinto-114978",
+    "img": "round-05/pairs/114978.png"
+   },
+   "claude": "B",
+   "why": "a wide dark range under a graded sky",
+   "his_scores": [
+    3,
+    4
+   ]
+  },
+  {
+   "n": 24,
+   "a": {
+    "id": "napali-75691",
+    "img": "round-05/pairs/75691.png"
+   },
+   "b": {
+    "id": "liathach-103423",
+    "img": "round-05/pairs/103423.png"
+   },
+   "claude": "A",
+   "why": "the rippled plain and lit col: both sheets needed",
+   "his_scores": [
+    4,
+    3
+   ]
+  },
+  {
+   "n": 25,
+   "a": {
+    "id": "invented-82624",
+    "img": "round-05/pairs/82624.png"
+   },
+   "b": {
+    "id": "meije-102711",
+    "img": "round-04/pairs/102711.png"
+   },
+   "claude": "B",
+   "why": "veiled ranges and a lit knoll over a black mass",
+   "his_scores": [
+    3,
+    4
+   ]
+  },
+  {
+   "n": 26,
+   "a": {
+    "id": "badile-154265",
+    "img": "round-05/pairs/154265.png"
+   },
+   "b": {
+    "id": "machapuchare-73380",
+    "img": "round-05/pairs/73380.png"
+   },
+   "claude": "A",
+   "why": "near dome with a legible far place",
+   "his_scores": [
+    4,
+    3
+   ]
+  },
+  {
+   "n": 27,
+   "a": {
+    "id": "huayhuash-112667",
+    "img": "round-05/pairs/112667.png"
+   },
+   "b": {
+    "id": "darrans-71466",
+    "img": "round-04/pairs/71466.png"
+   },
+   "claude": "B",
+   "why": "the pale veiled basin over a mottled pyramid",
+   "his_scores": [
+    4,
+    4
+   ]
+  },
+  {
+   "n": 28,
+   "a": {
+    "id": "olympus-142710",
+    "img": "round-05/pairs/142710.png"
+   },
+   "b": {
+    "id": "napali-71069",
+    "img": "round-05/pairs/71069.png"
+   },
+   "claude": "B",
+   "why": "the pale whiteout summit over a plain valley",
+   "his_scores": [
+    3,
+    4
+   ]
+  },
+  {
+   "n": 29,
+   "a": {
+    "id": "toubkal-145021",
+    "img": "round-05/pairs/145021.png"
+   },
+   "b": {
+    "id": "meije-104794",
+    "img": "round-04/pairs/104794.png"
+   },
+   "claude": "A",
+   "why": "the calm veiled valley carries it",
+   "his_scores": [
+    4,
+    3
+   ]
+  },
+  {
+   "n": 30,
+   "a": {
+    "id": "invented-73549",
+    "img": "round-04/pairs/73549.png"
+   },
+   "b": {
+    "id": "meije-133956",
+    "img": "round-04/pairs/133956.png"
+   },
+   "claude": "A",
+   "why": "a calm veiled valley beside the wall, over a centred peak",
+   "his_scores": [
+    4,
+    4
+   ]
+  }
+ ]
+}

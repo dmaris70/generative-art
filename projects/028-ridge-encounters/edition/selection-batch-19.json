@@ -1,0 +1,152 @@
+{
+ "batch": 19,
+ "by": "Dimitris",
+ "saved": "2026-09-23T19:36:59.651Z",
+ "kept": [
+  {
+   "seed": 20500089,
+   "place": "arthurs",
+   "register": "clearing",
+   "rescued": false
+  },
+  {
+   "seed": 20553413,
+   "place": "trecime",
+   "register": "clearing",
+   "rescued": false
+  },
+  {
+   "seed": 20580075,
+   "place": "liathach",
+   "register": "clearing",
+   "rescued": false
+  },
+  {
+   "seed": 20673392,
+   "place": "taygetos",
+   "register": "clearing",
+   "rescued": false
+  },
+  {
+   "seed": 20686723,
+   "place": "toubkal",
+   "register": "clearing",
+   "rescued": false
+  },
+  {
+   "seed": 20700054,
+   "place": "invented",
+   "register": "clearing",
+   "rescued": false
+  },
+  {
+   "seed": 20793371,
+   "place": "liathach",
+   "register": "clearing",
+   "rescued": false
+  },
+  {
+   "seed": 20833364,
+   "place": "k2",
+   "register": "clearing",
+   "rescued": false
+  },
+  {
+   "seed": 20873357,
+   "place": "trango",
+   "register": "clearing",
+   "rescued": false
+  },
+  {
+   "seed": 20886688,
+   "place": "amadablam",
+   "register": "clearing",
+   "rescued": false
+  },
+  {
+   "seed": 20980005,
+   "place": "k2",
+   "register": "clearing",
+   "rescued": false
+  },
+  {
+   "seed": 21046660,
+   "place": "toubkal",
+   "register": "clearing",
+   "rescued": false
+  },
+  {
+   "seed": 21193301,
+   "place": "k2",
+   "register": "clearing",
+   "rescued": false
+  },
+  {
+   "seed": 21379935,
+   "place": "fitzroy",
+   "register": "clearing",
+   "rescued": false
+  },
+  {
+   "seed": 21433259,
+   "place": "cuillin",
+   "register": "clearing",
+   "rescued": false
+  },
+  {
+   "seed": 21459921,
+   "place": "invented",
+   "register": "clearing",
+   "rescued": false
+  },
+  {
+   "seed": 21499914,
+   "place": "robson",
+   "register": "exposure",
+   "rescued": false
+  },
+  {
+   "seed": 21513245,
+   "place": "denali",
+   "register": "clearing",
+   "rescued": false
+  },
+  {
+   "seed": 21539907,
+   "place": "simien",
+   "register": "passage",
+   "rescued": false
+  },
+  {
+   "seed": 21673217,
+   "place": "cuillin",
+   "register": "exposure",
+   "rescued": false
+  },
+  {
+   "seed": 21726541,
+   "place": "jorasses",
+   "register": "whiteout",
+   "rescued": false
+  }
+ ],
+ "culled_by_claude": [
+  20526751,
+  20540082,
+  20566744,
+  20593406,
+  20620068,
+  20646730,
+  20726716,
+  20740047,
+  20753378,
+  20780040,
+  20900019,
+  20926681,
+  20953343,
+  21033329,
+  21099984,
+  21113315,
+  21126646
+ ]
+}
