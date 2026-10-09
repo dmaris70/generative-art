@@ -110,6 +110,17 @@ MOODS['summer day'] = {
   foliage: '#1d4a2c', foliageLit: '#79ae46', silhouette: '#0f1d26',
   light: '#fff6dc', shadow: '#28406a', water: '#2a5a9e', clouds: 1.25, rays: 0, summer: 1,
 };
+// A seventh: the valley after Dürer's early watercolours (the Trento view, c. 1495) — a pale
+// warm sheet, a sky mostly paper with mottled blue-grey toward the top and corners,
+// mountains in teal and rose-violet bodycolour, a still grey-blue river, ochre sand.
+MOODS['Dürer valley'] = {
+  zenith: '#4f7f96', upper: '#8fb0bd', horizon: '#efe6cf', glow: '#f3ead4', sun: '#fbf6e8',
+  haze: '#c3cfd0', cloudShadow: '#5f8494', cloudLit: '#eee6d2',
+  rockFar: '#8ea3bf', rockNear: '#3d7f7a', groundFar: '#a3b37c', groundNear: '#6f8a52',
+  fields: ['#a9b878', '#8fa463', '#c2b98a', '#7f9a5c', '#b5a87a'],
+  foliage: '#284f46', foliageLit: '#83a262', silhouette: '#1a2a28',
+  light: '#f6ecd4', shadow: '#3e5f6e', water: '#7f949c', clouds: 0.9, rays: 0, durer: 1,
+};
 
 function setup() {
   createCanvas(windowWidth, windowHeight, WEBGL);
@@ -125,11 +136,11 @@ function setup() {
     applyOnDemand: true, // a full painting is heavy: settings repaint only on "Apply changes"
     closedGroups: [WT, MO, NI],
     params: {
-      sceneType: { value: 0, options: { 'river plain': 0, 'fjord / lake': 1, 'alpine valley': 2 }, label: 'scene', group: SC },
+      sceneType: { value: 2, options: { 'river plain': 0, 'fjord / lake': 1, 'alpine valley': 2 }, label: 'scene', group: SC },
       viewpoint: { value: 1, options: { 'low (looking up)': 0, 'eye level': 1, 'high vantage (looking down)': 2 }, label: 'viewpoint', group: SC },
-      mood: { value: 5, options: { 'golden hour': 0, 'after the storm': 1, 'dawn mist': 2, 'moonlit night': 3, 'late snow': 4, 'summer day': 5 }, label: 'mood', group: SC },
+      mood: { value: 6, options: { 'golden hour': 0, 'after the storm': 1, 'dawn mist': 2, 'moonlit night': 3, 'late snow': 4, 'summer day': 5, 'Dürer valley': 6 }, label: 'mood', group: SC },
       sun: { value: 0.7, min: 0, max: 1, step: 0.01, label: 'sun height', group: SC },
-      haze: { value: 0.6, min: 0.3, max: 2.2, step: 0.05, label: 'atmosphere', group: SC },
+      haze: { value: 0.5, min: 0.3, max: 2.2, step: 0.05, label: 'atmosphere', group: SC },
       ranges: { value: 5, min: 3, max: 7, step: 1, label: 'mountain ranges', group: SC },
       mountainForm: { value: 1, options: { jagged: 0, 'big forms': 1 }, label: 'mountain forms', group: SC },
       mist: { value: 0.25, min: 0, max: 1, step: 0.05, label: 'mist', group: SC },
@@ -138,7 +149,7 @@ function setup() {
       meander: { value: 1.0, min: 0, max: 2, step: 0.05, label: 'river meander', group: SC },
       trees: { value: 0.6, min: 0, max: 1, step: 0.05, label: 'trees', group: SC },
       frame: { value: 1.0, min: 0, max: 1, step: 0.05, label: 'framing trees', group: SC },
-      fgTrees: { value: 2, min: 1, max: 4, step: 1, label: 'foreground trees', group: SC },
+      fgTrees: { value: 1, min: 1, max: 4, step: 1, label: 'foreground trees', group: SC },
       fgLayout: { value: 0, options: { 'one side (a group)': 0, 'both sides': 1 }, label: 'foreground trees stand', group: SC },
       rhyme: { value: 0, options: { off: 0, on: 1 }, label: 'tree rhymes the peak', group: SC },
 
@@ -1742,6 +1753,7 @@ function buildTasks(s) {
   WP = wcParams();
   // the summer day's light is high and cool: none of the warm low-sun terms
   if (s.C.summer) s.warmth = 0.12;
+  if (s.C.durer) s.warmth = 0.22;
   // solid lines are mixed toward the paper by day; at night that would make them glow
   WP.lineLift = s.night ? 0 : 1;
   const T = [];
@@ -1761,20 +1773,22 @@ function buildTasks(s) {
     const ps = G.param('paintSeed');
     if (ps) randomSeed(ps);
   });
+  if (s.C.durer) T.push(() => wcAgedSheet(s));
   stage('underdrawing');
   T.push(() => wcPencil(s));
   stage('sky, wet into wet');
-  for (const t of wcSkyTasks(s)) T.push(t);
+  for (const t of s.C.durer ? wcSkyDurer(s) : wcSkyTasks(s)) T.push(t);
   stage('clouds');
-  for (const c of s.clouds) T.push(() => wcCloud(s, c));
+  if (!s.C.durer) for (const c of s.clouds) T.push(() => wcCloud(s, c));
   T.push(() => wcCirrus(s));
   if (s.C.summer) T.push(() => wcSkyAccents(s));
-  if (!s.C.summer) T.push(() => wcSunMoon(s));
+  if (!s.C.summer && !s.C.durer) T.push(() => wcSunMoon(s));
   stage('mountains');
   s.ranges.forEach((L) => {
     T.push(() => wcRangeBody(s, L));
     T.push(() => wcRangeDrops(s, L));
     for (const t of wcRangePlanes(s, L)) T.push(t);
+    if (s.C.durer) T.push(() => wcStriations(s, L));
     T.push(() => wcPeakGlazes(s, L));
     T.push(() => wcRangeEdge(s, L));
     T.push(() => wcRangeMist(s, L));
@@ -1802,6 +1816,7 @@ function buildTasks(s) {
   T.push(() => wcSpatterSalt(s));
   T.push(() => wcGranulation(s));
   T.push(() => paintPaperTooth(s));
+  if (s.C.durer) T.push(() => wcFoxing(s));
   T.push(() => paintMat(s));
   return T;
 }
@@ -1810,7 +1825,7 @@ function buildTasks(s) {
 // The painter's light pencil lay-in: the crests, the horizon, the river's banks, where the
 // trees stand, the framing trunk's axis. It stays visible through the transparent washes.
 function wcPencil(s) {
-  if (WP.pencil <= 0.02) return;
+  if (WP.pencil <= 0.02 || s.C.durer) return; // the early sheets show no lay-in
   const col = mixRGB(PAPER, [86, 84, 90], 0.3 + 0.45 * WP.pencil);
   brush.wiggle(WP.wobble * 0.6);
   brush.set('2H', toHex(col), 0.35 + 0.35 * WP.pencil);
@@ -2066,10 +2081,14 @@ function rangePoly(L) {
   return L.ridge.map((p) => [p[0], Math.min(p[1], b)]).concat([[REF_W + 30, b], [-30, b]]);
 }
 function rangeCol(s, L) {
-  return s.seen(L.local, L.z, s.focalX, L.base - L.amp * 0.5);
+  const c = s.seen(L.local, L.z, s.focalX, L.base - L.amp * 0.5);
+  return s.C.durer ? durerRangeTint(s, L, c) : c;
 }
 function wcRangeBody(s, L) {
   const near = 1 - L.air;
+  // after Dürer the near ranges are dense, nearly bodycolour: a second layer over the wash
+  // after Dürer every range but the farthest is dense, nearly bodycolour
+  if (s.C.durer && L.air < 0.85) wsoft(rangePoly(L), rangeCol(s, L), 170 * (1 - 0.6 * L.air), 0.3);
   wfill(rangePoly(L), rangeCol(s, L), 130 + 125 * near, {
     bleed: 0.05 + 0.08 * L.air, dir: 'in', ang: Math.PI / 2, tex: 0.1 + 0.5 * WP.gran * near, border: 0.15 + 0.5 * near,
   });
@@ -2432,10 +2451,14 @@ function wcVegetation(s, yT) {
     const y = y0 + (REF_H - y0) * random(0.3, 1);
     if (onWater(s, x, y)) continue;
     const z = s.F / Math.max(1, y - s.HY);
-    const col = s.seen(i % 5 === 0 ? mixRGB(RUST, C.foliage, 0.45) : i % 5 === 1 ? mixRGB(OCHRE, C.foliageLit, 0.45) : mixRGB(C.foliage, C.silhouette, 0.1 * (i % 3)), z, x, y);
+    const col = C.durer
+      ? s.seen(i % 3 === 0 ? mixRGB(OCHRE, C.groundFar, 0.5) : mixRGB(C.foliageLit, C.groundFar, random(0.2, 0.6)), z, x, y)
+      : s.seen(i % 5 === 0 ? mixRGB(RUST, C.foliage, 0.45) : i % 5 === 1 ? mixRGB(OCHRE, C.foliageLit, 0.45) : mixRGB(C.foliage, C.silhouette, 0.1 * (i % 3)), z, x, y);
     const rx = random(90, 220) / Math.sqrt(z), ry = rx * random(0.2, 0.35);
     wfill(blobPoly(x, y, rx, ry, random(100), 16, 0.6), col, 170 * WP.vari + 40, { bleed: 0.35, dir: 'out', tex: 0.3, border: 0.4 });
   }
+  // after Dürer the plain is meadow: patches of light green and ochre, no tufts
+  if (C.durer) return;
   // the growth built up in masses: many overlapping upright strokes of a darker green laid
   // over the light first wash, closest together at the foot of a mass, the light first wash
   // left showing between the masses and at their tops; a little rust or ochre in some
@@ -2613,7 +2636,11 @@ function wcWater(s) {
     const ym = Math.max(2, Math.min(s.HY, lake ? 2 * ys - y : 2 * s.HY - y));
     // water reads bluer than the sky it mirrors (the zenith's colour comes back off it)
     const col = mixRGB(mixRGB(s.sky(x, ym), C.zenith, lake ? 0.4 : 0.2), C.water, 0.4);
-    if (day) {
+    if (day && C.durer) {
+      // still water: the land's washes taken back, then an even grey-blue
+      if (!lake) wwash(poly, PAPER, 245);
+      wfill(poly, mixRGB(col, C.water, 0.4), 150, { bleed: 0.15, dir: 'out', ang: 0, tex: 0.1, border: 0.25 });
+    } else if (day) {
       // by day the river's light is the paper: the land's washes are taken back off it
       // (standing in for painting round it), and it is only tinted before the strokes
       if (!lake) wwash(poly, PAPER, 245);
@@ -2631,7 +2658,8 @@ function wcWater(s) {
       const flush = () => {
         if (run.length > 1) {
           const poly = run.map(([x]) => [x, ys + 1]).concat(run.slice().reverse().map(([x, y]) => [x, y]));
-          wwash(poly, col, 60);
+          if (C.durer) wsoft(poly, col, 130, 0.5);
+          else wwash(poly, col, 60);
         }
         run = [];
       };
@@ -2662,9 +2690,12 @@ function wcWater(s) {
     const w = ((tr.hW * s.F) / tr.z) * (tr.tall ? 0.5 : 1);
     if (h < 4 || !onWater(s, x, y + 3)) continue;
     const col = shadeRGB(s.seenTree(mixRGB(C.foliage, C.silhouette, 0.3), tr.z, x, y), 0.9);
-    wwash(markPoly(markLine(x, y + 1, x + random(-1, 1), y + h * 0.85, 0.03), Math.min(6, 0.6 + w * 0.3), tr.ph), col, 110);
+    const refl = markPoly(markLine(x, y + 1, x + random(-1, 1), y + h * 0.85, 0.03), Math.min(6, 0.6 + w * 0.3) * (C.durer ? 1.8 : 1), tr.ph);
+    if (C.durer) wsoft(refl, col, 130, 1.2);
+    else wwash(refl, col, 110);
   }
-  wcWaterStrips(s);
+  if (C.durer) wcWaterDurer(s);
+  else wcWaterStrips(s);
 }
 // By day the water is written in horizontal strokes: the sky's blue (deeper than the sky
 // itself) broken by streaks of untouched paper, and at each bank the dark of the vegetation
@@ -2766,7 +2797,7 @@ function wcMidTree(s, tr) {
   }
   if (w > 3) wline('rigger', s.seenTree(C.silhouette, tr.z, x, y), Math.min(1.5, 0.25 + w * 0.04), x, y + 1, x + random(-0.5, 0.5), cy + h * 0.2);
   // the tall trees are pines; on a summer day a third of the others too
-  const pine = tr.tall || (s.C.summer && Math.abs(Math.sin(tr.ph * 12.9898)) < 0.35);
+  const pine = !s.C.durer && (tr.tall || (s.C.summer && Math.abs(Math.sin(tr.ph * 12.9898)) < 0.35));
   if (pine && !s.winter && h * (tr.tall ? 1 : 1.7) > 12) {
     wcPine(s, tr, x, y, w * (tr.tall ? 1.2 : 0.75), h * (tr.tall ? 1 : 1.7), mixRGB(dark, s.C.silhouette, 0.15), lit);
     return;
@@ -2778,6 +2809,7 @@ function wcMidTree(s, tr) {
   if (w > 2.5) {
     wwash(blobPoly(x - lx * w * 0.18, cy + h * 0.12, w * 0.38, h * (tr.tall ? 0.38 : 0.3), tr.ph + 5, 14, 0.4), dark, 110 * (1 - 0.5 * air));
   }
+  if (s.C.durer && w > 3) wcStipple(s, x, cy, w * (tr.tall ? 0.55 : 1), h, mixRGB(dark, s.C.silhouette, 0.2), lit);
   if (w > 9 && WP.sponge > 0) {
     brush.set('sponge', toHex(lit), Math.min(1.1, w * 0.025) * WP.sponge + 0.1);
     for (let k = 0; k < 2 + Math.round(w / 16); k++) {
@@ -2800,6 +2832,7 @@ function bankPoly(rp, drop = 0) {
 }
 function bankBase(s) {
   const C = s.C;
+  if (C.durer) return mixRGB(SAND, C.foliageLit, 0.25);
   return s.winter ? [118, 100, 76] : mixRGB(mixRGB(C.silhouette, C.foliage, 0.55), C.foliageLit, 0.15);
 }
 // The bank: one dark wash, wet; drops of warm olive, earth and cool blue into it; its
@@ -2858,12 +2891,13 @@ function wcBankDetail(s) {
   // the bank's growth: masses of overlapping upright strokes along its lip and below,
   // dark greens with a little rust, the bank's first wash showing between them
   if (!s.winter) {
-    for (let i = 0; i < 16; i++) {
-      const x = left + (right - left) * ((i + random(0.1, 0.9)) / 16);
+    const nm = C.durer ? 5 : 16;
+    for (let i = 0; i < nm; i++) {
+      const x = left + (right - left) * ((i + random(0.1, 0.9)) / nm);
       const y = bankAt(rp, x) + random(4, 120);
       if (y > REF_H + 8) continue;
       const near = 1 + (y - bankAt(rp, x)) / 160;
-      const fam = random() < 0.85 ? mixRGB(dark, base, random(0.2, 0.6)) : mixRGB(RUST, dark, 0.45);
+      const fam = C.durer ? mixRGB(dark, C.foliageLit, random(0.2, 0.5)) : random() < 0.85 ? mixRGB(dark, base, random(0.2, 0.6)) : mixRGB(RUST, dark, 0.45);
       vegMass(s, x, y, random(70, 160) * near, fam, near, 0.8, true);
     }
   }
@@ -2871,7 +2905,7 @@ function wcBankDetail(s) {
     brush.field('wind');
     // a new gust for the bank (the field recomputed at a later time)
     brush.refreshField(2.7);
-    const n = Math.round(200 * WP.rigger);
+    const n = Math.round(200 * WP.rigger * (C.durer ? 0.35 : 1));
     for (let i = 0; i < n; i++) {
       const x = random(left, right);
       const lip = bankAt(rp, x);
@@ -2886,7 +2920,7 @@ function wcBankDetail(s) {
     }
     brush.noField();
   }
-  if (!s.winter) {
+  if (!s.winter && !C.durer) {
     const leafC = mixRGB(mixRGB(C.foliage, C.foliageLit, 0.25), C.silhouette, 0.2);
     for (let c = 0; c < 4; c++) {
       const x = random(left + 30, right - 30);
@@ -2914,7 +2948,7 @@ function wcBankDetail(s) {
       }
     }
   }
-  if (WP.flowers > 0 && !s.winter) {
+  if (WP.flowers > 0 && !s.winter && !C.durer) {
     const violet = s.night ? [70, 66, 104] : [112, 92, 168];
     const cream = s.night ? [120, 120, 140] : [240, 228, 196];
     for (let i = 0; i < Math.round(36 * WP.flowers); i++) {
@@ -3175,4 +3209,168 @@ function paintPaperTooth(s) {
     endShape();
   }
   noStroke();
+}
+
+
+// ---------------------------------------------------------------------------------
+// After Dürer (the Trento valley view, c. 1495): early watercolour with bodycolour
+// ---------------------------------------------------------------------------------
+// A pale, warm sheet; the sky mostly the paper, the blue-grey put in as mottled, dabbed
+// patches that gather toward the top and the corners; the mountains in strong local colour
+// (teal, a rose-violet range, pale blue far off), dense like bodycolour, modelled by thin
+// strokes down their fall lines; round trees stippled dark blue-green; a broad, still river
+// with soft vertical reflections and ochre sandbars; light green meadows; a sandy bank.
+
+const VIOLET = [162, 112, 138];
+const SAND = [201, 167, 122];
+
+// the sheet: an uneven warm tone over the paper, and the foxing of an old sheet
+function wcAgedSheet(s) {
+  wfill(rrect(-40, -40, REF_W + 40, REF_H + 40, 0.04, 7.7), [238, 226, 198], 70, { bleed: 0.3, dir: 'out', tex: 0.5, border: 0.05, scatter: false });
+  for (let i = 0; i < 4; i++) {
+    const x = random(0, REF_W), y = random(0, REF_H);
+    wsoft(blobPoly(x, y, random(120, 300), random(80, 200), random(50), 18, 0.6), [232, 214, 178], 40, 1.4);
+  }
+}
+function wcFoxing(s) {
+  for (let i = 0; i < 26; i++) {
+    const x = random(20, REF_W - 20), y = random(10, s.HY * 0.6);
+    const r = random(0.8, 2.6);
+    wsoft(blobPoly(x, y, r, r * random(0.7, 1), random(50), 10, 0.5), [184, 136, 82], 150, 0.8);
+  }
+}
+
+// The sky: a pale warm wash, then the blue-grey scumbled in — a half-dry brush dragged level
+// in broad, overlapping passes that break up as they go — thickest high up and toward the
+// corners, thinning to bare paper low in the middle over the valley; a few of the passes wet
+// enough to granulate; the clouds as soft grey drifts where they stand, their tops left pale.
+function skyVignette(s, x, y) {
+  const up = 1 - clamp01(y / (s.HY * 0.9));
+  const side = Math.abs(x - s.CX) / s.CX;
+  return clamp01(Math.pow(up, 1.1) * (0.35 + 0.65 * side) + 0.25 * Math.pow(up, 2.5) + 0.35 * Math.pow(side, 3) * (0.5 + 0.5 * up));
+}
+function wcSkyDurer(s) {
+  const C = s.C;
+  const T = [];
+  T.push(() => {
+    wfill(rrect(-60, -60, REF_W + 60, s.HY + 30, 0.06, 3.1), C.horizon, 90, { bleed: 0.4, dir: 'out', ang: 0, tex: 0.25, border: 0.04, scatter: false });
+  });
+  // the passes: rows from the top down, each a run of broken level strokes whose strength
+  // follows the vignette
+  const rows = [];
+  for (let y = -30; y < s.HY * 0.92; y += random(32, 52)) rows.push(y);
+  const per = Math.ceil(rows.length / 5);
+  let nWet = 0;
+  for (let i = 0; i < rows.length; i += per) {
+    const chunk = rows.slice(i, i + per);
+    T.push(() => {
+      for (const y of chunk) {
+        let x = -80 + random(0, 60);
+        while (x < REF_W + 60) {
+          const len = random(220, 520);
+          const xm = x + len / 2;
+          const v = skyVignette(s, xm, y);
+          // the brush comes back to the top and the corners; the middle of the sky is the paper
+          if (v > 0.22 && random() < Math.pow(v, 1.4) * 1.25) {
+            const h = random(55, 110) * (0.6 + 0.6 * v);
+            const col = mixRGB(mixRGB(C.zenith, C.cloudShadow, random(0, 0.6)), C.upper, random(0.1, 0.5) * (1 - v));
+            // an irregular patch, not a band: the passes overlap and lose their outlines
+            const poly = blobPoly(xm, y + random(-8, 8), len / 2, h / 2, x * 0.01 + y * 0.07, 30, 0.75);
+            // nearly every pass is a real wet wash: its edge bleeds away and it granulates,
+            // so the sky has no shapes in it, only a mottled thickening toward the edges
+            if (nWet < 44) {
+              nWet++;
+              wfill(poly, col, 45 + 105 * v, { bleed: 0.35 + 0.2 * WP.wet, dir: 'out', ang: 0, tex: 0.5 + 0.4 * WP.gran, border: 0.08, scatter: true });
+            } else wsoft(poly, col, 30 + 60 * v, 3);
+          }
+          x += len * random(0.5, 1.1);
+        }
+      }
+    });
+  }
+  T.push(() => {
+    // the clouds: soft grey-teal drifts, darker toward their bases
+    for (const c of s.clouds) {
+      const body = mixRGB(C.cloudShadow, s.sky(c.cx, c.cy), 0.4);
+      for (const lb of c.lobes) wsoft(blobPoly(lb.x, lb.y + lb.ry * 0.4, lb.rx, lb.ry * 0.45, lb.ph, 26, 0.5), body, 55, 1.6);
+    }
+  });
+  return T;
+}
+
+// local colour of a range in the Dürer palette: one range, about the middle, rose-violet
+function durerRangeTint(s, L, col) {
+  const mid = Math.floor(s.ranges.length / 2);
+  if (L === s.ranges[mid]) return mixRGB(col, VIOLET, 0.5 * (1 - L.air * 0.6));
+  return col;
+}
+
+// Fall-line striations: thin strokes down the gullies, darker where the slope turns from the
+// light, a lighter one now and then on a lit rib; dense on the near ranges, absent far off.
+function wcStriations(s, L) {
+  if (L.air > 0.6) return;
+  const C = s.C;
+  const near = 1 - L.air;
+  const col = rangeCol(s, L);
+  const n = Math.round(150 * near);
+  for (let i = 0; i < n; i++) {
+    const x = random(-20, REF_W + 20);
+    const top = ridgeAt(L, x);
+    const y = top + 3 + (Math.min(L.base - top, L.amp) * 0.85) * Math.pow(random(), 1.2);
+    const P = rangePlane(s, L, x, y);
+    const fall = P.sl >= 0 ? Math.atan2(P.sl * 1.8 + 0.6, 1) : Math.atan2(-P.sl * 1.8 + 0.6, -1);
+    const len = random(20, 80) * (0.5 + 0.7 * near);
+    if (P.shade < 0.15 && random() < 0.6) continue; // the strokes gather in the shade
+    const lit = P.lit > P.shade + 0.2 && random() < 0.25;
+    const c = lit ? mixRGB(col, C.light, 0.3) : mixRGB(shadeRGB(col, 0.72), C.shadow, 0.25 * P.shade);
+    const P2 = markLine(x, y, x + Math.cos(fall) * len, y + Math.sin(fall) * len, 0.12, 6);
+    wsoft(markPoly(underRidge(P2, L, L.base), random(1, 2.6) * (0.6 + 0.6 * near), x * 0.03 + i, 0.6), c, 110 + 60 * near, 0.6);
+  }
+}
+
+// a round tree on the plain: the crown's wash, then stippled with small dabs — dark low and
+// away from the light, a lighter green on top
+function wcStipple(s, x, cy, w, h, dark, lit) {
+  const lx = Math.sign(s.sunX - x) || s.sunSide;
+  const k = Math.min(36, 6 + Math.round(w * 0.8));
+  for (let j = 0; j < k; j++) {
+    const u = random(-1, 1), v = random(-1, 1);
+    if (u * u + v * v > 1) continue;
+    const px = x + u * w * 0.5, py = cy + v * h * 0.45;
+    const top = v < -0.2 && u * lx > -0.2;
+    const r = Math.max(0.8, w * random(0.07, 0.14));
+    wsoft(blobPoly(px, py, r, r * 0.8, px * 0.1 + j, 10, 0.5), top ? lit : dark, top ? 140 : 190, 0.7);
+  }
+}
+
+// The river: still, pale grey-blue; the trees and the near ranges mirrored in soft vertical
+// wet strokes; a few level lights; ochre sandbars lying in it.
+function wcWaterDurer(s) {
+  const r = s.river;
+  if (!r) return;
+  const C = s.C;
+  // level lights: the wind barely touching the surface
+  for (let i = 0; i < 18; i++) {
+    const z = Math.exp(random(Math.log(0.9), Math.log(r.zN)));
+    const x = s.gx(r.center(z) + random(-0.7, 0.7) * r.halfW(z), z), y = s.gy(z);
+    if (!onWater(s, x, y)) continue;
+    const len = Math.max(10, (random(0.2, 0.6) * s.F) / z);
+    wsoft(stripPoly(x - len / 2, y, x + len / 2, Math.max(1, (s.F / z) * 0.008), x * 0.01), mixRGB(PAPER, C.light, 0.2), 150, 0.6);
+  }
+  // sandbars
+  let made = 0;
+  for (let tries = 0; tries < 60 && made < 3; tries++) {
+    const z = random(1.1, Math.min(6, r.zN * 0.5));
+    const side = random() < 0.5 ? -1 : 1;
+    const wx = r.center(z) + side * r.halfW(z) * random(0.25, 0.7);
+    const x = s.gx(wx, z), y = s.gy(z);
+    if (!onWater(s, x, y)) continue;
+    const rx = (random(0.45, 1.0) * s.F) / z, ry = Math.max(3, rx * random(0.06, 0.1));
+    const poly = blobPoly(x, y, rx, ry, random(50), 24, 0.45).map(([px, py]) => [px, py]);
+    const col = s.seen(SAND, z, x, y);
+    if (made === 0) wfill(poly, col, 220, { bleed: 0.12, dir: 'in', tex: 0.4, border: 0.3 });
+    else wsoft(poly, col, 200, 0.7);
+    wsoft(blobPoly(x, y + ry * 0.4, rx * 0.9, ry * 0.45, random(50), 18, 0.5), shadeRGB(col, 0.85), 90, 0.6);
+    made++;
+  }
 }
