@@ -70,6 +70,17 @@ const MOODS = {
     foliage: '#0c120f', foliageLit: '#3f4d5b', silhouette: '#05070a',
     light: '#c2cee3', shadow: '#0f162b', water: '#1a253d', clouds: 0.8, rays: 0, night: 1,
   },
+  // Late snow (after a snow study of mountains under an overcast sky): a heavy grey-violet
+  // sky laid in level drags, the mountains white to their feet with Prussian-blue shadows,
+  // a ploughed brown field with snow lying in its furrows. No sun: the light is diffuse.
+  'late snow': {
+    zenith: '#3f4352', upper: '#5c6070', horizon: '#9a9ca6', glow: '#d8d6d2', sun: '#eeeae2',
+    haze: '#8d919e', cloudShadow: '#4a4c5a', cloudLit: '#c8c6c8',
+    rockFar: '#55617f', rockNear: '#303a55', groundFar: '#7a6656', groundNear: '#5a4334',
+    fields: ['#7b6252', '#6e5645', '#8a6e58', '#644c3e', '#806452'],
+    foliage: '#262b2c', foliageLit: '#59625a', silhouette: '#15171c',
+    light: '#e9e8e4', shadow: '#2c3b66', water: '#5d6678', clouds: 1.5, rays: 0, winter: 1,
+  },
 };
 
 let G;
@@ -110,7 +121,7 @@ function setup() {
       wcTrees: { value: 0, options: { 'wash (clean)': 0, 'drawn (charcoal + hatch)': 1 }, label: 'watercolour trees', group: SC },
       sceneType: { value: 0, options: { 'river plain': 0, 'fjord / lake': 1, 'alpine valley': 2 }, label: 'scene', group: SC },
       viewpoint: { value: 1, options: { 'low (looking up)': 0, 'eye level': 1, 'high vantage (looking down)': 2 }, label: 'viewpoint', group: SC },
-      mood: { value: 0, options: { 'golden hour': 0, 'after the storm': 1, 'dawn mist': 2, 'moonlit night': 3 }, label: 'mood', group: SC },
+      mood: { value: 0, options: { 'golden hour': 0, 'after the storm': 1, 'dawn mist': 2, 'moonlit night': 3, 'late snow': 4 }, label: 'mood', group: SC },
       sun: { value: 0.35, min: 0, max: 1, step: 0.01, label: 'sun height', group: SC },
       haze: { value: 0.72, min: 0.3, max: 2.2, step: 0.05, label: 'atmosphere', group: SC },
       ranges: { value: 5, min: 3, max: 7, step: 1, label: 'mountain ranges', group: SC },
@@ -170,6 +181,7 @@ function setup() {
       hatchSpacing: { value: 7, min: 3, max: 16, step: 0.5, label: 'leaf hatch spacing', group: TR },
       hatchAngle: { value: 55, min: 0, max: 180, step: 1, label: 'leaf hatch angle°', group: TR },
       midTrees: { value: 1, options: { off: 0, on: 1 }, label: 'midground trees too', group: TR },
+      canopyDetail: { value: 0.6, min: 0.2, max: 1, step: 0.05, label: 'canopy detail (1 = finest, as before)', group: TR },
 
       brokenColour: { value: 2000, min: 0, max: 8000, step: 100, label: 'broken-colour strokes', group: CO },
       accentStrength: { value: 0.38, min: 0, max: 0.8, step: 0.01, label: 'accent strength', group: CO },
@@ -179,12 +191,15 @@ function setup() {
       meadowBroken: { value: 0.7, min: 0, max: 1, step: 0.05, label: 'meadow broken colour', group: CO },
       waterBroken: { value: 0.7, min: 0, max: 1, step: 0.05, label: 'water broken colour', group: CO },
       fgPaint: { value: 1, min: 0, max: 1, step: 0.05, label: 'foreground painted with the rest', group: MT },
+      fineDetail: { value: 0.5, min: 0, max: 1.5, step: 0.05, label: 'fine detail over the rest (leaf-sized marks)', group: MT },
       bankGreen: { value: 0.6, min: 0, max: 1, step: 0.05, label: 'bank: green of the grass', group: MT },
       bankSand: { value: 0.35, min: 0, max: 1, step: 0.05, label: 'bank: sandy patches', group: MT },
       cloudPaint: { value: 0.7, min: 0, max: 1, step: 0.05, label: 'cloud paint: thin shadows, thick lights', group: CO },
       overcast: { value: 0, min: 0, max: 1, step: 0.05, label: 'overcast deck', group: CO },
       horizonBand: { value: 1.0, min: 0, max: 1.2, step: 0.05, label: 'bright horizon band', group: CO },
       snow: { value: 0.5, min: 0, max: 1, step: 0.05, label: 'snow (snowline)', group: MO },
+      snowShadows: { value: 0.35, min: 0, max: 1, step: 0.05, label: 'snow: blue shadow strokes', group: MO },
+      furrowSnow: { value: 0.7, min: 0, max: 1.5, step: 0.05, label: 'snow in the furrows (late snow)', group: MO },
       couloirs: { value: 0.6, min: 0, max: 1, step: 0.05, label: 'couloirs (snow gullies)', group: MO },
       rockDetail: { value: 0.6, min: 0, max: 1, step: 0.05, label: 'rock: buttresses, bands, scree', group: MO },
       valleyMist: { value: 0.5, min: 0, max: 1, step: 0.05, label: 'valley mist in front of ranges', group: MO },
@@ -392,6 +407,9 @@ function buildScene() {
   // at night the "sun" is the moon: a cool, weak light — the warm terms all but vanish
   s.night = !!C.night;
   if (s.night) s.warmth = 0.22;
+  // late snow: no sun, the light diffuse through an overcast
+  s.winter = !!C.winter;
+  if (s.winter) s.warmth = 0.12;
 
   // --- atmospheric perspective: transmittance with distance ---
   const k = 0.0125 * G.param('haze');
@@ -405,7 +423,7 @@ function buildScene() {
     const dy = y - s.sunY;
     const d = Math.sqrt(dx * dx + dy * dy);
     // the moon's halo is tight and faint; the sun's broad and strong
-    const g = s.night ? Math.exp(-d / (95 * G.param('moonSize'))) * 0.55 : Math.exp(-d / (210 + 140 * s.warmth)) * (0.75 + 0.25 * s.warmth);
+    const g = s.night ? Math.exp(-d / (95 * G.param('moonSize'))) * 0.55 : s.winter ? Math.exp(-d / 420) * 0.16 : Math.exp(-d / (210 + 140 * s.warmth)) * (0.75 + 0.25 * s.warmth);
     c = mixRGB(c, C.glow, clamp01(g));
     const band = Math.exp(-Math.abs(y - s.HY) / 70) * 0.35 * s.warmth;
     return mixRGB(c, C.glow, band * Math.exp(-Math.abs(x - s.sunX) / 700));
@@ -1007,7 +1025,7 @@ function buildRepoussoir(s) {
   }
   // Foliage masses at tips and outer forks — high, and never over the sun.
   const leaves = [];
-  for (const g of grown) {
+  for (const g of s.winter ? [] : grown) { // late snow: bare trees
     const nodes = g.tips.map((t) => [...t, 1]).concat(g.forks.map((f) => [...f, 0.4]));
     for (const [x, y, d, weight] of nodes) {
       if (y > REF_H * 0.42 && g.fromEdge(x) > g.leafReach) continue;
@@ -1026,7 +1044,7 @@ function buildRepoussoir(s) {
   // bare needle: it is snapped instead, ending blunt like an old broken limb.
   const hasKids = new Set(segs.map((g) => g.parent)); // stubs too: they sit along the limb
   segs.forEach((g, i) => {
-    if (g.stub || g.depth === 0 || hasKids.has(i) || g.pts.length < 5) return;
+    if (s.winter || g.stub || g.depth === 0 || hasKids.has(i) || g.pts.length < 5) return; // bare twigs stay
     const [ex, ey] = g.pts[g.pts.length - 1];
     if (leaves.some((l) => Math.hypot(l.x - ex, l.y - ey) < 50)) return;
     g.pts.length -= 2;
@@ -1279,6 +1297,7 @@ function paintSkyGradient(s) {
 }
 
 function paintSun(s) {
+  if (s.winter) return; // behind the overcast
   noStroke();
   const C = s.C;
   const k = s.night ? 0.6 * G.param('moonSize') : 1;
@@ -3376,13 +3395,17 @@ function oilCanopy(s) {
   }
   // leaf-mark size: big leaves, big marks; this tree is near, so its marks are large
   // painted with the rest, a brush's mark, not a pen's: larger and fewer
-  const leafSize = 3.4 * (1 + 0.45 * OP.fg);
+  // canopy detail: below 1 the marks grow (up to 2.3× at 0.2) and thin out in proportion,
+  // and the edge leaves and sky holes are fewer — the crown painted with a bigger brush
+  const CD = G.param('canopyDetail');
+  const CDk = 1 + 1.6 * (1 - CD);
+  const leafSize = 3.4 * (1 + 0.45 * OP.fg) * CDk;
   // 2. the clumps as spheres, top to bottom (lower clumps overlap the undersides above)
   const clumps = clumpsAll.slice().sort((a, b) => a.y - b.y);
   for (const lf of clumps) {
     const rx = lf.r * 1.05, ry = lf.r * 0.85;
     const area = rx * ry;
-    const n = Math.max(10, Math.min(110, Math.round(area / (4.5 * (1 + 0.7 * OP.fg)))));
+    const n = Math.max(6, Math.min(110, Math.round(area / (4.5 * (1 + 0.7 * OP.fg)) / Math.pow(CDk, 1.6))));
     // dark values first, then light: two sweeps over the same clump
     for (const pass of [0, 1]) {
       for (let i = 0; i < n * (pass === 0 ? 2 : 1); i++) {
@@ -3416,7 +3439,7 @@ function oilCanopy(s) {
       const ey = lf.y + Math.sin(a) * lf.r * 0.7;
       // an outer edge only: not inside any other clump
       if (clumpsAll.some((o) => o !== lf && Math.hypot((ex - o.x) / o.r, (ey - o.y) / (o.r * 0.8)) < 0.95)) continue;
-      if (random() < 0.4) continue;
+      if (random() < 1 - 0.6 * CD) continue; // fewer edge leaves with less detail
       const nl = 1 + Math.floor(random(0, 2.5));
       for (let q = 0; q < nl; q++) {
         const la = a + random(-0.7, 0.7) + 0.3; // outward, and drooping
@@ -3455,7 +3478,8 @@ function oilCanopy(s) {
   if (!s.night) {
     const fc = G.param('foliageComplements');
     for (const lf of clumpsAll) {
-      const m = Math.round(lf.r * 0.22 * fc + random());
+      // as many flecks per area as before: fewer when the marks are larger
+      const m = Math.floor((lf.r * 0.22 * fc) / (CDk * CDk) + random());
       for (let k = 0; k < m; k++) {
         const a = random(TWO_PI), d = Math.sqrt(random()) * 0.75;
         const u = Math.cos(a) * d, v = Math.sin(a) * d;
@@ -3472,7 +3496,7 @@ function oilCanopy(s) {
     const T = trunkTones(s);
     const inClump = (x, y) => clumpsAll.some((o) => Math.hypot((x - o.x) / o.r, (y - o.y) / (o.r * 0.8)) < 0.8);
     for (const lf of clumpsAll) {
-      if (random() > 0.3) continue;
+      if (random() > 0.3 * (0.35 + 0.65 * CD)) continue; // fewer sky holes with less detail
       const a = random(TWO_PI);
       const d = random(0.4, 0.75);
       const x = lf.x + Math.cos(a) * d * lf.r;
@@ -3585,6 +3609,8 @@ const PRUSSIAN = [40, 66, 132];
 // the meadow's unblended touches (Arles): ochre, warm yellow, yellow-green, olive, a cool
 // green and the light; violet only goes into the darker patches
 const MEADOW_TOUCHES = [[196, 156, 74], [222, 196, 92], [156, 170, 72], [120, 128, 64], [92, 128, 96]];
+// the ploughed field's touches (late snow): umber, burnt sienna, a red-orange streak
+const EARTH_TOUCHES = [[150, 96, 70], [176, 120, 84], [120, 84, 64], [196, 112, 66], [140, 112, 98]];
 // Mont Sainte-Victoire with Large Pine (Cézanne, c. 1887): the plain's field planes by
 // temperature (warm ochre, mint, lavender, pale yellow-green), the peak's warm pink and
 // blue-violet, and its drawn blue contour
@@ -3613,6 +3639,15 @@ const ACCENTS = {
 function oilBegin(s) {
   OP = oilParams();
   OP.nightK = s.night ? 0.35 : 1;
+  // late snow: the sky in level drags (no vortex round a sun), the field ploughed in long
+  // level streaks, its planes of colour muted to the earth
+  OP.winter = s.winter;
+  if (s.winter) {
+    OP.vortex = 0;
+    OP.upright *= 0.25;
+    OP.sweep = Math.max(OP.sweep, 3.2);
+    OP.fieldPlanes *= 0.4;
+  }
   // the plain's fields by row, each given one temperature (or none) for the field planes
   {
     const rows = new Map();
@@ -3701,6 +3736,7 @@ function oilBegin(s) {
   oilBrokenColour(s, O, groups[2]);
   oilHorizonBand(s, O, groups[2]);
   oilScumble(s, O, groups[2]);
+  oilFurrows(s, O, groups[2]);
   oilMeadowFlowers(s, O, groups[2]);
   oilObjects(s, O, groups[3]);
   // the clouds' shadows: every stroke laid on the plain or the water under a shadow is
@@ -3785,6 +3821,17 @@ function oilBegin(s) {
   // p5.brush (watercolour mass + ink hatching)
   queue.push(() => YIELD);
   queue.push(() => captureSurface());
+  // fine detail over the rest of the picture, before the tree goes on (generated from the
+  // surface just captured, then drawn in chunks spliced in after this pass)
+  queue.push(() => {
+    const marks = oilFineDetail(s, O);
+    const chunks = [];
+    for (let i = 0; i < marks.length; i += 150) {
+      const c = marks.slice(i, i + 150);
+      chunks.push(() => c.forEach(oilStroke));
+    }
+    tasks.splice(taskIdx, 0, ...chunks);
+  });
   const mid = midTrunkMarks(s);
   for (let i = 0; i < mid.length; i += 80) {
     const chunk = mid.slice(i, i + 80);
@@ -3854,24 +3901,25 @@ function rangePlane(s, L, x, y) {
 //    sun while the next is in shadow.
 function rangeDetail(s, L, x, y, P) {
   const alt = (L.base - y) / Math.max(1, L.amp);
-  const SN = G.param('snow'), CO = G.param('couloirs'), RD = G.param('rockDetail');
+  const SN = s.winter ? Math.max(0.9, G.param('snow')) : G.param('snow'), CO = G.param('couloirs'), RD = G.param('rockDetail');
   if (L.maxSpan === undefined) L.maxSpan = Math.max(...L.ridge.map((p) => L.base - p[1]));
   const ry = y - P.d;
   // how high this stretch of crest stands: snow belongs to the summits and high crests,
   // not to a fixed fraction of every range (that read as a level white band); the farther
   // ranges stand higher and carry more of it, the near hills almost none
   const crestH = (L.base - ry) / Math.max(1, L.maxSpan);
-  const high = clamp01((crestH - (0.82 - 0.4 * SN)) / 0.25);
+  const high = s.winter ? 1 : clamp01((crestH - (0.82 - 0.4 * SN)) / 0.25); // late snow: every crest
   // snow lies on some stretches of a crest and not others (wind, aspect), and the farthest
   // ranges show less of it through their air — otherwise a high far range wore a
   // continuous white belt (glaring by moonlight)
-  const gate = L.isPeak ? 1.25 : clamp01((noise(x * 0.005 + L.i * 3.1, 17.3) - 0.38) / 0.2) * (0.45 + 0.55 * (1 - L.air));
-  const reachK = SN * high * gate * clamp01(1 - 1.4 * L.t);
+  const gate = L.isPeak ? 1.25 : clamp01((noise(x * 0.005 + L.i * 3.1, 17.3) - (s.winter ? 0.2 : 0.38)) / 0.2) * (0.45 + 0.55 * (1 - L.air));
+  // late snow: the nearer ranges are white too, down to their feet
+  const reachK = SN * high * gate * clamp01(1 - (s.winter ? 0.55 : 1.4) * L.t);
   // hollows between spurs hold the snow further down, the ribs shed it
   const sp = noise(x * 0.022 + P.d * 0.0035, L.i * 7.1 + 3.3);
   const hollow = clamp01((0.5 - sp) * 3);
   const patch = 0.55 + 0.9 * noise(x * 0.045, y * 0.03, L.i * 2.2 + 2.2);
-  const reach = L.maxSpan * 0.32 * reachK * patch * (0.45 + 0.9 * hollow);
+  const reach = L.maxSpan * (s.winter ? 1.4 : 0.32) * reachK * patch * (0.45 + 0.9 * hollow);
   // couloirs: thin, broken gullies running down from the snowfield, a little past it
   const cou = noise(x * 0.03 + P.d * 0.0025, L.i * 5.3 + 11);
   const run = clamp01((noise(P.d * 0.06, x * 0.01, L.i + 4.4) - 0.42) * 4);
@@ -4134,7 +4182,8 @@ function oilLayer(s, O, out, scale, cover, edges, layer) {
         }
         // broken colour: the upright dashes carry their own colour, laid unblended beside
         // one another (most of them, and strongly); the level strokes only a touch
-        const pick = () => (random() < 0.15 ? s.C.light : MEADOW_TOUCHES[Math.floor(random(MEADOW_TOUCHES.length))]);
+        const TOUCHES = OP.winter ? EARTH_TOUCHES : MEADOW_TOUCHES;
+        const pick = () => (random() < 0.15 ? s.C.light : TOUCHES[Math.floor(random(TOUCHES.length))]);
         const tint = f.kind !== 'ground' ? null : isUp || isCon ? (random() < 0.9 * OP.meadowBroken ? pick() : null) : random() < 0.4 * OP.meadowBroken ? pick() : null;
         const tint2 = tint && (isUp || isCon) ? pick() : tint;
         const st = makeOilStroke(O, sx, sy, sa, sl, w * random(0.85, 1.1), {
@@ -4518,14 +4567,18 @@ function oilPeak(s, O, out) {
 // line on gentle faces, steeper on steep ones), so they read as the lightest, thickest paint
 // on the mountain rather than a tint the body strokes and the peak's passes have diluted.
 function oilSnow(s, O, out) {
-  if (G.param('snow') <= 0) return;
+  if (G.param('snow') <= 0 && !s.winter) return;
+  // the snow study: snow is loaded near-white in flat planes, and its shadows are not a
+  // grey tint but bold Prussian / cobalt blue shapes drawn with the brush down the fall
+  // line, and a dark blue line restates each snowy crest against the sky
+  const SS = s.winter ? Math.max(0.9, G.param('snowShadows')) : G.param('snowShadows');
   const at = (L, x) => L.ridge[Math.max(0, Math.min(L.ridge.length - 1, Math.round((x + 30) / 4)))][1];
   for (const L of s.ranges) {
-    if (L.t > 0.72) continue; // the near hills carry none
+    if (L.t > (s.winter ? 1.01 : 0.72)) continue; // the near hills carry none (in late snow, all do)
     if (L.maxSpan === undefined) L.maxSpan = Math.max(...L.ridge.map((p) => L.base - p[1]));
     const vis = 1 - L.air;
     const w0 = 2.4 + 3.2 * vis;
-    for (let i = 0; i < 3200; i++) {
+    for (let i = 0; i < (s.winter ? 6500 : 3200); i++) {
       const x = random(-10, REF_W + 10);
       const y = at(L, x) + random(0.5, L.maxSpan * 0.42);
       const f = O.field(x, y);
@@ -4536,7 +4589,80 @@ function oilSnow(s, O, out) {
       const col = mountainDetailColour(s, L, O.under(x, y), P, { snow: Math.min(1, D.snow * 1.15), rock: 0, band: 0, scree: 0, shade: D.shade }, vis);
       const a = Math.atan(P.sl) * (Math.abs(P.sl) > 0.6 ? 1.2 : 0.7) + random(-0.12, 0.12);
       const w = w0 * random(0.8, 1.2);
-      out.push(makeOilStroke(O, x, y, a, w * random(1.8, 2.8), w, { color: col, color2: mixRGB(col, O.under(x, y), 0.25), relief: 0.3 + 0.25 * vis, crisp: true }));
+      // a shadow face (or a fold of the snow) takes a blue calligraphic stroke down the fall
+      // line; a lit face a loaded, flat near-white one
+      // shadow shapes, not dots: the face's turn plus a broad, low-frequency fold pattern
+      const sh = clamp01((P.shade - P.lit) * 2 + 0.2 + 1.1 * (noise(x * 0.007, y * 0.014, L.i + 7.7) - 0.5));
+      if (SS > 0 && random() < SS * sh) {
+        const blue = s.seen(mixRGB(PRUSSIAN, [74, 100, 168], noise(x * 0.01, y * 0.01, 3.3)), L.z * 0.3, x, y);
+        const bc = mixRGB(col, blue, 0.45 + 0.4 * SS);
+        const fall = Math.atan(P.sl) * 1.5 + (P.sl >= 0 ? 0.35 : -0.35) + random(-0.25, 0.25);
+        const wk = s.winter ? 1.35 : 1;
+        out.push(makeOilStroke(O, x, y, fall, w * wk * random(3.5, 6.5), w * wk * random(0.8, 1.2), { color: bc, color2: mixRGB(bc, blue, 0.3), relief: 0.3, crisp: true }));
+        continue;
+      }
+      const lc = mixRGB(col, [246, 246, 242], 0.35 * SS * vis);
+      out.push(makeOilStroke(O, x, y, a, w * random(1.8, 2.8) * (1 + 0.5 * SS), w * (1 + 0.3 * SS), { color: lc, color2: mixRGB(lc, O.under(x, y), 0.2), relief: 0.3 + 0.25 * vis + 0.15 * SS, crisp: true }));
+    }
+    // the crest restated in dark blue where snow lies under it, broken, against the sky
+    if (SS > 0) {
+      const rid = L.ridge;
+      for (let j = 1; j < rid.length - 9; j += 7) {
+        if (!(L.isPeak || L.t > 0.45)) break; // the crest line belongs to the nearer ranges and the peak
+        const [cx, cy] = rid[j];
+        if (cx < -10 || cx > REF_W + 10 || random() > 0.6 * SS) continue;
+        const f = O.field(cx, cy + 2);
+        if (f.L !== L) continue;
+        const D = rangeDetail(s, L, cx, cy + 3, rangePlane(s, L, cx, cy + 3));
+        if (D.snow < 0.4) continue;
+        const path = rid.slice(j, j + 9).map(([px, py]) => [px, py + 1.4]);
+        const col = s.seen(mixRGB(PRUSSIAN, s.C.shadow, 0.3), L.z * 0.35, cx, cy);
+        out.push(markToOil({ kind: 'band', path, w: (2.2 + 2.6 * vis) * random(0.8, 1.2), col, col2: col, rel: 0.12 }));
+      }
+    }
+  }
+}
+
+// Snow lying in the furrows of a ploughed field (late snow): long broken white stripes
+// running into the field toward one vanishing point on the horizon, widening toward us,
+// over the warm brown earth — the study's foreground.
+function oilFurrows(s, O, out) {
+  const FS = G.param('furrowSnow');
+  if (!s.winter || FS <= 0) return;
+  const vx = s.focalX + (noise(G.seed % 997, 3.3) - 0.5) * REF_W * 0.3;
+  const y0 = s.gy(s.zGround * 0.8);
+  const snow = mixRGB([238, 240, 244], s.C.light, 0.3);
+  const cold = mixRGB(s.C.shadow, [120, 132, 168], 0.5);
+  const n = Math.round(14 * FS);
+  for (let k = 0; k < n; k++) {
+    const xb = -REF_W * 0.4 + (REF_W * 1.8 * (k + random(0.15, 0.85))) / n; // where it meets the bottom edge
+    const ph = random(100);
+    const a = Math.atan2(REF_H - s.HY, xb - vx);
+    const sinA = Math.abs(Math.sin(a)) || 1e-3;
+    for (let y = y0; y < REF_H; ) {
+      const t = (y - s.HY) / (REF_H - s.HY);
+      // the furrow wanders a little and its snow swells and thins along it
+      const x = vx + (xb - vx) * t + (noise(ph, y * 0.012) - 0.5) * 30 * t;
+      const w = (1.4 + 13 * Math.pow(t, 1.3)) * (0.45 + 0.9 * noise(ph + 5, y * 0.03));
+      const step = Math.max(2, w * random(1.6, 2.6));
+      // broken, and more broken in the distance
+      if (noise(ph + y * 0.015) > 0.3 + 0.25 * (1 - t)) {
+        const f = O.field(x, y);
+        if (f.kind === 'ground') {
+          const base = O.under(x, y);
+          const z = s.F / Math.max(0.5, y - s.HY);
+          const col = s.seen(mixRGB(snow, base, random(0.05, 0.18)), z, x, y);
+          const st = makeOilStroke(O, x, y, a + random(-0.05, 0.05), step * 1.25, w, { color: col, color2: mixRGB(col, base, 0.3), relief: 0.25, crisp: random() < 0.4 });
+          out.push(st);
+          // the furrow's cold side: a thin blue-grey shadow along one edge of the snow
+          if (w > 3 && random() < 0.6) {
+            const off = w * 0.45;
+            const sc = s.seen(mixRGB(cold, base, 0.35), z, x, y);
+            out.push(makeOilStroke(O, x + off * Math.sin(a), y - off * Math.cos(a), a, step * 1.1, w * 0.3, { color: sc, color2: base, relief: 0.05, soft: true }));
+          }
+        }
+      }
+      y += step * sinA * 0.95 + 0.5;
     }
   }
 }
@@ -4632,7 +4758,7 @@ function oilScumble(s, O, out) {
 // (noise decides where they grow), denser and larger in front, gone by the middle
 // distance, and seen through the same air as the meadow.
 function oilMeadowFlowers(s, O, out) {
-  const amt = G.param('wildflowers') * (s.night ? 0.3 : 1); // colour sleeps at night
+  const amt = G.param('wildflowers') * (s.night ? 0.3 : 1) * (s.winter ? 0 : 1); // colour sleeps at night; none in snow
   const n = Math.round(900 * amt);
   const tints = [[248, 242, 226], [248, 242, 226], [240, 200, 208], [240, 218, 120]];
   for (let t = 0, made = 0; t < n * 4 && made < n; t++) {
@@ -4665,7 +4791,7 @@ function oilBankFlowers(s, O) {
   const C = s.C;
   const rp = s.repoussoir;
   const out = [];
-  const amt = G.param('wildflowers');
+  const amt = s.winter ? 0 : G.param('wildflowers');
   const n = Math.round(90 * amt);
   const stemCol = mixRGB(mixRGB(C.silhouette, PRUSSIAN, 0.35), ACCENTS.olive, 0.15);
   for (let t = 0, made = 0; t < n * 6 && made < n; t++) {
@@ -4786,27 +4912,30 @@ function oilClouds(s, O, out) {
   // the overcast deck (the sketch's grey sky): a broad veil over the part of the sky away
   // from the sun, laid in wide diagonal drags of thin grey — scumbles, so the blue shows
   // between and through them — with open gaps; its lower edge stops above the horizon
-  const OV = G.param('overcast');
+  const OV = s.winter ? Math.max(0.9, G.param('overcast')) : G.param('overcast');
   if (OV > 0) {
     const side = -s.sunSide; // away from the sun
     const deck = mixRGB(mixRGB(C.cloudShadow, [150, 152, 164], 0.55), C.shadow, 0.15);
     const deckLit = mixRGB(deck, [236, 232, 224], 0.35);
-    const n = Math.round(2600 * OV);
+    const n = Math.round((s.winter ? 4200 : 2600) * OV);
     for (let i = 0; i < n; i++) {
       const x = random(-40, REF_W + 40), y = random(-20, s.HY * 0.62);
       const f = O.field(x, y);
       if (f.kind !== 'sky' && f.kind !== 'cloud') continue;
-      const across = clamp01(0.5 + side * (x - s.sunX) / (REF_W * 0.7)); // 0 at the sun's side
+      const across = s.winter ? 1 : clamp01(0.5 + side * (x - s.sunX) / (REF_W * 0.7)); // 0 at the sun's side
       // the deck's lower edge stops well above the skyline, leaving the clear strip below it
-      const floor = Math.min(s.HY * 0.62, skylineY(s, x) - 90);
+      const floor = s.winter ? skylineY(s, x) - 45 : Math.min(s.HY * 0.62, skylineY(s, x) - 90);
       const low = clamp01((floor - y) / (s.HY * 0.22));
       const gaps = noise(x * 0.0035 + 13, y * 0.006, 4.2) * 0.75 + noise(x * 0.012, y * 0.02, 8.1) * 0.25;
-      const sunGap = 1 - Math.exp(-Math.pow(Math.hypot((x - s.sunX) / 1.4, y - s.sunY) / 300, 2));
+      const sunGap = s.winter ? 1 : 1 - Math.exp(-Math.pow(Math.hypot((x - s.sunX) / 1.4, y - s.sunY) / 300, 2));
       const k = OV * Math.pow(across, 0.8) * low * sunGap * clamp01((gaps - 0.32) / 0.25);
       if (k < 0.05 || random() > 0.4 + 0.6 * k) continue;
       const sky = s.sky(x, y);
       const col = mixRGB(sky, mixRGB(deck, deckLit, noise(x * 0.01, y * 0.01, 2)), 0.3 + 0.45 * k);
-      const st = makeOilStroke(O, x, y, -0.42 * side + random(-0.18, 0.18), random(60, 140), random(14, 26), { color: col, color2: mixRGB(col, sky, 0.3), relief: 0 });
+      // late snow: long level drags, wet into wet (the study's sky); otherwise diagonal
+      const st = s.winter
+        ? makeOilStroke(O, x, y, random(-0.07, 0.07), random(120, 260), random(12, 24), { color: col, color2: mixRGB(col, sky, 0.3), relief: 0 })
+        : makeOilStroke(O, x, y, -0.42 * side + random(-0.18, 0.18), random(60, 140), random(14, 26), { color: col, color2: mixRGB(col, sky, 0.3), relief: 0 });
       // both ends in the sky: a drag never crosses onto a mountain
       if ([st.P[0], st.P[3]].some(([px, py]) => { const k2 = O.field(px, py).kind; return (k2 !== 'sky' && k2 !== 'cloud') || py > skylineY(s, px) - 40; })) continue;
       if (random() < 0.7) st.scumble = true; else st.soft = true;
@@ -4969,7 +5098,7 @@ function oilClouds(s, O, out) {
     }
     // the silver lining reaches farther than the darkening does: a cloud well away from
     // the sun still catches light on the edge that faces it
-    const rimReach = Math.exp(-Math.pow(dl / 640, 2));
+    const rimReach = s.winter ? 0 : Math.exp(-Math.pow(dl / 640, 2)); // no lining under an overcast
     if (rimReach > 0.08) {
       const rimC = mixRGB(mixRGB(C.sun, [255, 252, 242], 0.6), C.glow, 0.15);
       for (const lb of c.lobes) {
@@ -5259,7 +5388,7 @@ function oilGrass(s, O) {
   const out = [];
   if (dens <= 0) return out;
   const dark = mixRGB(C.silhouette, [0, 0, 0], OP.silhouette * 0.5);
-  const BG = G.param('bankGreen') * OP.nightK, BS = G.param('bankSand') * OP.nightK;
+  const BG = (s.winter ? 0 : G.param('bankGreen')) * OP.nightK, BS = (s.winter ? Math.max(0.6, G.param('bankSand')) : G.param('bankSand')) * OP.nightK;
   const gr = mixRGB(C.foliage, C.foliageLit, 0.35);
   const cool = mixRGB(mixRGB(dark, C.shadow, 0.35), gr, 0.15 * BG);
   const warmDark = mixRGB(mixRGB(dark, ACCENTS.olive, 0.22), gr, 0.35 * BG);
@@ -5670,6 +5799,39 @@ function oilScratches(list) {
   noStroke();
 }
 
+// Fine detail over the rest of the picture, at the grain of the crown's leaves. The tree was
+// the only place painted in small marks, so it read as more finished than everything else.
+// Small marks go over the finished paint (sampled from it), each a step lighter or darker
+// than the colour already there, turned to the local stroke direction and sized by depth:
+// leaf-sized in front, specks at the back. They gather where forms meet (where the value
+// changes across a few pixels), as a painter's last touches do; few in the sky.
+function oilFineDetail(s, O) {
+  const FD = G.param('fineDetail');
+  if (FD <= 0 || !SURF) return [];
+  const n = Math.round(9000 * FD);
+  const lum = (c) => 0.3 * c[0] + 0.59 * c[1] + 0.11 * c[2];
+  const marks = [];
+  for (let i = 0, tries = 0; i < n && tries < n * 4; tries++) {
+    const x = random(0, REF_W), y = random(0, REF_H);
+    const f = O.field(x, y);
+    if (f.kind === 'limb' || f.kind === 'leaf') continue;
+    const sky = f.kind === 'sky' || f.kind === 'cloud';
+    const c = SURF(x, y);
+    const l0 = lum(c);
+    const dl = Math.max(Math.abs(lum(SURF(x + 4, y)) - l0), Math.abs(lum(SURF(x, y + 4)) - l0));
+    const edge = clamp01(dl / 40);
+    const keep = (sky ? 0.12 : f.kind === 'far' ? 0.3 : 0.6) * (0.3 + 0.7 * edge);
+    if (random() > keep) continue;
+    i++;
+    const size = 3.4 * Math.max(0.25, Math.min(1.3, f.k || 0.5)) * random(0.7, 1.3);
+    const v = random() < 0.5 ? random(0.82, 0.94) : random(1.06, 1.18);
+    const col = shadeRGB(c, v * (OP.nightK < 1 ? 0.97 : 1));
+    const st = makeOilStroke(O, x, y, (f.a || 0) + random(-0.35, 0.35), size * random(1.6, 2.6), size * 0.6, { color: col, color2: c, relief: 0.08, crisp: random() < 0.6 });
+    marks.push(st);
+  }
+  return marks;
+}
+
 // Glazes: thin transparent colour over the dry painting, the old masters' last layer. A
 // glaze filters the light coming back off the paint, so it is drawn as MULTIPLY: it can
 // shift hue and deepen, never lighten. Two glazes: transparent gold radiating from the
@@ -5716,9 +5878,10 @@ function oilForegroundBlockIn(s, O, out) {
   // the dunes study: the near ground is green grass, not a brown-black silhouette — a sap
   // green in the bank's own shadow, greener toward the lip and the sun — with patches of
   // bare warm sand showing between the tufts (both muted at night)
-  const BG = G.param('bankGreen') * OP.nightK, BS = G.param('bankSand') * OP.nightK;
-  const greenD = mixRGB(mixRGB(C.foliage, C.foliageLit, 0.4), C.silhouette, 0.25);
-  const sand = mixRGB([212, 196, 150], C.light, 0.2);
+  // late snow: the grass is dead straw, and snow lies where the sand would show
+  const BG = (s.winter ? 0.7 : G.param('bankGreen')) * OP.nightK, BS = (s.winter ? Math.max(0.6, G.param('bankSand')) : G.param('bankSand')) * OP.nightK;
+  const greenD = s.winter ? [112, 94, 70] : mixRGB(mixRGB(C.foliage, C.foliageLit, 0.4), C.silhouette, 0.25);
+  const sand = s.winter ? [234, 236, 240] : mixRGB([212, 196, 150], C.light, 0.2);
   const nBank = Math.round(1100 * k);
   for (let i = 0; i < nBank; i++) {
     const x = random(bk[0][0], bk[bk.length - 1][0]);
@@ -5736,7 +5899,7 @@ function oilForegroundBlockIn(s, O, out) {
     // greener, and a step lighter: grass in shade, not a silhouette
     if (BG > 0) col = shadeRGB(mixRGB(col, greenD, BG * (0.45 + 0.3 * toLip + 0.15 * sunw)), 1 + 0.22 * BG);
     const sd = bankSandAt(x, y);
-    if (BS > 0 && sd > 0) col = mixRGB(col, shadeRGB(sand, 0.68 + 0.25 * toLip + 0.15 * sunw), Math.min(0.85, BS * Math.sqrt(sd) * 2.2));
+    if (BS > 0 && sd > 0) col = mixRGB(col, shadeRGB(sand, (s.winter ? 0.8 : 0.68) + 0.25 * toLip + 0.15 * sunw), Math.min(0.85, BS * Math.sqrt(sd) * 2.2));
     // broad value shifts across the bank (the patch), then each stroke its own step
     col = shadeRGB(col, (0.9 + 0.35 * noise(x * 0.004 + 21, y * 0.008, 1.3)) * random(0.9, 1.1));
     const slope = (bankAt(rp, x + 12) - bankAt(rp, x - 12)) / 24;
@@ -5796,7 +5959,7 @@ function oilForegroundBlockIn(s, O, out) {
 // and scumbles, the glazes, the grass and flowers in front — goes over them.
 function oilSwordLeaves(s, O, out) {
   const n0 = G.param('swordLeaves'), dens = G.param('grass');
-  if (OP.fg <= 0 || n0 <= 0 || dens <= 0) return;
+  if (OP.fg <= 0 || n0 <= 0 || dens <= 0 || s.winter) return; // the irises are gone in winter
   const C = s.C;
   const rp = s.repoussoir;
   const lr = seededRand(G.seed ^ 0x5eed1eaf);
@@ -5957,7 +6120,7 @@ function oilGlazes(s) {
   blendMode(MULTIPLY);
   noStroke();
   const rings = [0, 90, 240, 480, 820, 1300];
-  const amt = [0, 0.18, 0.38, 0.28, 0.12, 0];
+  const amt = s.winter ? [0, 0, 0, 0, 0, 0] : [0, 0.18, 0.38, 0.28, 0.12, 0]; // no sun to gild under an overcast
   const seg = 48;
   for (let r = 0; r < rings.length - 1; r++) {
     const c0 = mixRGB(white, gold, amt[r] * k);
@@ -6169,6 +6332,7 @@ function oilMidTree(s, O, tr, out) {
 // circling strokes, then the halo in discrete tonal rings stepping down to the sky —
 // each ring thinner paint than the one inside it.
 function oilSun(s, O, out) {
+  if (s.winter) return;
   const C = s.C;
   const white = [255, 252, 245];
   const sky = O.under(s.sunX + 260, s.sunY - 60);

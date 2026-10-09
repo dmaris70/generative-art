@@ -819,6 +819,43 @@ scene's geometry is unchanged. Brush jitter in the later passes does shift.
   underpainting. At night that is mid-grey water and bank, where flat pale slabs read as
   scraps of paper. At night only the top 2.5 % (the moon's light) takes the knife.
 
+## Late snow (after a snow study) · canopy detail · fine detail over the rest
+
+### Late snow (a fifth *mood*)
+
+The snow study: mountains under a heavy overcast, white to their feet, with bold
+Prussian-blue shadows, and a ploughed brown field with snow lying in its furrows.
+
+| element | how it is painted |
+|---|---|
+| **Sky** | A grey-violet palette with no sun (no disc, rays or gold glaze; a faint diffuse brightness only). The overcast deck is always on, over the whole sky and down to the skyline: up to 4,200 long, level, wet-into-wet drags of 120–260 px. The sky strokes lose their vortex and lie level. The clouds have no silver linings |
+| **Snow cover** | Every crest carries snow, the nearer ranges too, down to their feet (snow at least 0.9; reach 1.4 × the range's height; the crest gate is looser) |
+| **Snow technique** (*snow: blue shadow strokes*, 0.35 in every mood, at least 0.9 in late snow) | `oilSnow` lays snow in two kinds of stroke. Lit faces get loaded, flat near-white strokes with higher impasto. Shadow faces, and the broad folds a low-frequency noise picks out, get bold Prussian-to-cobalt blue strokes down the fall line, 3.5–6.5 × their width, so the shadows read as shapes, not dots. Snowy crests on the nearer ranges and the peak are restated in long, dark blue runs against the sky |
+| **Ploughed field** | The meadow's broken colour becomes earth touches: umber, burnt sienna and a red-orange streak. The strokes lie level and long, and the field planes are muted |
+| **Snow in the furrows** (*snow in the furrows (late snow)*, 0.7) | About 14 stripes run to one vanishing point on the horizon, widening toward the viewer. They wander a little and swell and thin along their length, broken more in the distance, each with a thin cold blue-grey shadow on one edge |
+| **Foreground** | The framing trees are bare: no foliage, twigs kept. The bank is dead straw, and its "sandy patches" are snow. No irises, wildflowers or bank flowers |
+
+### Canopy detail (*canopy detail*, 0.6; 1 = as before)
+
+The crown was the most finely drawn part of the picture: leaf-sized marks (3.4 px against
+the rest's 18 px strokes), up to 110 per clump, plus single edge leaves and sky holes.
+Below 1:
+- the marks grow, up to 2.3× at 0.2;
+- their count falls in proportion (∝ 1/size^1.6);
+- the edge leaves thin out (kept with probability 0.6 × setting);
+- the sky holes thin out (0.35 + 0.65 × setting).
+
+### Fine detail over the rest (*fine detail over the rest*, 0.5)
+
+The counterpart, so the tree is not the only finished part. After the rest of the picture
+is painted and before the trees go on, up to 9,000 small marks are laid over it:
+- **Colour:** each is sampled from the paint there, a step lighter or darker
+  (×0.82–0.94 or ×1.06–1.18).
+- **Direction:** turned to the local stroke direction.
+- **Size:** by depth, leaf-sized in front and specks at the back.
+- **Placement:** they gather where the value changes across 4 px (where forms meet), and
+  are few in the sky (12 %) and on the far ranges (30 %).
+
 ## How each technique is implemented
 
 | technique | where | rule |
