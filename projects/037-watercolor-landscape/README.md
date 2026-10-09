@@ -9,7 +9,44 @@ white.
 Original composition, painted with [p5.brush](https://github.com/acamposuribe/p5.brush)
 (2.2.3, p5 2.x WEBGL). It is not a copy of any painting.
 
-![seed 4, golden hour, watercolour](preview.png)
+![seed 4, summer day, watercolour](preview.png)
+
+## v2: after Winslow Homer's *The Blue Boat* (1892)
+
+The reference was compared with the v1 painting. The gaps were technical, not about
+subject, so each one was traced to a method and the method was implemented. The
+composition stays original: no boat or figures, and the same engine-built landscape.
+
+| Homer's method | v1 | v2 implementation |
+|---|---|---|
+| A saturated blue sky; the cumulus are the **white of the paper**, with only their flat-bottomed grey bellies painted | a grey sky, with the clouds painted grey over it | a new mood, **summer day** (the default). The sky is laid as deep wet bands. Each cloud is lifted back to paper lobe by lobe, and its belly is a flat-bottomed wet grey band found along its base (`inCloud`), darkest at the base. A few tapered level strokes give the sky its banding. |
+| A full range of values: near-black conifers, white paper | everything mid-value and pastel | pigment load 1.25; a dark band of spruce with spired tops along the foot of the hills, and a few tall spires with tiers of branches |
+| Calligraphic pines: a thin trunk, tiers of horizontal dabs, sky between them | round blots | `wcPine`: tiers of drooping horizontal touches, lit tops dropped in, gaps of sky. On a summer day a third of the plain's trees are pines. |
+| The foliage of the near trees as masses of loaded-brush touches | transparent round glazes | each crown clump is a few broad drooping touches: light on the sunward top, dark beneath, mid between. Only the 10 largest masses get a wet underwash, so the sky shows through. |
+| Vegetation built up wet: variegated greens, rust and ochre, darks massed at the foot | pale banded green | wet drops of green, rust and ochre, then 60 masses on the plain and 16 on the bank. Each is a dark body whose top breaks into upright tips, with upright strokes over its edge (`vegMass`). |
+| Water in level strokes: the sky's blue deeper than the sky, streaks of white paper, the banks' dark mirrored and pulled out across it | a grey band | by day the land's washes are taken back off the river, which is tinted and then written in broken horizontal strokes, with dark bank reflections from each edge inward (`wcWaterStrips`) |
+| No gimmicks | pen hatching, salt and a pencil lay-in on by default | the pen is off by default; salt, spatter and pencil are reduced |
+
+The other five moods keep their painted, coloured clouds: lifted white clouds are wrong
+under a low sun, a storm light or the moon. The water and vegetation methods apply to every
+daylight mood.
+
+Changed defaults:
+- mood: summer day
+- sun: 0.7
+- atmosphere: 0.6
+- clouds: 0.75
+- mist: 0.25
+- wetness: 0.45
+- pigment load: 1.25
+- granulation: 0.4
+- backruns: 0.65
+- lifting: 0.4
+- horizon band: 0.4
+- pencil: 0.2
+- pen: 0
+- spatter: 0.25
+- salt: 0.1
 
 ## What is shared, what is new
 
@@ -33,12 +70,13 @@ The library's renderer was benchmarked in this repository before the painter was
 The first draft ignored this. It painted 3,016 fills and 2,385 strokes; washes read as black
 bars and a render took over 15 minutes. The current painter's counts (measured):
 
-| Painting | Fills | Washes | Strokes (`wline`/`wstroke`) |
+| Painting (v2) | Fills | Washes | Strokes (`wline`/`wstroke`) |
 |---|---|---|---|
-| seed 4, golden hour | 170 | 4,871 | 440 |
-| seed 4, moonlit night | 168 | 4,133 | 359 |
-| seed 4, late snow | 176 | 1,581 | 500 |
-| seed 11, fjord / lake | 141 | 4,138 | 312 |
+| seed 4, summer day (default) | 186 | 6,955 | 366 |
+| seed 4, golden hour | 216 | 8,950 | 422 |
+| seed 4, moonlit night | 196 | 6,245 | 373 |
+| seed 4, late snow | 203 | 1,396 | 342 |
+| seed 11, fjord / lake (summer day) | 161 | 8,195 | 334 |
 
 Grass `flowLine`s, pencil and pen splines, sponge, spatter and granulation come on top of
 the strokes counted here. A painting takes 4.5–6 minutes at 1240×860 in the software-GL
@@ -127,24 +165,24 @@ The rest of the README list was left out deliberately:
 
 | Group | Parameter (default) | Effect |
 |---|---|---|
-| Scene | scene, viewpoint, mood (golden hour, after the storm, dawn mist, moonlit night, late snow), sun, atmosphere, ranges, mountain forms, mist, clouds, cloud rows, river meander, trees, framing trees, foreground trees, stand, tree rhymes the peak | as in 036 (the same engine) |
+| Scene | scene, viewpoint, mood (golden hour, after the storm, dawn mist, moonlit night, late snow, **summer day**, the default), sun, atmosphere, ranges, mountain forms, mist, clouds, cloud rows, river meander, trees, framing trees, foreground trees, stand, tree rhymes the peak | as in 036 (the same engine) |
 | Watercolour · washes | paper (cold pressed) | rough granulates more and breaks dry brush more; hot pressed hardly granulates |
-| | wetness (0.6) | how far the washes bleed |
-| | pigment load (1) | opacity of every wash |
-| | granulation (0.5) | `fillTexture` grain and granulating dots |
-| | backruns / hard edges (0.55) | pigment gathered at a wash's rim (`fillTexture` border) |
+| | wetness (0.45) | how far the washes bleed |
+| | pigment load (1.25) | opacity of every wash |
+| | granulation (0.4) | `fillTexture` grain and granulating dots |
+| | backruns / hard edges (0.65) | pigment gathered at a wash's rim (`fillTexture` border) |
 | | glazes over dry paint (2) | glazes on the summits' shadow faces |
 | | variegated drops (0.6) | wet-in-wet drops in the sky, ranges and bank |
-| | lifted lights (0.6) | lifted sun, cloud linings, mist |
-| | lifted horizon band (0.8) | the bright band over the skyline |
-| Watercolour · techniques | graphite underdrawing (0.45) | the pencil lay-in |
+| | lifted lights (0.4) | lifted sun, cloud linings, mist |
+| | lifted horizon band (0.4) | the bright band over the skyline |
+| Watercolour · techniques | graphite underdrawing (0.2) | the pencil lay-in |
 | | dry brush (0.6) | cirrus, hedges, the plain's texture, rock, water light |
 | | shadow planes (0.7) | the planes on the mountains |
 | | sponge (0.6) | foliage texture |
 | | rigger (0.7) | grass and twigs |
 | | massing (0.5) | the bank's graphite massing |
-| | pen and wash (0.3) | the sepia pen |
-| | spatter (0.5), salt (0.3) | texture |
+| | pen and wash (0, off) | the sepia pen |
+| | spatter (0.25), salt (0.1) | texture |
 | | white gouache (0.6) | snow, stars, glints |
 | | hand wobble (2) | the lines' wobble |
 | | cloud shadows (0.7), flowers (0.5) | as named |
