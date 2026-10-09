@@ -1570,6 +1570,26 @@ function wwash(poly, col, op) {
   bpoly(poly);
   brush.noWash();
 }
+// A glaze with a loose edge: a wet mark spreads past where it was laid and thins there, so
+// it is laid three times — a faint spread a little beyond the shape, the shape itself, and a
+// denser core a little inside it — each outline jittered on its own, so the edge fades and
+// wanders instead of cutting. k scales the spread (1 = a damp brush on damp paper).
+function wsoft(poly, col, op, k = 1) {
+  let cx = 0, cy = 0;
+  for (const [x, y] of poly) { cx += x; cy += y; }
+  cx /= poly.length; cy /= poly.length;
+  let r = 0;
+  for (const [x, y] of poly) r = Math.max(r, Math.hypot(x - cx, y - cy));
+  const ph = random(100);
+  const ring = (sc, j) => poly.map(([x, y], i) => {
+    const n = (noise(ph + i * 0.37, sc * 7) - 0.5) * 2 * j * r;
+    const dx = x - cx, dy = y - cy, d = Math.hypot(dx, dy) || 1;
+    return [cx + dx * sc + (dx / d) * n, cy + dy * sc + (dy / d) * n];
+  });
+  wwash(ring(1 + 0.16 * k, 0.07 * k), col, op * 0.22);
+  wwash(ring(1, 0.05 * k), col, op * 0.42);
+  wwash(ring(1 - 0.12 * k, 0.04 * k), col, op * 0.5);
+}
 // the outline of a brush mark along a REF polyline [[x, y], …]: w the half-width at the
 // belly, the mark swelling from a point and lifting off thinner (a loaded round brush)
 function markPoly(P, w, ph = 0, jag = 0.35) {
@@ -2434,7 +2454,7 @@ function wcVegetation(s, yT) {
 // one mass of growth: a body of darker green laid in one stroke, its top broken into
 // upright tips, then upright strokes over its top edge and beyond it, densest at its foot
 let vegWet = 0;
-function vegMass(s, x, y, W, fam, near, z) {
+function vegMass(s, x, y, W, fam, near, z, bank = false) {
   const H = W * random(0.2, 0.36);
   const nr = Math.min(1, near);
   const top = [], bot = [];
@@ -2449,10 +2469,12 @@ function vegMass(s, x, y, W, fam, near, z) {
   }
   const body = top.concat(bot.reverse());
   const col0 = s.seen(shadeRGB(fam, 0.85), z, x, y);
-  if (W > 120 && vegWet < 12) {
+  // the body is wet: it spreads at its top into the light wash behind it, so the mass has no
+  // drawn outline (the biggest get a real bleeding wash, the rest a feathered glaze)
+  if (W > 90 && vegWet < (bank ? 40 : 28)) {
     vegWet++;
-    wfill(body, col0, 200, { bleed: 0.12, dir: 'in', ang: -Math.PI / 2, tex: 0.3, border: 0.45 });
-  } else wwash(body, col0, 150);
+    wfill(body, col0, 210, { bleed: 0.35 + 0.25 * WP.wet, dir: 'out', ang: -Math.PI / 2, tex: 0.3, border: 0.25 });
+  } else wsoft(body, col0, 170, 1.2);
   const m = Math.round(14 + 22 * nr);
   for (let j = 0; j < m; j++) {
     const u = random(-0.5, 0.5);
@@ -2462,7 +2484,10 @@ function vegMass(s, x, y, W, fam, near, z) {
     const len = H * random(0.4, 1) * (0.4 + 0.6 * env);
     const a = -Math.PI / 2 + random(-0.4, 0.4) + u * 0.5;
     const col = s.seen(shadeRGB(fam, random(0.65, 1.1)), z, px, foot);
-    wwash(markPoly(markLine(px, foot, px + Math.cos(a) * len, foot + Math.sin(a) * len, 0.25, 5), Math.max(0.8, W * random(0.012, 0.03)), px * 0.03 + j, 0.4), col, 130 + 50 * nr);
+    const P = markPoly(markLine(px, foot, px + Math.cos(a) * len, foot + Math.sin(a) * len, 0.3, 5), Math.max(0.8, W * random(0.014, 0.034)), px * 0.03 + j, 0.7);
+    // some tips are written crisp (a dry pass), most melt into the body
+    if (random() < 0.3) wwash(P, col, 120 + 40 * nr);
+    else wsoft(P, col, 140 + 50 * nr, 0.9);
   }
 }
 function wcTreeLine(s) {
@@ -2515,7 +2540,7 @@ function wcPine(s, tr, x, y, w, h, dark, lit) {
       if (random() < 0.2) continue;
       const len = reach * random(0.5, 1.1);
       const P = markLine(x, ty, x + side * len, ty + len * random(0.05, 0.25), 0.2, 5);
-      wwash(markPoly(P, thick, x * 0.1 + k + side, 0.6), dark, 215);
+      wsoft(markPoly(P, thick, x * 0.1 + k + side, 0.8), dark, 230, 0.8);
       if (side === lx && random() < 0.7) wwash(markPoly(P.slice(1).map(([px, py]) => [px, py - thick * 0.5]), thick * 0.5, x * 0.1 + k + 5, 0.6), lit, 150);
     }
   }
@@ -2839,7 +2864,7 @@ function wcBankDetail(s) {
       if (y > REF_H + 8) continue;
       const near = 1 + (y - bankAt(rp, x)) / 160;
       const fam = random() < 0.85 ? mixRGB(dark, base, random(0.2, 0.6)) : mixRGB(RUST, dark, 0.45);
-      vegMass(s, x, y, random(70, 160) * near, fam, near, 0.8);
+      vegMass(s, x, y, random(70, 160) * near, fam, near, 0.8, true);
     }
   }
   if (WP.rigger > 0) {
@@ -2884,8 +2909,8 @@ function wcBankDetail(s) {
         }
         // one stroke of a loaded round brush: it swells and lifts off to a point
         const c = shadeRGB(leafC, random(0.8, 1.1));
-        wwash(markPoly(P, (3 + 2.5 * near) * random(0.8, 1.2), x * 0.01 + i), c, 170);
-        if (random() < 0.5) wwash(markPoly(P.slice(0, 5), (1.6 + 1.2 * near), x * 0.01 + i + 3), shadeRGB(c, 0.7), 120);
+        wsoft(markPoly(P, (3 + 2.5 * near) * random(0.8, 1.2), x * 0.01 + i), c, 185, 0.7);
+        if (random() < 0.5) wsoft(markPoly(P.slice(0, 5), (1.6 + 1.2 * near), x * 0.01 + i + 3), shadeRGB(c, 0.7), 130, 0.7);
       }
     }
   }
@@ -2963,15 +2988,16 @@ function wcFramingTasks(s) {
   const midC = mixRGB(C.foliage, C.foliageLit, 0.3);
   const darkC = mixRGB(mixRGB(C.foliage, C.silhouette, s.C.summer ? 0.45 : 0.3), PRUSSIAN, 0.08);
   // the biggest masses get a wet wash; the rest are glazed
-  const wetSet = new Set(clusters.slice().sort((a, b) => b.r - a.r).slice(0, 10));
+  const wetSet = new Set(clusters.slice().sort((a, b) => b.r - a.r).slice(0, 22));
   for (const c of clusters) {
     T.push(() => {
       const dxs = s.sunX - c.x, dys = s.sunY - c.y, dl = Math.hypot(dxs, dys) || 1;
       const Lx = dxs / dl, Ly = dys / dl;
       // one light wash under the biggest masses only, so the sky still shows through the rest
       const outline = blobPoly(c.x, c.y, c.r * 0.85, c.r * 0.6, c.ph, 26, 0.8);
-      if (wetSet.has(c)) wfill(outline, lit, 140, { bleed: 0.3, dir: 'out', tex: 0.3, border: 0.35 });
-      else wwash(outline, mixRGB(lit, midC, 0.4), 90);
+      // wet, and left to spread outward: the crown's edge is lost against the sky
+      if (wetSet.has(c)) wfill(outline, lit, 140, { bleed: 0.45 + 0.2 * WP.wet, dir: 'out', tex: 0.3, border: 0.2 });
+      else wsoft(outline, mixRGB(lit, midC, 0.4), 100, 1.3);
       // the clumps written as touches of a loaded brush, laid level and drooping a little at
       // the tips (a tier of foliage), light on the sunward top, dark beneath and away
       for (const lf of c.members) {
@@ -2983,8 +3009,11 @@ function wcFramingTasks(s) {
           const col = toward > 0.25 && up < 0.2 ? lit : up > 0.25 || toward < -0.3 ? darkC : midC;
           const len = lf.r * random(1.2, 2.4);
           const dir = random() < 0.5 ? -1 : 1;
-          const P = markLine(ox - (dir * len) / 2, oy, ox + (dir * len) / 2, oy + len * random(0.05, 0.22), 0.25, 5);
-          wwash(markPoly(P, lf.r * random(0.35, 0.6), ox * 0.07 + oy * 0.03, 0.9), shadeRGB(col, random(0.88, 1.12)), col === darkC ? 150 : 105);
+          const P = markLine(ox - (dir * len) / 2, oy, ox + (dir * len) / 2, oy + len * random(0.05, 0.22), 0.25, 9);
+          // the dark touches keep a firmer edge (dropped in once the light had settled); the
+          // light and mid ones are soft, run into the damp underwash
+          const P2 = markPoly(P, lf.r * random(0.35, 0.6), ox * 0.07 + oy * 0.03, 1.1);
+          wsoft(P2, shadeRGB(col, random(0.88, 1.12)), col === darkC ? 165 : 120, col === darkC ? 0.85 : 1.2);
         }
       }
       if (WP.sponge > 0) {
