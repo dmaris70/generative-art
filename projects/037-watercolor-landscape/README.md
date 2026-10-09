@@ -48,6 +48,23 @@ Changed defaults:
 - spatter: 0.25
 - salt: 0.1
 
+## v3: loose edges in the vegetation and foliage
+
+In v2 the foliage and vegetation were drawn as flat `wash` glazes. A `wash` cuts a hard,
+even edge, so masses read as cut-outs. Wet watercolour spreads past where it is laid and
+thins there. v3 builds that into the glazes and spends more of the wet-fill budget on the
+greenery.
+
+| Change | Method |
+|---|---|
+| **Feathered glaze** (`wsoft`) | Every soft mark is laid three times: a faint spread 16 % beyond the shape (22 % of the strength), the shape itself (42 %), and a denser core 12 % inside (50 %). Each outline is jittered on its own, so the edge fades and wanders. The amount of spread is set per use. |
+| Crown underwashes | The 22 largest crown clumps (v2: 10) get a bleeding wet fill left to spread outward (bleed 0.45–0.65), and the rest a feathered glaze. The light and mid touches are soft (spread 1.2); the dark touches are firmer (0.85), as if dropped in once the light had settled. The touches are smoother (twice the outline points). |
+| Vegetation masses | Each body is wet and spreads at its top into the wash behind it. Up to 28 masses on the plain and 12 on the bank get a real bleeding fill (v2: 12 in total); the rest are feathered. 70 % of the upright tips melt into the body and 30 % stay crisp, like a dry pass. |
+| Pines and sword leaves | Branch tiers and leaves are feathered. |
+
+Cost: 214 fills for seed 4 (v2: 186), and the render time in the test container rose about
+11 % (362 s against 327 s at 1240×860).
+
 ## What is shared, what is new
 
 | Layer | Source | Notes |
@@ -70,13 +87,13 @@ The library's renderer was benchmarked in this repository before the painter was
 The first draft ignored this. It painted 3,016 fills and 2,385 strokes; washes read as black
 bars and a render took over 15 minutes. The current painter's counts (measured):
 
-| Painting (v2) | Fills | Washes | Strokes (`wline`/`wstroke`) |
+| Painting (v3) | Fills | Washes | Strokes (`wline`/`wstroke`) |
 |---|---|---|---|
-| seed 4, summer day (default) | 186 | 6,955 | 366 |
-| seed 4, golden hour | 216 | 8,950 | 422 |
-| seed 4, moonlit night | 196 | 6,245 | 373 |
+| seed 4, summer day (default) | 214 | 14,090 | 366 |
+| seed 4, golden hour | 246 | 19,640 | 422 |
+| seed 4, moonlit night | 225 | 13,043 | 373 |
 | seed 4, late snow | 203 | 1,396 | 342 |
-| seed 11, fjord / lake (summer day) | 161 | 8,195 | 334 |
+| seed 11, fjord / lake (summer day) | 191 | 18,806 | 334 |
 
 Grass `flowLine`s, pencil and pen splines, sponge, spatter and granulation come on top of
 the strokes counted here. A painting takes 4.5–6 minutes at 1240×860 in the software-GL
