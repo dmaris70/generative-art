@@ -1,0 +1,191 @@
+// 039 — Ridge, encounters — stroke by stroke
+//
+// 028's scene (its engine, loaded unchanged: the same seed gives the same diptych), painted
+// in oil one stroke after another by a painter that looks at the canvas before each stroke
+// (painter.js), with paint that behaves as paint while the stroke is laid (paint.js). See
+// README.md.
+
+let G;
+let SC = null; // 028's scene: two sheets of buffers (038's bridge)
+let SHEETS = []; // per sheet: { painter, off (an offscreen canvas), img (its ImageData) }
+let ACTIVE = 0; // the sheet being painted
+let R = null, U = 1, PANEL_W = 0;
+let JOB = 0;
+let PG = null;
+const ROOM = [14, 14, 16];
+const GAP = 40; // sheet units between the two sheets
+const FRAME_BUDGET_MS = 34;
+const UI = { status: 'loading the places…' };
+
+function setup() {
+  createCanvas(windowWidth, windowHeight);
+  pixelDensity(Math.min(2, window.devicePixelRatio || 1));
+  const PA = 'Painting', SN = 'Scene', BR = 'The painter', PT = 'The paint';
+  G = GenArt.create({
+    title: 'Ridge, encounters — stroke by stroke',
+    applyOnDemand: true,
+    closedGroups: [PT],
+    params: {
+      palette: { value: 0, options: { 'full palette': 0, 'grisaille (white, black, umber)': 1 }, label: 'palette', group: PA },
+      warmth: { value: 1, min: 0, max: 1.5, step: 0.05, label: 'glow of the light', group: PA },
+      regime: { value: 0, options: { 'by seed': 0, exposure: 1, looming: 2, whiteout: 3, passage: 4, clearing: 5 }, label: 'register', group: SN },
+      event: { value: 0, options: { 'by seed': 0, none: 1, tarn: 2, hut: 3, bird: 4, moon: 5 }, label: 'rare event (as 028)', group: SN },
+      smear: { value: 1, min: 0, max: 2, step: 0.05, label: 'movement of the body (painted)', group: SN },
+      brush: { value: 7, min: 4, max: 16, step: 0.5, label: 'finest brush (px)', group: BR },
+      tol: { value: 0.03, min: 0.015, max: 0.12, step: 0.005, label: 'tolerance (how exact)', group: BR },
+      aim: { value: 0.4, min: 0, max: 1, step: 0.05, label: 'correction in the mix', group: BR },
+      wipeAt: { value: 0.12, min: 0.03, max: 0.4, step: 0.01, label: 'wipe the brush past (ΔE)', group: BR },
+      open: { value: 1500, min: 50, max: 8000, step: 50, label: 'paint stays wet (strokes)', group: PT },
+      pick: { value: 0.3, min: 0, max: 0.6, step: 0.02, label: 'pickup of wet paint', group: PT },
+      reach: { value: 6, min: 2, max: 14, step: 0.5, label: 'a brushful lasts (widths)', group: PT },
+      streak: { value: 0.12, min: 0, max: 0.6, step: 0.05, label: 'unevenly mixed brushful', group: PT },
+      dryBrush: { value: 0.5, min: 0, max: 1, step: 0.05, label: 'dry brush (breaks)', group: PT },
+      impasto: { value: 1, min: 0, max: 2, step: 0.05, label: 'loaded lights (impasto)', group: PT },
+      relief: { value: 0.45, min: 0, max: 2, step: 0.05, label: 'relief under the light', group: PT },
+    },
+    onReset: reset,
+  });
+  addShuffle();
+  noLoop();
+  textFont('ui-sans-serif, system-ui, sans-serif');
+  requestAnimationFrame(() => loadDEMs().then(() => reset()));
+}
+
+function shuffleAll() {
+  const r = (a, b) => a + Math.random() * (b - a);
+  const step = (v, d) => (d.step ? Number((d.min + Math.round((v - d.min) / d.step) * d.step).toFixed(6)) : v);
+  const guard = {
+    event: () => (Math.random() < 0.5 ? 0 : 1 + Math.floor(Math.random() * 5)),
+    brush: (d) => step(r(5.5, 12), d), // finer than this and a sheet takes too long
+    tol: (d) => step(r(0.025, 0.06), d),
+    aim: (d) => step(r(0.2, 0.6), d),
+  };
+  G.shuffle((k, d) => (guard[k] ? guard[k](d) : undefined));
+}
+function addShuffle() {
+  const gui = G.gui;
+  if (!gui) return;
+  const shuf = gui.add({ shuffleAll }, 'shuffleAll').name('🔀 shuffle everything (X)');
+  const apply = gui.controllers.find((c) => /Apply/.test(c._name));
+  if (apply) apply.domElement.after(shuf.domElement);
+}
+
+function panelSpace() {
+  const g = G.gui, el = g && g.domElement;
+  if (!el || g._closed || g._hidden || windowWidth <= 700) return 0;
+  return el.offsetWidth ? el.offsetWidth + 12 : 0;
+}
+
+function mulberry32(a) {
+  return function () {
+    a |= 0; a = (a + 0x6d2b79f5) | 0;
+    let t = Math.imul(a ^ (a >>> 15), 1 | a);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+function reset() {
+  const job = ++JOB;
+  randomSeed(G.seed);
+  noiseSeed(G.seed);
+  PANEL_W = panelSpace();
+  UI.status = 'finding the place, the body, the weather…';
+  SC = null;
+  SHEETS = [];
+  ACTIVE = 0;
+  window.DONE = false;
+  loop();
+  setTimeout(() => {
+    if (job !== JOB) return;
+    const P = (k) => G.param(k);
+    const place = new URLSearchParams(location.search).get('place') || '';
+    SC = ridgeScene(G.seed, { regime: P('regime'), event: P('event'), place });
+    const mono = P('palette') === 1;
+    PG = PG || makePigments(PIGMENT_DEFS);
+    const pal = makePalette(PG, mono ? 'mono' : 'colour');
+    const o = {
+      palette: mono ? 'mono' : 'colour', brush: P('brush'), tol: P('tol'), aim: P('aim'), wipeAt: P('wipeAt'), open: P('open'),
+      pick: P('pick'), reach: P('reach'), streak: P('streak'), dryBrush: P('dryBrush'), impasto: P('impasto'), smear: P('smear'),
+    };
+    SHEETS = SC.sheets.map((B, k) => {
+      const C = colourise(B, SC.light, mono ? 'mono' : 'colour', P('warmth'));
+      const painter = makePainter(B, C, PG, pal, o, mulberry32((G.seed ^ 0x39c0ffee) + k * 7919));
+      const off = document.createElement('canvas');
+      off.width = painter.cv.w; off.height = painter.cv.h;
+      const ctx = off.getContext('2d');
+      const img = ctx.createImageData(off.width, off.height);
+      return { painter, off, ctx, img };
+    });
+    window.STATS = SHEETS.map((s) => s.painter.stats);
+    loop();
+  }, 30);
+}
+
+// show what changed on a sheet: its paint, lit, into the offscreen canvas
+function show(S, r) {
+  const cv = S.painter.cv;
+  const x0 = Math.max(0, r[0] - 1), y0 = Math.max(0, r[1] - 1), x1 = Math.min(cv.w, r[2] + 1), y1 = Math.min(cv.h, r[3] + 1);
+  if (x1 <= x0 || y1 <= y0) return;
+  cv.renderRect(S.img.data, x0, y0, x1, y1, G.param('relief'));
+  S.ctx.putImageData(S.img, 0, 0, x0, y0, x1 - x0, y1 - y0);
+}
+
+function draw() {
+  background(...ROOM);
+  const sw = (SC ? SC.sheets[0].W : 1080) * 2 + GAP, sh = SC ? SC.sheets[0].H : 1350;
+  const avail = width - PANEL_W;
+  U = Math.min((avail * 0.96) / sw, (height * 0.94) / sh);
+  R = { x: (avail - sw * U) / 2, y: (height - sh * U) / 2, w: sw * U, h: sh * U };
+  if (SC && SHEETS.length) {
+    // paint
+    const t0 = performance.now();
+    let pending = null;
+    while (ACTIVE < 2 && performance.now() - t0 < FRAME_BUDGET_MS) {
+      const S = SHEETS[ACTIVE];
+      const r = S.painter.step(FRAME_BUDGET_MS - (performance.now() - t0));
+      if (r) show(S, r);
+      if (S.painter.done) { ACTIVE++; continue; }
+      pending = S;
+    }
+    // the sheets on their mats
+    const ctx = drawingContext;
+    for (let k = 0; k < 2; k++) {
+      const B = SC.sheets[k], ox = R.x + k * (B.W + GAP) * U;
+      noStroke();
+      fill(...B.mat);
+      rect(ox, R.y, B.W * U, B.H * U);
+      if (SHEETS[k] && (k <= ACTIVE)) {
+        ctx.imageSmoothingEnabled = true;
+        ctx.drawImage(SHEETS[k].off, ox + B.box[0] * U, R.y + B.box[1] * U, B.box[2] * U, B.box[3] * U);
+      }
+    }
+    if (ACTIVE >= 2) {
+      noLoop();
+      window.DONE = true;
+      const s = SHEETS.map((x) => x.painter.stats);
+      UI.status = 'done · ' + SC.placeLabel + ' · ' + SC.regime + ' · ' + SC.light + ' light · ' + (s[0].strokes + s[1].strokes).toLocaleString() + ' strokes';
+    } else if (pending) {
+      const p = pending.painter;
+      UI.status = (ACTIVE ? 'right' : 'left') + ' sheet · ' + p.stage + ' · ' + p.stats.strokes.toLocaleString() + ' strokes';
+    }
+  }
+  // the status line, under the pictures
+  noStroke();
+  fill(200, 200, 194, 150);
+  textSize(12);
+  textAlign(LEFT, BOTTOM);
+  text(UI.status, R.x, height - 8);
+}
+
+function keyPressed() {
+  if (key === 'r' || key === 'R') G.randomize();
+  if (key === 'x' || key === 'X') shuffleAll();
+  if (key === 's' || key === 'S') saveCanvas('ridge-stroke-by-stroke-' + G.seed, 'png');
+}
+function windowResized() {
+  resizeCanvas(windowWidth, windowHeight);
+  PANEL_W = panelSpace();
+  if (!SC) return;
+  redraw();
+}
