@@ -55,9 +55,36 @@ function setup() {
     },
     onReset: reset,
   });
+  addShuffle();
   noLoop();
   // p5.brush binds once the constructor has returned; the places load before the first scene
   requestAnimationFrame(() => loadDEMs().then(() => reset()));
+}
+
+// Every setting at once: a new seed and a random value for each control, then one repaint.
+// Guards keep the draws where a sheet still paints and finishes in reasonable time: a forced
+// rare event only half the time (028 makes them rare), oil strokes not so fine that a sheet
+// takes minutes, and coverage and pigment not so thin that the paper or underpainting is all
+// that shows.
+function shuffleAll() {
+  const r = (a, b) => a + Math.random() * (b - a);
+  const step = (v, d) => (d.step ? Number((d.min + Math.round((v - d.min) / d.step) * d.step).toFixed(6)) : v);
+  const guard = {
+    event: () => (Math.random() < 0.5 ? 0 : 1 + Math.floor(Math.random() * 5)),
+    strokeSize: (d) => step(r(6, 16), d),
+    coverage: (d) => step(r(0.7, 1.6), d),
+    load: (d) => step(r(0.8, 1.45), d),
+  };
+  G.shuffle((k, d) => (guard[k] ? guard[k](d) : undefined));
+}
+
+// the shuffle button sits under Apply on the panel's face
+function addShuffle() {
+  const gui = G.gui;
+  if (!gui) return;
+  const shuf = gui.add({ shuffleAll }, 'shuffleAll').name('🔀 shuffle everything (X)');
+  const apply = gui.controllers.find((c) => /Apply/.test(c._name));
+  if (apply) apply.domElement.after(shuf.domElement);
 }
 
 function panelSpace() {
@@ -206,6 +233,7 @@ const pts = (arr) => arr.map((p) => [X(p[0]), Y(p[1])]);
 
 function keyPressed() {
   if (key === 'r' || key === 'R') G.randomize();
+  if (key === 'x' || key === 'X') shuffleAll();
   if (key === 's' || key === 'S') saveCanvas('ridge-encounters-painted-' + G.seed, 'png');
 }
 function windowResized() {

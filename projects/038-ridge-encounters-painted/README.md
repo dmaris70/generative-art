@@ -146,5 +146,11 @@ What moved it, each found by measuring rather than by eye:
 
 Other controls:
 - **Apply changes** repaints.
+- **🔀 shuffle everything** (or `X`) draws a new seed and a random value for every control, then
+  repaints. It works within limits so every draw still paints in reasonable time:
+  - a rare event is forced only half the time;
+  - oil stroke width stays within 6–16;
+  - oil coverage stays within 0.7–1.6;
+  - pigment load stays within 0.8–1.45.
 - `R` makes a new seed and `S` saves a PNG.
 - `?under` shows the colourised frame alone, which is what the painters work from.
