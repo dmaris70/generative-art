@@ -1,5 +1,7 @@
 # 039 — Ridge, encounters — stroke by stroke
 
+Oil (v1–v2) and watercolour (v3), each painted physically, stroke by stroke or wash by wash.
+
 **Mechanism (one sentence):** the scene of [028 — Ridge, encounters](../028-ridge-encounters/)
 (coloured by [038](../038-ridge-encounters-painted/)'s bridge) is painted in oil one stroke
 after another. A painter looks at the canvas before every stroke and chooses where, which mix
@@ -86,6 +88,72 @@ changes when the order and state of the paint are real.
   - While a sheet is painted, its state takes about 120 MB at 1× and 250 MB at 1.5×. 2× can be
     chosen and takes about 700 MB.
   - When a sheet is finished, only its image is kept.
+
+## Watercolour (`water.js`, `wpainter.js`)
+
+The medium control switches to watercolour: the same scene, painted with water on paper.
+
+### Water and paper (`water.js`)
+
+After Curtis et al., *Computer-Generated Watercolor* (SIGGRAPH 1997), simplified to run in a
+browser.
+
+**Two grids:**
+- **Coarse grid** (3-pixel cells at 1×): water and the pigment suspended in it move here. One
+  pixel per step reached too short a distance and was too slow.
+- **Per pixel:** the paper's cold-pressed grain, the exact wet edge and the settled pigment.
+
+**Every tick:**
+- **Flow.** Water flows between wet cells and levels.
+  - Dry paper takes water only from a very wet neighbour, so a wash keeps its edge.
+  - Damp paper takes it readily (wet into wet).
+  - Paper that has dried does not take water back.
+- **Carrying.** Pigment travels with the water and diffuses through it, all but none in a thin
+  film.
+- **Evaporation and edges.** Water evaporates almost uniformly, so a wash's edge stays where it
+  is while it thins. Pigment that reaches an edge against paper that was dry before the wash
+  settles faster: the hard, dark edge of a dried wash.
+- **Settling.** Pigment settles slowly while the water is deep and fast as it thins. A
+  granulating pigment (ultramarine, cerulean, umber) settles more into the hollows of the grain.
+- **Lifting.** Water on damp paper lifts a little of the settling pigment, the less staining the
+  pigment the more. Water dropped into a wash pushes pigment out into a bloom.
+
+**Seven watercolour pigments,** with their granulation and staining. Colour is their
+Kubelka–Munk absorption, with little scattering, as a transparent layer over the paper. There
+is no white paint: the paper is the light.
+
+### The watercolourist (`wpainter.js`)
+
+Watercolour can only darken, so:
+1. **Reserved lights.** The lights of the subject stay as bare paper; no wash goes over them.
+2. **The sky, wet into wet.** It is flooded evenly with clear water, and its wash is laid into
+   the wet.
+3. **Four layers of washes,** broad to small, each dried before the next is decided.
+   - **Shapes.** The places still too light, smoothed into shapes and split by hue, are the
+     washes. Small shapes get one only if clearly too light.
+   - **The mix** for a wash is chosen for where it lands, and anchored to the hue it makes on
+     clean paper (weighted 0.35, so a dark can still be neutralised with an earth).
+   - **Grading.** The pigment is graded pixel by pixel to reach the lightness wanted there.
+   - **Aim.** Each layer aims short of the subject (60 %, 85 %, then all the way): a wash cannot
+     be undone, and the next can always go further.
+
+### Found by measuring while building
+
+- **Small strokes don't make a wash.** Thousands of small strokes each dried alone with its own
+  hard edge: a patchwork. A watercolour is a few washes of shapes. This sheet now takes about
+  40–90 washes.
+- **Overlap doubled the pigment.** Wash strokes checked only where they started, crossed about a
+  dozen others' work, and doubled it. 75 % of pixels ended too dark after four bands.
+- **Hue compensation (twice).**
+  - Colour dropped into the sky stroke by stroke cancelled warm with teal and cool with orange.
+  - Anchoring the hue fully sent a dark bluer with every layer.
+- **Dampness.** Paper stayed "damp" for hours after its water had gone, and every later stroke
+  lifted the pigment under it: holes, and rings where it settled again.
+- **Receding fronts.** Edge darkening applied at fronts that were only receding as the wash
+  dried laid a ring at each step and a dot where the front ended. Isolated by drying a uniform
+  wash on its own: it dried clean.
+- **The picture's edge.** The last row of cells, cut by the edge, was given water as if whole,
+  ran half as deep again, and dried as a line along the bottom.
 
 ## The painter (`painter.js`)
 
@@ -193,12 +261,33 @@ For reference:
 - **Name clash.** `painter.js` declared `PARTS`, which is 028's global. The page failed
   silently and a render "ran" for twenty minutes. The lint pass now checks redeclarations.
 
-## Known gaps (v2)
+## Watercolour results (1×)
+
+Measured the same way as oil. For comparison, 038's watercolour scores block MAE 9.9–17.8 and
+ΔE 1.0–5.7 on these sheets.
+
+| Seed | Mean (vs 028) | Block MAE | r | ΔE ×100 |
+|---|---|---|---|---|
+| 221429 (clearing, against) | 150 / 161 (146 / 159) | 4.1 / 1.9 | 0.99 / 1.00 | 1.5 / 1.2 |
+| 20833364 (clearing, side) | 167 / 139 (163 / 135) | 3.6 / 4.5 | 0.99 / 1.00 | 1.4 / 1.7 |
+| 22262986, grisaille (black, umber) | 189 / 176 (186 / 173) | 3.2 / 3.4 | 0.99 / 1.00 | 1.1 / 1.2 |
+| 22414005 (passage, moon) | 88 / 100 (89 / 99) | 1.6 / 1.6 | 1.00 / 1.00 | 1.7 / 1.8 |
+
+- `compare-watercolour.png`: 028's frame, 038's watercolour, 039's watercolour (right sheet of
+  221429).
+- `preview-watercolour.png`: the diptych at 1.5×.
+- **Render time:** a diptych takes 80–130 s at 1× and about 4 min at 1.5× in the test container.
+
+## Known gaps (v3)
 
 v1's gaps (resolution, rectangular strokes, no palette mixing, all-or-nothing drying, no fat
 over lean or ageing) are addressed above. What remains:
-- **Oil only.** Watercolour needs water flow on the paper (pigment carried and deposited at
-  the edges); it comes next.
+- **Watercolour, wash edges.** A wash's edge follows 028's sky mask at that mask's own
+  resolution, so the edge along a ridge steps slightly.
+- **Watercolour, chroma.** The moonlit scene runs more saturated than the subject (5.6–5.9 vs
+  4.1–4.4).
+- **Watercolour has no dry-brush or calligraphic detail.** The brush strokes for it exist
+  (`layWater`), but the painter lays washes only.
 - **Simplified drying.** Drying is a per-pixel clock, not the chemistry of oxidation: a layer
   is wet or dry, with no skin over a wet interior.
 - **Craquelure is a pattern, not a stress simulation.** It follows age, paint thickness and
@@ -210,10 +299,11 @@ over lean or ageing) are addressed above. What remains:
 
 | Group | Parameter (default) |
 |---|---|
-| Painting | palette (full / grisaille: white, black, umber), glow of the light (1) |
+| Painting | medium (oil / watercolour), palette (full / grisaille: white, black, umber), glow of the light (1) |
 | Scene | register, rare event (as 028), movement of the body (1) |
-| The painter | finest brush (7 px), tolerance (0.03 OKLab), correction in the mix (0.4), wipe the brush past (ΔE 0.12) |
-| The paint | pickup of wet paint (0.3), a brushful lasts (6 widths), unevenly mixed brushful (0.12), dry brush (0.5), loaded lights (1), relief under the light (0.45), dirty palette (0.5), drying speed (1×), layers (fat over lean), age (0 years), canvas resolution (auto) |
+| The painter (both media) | finest brush (7 px), tolerance (0.03 OKLab), drying speed (1×), relief under the light (0.45), canvas resolution (auto) |
+| Oil | correction in the mix (0.4), wipe the brush past (ΔE 0.12), pickup of wet paint (0.3), a brushful lasts (6 widths), unevenly mixed brushful (0.12), dry brush (0.5), loaded lights (1), dirty palette (0.5), layers (fat over lean), age (0 years) |
+| Watercolour | water spreads (1) |
 
 Other controls:
 - **Apply changes** repaints.
