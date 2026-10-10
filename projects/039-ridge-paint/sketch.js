@@ -21,12 +21,13 @@ const UI = { status: 'loading the places…' };
 function setup() {
   createCanvas(windowWidth, windowHeight);
   pixelDensity(Math.min(2, window.devicePixelRatio || 1));
-  const PA = 'Painting', SN = 'Scene', BR = 'The painter', PT = 'The paint';
+  const PA = 'Painting', SN = 'Scene', BR = 'The painter', PO = 'Oil', WA = 'Watercolour';
   G = GenArt.create({
     title: 'Ridge, encounters — stroke by stroke',
     applyOnDemand: true,
-    closedGroups: [PT],
+    closedGroups: [PO, WA],
     params: {
+      medium: { value: 0, options: { oil: 0, watercolour: 1 }, label: 'medium', group: PA },
       palette: { value: 0, options: { 'full palette': 0, 'grisaille (white, black, umber)': 1 }, label: 'palette', group: PA },
       warmth: { value: 1, min: 0, max: 1.5, step: 0.05, label: 'glow of the light', group: PA },
       regime: { value: 0, options: { 'by seed': 0, exposure: 1, looming: 2, whiteout: 3, passage: 4, clearing: 5 }, label: 'register', group: SN },
@@ -34,19 +35,20 @@ function setup() {
       smear: { value: 1, min: 0, max: 2, step: 0.05, label: 'movement of the body (painted)', group: SN },
       brush: { value: 7, min: 4, max: 16, step: 0.5, label: 'finest brush (px)', group: BR },
       tol: { value: 0.03, min: 0.015, max: 0.12, step: 0.005, label: 'tolerance (how exact)', group: BR },
-      aim: { value: 0.4, min: 0, max: 1, step: 0.05, label: 'correction in the mix', group: BR },
-      wipeAt: { value: 0.12, min: 0.03, max: 0.4, step: 0.01, label: 'wipe the brush past (ΔE)', group: BR },
-      dirt: { value: 0.5, min: 0, max: 1, step: 0.05, label: 'dirty palette (brush into piles)', group: PT },
-      dryRate: { value: 1, min: 0.25, max: 4, step: 0.05, label: 'drying speed (×)', group: PT },
-      fatOverLean: { value: 1, options: { 'fat over lean (as taught)': 1, 'lean over fat (it will crack)': 0 }, label: 'layers', group: PT },
-      age: { value: 0, min: 0, max: 300, step: 5, label: 'age (years)', group: PT },
-      res: { value: 0, options: { 'auto (screen)': 0, '1×': 1, '1.5×': 1.5, '2× (heavy)': 2 }, label: 'canvas resolution', group: PT },
-      pick: { value: 0.3, min: 0, max: 0.6, step: 0.02, label: 'pickup of wet paint', group: PT },
-      reach: { value: 6, min: 2, max: 14, step: 0.5, label: 'a brushful lasts (widths)', group: PT },
-      streak: { value: 0.12, min: 0, max: 0.6, step: 0.05, label: 'unevenly mixed brushful', group: PT },
-      dryBrush: { value: 0.5, min: 0, max: 1, step: 0.05, label: 'dry brush (breaks)', group: PT },
-      impasto: { value: 1, min: 0, max: 2, step: 0.05, label: 'loaded lights (impasto)', group: PT },
-      relief: { value: 0.45, min: 0, max: 2, step: 0.05, label: 'relief under the light', group: PT },
+      aim: { value: 0.4, min: 0, max: 1, step: 0.05, label: 'correction in the mix', group: PO },
+      wipeAt: { value: 0.12, min: 0.03, max: 0.4, step: 0.01, label: 'wipe the brush past (ΔE)', group: PO },
+      dirt: { value: 0.5, min: 0, max: 1, step: 0.05, label: 'dirty palette (brush into piles)', group: PO },
+      spread: { value: 1, min: 0.4, max: 2.5, step: 0.05, label: 'water spreads', group: WA },
+      dryRate: { value: 1, min: 0.25, max: 4, step: 0.05, label: 'drying speed (×)', group: BR },
+      fatOverLean: { value: 1, options: { 'fat over lean (as taught)': 1, 'lean over fat (it will crack)': 0 }, label: 'layers', group: PO },
+      age: { value: 0, min: 0, max: 300, step: 5, label: 'age (years)', group: PO },
+      res: { value: 0, options: { 'auto (screen)': 0, '1×': 1, '1.5×': 1.5, '2× (heavy)': 2 }, label: 'canvas resolution', group: BR },
+      pick: { value: 0.3, min: 0, max: 0.6, step: 0.02, label: 'pickup of wet paint', group: PO },
+      reach: { value: 6, min: 2, max: 14, step: 0.5, label: 'a brushful lasts (widths)', group: PO },
+      streak: { value: 0.12, min: 0, max: 0.6, step: 0.05, label: 'unevenly mixed brushful', group: PO },
+      dryBrush: { value: 0.5, min: 0, max: 1, step: 0.05, label: 'dry brush (breaks)', group: PO },
+      impasto: { value: 1, min: 0, max: 2, step: 0.05, label: 'loaded lights (impasto)', group: PO },
+      relief: { value: 0.45, min: 0, max: 2, step: 0.05, label: 'relief under the light', group: BR },
     },
     onReset: reset,
   });
@@ -131,12 +133,13 @@ function reset() {
     const o = {
       palette: mono ? 'mono' : 'colour', brush: P('brush'), tol: P('tol'), aim: P('aim'), wipeAt: P('wipeAt'), dryRate: P('dryRate'),
       pick: P('pick'), reach: P('reach'), streak: P('streak'), dryBrush: P('dryBrush'), impasto: P('impasto'), smear: P('smear'),
-      fatOverLean: P('fatOverLean') === 1, age: P('age'), res: canvasRes(), dirt: P('dirt'),
+      fatOverLean: P('fatOverLean') === 1, age: P('age'), res: canvasRes(), dirt: P('dirt'), hold: 1 / P('spread'),
     };
     UI.res = o.res;
     SHEETS = SC.sheets.map((B, k) => {
       const C = colourise(B, SC.light, mono ? 'mono' : 'colour', P('warmth'));
-      const painter = makePainter(B, C, PG, pal, o, mulberry32((G.seed ^ 0x39c0ffee) + k * 7919));
+      const rng = mulberry32((G.seed ^ 0x39c0ffee) + k * 7919);
+      const painter = P('medium') === 1 ? makeWCPainter(B, C, PG, o, rng) : makePainter(B, C, PG, pal, o, rng);
       const off = document.createElement('canvas');
       off.width = painter.cv.w; off.height = painter.cv.h;
       const ctx = off.getContext('2d');
@@ -195,11 +198,11 @@ function draw() {
       noLoop();
       window.DONE = true;
       const s = SHEETS.map((x) => x.painter.stats);
-      UI.status = 'done · ' + SC.placeLabel + ' · ' + SC.regime + ' · ' + SC.light + ' light · ' + (s[0].strokes + s[1].strokes).toLocaleString() + ' strokes · ' +
+      UI.status = 'done · ' + SC.placeLabel + ' · ' + SC.regime + ' · ' + SC.light + ' light · ' + (s[0].washes != null ? (s[0].washes + s[1].washes).toLocaleString() + ' washes · ' : (s[0].strokes + s[1].strokes).toLocaleString() + ' strokes · ') +
         (s[0].hours + s[1].hours).toFixed(1) + ' h at the easel · ' + UI.res + '×' + (G.param('age') > 0 ? ' · aged ' + G.param('age') + ' years' : '');
     } else if (pending) {
       const p = pending.painter;
-      UI.status = (ACTIVE ? 'right' : 'left') + ' sheet · ' + p.stage + ' · ' + p.stats.strokes.toLocaleString() + ' strokes';
+      UI.status = (ACTIVE ? 'right' : 'left') + ' sheet · ' + p.stage + ' · ' + (p.stats.washes != null ? p.stats.washes.toLocaleString() + ' washes' : p.stats.strokes.toLocaleString() + ' strokes');
     }
   }
   // the status line, under the pictures
