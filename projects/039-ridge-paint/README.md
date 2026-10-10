@@ -45,9 +45,47 @@ changes when the order and state of the paint are real.
      stroke runs out;
   3. a spent or lightly pressed bristle reaches only the tops of the weave and skips in runs
      along the stroke (dry brush).
-- **Drying:** a session's end dries the wet layer into the dried colour and relief.
+- **Brush shapes**, as a painter keeps them, differ in how the footprint answers pressure:
+  - **flat:** square-ended, nearly the same width whatever the pressure (blocks, planes);
+  - **filbert:** lands narrow and opens as it is pressed (oval ends);
+  - **round:** a touch is a thin line, pressed it swells, lifted it leaves a pointed tail.
+
+  The bristles waver a little across the footprint. (v1's single flat brush left the finest
+  strokes as small rectangles.)
+- **Time and drying.**
+  - **Clock.** There is a painting clock in minutes. Each stroke takes about half a second plus
+    a second per 200 px. Each dip into the palette, each wipe and each new mix takes its time.
+  - **Drying.** Each pixel's wet layer dries on its own schedule: about 6 h × (0.3 +
+    thickness) × (0.2 + 2 × fatness), divided by the drying speed. Thin lean paint dries in
+    hours, thick fat paint in a day or more.
+  - **Setting.** As paint sets, the brush picks up less of it, falling with time over about
+    a third of its drying time.
+  - **When it dries.** Every quarter hour of painting, whatever has had its time dries: it
+    joins the dried colour and relief, and what goes over it glazes or covers instead of
+    mixing in.
+  - **Sessions.** The painting stands overnight (18 h) after the block-in. (v1 dried
+    everything at once at a session's end and counted open time in strokes.)
+- **Fat over lean.**
+  - Each session's paint carries more oil than the one under it: block-in 0.08 (turpentine),
+    body 0.25, detail 0.35, lights 0.42.
+  - A layer that dries leaner than the one under it keeps a strain, recorded per pixel.
+  - The `layers` control can break the rule (lean over fat), and the painting then cracks
+    early.
+- **Age.** The age control (years) dries the painting through, then ages it:
+  - **Yellowing:** the oil yellows where there is more of it, and the varnish yellows over
+    everything.
+  - **Craquelure:** islands on a warped jittered grid, opening in patches and more in thick
+    paint, from about 30 years.
+  - **Early drying cracks:** wide and dark, wherever lean was laid over fat, within years.
 - **Display:** a raking light over the paint's height (stroke ridges, impasto, the weave where
-  paint is thin) with a little sheen.
+  paint is thin), with a sheen on paint that is still wet.
+- **Resolution.** Each sheet is painted at its picture size × the canvas resolution. On auto,
+  that is as many pixels as the screen shows, in 0.5 steps from 1× to 1.5×.
+  - Brushes, the weave and the light scale with it, so a 1.5× painting is the same painting,
+    finer.
+  - While a sheet is painted, its state takes about 120 MB at 1× and 250 MB at 1.5×. 2× can be
+    chosen and takes about 700 MB.
+  - When a sheet is finished, only its image is kept.
 
 ## The painter (`painter.js`)
 
@@ -71,7 +109,19 @@ colour, darkest first and lights last.
 - **Mix:** the nearest mix on the palette to the subject there. Its value is pushed past the
   subject by how far the canvas is off (the paint will mix with what is wet under it). Hue is
   not pushed: pushing it cancelled an orange canvas with teal, and back.
-- **The palette** tints the way paint allows: one to three colours in relative proportions
+- **The palette is kept as a painter keeps it.** Piles of mixed paint stay on it while the
+  painting goes on (up to 14; the least recently used is scraped off):
+  - a wanted colour is taken from a pile within ΔE 0.012;
+  - failing that, the nearest pile within 0.12 is worked toward it with touches of tube paint,
+    so the colours of a painting come out of one another;
+  - failing that, it is mixed fresh from the tubes;
+  - a brush dipped in a pile while it still holds other paint leaves some there (the
+    `dirty palette` control), so the piles drift together;
+  - a fresh pile is not yet worked smooth, so a brush loaded from it carries more streaks.
+
+  On 221429's left sheet this gave 21 fresh piles, 149 derived ones and 1,491 reloads from
+  existing piles.
+- **The tube mixes** tint the way paint allows: one to three colours in relative proportions
   (1, 2, 4, 8), with white from none to 64 times their amount. That is about 20,000 mixes;
   the scene's colours are reached within ΔE 0.005–0.009 (OKLab). Mixes in eighths could not
   make a muted tint: a sky beige became salmon, a warm grey green-grey.
@@ -84,17 +134,23 @@ colour, darkest first and lights last.
   buffers).
 - **Length:** the stroke goes on while its colour is closer to the subject than the canvas is.
 
-## Results
+## Results (v2, 1×)
 
 Each render is compared with 028's own frame for the same seed (038's `?under`): block
 luminance (12 px blocks at 1400 × 860) and colour (mean OKLab ΔE ×100 per block), per sheet.
 
 | Seed (register, light) | Mean (vs 028) | Block MAE | r | ΔE ×100 |
 |---|---|---|---|---|
-| 221429 (clearing, against) | 144 / 157 (146 / 159) | 2.8 / 2.3 | 0.99 / 0.99 | 1.0 / 0.9 |
-| 20833364 (clearing, side) | 162 / 133 (163 / 135) | 2.5 / 2.1 | 0.99 / 1.00 | 0.9 / 0.9 |
-| 22262986, grisaille | 186 / 172 (186 / 173) | 2.4 / 2.5 | 0.98 / 0.99 | 1.1 / 1.1 |
-| 22414005 (passage, moon) | 87 / 98 (89 / 99) | 2.5 / 1.8 | 1.00 / 0.99 | 1.1 / 0.9 |
+| 221429 (clearing, against) | 144 / 157 (146 / 159) | 2.8 / 2.7 | 0.99 / 0.99 | 1.2 / 1.1 |
+| 20833364 (clearing, side) | 162 / 133 (163 / 135) | 2.7 / 2.2 | 0.99 / 1.00 | 1.1 / 0.9 |
+| 22262986, grisaille | 185 / 172 (186 / 173) | 2.1 / 2.3 | 0.99 / 1.00 | 0.9 / 1.0 |
+| 22414005 (passage, moon) | 87 / 98 (89 / 99) | 2.4 / 1.9 | 1.00 / 0.99 | 1.0 / 0.9 |
+
+v1's figures were within ±0.2 of these: the new palette, brushes and drying cost nothing in
+fidelity.
+- 221429 is painted in 22.4 hours on the clock: 0.8 h of block-in, 18 h standing, 3.6 h of
+  body, detail and lights.
+- A diptych takes about 50 s at 1× and 150 s at 1.5× in the test container.
 
 For reference:
 - **038's oil** on 221429 scores MAE 2.4 / 2.7, r 0.99, ΔE 0.9 / 1.0. Its strokes take their
@@ -137,18 +193,18 @@ For reference:
 - **Name clash.** `painter.js` declared `PARTS`, which is 028's global. The page failed
   silently and a render "ran" for twenty minutes. The lint pass now checks redeclarations.
 
-## Known gaps (v1)
+## Known gaps (v2)
 
-- Each sheet is painted at its picture size (900 × 1193) and scaled for display, so large
-  screens show it a little soft.
-- **Strokes are straight-sided flat-brush marks.** The finest still read as small rectangles
-  in smooth areas.
-- **Wet blending is modelled, mixing on the palette is not.** The brush mixes only what it
-  picks up from the canvas and from loading it dirty.
-- **No fat-over-lean, cracking or yellowing.** Drying is all or nothing at a session's end, and
-  open time is counted in strokes.
+v1's gaps (resolution, rectangular strokes, no palette mixing, all-or-nothing drying, no fat
+over lean or ageing) are addressed above. What remains:
 - **Oil only.** Watercolour needs water flow on the paper (pigment carried and deposited at
-  the edges), which is a larger step.
+  the edges); it comes next.
+- **Simplified drying.** Drying is a per-pixel clock, not the chemistry of oxidation: a layer
+  is wet or dry, with no skin over a wet interior.
+- **Craquelure is a pattern, not a stress simulation.** It follows age, paint thickness and
+  recorded fat-over-lean strain, but the islands come from a warped grid.
+- **Short strokes.** The shortest detail strokes (four steps) can read as pills in smooth areas.
+- **Auto resolution stops at 1.5×** for memory. 2× must be chosen.
 
 ## Controls
 
@@ -157,11 +213,17 @@ For reference:
 | Painting | palette (full / grisaille: white, black, umber), glow of the light (1) |
 | Scene | register, rare event (as 028), movement of the body (1) |
 | The painter | finest brush (7 px), tolerance (0.03 OKLab), correction in the mix (0.4), wipe the brush past (ΔE 0.12) |
-| The paint | paint stays wet (1500 strokes), pickup of wet paint (0.3), a brushful lasts (6 widths), unevenly mixed brushful (0.12), dry brush (0.5), loaded lights (1), relief under the light (0.45) |
+| The paint | pickup of wet paint (0.3), a brushful lasts (6 widths), unevenly mixed brushful (0.12), dry brush (0.5), loaded lights (1), relief under the light (0.45), dirty palette (0.5), drying speed (1×), layers (fat over lean), age (0 years), canvas resolution (auto) |
 
 Other controls:
 - **Apply changes** repaints.
-- **🔀 shuffle everything** (or `X`) draws all settings at random, with limits: finest brush
-  5.5–12 px, tolerance 0.025–0.06, a forced rare event only half the time.
+- **🔀 shuffle everything** (or `X`) draws all settings at random, with limits:
+  - finest brush 5.5–12 px;
+  - tolerance 0.025–0.06;
+  - correction 0.2–0.6;
+  - a forced rare event only half the time;
+  - aged 40 % of the time;
+  - lean over fat 20 % of the time;
+  - resolution left on auto.
 - `R` makes a new seed and `S` saves a PNG.
-- The status line shows the session, brush and stroke count.
+- The status line shows the session, brush, clock and stroke count; when done, the hours at the easel and the resolution.
