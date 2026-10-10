@@ -2453,7 +2453,7 @@ function wcVegetation(s, yT) {
     const z = s.F / Math.max(1, y - s.HY);
     const col = C.durer
       ? s.seen(i % 3 === 0 ? mixRGB(OCHRE, C.groundFar, 0.5) : mixRGB(C.foliageLit, C.groundFar, random(0.2, 0.6)), z, x, y)
-      : s.seen(i % 5 === 0 ? mixRGB(RUST, C.foliage, 0.45) : i % 5 === 1 ? mixRGB(OCHRE, C.foliageLit, 0.45) : mixRGB(C.foliage, C.silhouette, 0.1 * (i % 3)), z, x, y);
+      : s.seen(i % 5 === 0 ? mixRGB(RUST, C.foliage, C.summer ? 0.45 : s.night ? 0.92 : 0.75) : i % 5 === 1 ? mixRGB(OCHRE, C.foliageLit, C.summer ? 0.45 : s.night ? 0.92 : 0.7) : mixRGB(C.foliage, C.silhouette, 0.1 * (i % 3)), z, x, y);
     const rx = random(90, 220) / Math.sqrt(z), ry = rx * random(0.2, 0.35);
     wfill(blobPoly(x, y, rx, ry, random(100), 16, 0.6), col, 170 * WP.vari + 40, { bleed: 0.35, dir: 'out', tex: 0.3, border: 0.4 });
   }
@@ -2470,7 +2470,9 @@ function wcVegetation(s, yT) {
     const near = clamp01(1.4 / z);
     if (near < 0.25) continue;
     const r = random();
-    const fam = r < 0.75 ? mixRGB(C.foliage, C.foliageLit, random(0, 0.45)) : r < 0.88 ? mixRGB(RUST, C.foliage, 0.5) : mixRGB(OCHRE, C.foliage, 0.45);
+    // the warm accents are Homer's summer; under other lights they are fewer and muted
+    const warm = C.summer ? 0.5 : s.night ? 0.92 : 0.75; // at night a rust is only a darker green
+    const fam = r < (C.summer ? 0.75 : 0.88) ? mixRGB(C.foliage, C.foliageLit, random(0, 0.45)) : r < (C.summer ? 0.88 : 0.95) ? mixRGB(RUST, C.foliage, warm) : mixRGB(OCHRE, C.foliage, warm);
     vegMass(s, x, y, (60 + 200 * near) * random(0.6, 1.3), fam, near, z);
   }
 }
@@ -2897,7 +2899,7 @@ function wcBankDetail(s) {
       const y = bankAt(rp, x) + random(4, 120);
       if (y > REF_H + 8) continue;
       const near = 1 + (y - bankAt(rp, x)) / 160;
-      const fam = C.durer ? mixRGB(dark, C.foliageLit, random(0.2, 0.5)) : random() < 0.85 ? mixRGB(dark, base, random(0.2, 0.6)) : mixRGB(RUST, dark, 0.45);
+      const fam = C.durer ? mixRGB(dark, C.foliageLit, random(0.2, 0.5)) : random() < 0.85 ? mixRGB(dark, base, random(0.2, 0.6)) : mixRGB(RUST, dark, C.summer ? 0.45 : s.night ? 0.9 : 0.7);
       vegMass(s, x, y, random(70, 160) * near, fam, near, 0.8, true);
     }
   }
@@ -2998,9 +3000,11 @@ function wcFramingTasks(s) {
           away.push([P[k][0] + nx * hw, P[k][1] + ny * hw]);
           mid.push([P[k][0] - nx * hw * 0.15, P[k][1] - ny * hw * 0.15]);
         }
-        // the trunk and the big limbs are washes (texture, a dried rim); the rest glazes
-        if (W > 14) wfill(left.concat(right.reverse()), barkLit, 220, { bleed: 0.04, dir: 'in', tex: 0.45, border: 0.55 });
-        else wwash(left.concat(right.reverse()), barkLit, 200);
+        // the trunk and limbs are glazes with a firm edge: a bleeding fill spreads in
+        // proportion to its shape's size, so a long limb smeared brown into the sky beside it
+        const limb = left.concat(right.reverse());
+        if (W > 14) wsoft(limb, barkLit, 230, 0.25);
+        else wwash(limb, barkLit, 200);
         wwash(away.concat(mid.reverse()), bark, 170);
         if (W > 7 && WP.rigger > 0) {
           for (let k = 0; k < W * 0.5; k++) {
@@ -3030,7 +3034,7 @@ function wcFramingTasks(s) {
       // one light wash under the biggest masses only, so the sky still shows through the rest
       const outline = blobPoly(c.x, c.y, c.r * 0.85, c.r * 0.6, c.ph, 26, 0.8);
       // wet, and left to spread outward: the crown's edge is lost against the sky
-      if (wetSet.has(c)) wfill(outline, lit, 140, { bleed: 0.45 + 0.2 * WP.wet, dir: 'out', tex: 0.3, border: 0.2 });
+      if (wetSet.has(c)) wfill(outline, lit, 140, { bleed: 0.25 + 0.15 * WP.wet, dir: 'out', tex: 0.3, border: 0.2, scatter: false });
       else wsoft(outline, mixRGB(lit, midC, 0.4), 100, 1.3);
       // the clumps written as touches of a loaded brush, laid level and drooping a little at
       // the tips (a tier of foliage), light on the sunward top, dark beneath and away
@@ -3240,10 +3244,10 @@ function wcFoxing(s) {
   }
 }
 
-// The sky: a pale warm wash, then the blue-grey scumbled in — a half-dry brush dragged level
-// in broad, overlapping passes that break up as they go — thickest high up and toward the
-// corners, thinning to bare paper low in the middle over the valley; a few of the passes wet
-// enough to granulate; the clouds as soft grey drifts where they stand, their tops left pale.
+// The sky: a pale warm wash; the tone laid into the corners and along the top in a few very
+// wet washes; then wet, granulating patches of every size dropped where the brush went,
+// thinning to bare paper low in the middle over the valley; the clouds as soft grey drifts
+// where they stand, their tops left pale.
 function skyVignette(s, x, y) {
   const up = 1 - clamp01(y / (s.HY * 0.9));
   const side = Math.abs(x - s.CX) / s.CX;
@@ -3255,36 +3259,37 @@ function wcSkyDurer(s) {
   T.push(() => {
     wfill(rrect(-60, -60, REF_W + 60, s.HY + 30, 0.06, 3.1), C.horizon, 90, { bleed: 0.4, dir: 'out', ang: 0, tex: 0.25, border: 0.04, scatter: false });
   });
-  // the passes: rows from the top down, each a run of broken level strokes whose strength
-  // follows the vignette
-  const rows = [];
-  for (let y = -30; y < s.HY * 0.92; y += random(32, 52)) rows.push(y);
-  const per = Math.ceil(rows.length / 5);
-  let nWet = 0;
-  for (let i = 0; i < rows.length; i += per) {
-    const chunk = rows.slice(i, i + per);
+  // 1. the tone: a few very large, very wet washes laid into the corners and along the top —
+  //    they make the fall-off from the edges to the bare middle, with no edge of their own
+  T.push(() => {
+    const big = [[-80, -60], [REF_W + 80, -60], [REF_W * 0.5, -140], [-120, s.HY * 0.45], [REF_W + 120, s.HY * 0.45]];
+    for (const [x, y] of big) {
+      const col = mixRGB(C.zenith, C.upper, random(0.2, 0.5));
+      wfill(blobPoly(x + random(-60, 60), y + random(-30, 30), random(420, 620), random(240, 340), random(100), 30, 0.55), col, 135, { bleed: 0.55, dir: 'out', tex: 0.45 + 0.4 * WP.gran, border: 0.04, scatter: true });
+    }
+  });
+  // 2. the patches: dropped where the brush happened to go, not in rows — their size spread
+  //    over a wide range (a few broad, many middling, some small), so no rhythm forms; each
+  //    wet and granulating, darker the nearer it lies to the edges
+  const patches = [];
+  for (let tries = 0; patches.length < 40 && tries < 2000; tries++) {
+    const x = random(-60, REF_W + 60), y = random(-40, s.HY * 0.85);
+    const v = skyVignette(s, x, y);
+    if (v < 0.2 || random() > Math.pow(v, 1.3)) continue;
+    // log-uniform size: 50–420 wide
+    const w = Math.exp(random(Math.log(50), Math.log(420)));
+    patches.push([x, y, v, w]);
+  }
+  const per = Math.ceil(patches.length / 4);
+  for (let i = 0; i < patches.length; i += per) {
+    const chunk = patches.slice(i, i + per);
     T.push(() => {
-      for (const y of chunk) {
-        let x = -80 + random(0, 60);
-        while (x < REF_W + 60) {
-          const len = random(220, 520);
-          const xm = x + len / 2;
-          const v = skyVignette(s, xm, y);
-          // the brush comes back to the top and the corners; the middle of the sky is the paper
-          if (v > 0.22 && random() < Math.pow(v, 1.4) * 1.25) {
-            const h = random(55, 110) * (0.6 + 0.6 * v);
-            const col = mixRGB(mixRGB(C.zenith, C.cloudShadow, random(0, 0.6)), C.upper, random(0.1, 0.5) * (1 - v));
-            // an irregular patch, not a band: the passes overlap and lose their outlines
-            const poly = blobPoly(xm, y + random(-8, 8), len / 2, h / 2, x * 0.01 + y * 0.07, 30, 0.75);
-            // nearly every pass is a real wet wash: its edge bleeds away and it granulates,
-            // so the sky has no shapes in it, only a mottled thickening toward the edges
-            if (nWet < 44) {
-              nWet++;
-              wfill(poly, col, 45 + 105 * v, { bleed: 0.35 + 0.2 * WP.wet, dir: 'out', ang: 0, tex: 0.5 + 0.4 * WP.gran, border: 0.08, scatter: true });
-            } else wsoft(poly, col, 30 + 60 * v, 3);
-          }
-          x += len * random(0.5, 1.1);
-        }
+      for (const [x, y, v, w] of chunk) {
+        const h = w * random(0.25, 0.6);
+        const col = mixRGB(mixRGB(C.zenith, C.cloudShadow, random(0, 0.6)), C.upper, random(0.1, 0.5) * (1 - v));
+        const tilt = random(-0.12, 0.12);
+        const poly = blobPoly(x, y, w / 2, h / 2, x * 0.01 + y * 0.07, 30, 0.8).map(([px, py]) => [px, py + (px - x) * tilt]);
+        wfill(poly, col, 40 + 100 * v, { bleed: 0.35 + 0.2 * WP.wet, dir: 'out', ang: 0, tex: 0.5 + 0.4 * WP.gran, border: 0.06, scatter: true });
       }
     });
   }
