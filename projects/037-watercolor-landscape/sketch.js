@@ -2453,7 +2453,7 @@ function wcVegetation(s, yT) {
     const z = s.F / Math.max(1, y - s.HY);
     const col = C.durer
       ? s.seen(i % 3 === 0 ? mixRGB(OCHRE, C.groundFar, 0.5) : mixRGB(C.foliageLit, C.groundFar, random(0.2, 0.6)), z, x, y)
-      : s.seen(i % 5 === 0 ? mixRGB(RUST, C.foliage, 0.45) : i % 5 === 1 ? mixRGB(OCHRE, C.foliageLit, 0.45) : mixRGB(C.foliage, C.silhouette, 0.1 * (i % 3)), z, x, y);
+      : s.seen(i % 5 === 0 ? mixRGB(RUST, C.foliage, C.summer ? 0.45 : 0.75) : i % 5 === 1 ? mixRGB(OCHRE, C.foliageLit, C.summer ? 0.45 : 0.7) : mixRGB(C.foliage, C.silhouette, 0.1 * (i % 3)), z, x, y);
     const rx = random(90, 220) / Math.sqrt(z), ry = rx * random(0.2, 0.35);
     wfill(blobPoly(x, y, rx, ry, random(100), 16, 0.6), col, 170 * WP.vari + 40, { bleed: 0.35, dir: 'out', tex: 0.3, border: 0.4 });
   }
@@ -2470,7 +2470,9 @@ function wcVegetation(s, yT) {
     const near = clamp01(1.4 / z);
     if (near < 0.25) continue;
     const r = random();
-    const fam = r < 0.75 ? mixRGB(C.foliage, C.foliageLit, random(0, 0.45)) : r < 0.88 ? mixRGB(RUST, C.foliage, 0.5) : mixRGB(OCHRE, C.foliage, 0.45);
+    // the warm accents are Homer's summer; under other lights they are fewer and muted
+    const warm = C.summer ? 0.5 : 0.75;
+    const fam = r < (C.summer ? 0.75 : 0.88) ? mixRGB(C.foliage, C.foliageLit, random(0, 0.45)) : r < (C.summer ? 0.88 : 0.95) ? mixRGB(RUST, C.foliage, warm) : mixRGB(OCHRE, C.foliage, warm);
     vegMass(s, x, y, (60 + 200 * near) * random(0.6, 1.3), fam, near, z);
   }
 }
