@@ -20,7 +20,7 @@ left out, and the composition stays the engine's own. The result is a seventh mo
 
 | # | Technique in the reference | v3 | v4 implementation (`paint6`) |
 |---|---|---|---|
-| 1 | The sky is mostly bare warm paper. Blue-grey is scumbled in level, half-dry passes that thicken toward the top and the corners (a vignette); there are no cut-out clouds. | saturated blue sky, white paper clouds | `wcSkyDurer`: a pale warm wash, then up to 44 wet, granulating, irregular patches. Their density follows `skyVignette` (height × distance from the centre), so the middle low sky stays paper. Clouds are soft grey drifts with pale tops. |
+| 1 | The sky is mostly bare warm paper. Blue-grey is scumbled in level, half-dry passes that thicken toward the top and the corners (a vignette); there are no cut-out clouds. | saturated blue sky, white paper clouds | `wcSkyDurer`: a pale warm wash; five very large, very wet washes laid into the corners and along the top, which make the fall-off with no edge of their own; then 40 wet, granulating patches placed at random, not in rows. Their sizes are log-uniform (50–420 px wide), so no rhythm forms. Their density follows `skyVignette` (height × distance from the centre), so the middle low sky stays paper. Clouds are soft grey drifts with pale tops. |
 | 2 | Mountains in strong local colour, nearly bodycolour: teal and blue-green near, one rose-violet range, pale blue far, misting out on one side | translucent blue-grey glazes | palette per range, with the middle range mixed 50 % toward violet (`durerRangeTint`). Every range but the farthest gets a second dense layer over its wash. |
 | 3 | The mountains are modelled by thin strokes running down the gullies | shadow-plane glazes only | `wcStriations`: up to 150 strokes per near range along each slope's fall line (`rangePlane`). They gather in the shade, with a lighter one now and then on a lit rib. |
 | 4 | Round trees, dark blue-green, built of small stippled dabs with lighter tops | pines and broad touches | no pines in this mood; `wcStipple` dabs each crown, dark low and away from the light, lighter on top |
@@ -40,6 +40,18 @@ Defaults changed:
 The other six moods are unchanged and can be picked from the panel, summer day among
 them. Known gap: the shared engine fixes the river's width, so the valley's river is
 narrower than Dürer's. The **fjord / lake** scene gives the broad still water instead.
+
+Corrections after review (all moods, re-rendered at seed 4):
+- **Sky without rows.** The first v4 sky laid its patches along rows from the top down, and
+  the rows showed as stripes. The patches are now placed at random, with sizes spread over
+  an order of magnitude, under the corner washes described in row 1.
+- **Firm-edged limbs.** A bleeding fill spreads in proportion to its shape's size, so a long
+  limb laid as a wet fill smeared brown into the sky beside it. Trunk and limbs wider than
+  14 px are now soft-edged glazes (`wsoft`). The crown's wet underwash bleeds less (0.25 +
+  0.15 × wetness, previously 0.45 + 0.2).
+- **Warm accents by light.** The rust and ochre vegetation and bank accents are Homer's summer.
+  In the other moods they are fewer (12 % of masses, previously 25 %) and mixed 75 % toward
+  the foliage (92 % at night, where a rust reads only as a darker green).
 
 ## v2: after Winslow Homer's *The Blue Boat* (1892)
 
