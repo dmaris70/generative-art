@@ -26,11 +26,16 @@
 const PALETTES = {
   colour: [2, 3, 4, 5, 6, 7, 8, 9], // with white (1) added to every mix in its proportions
   mono: [2, 5], // ivory black and burnt umber with white: 028's monochrome as a warm grisaille
+  // (indices into CONSTRUCTIVE_DEFS) the constructive manner's palette, black left out
+  constructive: [3, 4, 5, 6, 7, 8, 9, 10, 11],
 };
 const WHITE_RATIOS = [0, 0.5, 1, 2, 4, 8, 16, 32, 64];
 const MIX_PARTS = [1, 2, 4, 8];
 function makePalette(PG, which) {
   const use = PALETTES[which] || PALETTES.colour, P = PG.length, mixes = [], seen = new Set();
+  // nine colours in threes at four strengths are many more mixes: the constructive palette
+  // takes its triples at three
+  const parts = use.length > 8 ? [1, 2, 4] : MIX_PARTS;
   const add = (parts) => {
     let sc = 0;
     for (const [, n] of parts) sc += n;
@@ -54,7 +59,7 @@ function makePalette(PG, which) {
     for (let b = a + 1; b < n; b++) {
       for (const i of MIX_PARTS) for (const j of MIX_PARTS) add([[use[a], i], [use[b], j]]);
       for (let c = b + 1; c < n; c++)
-        for (const i of MIX_PARTS) for (const j of MIX_PARTS) for (const k of MIX_PARTS) add([[use[a], i], [use[b], j], [use[c], k]]);
+        for (const i of parts) for (const j of parts) for (const k of parts) add([[use[a], i], [use[b], j], [use[c], k]]);
     }
   }
   { const f = new Float32Array(P); f[1] = 1; const lin = mixRInf(PG, f, [0, 0, 0]); mixes.push({ f, lin, lab: oklab(lin[0], lin[1], lin[2], [0, 0, 0]) }); }
@@ -150,8 +155,11 @@ function strokeField(Bs, wd, smearK) {
 // as on a real palette. A fresh pile is not yet worked smooth, so a brush loaded from it
 // carries more streaks.
 // ---------------------------------------------------------------------------------
-function makeMixer(PG, pal, rng, stats) {
-  const P = PG.length, piles = [], MAX = 14;
+// opt.reuse: how close a pile must be to be used as it is; opt.max: how many piles the palette
+// holds (the constructive manner keeps few and reuses them loosely, so the same colours recur
+// across sky and land)
+function makeMixer(PG, pal, rng, stats, opt = {}) {
+  const P = PG.length, piles = [], MAX = opt.max ?? 14, REUSE = opt.reuse ?? 0.012;
   const labOf = (f) => { const l = mixRInf(PG, f, [0, 0, 0]); return oklab(l[0], l[1], l[2], [0, 0, 0]); };
   const dist = (a, b) => Math.hypot(a[0] - b[0], a[1] - b[1], a[2] - b[2]);
   const norm = (f) => { let t = 0; for (let p = 1; p < P; p++) t += f[p]; for (let p = 1; p < P; p++) f[p] /= t; f[0] = 0; return f; };
@@ -180,7 +188,7 @@ function makeMixer(PG, pal, rng, stats) {
       tick++;
       let near = null, nd = Infinity;
       for (const pl of piles) { const d = dist(pl.lab, want); if (d < nd) { nd = d; near = pl; } }
-      if (near && nd < 0.012) { near.used = tick; near.uses++; stats.pilesReused++; return { pile: near, minutes: 0.05 }; }
+      if (near && nd < REUSE) { near.used = tick; near.uses++; stats.pilesReused++; return { pile: near, minutes: 0.05 }; }
       const fresh = pal.nearest(lin[0], lin[1], lin[2]), fd = dist(fresh.lab, want);
       let pile, minutes;
       const adj = near && nd < 0.12 ? adjust(near.f, want) : null;

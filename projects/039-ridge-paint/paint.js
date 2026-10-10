@@ -37,6 +37,24 @@ const PIGMENT_DEFS = [
   { name: 'cadmium red light', mass: [210, 55, 35], tint: [240, 150, 135] },
   { name: 'naples yellow', mass: [235, 205, 140], tint: [245, 230, 200] },
 ];
+// The palette Cézanne's late landscapes are painted with (lead white, chrome yellow, yellow
+// ochre, vermilion, red lake, burnt sienna, emerald and viridian greens, ultramarine, cobalt,
+// a little black): the constructive manner paints from it. The greens and the clean yellow are
+// the ones the main palette cannot mix (its greens, ultramarine with ochre, are dull).
+const CONSTRUCTIVE_DEFS = [
+  { name: 'medium' },
+  { name: 'lead white', mass: [244, 241, 232] },
+  { name: 'ivory black', mass: [28, 27, 28], tint: [120, 119, 121] },
+  { name: 'ultramarine', mass: [30, 32, 95], tint: [110, 125, 200] },
+  { name: 'cobalt blue', mass: [30, 70, 170], tint: [130, 160, 215] },
+  { name: 'viridian', mass: [20, 80, 65], tint: [120, 185, 165] },
+  { name: 'emerald green', mass: [40, 160, 110], tint: [150, 215, 180] },
+  { name: 'chrome yellow', mass: [235, 180, 20], tint: [245, 225, 140] },
+  { name: 'yellow ochre', mass: [190, 140, 60], tint: [228, 205, 160] },
+  { name: 'vermilion', mass: [215, 55, 30], tint: [240, 155, 135] },
+  { name: 'red lake', mass: [110, 20, 35], tint: [215, 140, 160] },
+  { name: 'burnt sienna', mass: [120, 52, 28], tint: [205, 145, 115] },
+];
 const WHITE_S = 6; // white's scattering per unit thickness: a layer of 1 nearly hides what is under it
 const TINT_C = 0.2; // the tint is one part pigment in five
 
@@ -473,4 +491,4 @@ function layStroke(cv, brush, path, o) {
   return bx0 <= bx1 ? [bx0, by0, bx1 + 1, by1 + 1] : null;
 }
 
-if (typeof module !== 'undefined') module.exports = { PIGMENT_DEFS, makePigments, kmLayer, mixRInf, oklab, oklabToLin, srgbToLin, linToSrgb, PaintCanvas, Brush, layStroke, rInf, ksOf, BRUSH_KINDS };
+if (typeof module !== 'undefined') module.exports = { PIGMENT_DEFS, CONSTRUCTIVE_DEFS, makePigments, kmLayer, mixRInf, oklab, oklabToLin, srgbToLin, linToSrgb, PaintCanvas, Brush, layStroke, rInf, ksOf, BRUSH_KINDS };
