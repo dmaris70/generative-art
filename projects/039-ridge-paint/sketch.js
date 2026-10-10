@@ -11,7 +11,7 @@ let SHEETS = []; // per sheet: { painter, off (an offscreen canvas), img (its Im
 let ACTIVE = 0; // the sheet being painted
 let R = null, U = 1, PANEL_W = 0;
 let JOB = 0;
-let PG = null;
+let PG = null, PGC = null;
 const ROOM = [14, 14, 16];
 const GAP = 40; // sheet units between the two sheets
 const FRAME_BUDGET_MS = 34;
@@ -28,6 +28,7 @@ function setup() {
     closedGroups: [PO, WA],
     params: {
       medium: { value: 0, options: { oil: 0, watercolour: 1 }, label: 'medium', group: PA },
+      manner: { value: 0, options: { 'alla prima': 0, 'constructive (after Cézanne)': 1 }, label: 'oil: manner', group: PA },
       palette: { value: 0, options: { 'full palette': 0, 'grisaille (white, black, umber)': 1 }, label: 'palette', group: PA },
       warmth: { value: 1, min: 0, max: 1.5, step: 0.05, label: 'glow of the light', group: PA },
       regime: { value: 0, options: { 'by seed': 0, exposure: 1, looming: 2, whiteout: 3, passage: 4, clearing: 5 }, label: 'register', group: SN },
@@ -42,6 +43,8 @@ function setup() {
       dryRate: { value: 1, min: 0.25, max: 4, step: 0.05, label: 'drying speed (×)', group: BR },
       fatOverLean: { value: 1, options: { 'fat over lean (as taught)': 1, 'lean over fat (it will crack)': 0 }, label: 'layers', group: PO },
       age: { value: 0, min: 0, max: 300, step: 5, label: 'age (years)', group: PO },
+      modulation: { value: 1, min: 0, max: 2, step: 0.05, label: 'constructive: warm/cool modulation', group: PO },
+      outlines: { value: 1, min: 0, max: 1, step: 0.05, label: 'constructive: drawn outlines', group: PO },
       res: { value: 0, options: { 'auto (screen)': 0, '1×': 1, '1.5×': 1.5, '2× (heavy)': 2 }, label: 'canvas resolution', group: BR },
       pick: { value: 0.3, min: 0, max: 0.6, step: 0.02, label: 'pickup of wet paint', group: PO },
       reach: { value: 6, min: 2, max: 14, step: 0.5, label: 'a brushful lasts (widths)', group: PO },
@@ -129,17 +132,23 @@ function reset() {
     SC = ridgeScene(G.seed, { regime: P('regime'), event: P('event'), place });
     const mono = P('palette') === 1;
     PG = PG || makePigments(PIGMENT_DEFS);
-    const pal = makePalette(PG, mono ? 'mono' : 'colour');
+    // the constructive manner paints from its own palette (Cézanne's), the grisaille from the main one
+    const constructive = P('medium') === 0 && P('manner') === 1 && !mono;
+    if (constructive) PGC = PGC || makePigments(CONSTRUCTIVE_DEFS);
+    const pgUse = constructive ? PGC : PG;
+    const pal = makePalette(pgUse, constructive ? 'constructive' : mono ? 'mono' : 'colour');
     const o = {
       palette: mono ? 'mono' : 'colour', brush: P('brush'), tol: P('tol'), aim: P('aim'), wipeAt: P('wipeAt'), dryRate: P('dryRate'),
       pick: P('pick'), reach: P('reach'), streak: P('streak'), dryBrush: P('dryBrush'), impasto: P('impasto'), smear: P('smear'),
       fatOverLean: P('fatOverLean') === 1, age: P('age'), res: canvasRes(), dirt: P('dirt'), hold: 1 / P('spread'),
+      modulation: P('modulation'), outlines: P('outlines'),
     };
     UI.res = o.res;
     SHEETS = SC.sheets.map((B, k) => {
       const C = colourise(B, SC.light, mono ? 'mono' : 'colour', P('warmth'));
       const rng = mulberry32((G.seed ^ 0x39c0ffee) + k * 7919);
-      const painter = P('medium') === 1 ? makeWCPainter(B, C, PG, o, rng) : makePainter(B, C, PG, pal, o, rng);
+      const painter = P('medium') === 1 ? makeWCPainter(B, C, PG, o, rng)
+        : P('manner') === 1 ? makeConstructivePainter(B, C, pgUse, pal, o, rng) : makePainter(B, C, PG, pal, o, rng);
       const off = document.createElement('canvas');
       off.width = painter.cv.w; off.height = painter.cv.h;
       const ctx = off.getContext('2d');

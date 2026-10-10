@@ -1,6 +1,7 @@
 # 039 — Ridge, encounters — stroke by stroke
 
 Oil (v1–v2) and watercolour (v3), each painted physically, stroke by stroke or wash by wash.
+v4 adds a second oil manner, **constructive** (after Cézanne's late Mont Sainte-Victoire canvases).
 
 **Mechanism (one sentence):** the scene of [028 — Ridge, encounters](../028-ridge-encounters/)
 (coloured by [038](../038-ridge-encounters-painted/)'s bridge) is painted in oil one stroke
@@ -278,6 +279,92 @@ Measured the same way as oil. For comparison, 038's watercolour scores block MAE
 - `preview-watercolour.png`: the diptych at 1.5×.
 - **Render time:** a diptych takes 80–130 s at 1× and about 4 min at 1.5× in the test container.
 
+## The constructive manner (`constructive.js`, v4)
+
+Oil only: choose **oil: manner → constructive (after Cézanne)**. It uses the same paint
+(`paint.js`) with a different painter.
+
+**What was measured.** One of Cézanne's late Mont Sainte-Victoire canvases was measured
+against 039's alla prima oil (`cz/measure.js` in the working notes). The image was 600 px
+wide, OKLab throughout, with variation taken inside 8 px windows.
+
+| Measure | Cézanne | 039 alla prima | What it says |
+|---|---|---|---|
+| Lightness variation in 8 px (localL) | 0.034 | 0.006 | his strokes stay distinct patches; ours blend wet into wet |
+| Colour variation in 8 px (localAB) | 0.011 | 0.002 | adjacent strokes differ in hue, not only in value |
+| Correlation of warmth (b) with lightness | 0.04 | 0.76 | warm and cool occur at every value: colour models, not light and dark |
+| Mean chroma | 0.043 | 0.031 | cleaner greens and yellows than the main palette holds |
+| Stroke directions (12 bins of 15°, % per bin) | 15 6 7 10 8 9 7 6 5 6 8 15 | follows the form | parallel groups, spread round the compass |
+| Bare ground | 0.1 % | 0 % | — |
+
+**What the painter does:**
+1. **Palette.** It paints from its own palette (`CONSTRUCTIVE_DEFS`): lead white, ivory black,
+   ultramarine, cobalt, viridian, emerald green, chrome yellow, yellow ochre, vermilion,
+   red lake and burnt sienna. Mixes are of up to three paints (in parts of 1, 2 and 4). The
+   canvas is white-primed, with no toned ground.
+2. **Patches.** Each of three layers divides the canvas into a jittered grid of patches,
+   4.5, 4 and 3.5 brush widths across, with brushes 2.6, 1.9 and 1.4 × the finest. Patches
+   are painted in random order, all over the canvas at once.
+3. **Value at the patch's scale.** A patch takes the subject's value softened to its own
+   size. Layers 2 and 3 repaint only patches whose softened canvas is still off by more than
+   the tolerance, pushing the value past the target by up to 0.06.
+4. **One brushload per patch.** A patch is one mix, turned warm (ochre, orange) or cool
+   (blue-violet, more rarely green) by up to 0.056 in a/b × `modulation`.
+   - The turn is smaller in the lights.
+   - Warm is likelier near, cool likelier far and in the sky.
+   - A third of patches work a second load into the first.
+   - The mixer reuses piles freely (12 piles; reuse distance 0.03), so the same colours recur
+     across the canvas.
+5. **Parallel flat strokes.** Strokes in a patch share a direction. It is drawn from four
+   families (the canvas's diagonal hatching 30 %, across it 20 %, vertical 20 %,
+   horizontal 30 %), turned 20 % toward the form, with ±14° play.
+6. **Lean and thin.** The paint is thinned slightly (10 % medium), with low pickup (0.05).
+   Each layer stands 6 h before the next, so strokes stay strokes.
+7. **Drawing.** Broken blue-violet lines are laid twice with a round brush along strong
+   contours.
+   - Edges are taken from the subject at 4 px blur.
+   - The sky silhouette is drawn above the 90th percentile of edge strength; elsewhere only
+     above the 99th.
+   - A traced line must be at least 22 px long and nearly straight (no point further than
+     0.15 of the chord from it). Without that rule, two cells each tracing half of a small
+     spot's rim drew a loop.
+
+**Results** (1×, right sheet; `compare-constructive.png` shows, left to right: alla prima and
+constructive for seed 90210, then the same for seed 221429):
+
+| Measure | Cézanne | 221429 alla prima | 221429 constructive | 90210 alla prima | 90210 constructive |
+|---|---|---|---|---|---|
+| localL | 0.034 | 0.006 | 0.013 | 0.010 | 0.016 |
+| localAB | 0.011 | 0.002 | 0.006 | 0.001 | 0.008 |
+| warmth–lightness correlation | 0.04 | 0.76 | 0.41 | 0.91 | 0.21 |
+| mean chroma | 0.043 | 0.031 | 0.035 | 0.019 | 0.023 |
+| bare ground | 0.1 % | 0.0 % | 0.2 % | 0.0 % | 0.3 % |
+
+On 24 px blocks, value fidelity to 028's frame (seed 221429) is MAE 18.6 / 18.6 (r 0.97 / 0.97).
+Alla prima scores 9.3 / 9.7 (r 0.99 / 1.00). The manner trades pixel fidelity for answering the
+masses. A diptych takes about 40 s at 1× and holds 6,000–7,500 strokes.
+`preview-constructive.png` is the diptych of seed 90210 at 1.5× (92 s in the test container).
+
+![seed 90210, constructive manner, 1.5×](preview-constructive.png)
+
+**What it took** (from the first render to this one):
+
+| Problem | Measured | Fix |
+|---|---|---|
+| Confetti: a warm or cool turn chosen for every stroke | localAB 0.023 (twice Cézanne's), no massing | one brushload per patch, at most two |
+| Bare canvas between patches | 3.1 % | patches wider than their grid step; strokes spaced 0.75 w; longer strokes |
+| One direction dominant | 26 % in one bin | four direction families instead of one hatching with jitter |
+| Mint and peach in the lights | — | the warm/cool turn shrinks with lightness (×(1.25 − 0.75 L), at most 1) |
+| Outlines round snow blobs | loops on land | stricter threshold off the silhouette; straightness and length tests |
+
+**Gaps.**
+- Local contrast stays below Cézanne's (localL 0.013–0.016 against 0.034). The subject
+  scenes are hazier than his, and strokes 7–12 px wide (at the measuring scale) fill the 8 px window.
+- The direction histogram still peaks (14–24 % in one bin, against 15 %), because the form
+  field pulls strokes toward the slope.
+- A near-featureless subject (seed 7, a whiteout) becomes an even mosaic. Nothing in it
+  calls for a mass.
+
 ## Known gaps (v3)
 
 v1's gaps (resolution, rectangular strokes, no palette mixing, all-or-nothing drying, no fat
@@ -299,11 +386,12 @@ over lean or ageing) are addressed above. What remains:
 
 | Group | Parameter (default) |
 |---|---|
-| Painting | medium (oil / watercolour), palette (full / grisaille: white, black, umber), glow of the light (1) |
+| Painting | medium (oil / watercolour), oil: manner (alla prima / constructive), palette (full / grisaille: white, black, umber), glow of the light (1) |
 | Scene | register, rare event (as 028), movement of the body (1) |
 | The painter (both media) | finest brush (7 px), tolerance (0.03 OKLab), drying speed (1×), relief under the light (0.45), canvas resolution (auto) |
 | Oil | correction in the mix (0.4), wipe the brush past (ΔE 0.12), pickup of wet paint (0.3), a brushful lasts (6 widths), unevenly mixed brushful (0.12), dry brush (0.5), loaded lights (1), dirty palette (0.5), layers (fat over lean), age (0 years) |
 | Watercolour | water spreads (1) |
+| Constructive | warm/cool modulation (1, range 0–2), drawn outlines (1) |
 
 Other controls:
 - **Apply changes** repaints.
