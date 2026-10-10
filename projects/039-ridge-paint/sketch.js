@@ -15,6 +15,7 @@ let PG = null;
 const ROOM = [14, 14, 16];
 const GAP = 40; // sheet units between the two sheets
 const FRAME_BUDGET_MS = 34;
+const SHOW_MS = 250;
 const UI = { status: 'loading the places…' };
 
 function setup() {
@@ -35,7 +36,11 @@ function setup() {
       tol: { value: 0.03, min: 0.015, max: 0.12, step: 0.005, label: 'tolerance (how exact)', group: BR },
       aim: { value: 0.4, min: 0, max: 1, step: 0.05, label: 'correction in the mix', group: BR },
       wipeAt: { value: 0.12, min: 0.03, max: 0.4, step: 0.01, label: 'wipe the brush past (ΔE)', group: BR },
-      open: { value: 1500, min: 50, max: 8000, step: 50, label: 'paint stays wet (strokes)', group: PT },
+      dirt: { value: 0.5, min: 0, max: 1, step: 0.05, label: 'dirty palette (brush into piles)', group: PT },
+      dryRate: { value: 1, min: 0.25, max: 4, step: 0.05, label: 'drying speed (×)', group: PT },
+      fatOverLean: { value: 1, options: { 'fat over lean (as taught)': 1, 'lean over fat (it will crack)': 0 }, label: 'layers', group: PT },
+      age: { value: 0, min: 0, max: 300, step: 5, label: 'age (years)', group: PT },
+      res: { value: 0, options: { 'auto (screen)': 0, '1×': 1, '1.5×': 1.5, '2× (heavy)': 2 }, label: 'canvas resolution', group: PT },
       pick: { value: 0.3, min: 0, max: 0.6, step: 0.02, label: 'pickup of wet paint', group: PT },
       reach: { value: 6, min: 2, max: 14, step: 0.5, label: 'a brushful lasts (widths)', group: PT },
       streak: { value: 0.12, min: 0, max: 0.6, step: 0.05, label: 'unevenly mixed brushful', group: PT },
@@ -58,6 +63,9 @@ function shuffleAll() {
     event: () => (Math.random() < 0.5 ? 0 : 1 + Math.floor(Math.random() * 5)),
     brush: (d) => step(r(5.5, 12), d), // finer than this and a sheet takes too long
     tol: (d) => step(r(0.025, 0.06), d),
+    res: () => 0, // the screen decides
+    age: (d) => (Math.random() < 0.6 ? 0 : step(r(d.min, d.max), d)),
+    fatOverLean: () => (Math.random() < 0.8 ? 1 : 0),
     aim: (d) => step(r(0.2, 0.6), d),
   };
   G.shuffle((k, d) => (guard[k] ? guard[k](d) : undefined));
@@ -74,6 +82,22 @@ function panelSpace() {
   const g = G.gui, el = g && g.domElement;
   if (!el || g._closed || g._hidden || windowWidth <= 700) return 0;
   return el.offsetWidth ? el.offsetWidth + 12 : 0;
+}
+
+// the canvas px per sheet unit: as many as the screen shows (in 0.5 steps, 1 to 1.5), unless
+// set; 2× takes about 700 MB while a sheet is being painted
+function canvasRes() {
+  const set = G.param('res');
+  if (set) return set;
+  layout();
+  const shown = SC ? U * pixelDensity() : 1; // device px per sheet unit
+  return Math.min(1.5, Math.max(1, Math.round(shown * 2) / 2));
+}
+function layout() {
+  const sw = (SC ? SC.sheets[0].W : 1080) * 2 + GAP, sh = SC ? SC.sheets[0].H : 1350;
+  const avail = width - PANEL_W;
+  U = Math.min((avail * 0.96) / sw, (height * 0.94) / sh);
+  R = { x: (avail - sw * U) / 2, y: (height - sh * U) / 2, w: sw * U, h: sh * U };
 }
 
 function mulberry32(a) {
@@ -105,9 +129,11 @@ function reset() {
     PG = PG || makePigments(PIGMENT_DEFS);
     const pal = makePalette(PG, mono ? 'mono' : 'colour');
     const o = {
-      palette: mono ? 'mono' : 'colour', brush: P('brush'), tol: P('tol'), aim: P('aim'), wipeAt: P('wipeAt'), open: P('open'),
+      palette: mono ? 'mono' : 'colour', brush: P('brush'), tol: P('tol'), aim: P('aim'), wipeAt: P('wipeAt'), dryRate: P('dryRate'),
       pick: P('pick'), reach: P('reach'), streak: P('streak'), dryBrush: P('dryBrush'), impasto: P('impasto'), smear: P('smear'),
+      fatOverLean: P('fatOverLean') === 1, age: P('age'), res: canvasRes(), dirt: P('dirt'),
     };
+    UI.res = o.res;
     SHEETS = SC.sheets.map((B, k) => {
       const C = colourise(B, SC.light, mono ? 'mono' : 'colour', P('warmth'));
       const painter = makePainter(B, C, PG, pal, o, mulberry32((G.seed ^ 0x39c0ffee) + k * 7919));
@@ -133,21 +159,26 @@ function show(S, r) {
 
 function draw() {
   background(...ROOM);
-  const sw = (SC ? SC.sheets[0].W : 1080) * 2 + GAP, sh = SC ? SC.sheets[0].H : 1350;
-  const avail = width - PANEL_W;
-  U = Math.min((avail * 0.96) / sw, (height * 0.94) / sh);
-  R = { x: (avail - sw * U) / 2, y: (height - sh * U) / 2, w: sw * U, h: sh * U };
+  layout();
   if (SC && SHEETS.length) {
-    // paint
+    // paint; what changed is shown at most every SHOW_MS (lighting the paint costs time)
     const t0 = performance.now();
     let pending = null;
     while (ACTIVE < 2 && performance.now() - t0 < FRAME_BUDGET_MS) {
       const S = SHEETS[ACTIVE];
       const r = S.painter.step(FRAME_BUDGET_MS - (performance.now() - t0));
-      if (r) show(S, r);
-      if (S.painter.done) { ACTIVE++; continue; }
+      if (r) S.dirty = S.dirty ? [Math.min(S.dirty[0], r[0]), Math.min(S.dirty[1], r[1]), Math.max(S.dirty[2], r[2]), Math.max(S.dirty[3], r[3])] : r;
+      if (S.painter.done) {
+        show(S, [0, 0, S.painter.cv.w, S.painter.cv.h]);
+        S.dirty = null;
+        // the finished sheet lives on in its image; the paint's state is let go
+        S.painter.cv.release();
+        ACTIVE++;
+        continue;
+      }
       pending = S;
     }
+    if (pending && pending.dirty && t0 - (pending.shown || 0) > SHOW_MS) { show(pending, pending.dirty); pending.dirty = null; pending.shown = t0; }
     // the sheets on their mats
     const ctx = drawingContext;
     for (let k = 0; k < 2; k++) {
@@ -164,7 +195,8 @@ function draw() {
       noLoop();
       window.DONE = true;
       const s = SHEETS.map((x) => x.painter.stats);
-      UI.status = 'done · ' + SC.placeLabel + ' · ' + SC.regime + ' · ' + SC.light + ' light · ' + (s[0].strokes + s[1].strokes).toLocaleString() + ' strokes';
+      UI.status = 'done · ' + SC.placeLabel + ' · ' + SC.regime + ' · ' + SC.light + ' light · ' + (s[0].strokes + s[1].strokes).toLocaleString() + ' strokes · ' +
+        (s[0].hours + s[1].hours).toFixed(1) + ' h at the easel · ' + UI.res + '×' + (G.param('age') > 0 ? ' · aged ' + G.param('age') + ' years' : '');
     } else if (pending) {
       const p = pending.painter;
       UI.status = (ACTIVE ? 'right' : 'left') + ' sheet · ' + p.stage + ' · ' + p.stats.strokes.toLocaleString() + ' strokes';
