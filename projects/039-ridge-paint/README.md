@@ -365,6 +365,50 @@ masses. A diptych takes about 40 s at 1× and holds 6,000–7,500 strokes.
 - A near-featureless subject (seed 7, a whiteout) becomes an even mosaic. Nothing in it
   calls for a mass.
 
+## Load: overpaint rounds (v4.1)
+
+**The painter → load (overpaint rounds)** sets how many times the painting is worked over,
+from 1 to 3. It applies to all three painters. At 1, every painter is unchanged: renders at
+load 1 are pixel-identical to the previous version for all three. What a round is:
+
+| Painter | Load 1 | Each further round |
+|---|---|---|
+| Oil, alla prima | block-in, body, detail, lights | the painting stands 20 h (touch-dry), then body and detail are laid again before the lights. Each round corrects to 0.6 × the previous round's tolerance and is a little fatter (fat over lean holds). |
+| Oil, constructive | first, second, third patches | after a 6 h stand, the second and third patch layers are laid again, at 0.6 × the previous tolerance and 0.05 fatter |
+| Watercolour | sky, three wash layers, accents | each wash layer is laid as `load` glazes over the same shapes, each let dry first. Glaze j closes frac / load of the layer's starting shortfall, so the final depth is the same, built thinner. The accents stay a single pass. |
+
+Measured on seed 221429 at 1×, both sheets, in the test container. Thickness is the mean paint
+height for oil (dried plus wet) and the settled pigment for watercolour. Value MAE is on 24 px
+blocks against 028's frame.
+
+| Painter | Load | Strokes / washes | Thickness | Hours at the easel | Value MAE | Render |
+|---|---|---|---|---|---|---|
+| alla prima | 1 | 5,210 / 4,349 | 2.04 / 2.01 | 22 | 9.3 / 9.7 | 44 s |
+| alla prima | 2 | 14,529 / 11,101 | 2.74 / 2.57 | 47 | 6.3 / 5.9 | 58 s |
+| alla prima | 3 | 36,770 / 26,537 | 4.09 / 3.60 | 75 / 72 | 4.4 / 3.8 | 94 s |
+| constructive | 1 | 3,240 / 2,950 | 2.71 / 2.62 | 23 / 22 | 18.6 / 18.6 | 42 s |
+| constructive | 2 | 5,836 / 5,313 | 3.72 / 3.52 | 38 | 15.0 / 15.4 | 57 s |
+| constructive | 3 | 10,796 / 10,200 | 5.55 / 5.32 | 57 | 15.4 / 15.5 | 74 s |
+| watercolour | 1 | 61 / 20 washes | 0.014 / 0.017 | 4 | 16.0 / 6.9 | 82 s |
+| watercolour | 2 | 114 / 43 washes | 0.017 / 0.018 | 7 / 6.5 | 16.2 / 6.9 | 135 s |
+| watercolour | 3 | 173 / 61 washes | 0.015 / 0.020 | 10 / 9 | 16.3 / 6.2 | 186 s |
+
+What changes on the canvas (`compare-load.png`: right sheet; rows are alla prima, constructive
+and watercolour; columns are load 1, 2 and 3):
+- **Alla prima:** the paint doubles in thickness by load 3, the toned ground stops showing
+  between strokes, and the value error halves. The surface becomes smoother and more worked:
+  each round corrects finer differences, with more and smaller touches.
+- **Constructive:** the patches thicken (×2 by load 3) and close up, with no bare canvas left.
+  Value error falls at load 2 and then holds. More patches make the warm/cool play denser
+  rather than stronger.
+- **Watercolour:** by design, the same depth is reached through more glazes. Each glaze leaves
+  its own dried edge, so the layering shows at the edges of shapes rather than in the tone. The
+  difference is subtle. A darker, heavier watercolour would need glazes that go past the
+  subject, which this closed-loop painter does not do.
+- **Cost:** strokes grow faster than linearly in alla prima (each round finds more small
+  corrections). Render time at load 3 is 1.8–2.3× that at load 1. The shuffle button draws load 1 or
+  2 only.
+
 ## Known gaps (v3)
 
 v1's gaps (resolution, rectangular strokes, no palette mixing, all-or-nothing drying, no fat
@@ -388,7 +432,7 @@ over lean or ageing) are addressed above. What remains:
 |---|---|
 | Painting | medium (oil / watercolour), oil: manner (alla prima / constructive), palette (full / grisaille: white, black, umber), glow of the light (1) |
 | Scene | register, rare event (as 028), movement of the body (1) |
-| The painter (both media) | finest brush (7 px), tolerance (0.03 OKLab), drying speed (1×), relief under the light (0.45), canvas resolution (auto) |
+| The painter (both media) | finest brush (7 px), tolerance (0.03 OKLab), load: overpaint rounds (1, range 1–3), drying speed (1×), relief under the light (0.45), canvas resolution (auto) |
 | Oil | correction in the mix (0.4), wipe the brush past (ΔE 0.12), pickup of wet paint (0.3), a brushful lasts (6 widths), unevenly mixed brushful (0.12), dry brush (0.5), loaded lights (1), dirty palette (0.5), layers (fat over lean), age (0 years) |
 | Watercolour | water spreads (1) |
 | Constructive | warm/cool modulation (1, range 0–2), drawn outlines (1) |
@@ -402,6 +446,7 @@ Other controls:
   - a forced rare event only half the time;
   - aged 40 % of the time;
   - lean over fat 20 % of the time;
+  - load 1 or 2 only (3 must be chosen);
   - resolution left on auto.
 - `R` makes a new seed and `S` saves a PNG.
 - The status line shows the session, brush, clock and stroke count; when done, the hours at the easel and the resolution.

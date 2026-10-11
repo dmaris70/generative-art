@@ -36,6 +36,7 @@ function setup() {
       smear: { value: 1, min: 0, max: 2, step: 0.05, label: 'movement of the body (painted)', group: SN },
       brush: { value: 7, min: 4, max: 16, step: 0.5, label: 'finest brush (px)', group: BR },
       tol: { value: 0.03, min: 0.015, max: 0.12, step: 0.005, label: 'tolerance (how exact)', group: BR },
+      load: { value: 1, min: 1, max: 3, step: 1, label: 'load (overpaint rounds)', group: BR },
       aim: { value: 0.4, min: 0, max: 1, step: 0.05, label: 'correction in the mix', group: PO },
       wipeAt: { value: 0.12, min: 0.03, max: 0.4, step: 0.01, label: 'wipe the brush past (ΔE)', group: PO },
       dirt: { value: 0.5, min: 0, max: 1, step: 0.05, label: 'dirty palette (brush into piles)', group: PO },
@@ -72,6 +73,7 @@ function shuffleAll() {
     age: (d) => (Math.random() < 0.6 ? 0 : step(r(d.min, d.max), d)),
     fatOverLean: () => (Math.random() < 0.8 ? 1 : 0),
     aim: (d) => step(r(0.2, 0.6), d),
+    load: () => (Math.random() < 0.6 ? 1 : 2), // 3 only by hand: it takes three times as long
   };
   G.shuffle((k, d) => (guard[k] ? guard[k](d) : undefined));
 }
@@ -141,7 +143,7 @@ function reset() {
       palette: mono ? 'mono' : 'colour', brush: P('brush'), tol: P('tol'), aim: P('aim'), wipeAt: P('wipeAt'), dryRate: P('dryRate'),
       pick: P('pick'), reach: P('reach'), streak: P('streak'), dryBrush: P('dryBrush'), impasto: P('impasto'), smear: P('smear'),
       fatOverLean: P('fatOverLean') === 1, age: P('age'), res: canvasRes(), dirt: P('dirt'), hold: 1 / P('spread'),
-      modulation: P('modulation'), outlines: P('outlines'),
+      modulation: P('modulation'), outlines: P('outlines'), load: P('load'),
     };
     UI.res = o.res;
     SHEETS = SC.sheets.map((B, k) => {
