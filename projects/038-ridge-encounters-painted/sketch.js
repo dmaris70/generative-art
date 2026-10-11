@@ -37,6 +37,7 @@ function setup() {
       medium: { value: 1, options: { oil: 0, watercolour: 1 }, label: 'medium', group: PA },
       palette: { value: 0, options: { colour: 0, 'monochrome (028)': 1 }, label: 'palette', group: PA },
       warmth: { value: 1, min: 0, max: 1.5, step: 0.05, label: 'glow of the light', group: PA },
+      overpaint: { value: 1, min: 1, max: 3, step: 1, label: 'load (overpaint rounds)', group: PA },
       regime: { value: 0, options: { 'by seed': 0, exposure: 1, looming: 2, whiteout: 3, passage: 4, clearing: 5 }, label: 'register', group: SN },
       event: { value: 0, options: { 'by seed': 0, none: 1, tarn: 2, hut: 3, bird: 4, moon: 5 }, label: 'rare event (as 028)', group: SN },
       smear: { value: 1, min: 0, max: 2, step: 0.05, label: 'movement of the body (painted)', group: SN },
@@ -74,6 +75,7 @@ function shuffleAll() {
     strokeSize: (d) => step(r(6, 16), d),
     coverage: (d) => step(r(0.7, 1.6), d),
     load: (d) => step(r(0.8, 1.45), d),
+    overpaint: () => (Math.random() < 0.6 ? 1 : 2), // 3 only by hand
   };
   G.shuffle((k, d) => (guard[k] ? guard[k](d) : undefined));
 }
@@ -119,7 +121,7 @@ function reset() {
 
 function wcParams() {
   const P = (k) => G.param(k);
-  return { wet: P('wetness'), load: P('load'), gran: P('granulation'), back: P('backruns'), dry: P('dryBrush'), rigger: P('rigger'), tooth: 0.8 };
+  return { wet: P('wetness'), load: P('load'), gran: P('granulation'), back: P('backruns'), dry: P('dryBrush'), rigger: P('rigger'), tooth: 0.8, rounds: P('overpaint') };
 }
 
 function buildTasks() {
@@ -127,6 +129,7 @@ function buildTasks() {
   const oil = G.param('medium') === 0;
   const st = { smear: G.param('smear') };
   T.push(() => {
+    Overpaint.end(); // a sheet stopped part-way may have left the coats on
     background(...ROOM);
     for (let k = 0; k < 2; k++) {
       SHEET = k;
