@@ -146,6 +146,9 @@ function wcSheetTasks(Bs, C, st) {
     }
   });
 
+  // load: from here to the crest every wash is logged, to be laid again in each further round
+  // (the toned ground of a nocturne is not: it is a ground, not a layer of the picture)
+  if (WP.rounds > 1) T.push(() => Overpaint.start());
   // --- the sky, wet into wet, light to dark ---
   T.push(() => {
     SKY_LEVELS.forEach((L, li) => {
@@ -189,6 +192,8 @@ function wcSheetTasks(Bs, C, st) {
       });
     });
   }
+
+  if (WP.rounds > 1) for (const t of Overpaint.rounds(WP.rounds - 1)) T.push(t);
 
   // --- the crest, found and lost: rigger runs where the land meets the sky in contrast ---
   T.push(() => {

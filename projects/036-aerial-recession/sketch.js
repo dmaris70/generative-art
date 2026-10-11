@@ -119,6 +119,7 @@ function setup() {
     params: {
       medium: { value: 1, options: { watercolour: 0, oil: 1 }, label: 'medium', group: SC },
       wcTrees: { value: 0, options: { 'wash (clean)': 0, 'drawn (charcoal + hatch)': 1 }, label: 'watercolour trees', group: SC },
+      overpaint: { value: 1, min: 1, max: 3, step: 1, label: 'load (overpaint rounds)', group: SC },
       sceneType: { value: 0, options: { 'river plain': 0, 'fjord / lake': 1, 'alpine valley': 2 }, label: 'scene', group: SC },
       viewpoint: { value: 1, options: { 'low (looking up)': 0, 'eye level': 1, 'high vantage (looking down)': 2 }, label: 'viewpoint', group: SC },
       mood: { value: 0, options: { 'golden hour': 0, 'after the storm': 1, 'dawn mist': 2, 'moonlit night': 3, 'late snow': 4 }, label: 'mood', group: SC },
@@ -1159,6 +1160,7 @@ function buildControls() {
         strokeSize: (d) => step(r(9, d.max), d),
         coverage: (d) => step(r(0.6, 1.6), d),
         layers: () => (Math.random() < 0.75 ? 3 : 2),
+        overpaint: () => (Math.random() < 0.6 ? 1 : 2), // 3 only by hand
         fineDetail: (d) => step(r(0, 1), d),
         grass: (d) => step(r(0.3, 1.8), d),
         sun: (d) => step(r(0.05, 0.85), d),
@@ -1205,6 +1207,10 @@ function buildTasks(s) {
     setBrushScale(Math.max(0.3, U * 1.7));
     brush.noField();
   });
+  // load (watercolour): from here to the grain every wash is logged, to be laid again in each
+  // further round; in oil the rounds are the oil layers' (oilBegin)
+  const wcRounds = G.param('medium') === 0 ? G.param('overpaint') - 1 : 0;
+  if (wcRounds > 0) T.push(() => Overpaint.start());
   T.push(() => paintSkyGradient(s));
   T.push(() => paintSun(s));
   for (const c of s.clouds) T.push(() => paintCloud(s, c));
@@ -1285,6 +1291,7 @@ function buildTasks(s) {
     T.push(() => oilBegin(s));
     T.push(() => paintCanvasWeave(s));
   } else {
+    if (wcRounds > 0) for (const t of Overpaint.rounds(wcRounds)) T.push(t);
     T.push(() => paintGrain(s));
   }
   T.push(() => paintVignette(s));
@@ -3678,6 +3685,7 @@ function oilParams() {
     l: P('strokeLength'), // stroke length ÷ width
     coverage: P('coverage'),
     layers: P('layers'),
+    rounds: P('overpaint'),
     edge: P('edgeThreshold'),
     bend: P('bend'),
     jitterA: P('angleJitter'),
@@ -3839,6 +3847,13 @@ function oilBegin(s) {
   oilLayer(s, O, groups[0], 1.0, 1.2 * OP.coverage, false, 0);
   if (OP.layers >= 2) oilLayer(s, O, groups[1], 0.55, 0.8 * OP.coverage, false, 1);
   if (OP.layers >= 3) oilLayer(s, O, groups[1], 0.24, 1.0 * OP.coverage, true, 2);
+  // load: each further round lays the painting's layers again over what is there — the body
+  // and the edges (or, painted in one layer, the block-in), so the paint stands thicker
+  for (let k = 1; k < OP.rounds; k++) {
+    if (OP.layers < 2) oilLayer(s, O, groups[0], 1.0, 1.2 * OP.coverage, false, 0);
+    if (OP.layers >= 2) oilLayer(s, O, groups[1], 0.55, 0.8 * OP.coverage, false, 1);
+    if (OP.layers >= 3) oilLayer(s, O, groups[1], 0.24, 1.0 * OP.coverage, true, 2);
+  }
   oilForegroundBlockIn(s, O, groups[1]);
   oilSwordLeaves(s, O, groups[1]);
   oilLostEdges(s, O, groups[2]);
