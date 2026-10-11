@@ -166,7 +166,11 @@ Measured at seed 221429, 1400 × 860 (whole frame):
 | oil, render time | 78 s | 126 s | 173 s |
 
 In oil the change is in the surface (more and denser strokes, more relief), not in the value.
-The shuffle button draws load 1 or 2.
+The shuffle button draws load 1 or 2. The extra oil rounds draw from the same random stream as the knife, so
+the knife lights land differently at each load.
+
+`compare-load.png` shows the right sheet of seed 221429. The top row is oil, the bottom row
+watercolour; the columns are loads 1, 2 and 3.
 
 ## Known gaps (v1)
 

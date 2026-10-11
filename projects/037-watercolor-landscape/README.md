@@ -147,6 +147,9 @@ The renders shared the CPU, so the times are only a guide. Each coat of a wet wa
 fill, which is the slow p5.brush call; on a GPU the cost is small. The shuffle button draws
 load 1 or 2.
 
+`compare-load.png` shows seed 4 at loads 1, 2 and 3. The clouds, ranges and plain deepen; the
+striations, horizon pines and framing tree stay crisp over the coats.
+
 ## What is shared, what is new
 
 | Layer | Source | Notes |
