@@ -129,6 +129,7 @@ function buildTasks() {
   const oil = G.param('medium') === 0;
   const st = { smear: G.param('smear') };
   T.push(() => {
+    Overpaint.end(); // a sheet stopped part-way may have left the coats on
     background(...ROOM);
     for (let k = 0; k < 2; k++) {
       SHEET = k;
