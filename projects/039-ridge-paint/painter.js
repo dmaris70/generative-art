@@ -246,12 +246,22 @@ function makePainter(Bs, C, PG, pal, o, rng) {
   // sessions, as painted: brushes (× W0) and their shapes, paint thickness, medium share,
   // fatness, tolerance (OKLab), how far past the subject to mix, stroke steps, how far the
   // subject is softened, hours left to stand after it
+  // load: the body and the detail are laid again over the touch-dry painting, once per round
+  // (1 = as v3; up to 3). Each round is finer in what it corrects and a little fatter.
+  const LOAD = Math.max(1, Math.round(o.load || 1));
   const SESSIONS = [
     { name: 'block-in', brushes: [5.5], kinds: ['flat'], rate: 0.8, medium: 0.12, fat: FAT[0], tol: 0.0, aim: 0, steps: 6, soft: 1.1, standH: 18 },
-    { name: 'body', brushes: [2.8, 1.5], kinds: ['flat', 'filbert'], rate: 0.85, medium: 0.08, fat: FAT[1], tol: o.tol, aim: o.aim, steps: 10, soft: 0.55, standH: 0 },
-    { name: 'detail', brushes: [0.75], kinds: ['round'], rate: 0.9, medium: 0.05, fat: FAT[2], tol: o.tol * 1.25, aim: o.aim, steps: 12, soft: 0.35, standH: 0 },
-    { name: 'lights', brushes: [1.0], kinds: ['filbert'], rate: 1.7 * o.impasto, medium: 0, fat: FAT[3], tol: o.tol, aim: o.aim, steps: 6, soft: 0.4, standH: 0, lights: true },
   ];
+  for (let k = 0; k < LOAD; k++) {
+    const r = LOAD > 1 ? k / (LOAD - 1) : 0, tk = Math.pow(0.6, k), tag = LOAD > 1 ? ' ' + (k + 1) : '';
+    const fb = FAT[1] + (FAT[2] - FAT[1]) * 0.5 * r, fd = FAT[2] + (FAT[3] - FAT[2]) * 0.5 * r;
+    SESSIONS.push(
+      { name: 'body' + tag, brushes: [2.8, 1.5], kinds: ['flat', 'filbert'], rate: 0.85, medium: 0.08, fat: fb, tol: o.tol * tk, aim: o.aim, steps: 10, soft: 0.55, standH: 0 },
+      // between rounds the painting stands overnight, so the next round goes over touch-dry paint
+      { name: 'detail' + tag, brushes: [0.75], kinds: ['round'], rate: 0.9, medium: 0.05, fat: fd, tol: o.tol * 1.25 * tk, aim: o.aim, steps: 12, soft: 0.35, standH: k < LOAD - 1 ? 20 : 0 },
+    );
+  }
+  SESSIONS.push({ name: 'lights', brushes: [1.0], kinds: ['filbert'], rate: 1.7 * o.impasto, medium: 0, fat: FAT[3], tol: o.tol, aim: o.aim, steps: 6, soft: 0.4, standH: 0, lights: true });
   const stats = { strokes: 0, reloads: 0, wipes: 0, kept: 0, pilesFresh: 0, pilesDerived: 0, pilesReused: 0, contaminated: 0, sessions: [], hours: 0 };
   const mixer = makeMixer(PG, pal, rng, stats);
   let lab = new Float32Array(n * 3), cur = new Float32Array(n * 3), err = new Float32Array(n);

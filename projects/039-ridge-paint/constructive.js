@@ -36,11 +36,17 @@ function makeConstructivePainter(Bs, C, PG, pal, o, rng) {
   const W0 = o.brush * RES, MOD = o.modulation ?? 1;
   const stats = { strokes: 0, patches: 0, outlines: 0, reloads: 0, pilesFresh: 0, pilesDerived: 0, pilesReused: 0, contaminated: 0, sessions: [], hours: 0 };
   const mixer = makeMixer(PG, pal, rng, stats, { reuse: 0.03, max: 12 });
-  const LAYERS = [
-    { name: 'first patches', w: 2.6, patch: 4.5, rate: 0.7, fat: 0.1, tol: 0, push: 0 },
-    { name: 'second patches', w: 1.9, patch: 4, rate: 0.7, fat: 0.2, tol: o.tol * 1.2, push: 0.5 },
-    { name: 'third patches', w: 1.4, patch: 3.5, rate: 0.65, fat: 0.3, tol: o.tol * 1.5, push: 0.5 },
-  ];
+  // load: the second and third layers of patches are laid again, once per round (1 = three
+  // layers; up to 3), each round finer in what it corrects and a little fatter
+  const LOAD = Math.max(1, Math.round(o.load || 1));
+  const LAYERS = [{ name: 'first patches', w: 2.6, patch: 4.5, rate: 0.7, fat: 0.1, tol: 0, push: 0 }];
+  for (let k = 0; k < LOAD; k++) {
+    const tk = Math.pow(0.6, k), tag = LOAD > 1 ? ' ' + (k + 1) : '';
+    LAYERS.push(
+      { name: 'second patches' + tag, w: 1.9, patch: 4, rate: 0.7, fat: 0.2 + 0.05 * k, tol: o.tol * 1.2 * tk, push: 0.5 },
+      { name: 'third patches' + tag, w: 1.4, patch: 3.5, rate: 0.65, fat: 0.3 + 0.05 * k, tol: o.tol * 1.5 * tk, push: 0.5 },
+    );
+  }
   const l1 = [0, 0, 0], l2 = [0, 0, 0], c3 = [0, 0, 0];
   const dataAt = (x, y) => Math.min(Bs.h - 1, Math.max(0, Math.floor(y / s2d))) * Bs.w + Math.min(Bs.w - 1, Math.max(0, Math.floor(x / s2d)));
   // the general hatching: a diagonal for the whole canvas, its sense set by the seed
