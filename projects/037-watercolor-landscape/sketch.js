@@ -161,6 +161,7 @@ function setup() {
       granulation: { value: 0.4, min: 0, max: 1, step: 0.05, label: 'granulation', group: WC },
       backruns: { value: 0.65, min: 0, max: 1, step: 0.05, label: 'backruns / hard edges', group: WC },
       glazes: { value: 2, min: 1, max: 3, step: 1, label: 'glazes over dry paint', group: WC },
+      overpaint: { value: 1, min: 1, max: 3, step: 1, label: 'load (overpaint rounds)', group: WC },
       variegation: { value: 0.6, min: 0, max: 1, step: 0.05, label: 'variegated drops (wet-in-wet)', group: WC },
       lifting: { value: 0.4, min: 0, max: 1, step: 0.05, label: 'lifted lights (sun, mist, glints)', group: WC },
       horizonBand: { value: 0.4, min: 0, max: 1.2, step: 0.05, label: 'lifted horizon band', group: WC },
@@ -317,6 +318,7 @@ function buildControls() {
         sun: (d) => step(r(0.05, 0.85), d),
         haze: (d) => step(r(0.4, 1.6), d),
         load: (d) => step(r(0.75, 1.35), d),
+        overpaint: () => (Math.random() < 0.6 ? 1 : 2), // 3 only by hand: it darkens the sheet a long way
         penInk: (d) => (Math.random() < 0.5 ? 0 : step(r(0.2, 0.8), d)),
       };
       G.shuffle((k, d) => (guard[k] ? guard[k](d) : undefined));
@@ -1774,6 +1776,9 @@ function buildTasks(s) {
     if (ps) randomSeed(ps);
   });
   if (s.C.durer) T.push(() => wcAgedSheet(s));
+  // load: from here to the pen every wash is laid in as many coats (assets/overpaint.js)
+  const coats = G.param('overpaint');
+  T.push(() => Overpaint.begin(coats));
   stage('underdrawing');
   T.push(() => wcPencil(s));
   stage('sky, wet into wet');
@@ -1811,6 +1816,7 @@ function buildTasks(s) {
     stage('framing trees');
     for (const t of wcFramingTasks(s)) T.push(t);
   }
+  T.push(() => Overpaint.end());
   stage('pen, spatter, salt');
   T.push(() => wcPen(s));
   T.push(() => wcSpatterSalt(s));

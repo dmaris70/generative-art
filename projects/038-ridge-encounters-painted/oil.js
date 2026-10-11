@@ -21,7 +21,7 @@ function oilParams() {
   return {
     w: P('strokeSize'), l: 3.1, coverage: P('coverage'), edge: 10, bend: 0.2, jitterA: 0.1, jitterC: 0.05, body: 0.95,
     bristles: P('bristles'), bristleA: 1, dry: P('oilDry'), wet: 1, impasto: P('impasto'), economy: 0.7, blockIn: 0.6,
-    fol: 0.6, pickup: 0, knife: P('knife'), lost: 0.9, light: [Math.cos(la), Math.sin(la)], nightK: 1,
+    fol: 0.6, pickup: 0, knife: P('knife'), rounds: P('overpaint'), lost: 0.9, light: [Math.cos(la), Math.sin(la)], nightK: 1,
   };
 }
 
@@ -153,8 +153,10 @@ function oilSheetTasks(Bs, C, st) {
   // coverage is in expected layers of paint at each point: with random placement a layer of
   // c leaves e^-c of the ground bare, so the block-in is laid ~2.4 deep (≈ 9 % bare, where the
   // underpainting glows through), the body over it where something happens, then the edges
-  const passes = [[2.2, 2.4, false], [1.1, 1.4, false], [0.55, 1.0, true]];
-  passes.forEach(([scale, cover, edges], li) => {
+  // load: each further round lays the body and the edges again over what is there
+  const passes = [[2.2, 2.4, false, 0], [1.1, 1.4, false, 1], [0.55, 1.0, true, 2]];
+  for (let k = 1; k < OP.rounds; k++) passes.push([1.1, 1.4, false, 1], [0.55, 1.0, true, 2]);
+  passes.forEach(([scale, cover, edges, li]) => {
     let strokes = null, at = 0;
     T.push(() => {
       if (!strokes) { strokes = []; layer(scale, cover * OP.coverage, edges, li, strokes); }

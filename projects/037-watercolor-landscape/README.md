@@ -107,6 +107,49 @@ greenery.
 Cost: 214 fills for seed 4 (v2: 186), and the render time in the test container rose about
 11 % (362 s against 327 s at 1240×860).
 
+## Load: overpaint rounds (v5.1)
+
+**Watercolour · washes → load (overpaint rounds)** runs from 1 (as before) to 3. It is not
+*pigment load*, which sets the strength of each wash; this sets how many coats each wash gets.
+
+`assets/overpaint.js` (shared by 036, 037 and 038) wraps p5.brush's `fill`, `wash`,
+`fillBleed`, `fillTexture` and `polygon`. At load *n*, every wash in the painting is laid *n*
+times before the painter moves on:
+1. the wash itself;
+2. then, over the same shape, *n* − 1 further coats once it has dried:
+   - a wet wash (a fill) goes on again as a wet wash, with its granulation and dried edge but
+     no bleed, because the paper under it is now dry; it carries 0.7 of the first coat's
+     strength (p5.brush's wet washes dry far lighter than their nominal strength);
+   - a glaze (a wash) goes on again as a glaze, at 0.3 of its strength;
+   - each coat is shifted by up to 1.5 px, so its edge does not land exactly on the first.
+
+Everything painted after a wash goes on over all of its coats, so nothing is veiled. Dry-brush,
+rigger and pen marks are not washes and are laid once. Watercolour cannot cover what is under
+it, so each coat deepens the value and colour of its wash, and paper left bare stays bare. The
+coats draw nothing from p5's random stream, so every other mark stays where it was. At load 1
+nothing is wrapped: the code path is unchanged. Renders at load 1 match the previous version
+within the renderer's own run-to-run noise: two runs of the same code differ in 0.05 % of
+pixels, by at most a few levels.
+
+A first version replayed a log of all the washes after the whole painting. It veiled everything
+painted after them (the striations, the horizon pines, the bushes, the trunk), and replayed as
+flat glazes the wet washes lost their texture. Laying the coats in place fixed both.
+
+Measured at seed 4, 900 × 560, Dürer valley (the default):
+
+| Load | Mean value (0–255) | Render, test container |
+|---|---|---|
+| 1 | 183.2 | 655 s |
+| 2 | 177.9 | 1,057 s |
+| 3 | 172.7 | 1,311 s |
+
+The renders shared the CPU, so the times are only a guide. Each coat of a wet wash is a further
+fill, which is the slow p5.brush call; on a GPU the cost is small. The shuffle button draws
+load 1 or 2.
+
+`compare-load.png` shows seed 4 at loads 1, 2 and 3. The clouds, ranges and plain deepen; the
+striations, horizon pines and framing tree stay crisp over the coats.
+
 ## What is shared, what is new
 
 | Layer | Source | Notes |
@@ -234,6 +277,7 @@ The rest of the README list was left out deliberately:
 | | granulation (0.4) | `fillTexture` grain and granulating dots |
 | | backruns / hard edges (0.65) | pigment gathered at a wash's rim (`fillTexture` border) |
 | | glazes over dry paint (2) | glazes on the summits' shadow faces |
+| | load: overpaint rounds (1) | coats per wash, 1–3 (see *Load: overpaint rounds*) |
 | | variegated drops (0.6) | wet-in-wet drops in the sky, ranges and bank |
 | | lifted lights (0.4) | lifted sun, cloud linings, mist |
 | | lifted horizon band (0.4) | the bright band over the skyline |
