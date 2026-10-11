@@ -875,6 +875,7 @@ painting unaffordable or ruin it outright:
 | stroke width | 9–34 (range 5–34) | the stroke count grows as 1/width²: a 5 px brush at full coverage runs to millions of strokes |
 | coverage | 0.6–1.6 (range 0.3–2.5) | the same cost; below 0.6 the canvas shows through in holes |
 | layers | 3 (75 %) or 2 | one layer leaves the picture unfinished |
+| load (overpaint rounds) | 1 or 2 | 3 must be chosen by hand |
 | grass density | 0.3–1.8 | cost of the blades |
 | fine detail | 0–1 | cost of the marks |
 | sun height | 0.05–0.85 | at the extremes the sun sits on the crest or leaves the picture |
@@ -921,6 +922,30 @@ tree's scale:
 
 Near and middle distance now share one brush language instead of a broad framing tree
 over a speckled plain.
+
+## Load: overpaint rounds (*load*, 1–3)
+
+**Scene → load (overpaint rounds)** sets how many times the painting is worked over. At 1 it
+is as before.
+
+**Oil** (the default medium): each further round lays the painting's layers again over
+what is there, before the foreground block-in, the lost edges and the objects. With *layers*
+at 3 that means the medium body layer and the edge layer; at 2, the body layer; at 1, the
+coarse block-in. Each round is laid at the same scale, coverage and fat as the first, at new
+random places, so the paint stands denser and smoother. The extra strokes are cheap beside
+the underpainting: seed 4 at 900 × 560 took 407, 411 and 437 s at loads 1, 2 and 3 in the
+test container. The rounds draw from the same random stream as the passes after them, so the
+flowers, rocks and objects placed later land differently at each load.
+
+**Watercolour:** each wash is laid in as many coats (`assets/overpaint.js`, shared with 037
+and 038). A wet wash is recoated as a wet wash with its texture and no bleed, at 0.7 of its
+strength; a glaze as a glaze, at 0.3. Here the effect is slight: mean value 135.6, 135.1 and
+136.3 at loads 1, 2 and 3. Most of 036's washes are laid at full opacity (a second coat of
+the same colour adds nothing), and its gradients, sun and veils are drawn by p5 itself, not
+as washes. The watercolour painting proper is 037, where the coats deepen the sheet visibly.
+
+`compare-load.png` shows the same detail of seed 4 (the plain, the river and the bank). The
+top row is oil, the bottom row watercolour; the columns are loads 1, 2 and 3.
 
 ## How each technique is implemented
 
@@ -974,6 +999,7 @@ back, or reset the stroke settings to their defaults while keeping the scene. A
 | | length ÷ width | stroke aspect |
 | | coverage | how densely each layer is laid |
 | | layers | 1 coarse · 2 + medium · 3 + edge detail |
+| | load (overpaint rounds) | 1–3: how many times the layers are laid (oil) or each wash is coated (watercolour) |
 | | edge threshold | contrast an edge needs before the detail layer paints along it (lower = more detail) |
 | | curvature · angle jitter · value jitter | the hand's looseness |
 | | body opacity | opacity of the body paint |
