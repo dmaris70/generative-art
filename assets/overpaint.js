@@ -1,9 +1,11 @@
 // Load: overpaint rounds for the p5.brush watercolour painters (036, 037, 038).
 //
 // While recording, every polygon laid with a fill (a wet wash) or a wash (a glaze) is logged
-// with its colour and strength, in the order it was painted. A further round lays the whole
-// log again, in the same order, as glazes on the dried sheet at a share of the original
-// strength: a second coat of the painting's washes. Watercolour cannot cover what is under
+// with its colour, strength and (for a fill) its texture, in the order it was painted. A
+// further round lays the whole log again, in the same order, on the dried sheet at a share of
+// the original strength: a second coat of the painting's washes. A wet wash goes on again as
+// a wet wash with its granulation and dried edge but no bleed (the paper under it is dry); a
+// glaze as a glaze. Watercolour cannot cover what is under
 // it, so each round deepens the values and the colour where washes were laid, and the paper
 // left bare stays bare. Line work laid after the rounds (pen, rigger, spatter) stays on top.
 //
@@ -13,12 +15,13 @@
 //   for (const t of Overpaint.rounds(load - 1)) T.push(t);   // stops recording, then replays
 // With load 1 nothing is recorded or laid: the painting is exactly as before.
 const Overpaint = (() => {
-  const S = { rec: false, log: [], fill: null, wash: null, wrapped: false };
+  const S = { rec: false, log: [], fill: null, wash: null, tex: [0.3, 0.3, true], wrapped: false };
   // follow p5.brush's fill and wash state, and log the polygons laid under either
   function wrap() {
     if (S.wrapped || typeof brush === 'undefined') return;
     S.wrapped = true;
-    const f = brush.fill, nf = brush.noFill, w = brush.wash, nw = brush.noWash, pg = brush.polygon;
+    const f = brush.fill, nf = brush.noFill, w = brush.wash, nw = brush.noWash, pg = brush.polygon, ft = brush.fillTexture;
+    brush.fillTexture = function (t, b, sc) { S.tex = [t ?? 0, b ?? 0, sc ?? false]; return ft.apply(this, arguments); };
     brush.fill = function (c, a) { S.fill = [c, a ?? 255]; return f.apply(this, arguments); };
     brush.noFill = function () { S.fill = null; return nf.apply(this, arguments); };
     brush.wash = function (c, a) { S.wash = [c, a ?? 255]; return w.apply(this, arguments); };
@@ -26,7 +29,7 @@ const Overpaint = (() => {
     brush.polygon = function (P) {
       if (S.rec && (S.fill || S.wash)) {
         const st = S.wash || S.fill;
-        S.log.push({ P: P.map((p) => [p[0], p[1]]), c: st[0], a: st[1] });
+        S.log.push({ P: P.map((p) => [p[0], p[1]]), c: st[0], a: st[1], tex: S.wash ? null : S.tex.slice() });
       }
       return pg.apply(this, arguments);
     };
@@ -39,9 +42,9 @@ const Overpaint = (() => {
     start() { wrap(); S.log = []; S.rec = S.wrapped; },
     stop() { S.rec = false; },
     count() { return S.log.length; },
-    // tasks laying `n` rounds: each replays the log as glazes at `share` of each wash's
-    // strength, every shape shifted by up to `jitter` canvas px so the edges do not coincide
-    rounds(n, share = 0.5, jitter = 1.5) {
+    // tasks laying `n` rounds: each replays the log at `share` of each wash's strength, every
+    // shape shifted by up to `jitter` canvas px so the edges do not coincide
+    rounds(n, share = 0.3, jitter = 1.5) {
       if (!(n > 0)) return [() => Overpaint.stop()];
       const T = [() => Overpaint.stop()];
       for (let r = 0; r < n; r++) {
@@ -51,12 +54,22 @@ const Overpaint = (() => {
             const g = rnd(1009 * (r + 1) + k);
             brush.noStroke();
             brush.noFill();
+            brush.noWash();
             for (let i = i0; i < i1; i++) {
               const e = L[i], dx = (g() - 0.5) * 2 * jitter, dy = (g() - 0.5) * 2 * jitter;
-              brush.wash(e.c, Math.min(255, e.a * share));
-              brush.polygon(e.P.map(([x, y]) => [x + dx, y + dy]));
+              const P = e.P.map(([x, y]) => [x + dx, y + dy]);
+              if (e.tex) {
+                brush.fill(e.c, Math.min(255, e.a * share));
+                brush.fillBleed(0, 'out');
+                brush.fillTexture(e.tex[0], e.tex[1], e.tex[2]);
+                brush.polygon(P);
+                brush.noFill();
+              } else {
+                brush.wash(e.c, Math.min(255, e.a * share));
+                brush.polygon(P);
+                brush.noWash();
+              }
             }
-            brush.noWash();
           });
         }
       }
