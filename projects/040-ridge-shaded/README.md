@@ -2,7 +2,7 @@
 
 028's places, lit on the GPU and seen live.
 
-![seed 777, live view](preview.png)
+![seed 777: Ben Nevis and the Carn Mor Dearg arête, passage, side light; live view](preview.png)
 
 **Mechanism (one sentence):** 028's engine decides everything about a seed — the place (invented
 ground, or one of the surveyed ranges), where the body stands and looks, the light, the
@@ -72,7 +72,11 @@ renders them in colour, in real time, and the body can look round and walk.
   own jitter of the cloud march and of the pixel (Halton offsets). A single pass shows grain in
   the cloud and haze; 8 remove it.
 
-![six seeds: Piz Badile (exposure, side light) · a night under the moon · a warm rock face · against the light · a whiteout · a looming wall](views.png)
+![six seeds, live view: Piz Badile (exposure, side light) · the Brenta Dolomites under the moon (passage) · Ben Nevis (passage, side light) · the Simien escarpment (passage, against the light) · Ama Dablam in a whiteout · Kinabalu (passage, side light)](views.png)
+
+The same frames in *028's two sheets* (seed 221429, Picu Urriellu, a clearing against the light; compare 028's own sheets for this seed):
+
+![seed 221429 in 028's two sheets](sheets.png)
 
 ## What 028 does that this does not (yet)
 
