@@ -12,7 +12,7 @@
 const UI = { status: 'loading the places…' };
 let G = null;                // the panel (assets/genart.js)
 let gl = null, prog = null, U = {}, TEX = {}, SC = null, VIEW = null;
-let built = '', lastFrame = 0, scale = 0.6, moving = false, frames = 0, tStart = performance.now(), driftT = 0;
+let built = '', lastFrame = 0, resScale = 0.6, moving = false, nFrames = 0, tStart = performance.now(), driftT = 0;
 let lastChange = 0, needFull = true, pass = 0;   // a change redraws at the frame rate; once still, PASSES full-resolution frames averaged
 const PASSES = 8;
 function touch() { lastChange = performance.now(); needFull = true; pass = 0; }
@@ -53,7 +53,7 @@ function start() {
   addControls();
   window.saveCanvas = (name) => savePNG(name);
   if (!initGL()) return;
-  requestAnimationFrame(loop);
+  requestAnimationFrame(frameTick);
 }
 
 // ───────────────────────── the scene from 028 ─────────────────────────
@@ -265,9 +265,9 @@ function lightNow() {
 }
 
 // ───────────────────────── a frame ─────────────────────────
-function loop(now) {
+function frameTick(now) {
   if (STILL && window.DONE) return;
-  requestAnimationFrame(loop);
+  requestAnimationFrame(frameTick);
   if (!G) return;
   if (built !== sceneKey()) build();
   const animate = (G.param('drift') > 0 || G.param('sunMoves') > 0) && !STILL;
@@ -278,22 +278,22 @@ function loop(now) {
   driftT += dt * G.param('drift');
   // resolution: fixed, or held to the frame rate while anything moves, full once still
   const fixed = G.param('res');
-  if (STILL) scale = 1;
-  else if (fixed) scale = fixed;
-  else if (!active) scale = 1;
-  else if (dt > 0) scale = Math.max(0.3, Math.min(0.85, scale * (dt > 1 / 30 ? 0.93 : dt < 1 / 50 ? 1.04 : 1)));
+  if (STILL) resScale = 1;
+  else if (fixed) resScale = fixed;
+  else if (!active) resScale = 1;
+  else if (dt > 0) resScale = Math.max(0.3, Math.min(0.85, resScale * (dt > 1 / 30 ? 0.93 : dt < 1 / 50 ? 1.04 : 1)));
   // once still, the frame is averaged over PASSES passes, each with its own jitter of the cloud
   // march and of the pixel: the grain of a single pass goes, and the edges are smoothed
   if (active) pass = 0;
   draw(active ? 0 : pass);
-  frames++;
+  nFrames++;
   if (!active && ++pass >= PASSES) needFull = false;
   if (STILL && !needFull) { gl.finish(); window.DONE = true; }
 }
 
 function draw(k = 0) {
   const dpr = Math.min(2, window.devicePixelRatio || 1);
-  const W = Math.max(2, Math.round(innerWidth * dpr * scale)), H = Math.max(2, Math.round(innerHeight * dpr * scale));
+  const W = Math.max(2, Math.round(innerWidth * dpr * resScale)), H = Math.max(2, Math.round(innerHeight * dpr * resScale));
   if (canvas.width !== W || canvas.height !== H) { canvas.width = W; canvas.height = H; }
   const L = lightNow(), q = G.param('quality');
   const b = (unit, name, target) => { gl.activeTexture(gl.TEXTURE0 + unit); gl.bindTexture(target || gl.TEXTURE_2D, TEX[name]); gl.uniform1i(U['u' + name], unit); };
@@ -313,7 +313,7 @@ function draw(k = 0) {
   gl.uniform1f(U.uExposure, G.param('exposure') + (L.night ? 1.2 : 0));
   gl.uniform1f(U.uTime, driftT);
   gl.uniform1f(U.uQuality, q);
-  gl.uniform1f(U.uSeed, k ? k * 7.13 : frames % 64);
+  gl.uniform1f(U.uSeed, k ? k * 7.13 : nFrames % 64);
   const hal = (i, b) => { let f = 1, r = 0; while (i > 0) { f /= b; r += f * (i % b); i = Math.floor(i / b); } return r; };
   gl.uniform2f(U.uJit, k ? hal(k, 2) - 0.5 : 0, k ? hal(k, 3) - 0.5 : 0);
   // pass k is blended over the passes before it at 1 / (k + 1): the canvas holds their mean
@@ -408,9 +408,9 @@ function walk(fwd, side) {
 }
 
 function savePNG(name) {
-  const keep = scale; scale = 1;
+  const keep = resScale; resScale = 1;
   for (let k = 0; k < PASSES; k++) draw(k);
-  scale = keep;
+  resScale = keep;
   const a = document.createElement('a');
   a.download = (name || 'ridge-encounters-shaded-' + G.seed) + '.png';
   a.href = canvas.toDataURL('image/png');
