@@ -55,8 +55,17 @@ function makeWCPainter(Bs, C, PG, o, rng) {
   // graded and split by hue (the water softens it; drops of colour, tried first, stayed blobs)
   steps.push({ name: 'sky: clear water', kind: 'flood', where: skyAt, depth: 0.35 });
   steps.push({ name: 'sky: wash into the wet', kind: 'washes', L: { frac: 0.6, blur: 12, tol: 0.02, minArea: 500, where: skyAt, depth: 0.25 } });
-  // 2) layers of washes
-  for (const L of LAYERS) steps.push({ name: L.name, kind: 'washes', L });
+  // 2) layers of washes. Load: each layer but the accents is laid as that many glazes over the
+  //    same shapes, each let dry, glaze j closing its share of what the layer is to darken
+  //    (frac / load of the starting shortfall), so the depth is the same and is built thinner
+  const LOAD = Math.max(1, Math.round(o.load || 1));
+  for (const L of LAYERS) {
+    const G = L.name === 'accents' ? 1 : LOAD;
+    for (let j = 0; j < G; j++) {
+      const frac = L.frac / G / (1 - (L.frac * j) / G);
+      steps.push({ name: L.name + (G > 1 ? ', glaze ' + (j + 1) + '/' + G : ''), kind: 'washes', L: G > 1 ? { ...L, frac } : L, again: j > 0 });
+    }
+  }
   let si = -1, cur = new Float32Array(n * 3), lab = new Float32Array(n * 3), pending = null, work = null;
   const grow = (R, r) => (!r ? R : !R ? r : [Math.min(R[0], r[0]), Math.min(R[1], r[1]), Math.max(R[2], r[2]), Math.max(R[3], r[3])]);
 
@@ -214,6 +223,8 @@ function makeWCPainter(Bs, C, PG, o, rng) {
       if (px.length) pending = grow(pending, layWash(cv, px, new Float32Array(cv.Q), new Float32Array(px.length), P.depth));
       return { type: 'washes', P: { L: {} }, washes: [], at: 0, flood: true };
     }
+    // a later glaze goes over the same shapes, judged against the canvas as it now is
+    if (P.again && work && work.washes) { cv.renderLin(cur); return { type: 'washes', P, washes: work.washes, at: 0 }; }
     return { type: 'washes', P, washes: planWashes(P.L), at: 0 };
   }
 
