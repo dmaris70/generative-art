@@ -1207,10 +1207,11 @@ function buildTasks(s) {
     setBrushScale(Math.max(0.3, U * 1.7));
     brush.noField();
   });
-  // load (watercolour): from here to the grain every wash is logged, to be laid again in each
-  // further round; in oil the rounds are the oil layers' (oilBegin)
-  const wcRounds = G.param('medium') === 0 ? G.param('overpaint') - 1 : 0;
-  if (wcRounds > 0) T.push(() => Overpaint.start());
+  // load (watercolour): from here to the grain every wash is laid in as many coats
+  // (assets/overpaint.js); in oil the rounds are the oil layers' (oilBegin), and the
+  // underpainting is laid once
+  const coats = G.param('medium') === 0 ? G.param('overpaint') : 1;
+  T.push(() => Overpaint.begin(coats));
   T.push(() => paintSkyGradient(s));
   T.push(() => paintSun(s));
   for (const c of s.clouds) T.push(() => paintCloud(s, c));
@@ -1291,7 +1292,7 @@ function buildTasks(s) {
     T.push(() => oilBegin(s));
     T.push(() => paintCanvasWeave(s));
   } else {
-    if (wcRounds > 0) for (const t of Overpaint.rounds(wcRounds)) T.push(t);
+    T.push(() => Overpaint.end());
     T.push(() => paintGrain(s));
   }
   T.push(() => paintVignette(s));

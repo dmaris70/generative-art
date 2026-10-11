@@ -1776,9 +1776,9 @@ function buildTasks(s) {
     if (ps) randomSeed(ps);
   });
   if (s.C.durer) T.push(() => wcAgedSheet(s));
-  // load: from here to the pen, every wash is logged, to be laid again in each further round
-  const rounds = G.param('overpaint') - 1;
-  if (rounds > 0) T.push(() => Overpaint.start());
+  // load: from here to the pen every wash is laid in as many coats (assets/overpaint.js)
+  const coats = G.param('overpaint');
+  T.push(() => Overpaint.begin(coats));
   stage('underdrawing');
   T.push(() => wcPencil(s));
   stage('sky, wet into wet');
@@ -1816,10 +1816,7 @@ function buildTasks(s) {
     stage('framing trees');
     for (const t of wcFramingTasks(s)) T.push(t);
   }
-  if (rounds > 0) {
-    stage('overpaint rounds');
-    for (const t of Overpaint.rounds(rounds)) T.push(t);
-  }
+  T.push(() => Overpaint.end());
   stage('pen, spatter, salt');
   T.push(() => wcPen(s));
   T.push(() => wcSpatterSalt(s));
