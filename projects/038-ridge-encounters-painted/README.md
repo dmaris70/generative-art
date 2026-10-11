@@ -124,6 +124,50 @@ What moved it, each found by measuring rather than by eye:
 - **Test serving:** 028's elevation data loads by `fetch`, so the page must be served over HTTP;
   `file://` falls back to invented ground only.
 
+## Load: overpaint rounds (v1.1)
+
+**Painting → load (overpaint rounds)** runs from 1 (as before) to 3, in both media. It is not
+the watercolour's *pigment load*, which sets the strength of each wash.
+
+**Oil:** each further round lays the body pass and the edge pass again (`oil.js`, `passes`)
+before the knife. Their economy and lean-to-fat settings are as in the first round, and the
+strokes land at new random places, so the paint lies thicker where something happens.
+
+**Watercolour:** each wash is laid in as many coats. `assets/overpaint.js` (shared with 036 and 037) wraps p5.brush's `fill`, `wash`,
+`fillBleed`, `fillTexture` and `polygon`. At load *n*, every wash in the painting is laid *n*
+times before the painter moves on:
+1. the wash itself;
+2. then, over the same shape, *n* − 1 further coats once it has dried:
+   - a wet wash (a fill) goes on again as a wet wash, with its granulation and dried edge but
+     no bleed, because the paper under it is now dry; it carries 0.7 of the first coat's
+     strength (p5.brush's wet washes dry far lighter than their nominal strength);
+   - a glaze (a wash) goes on again as a glaze, at 0.3 of its strength;
+   - each coat is shifted by up to 1.5 px, so its edge does not land exactly on the first.
+
+Everything painted after a wash goes on over all of its coats, so nothing is veiled. Dry-brush,
+rigger and pen marks are not washes and are laid once. Watercolour cannot cover what is under
+it, so each coat deepens the value and colour of its wash, and paper left bare stays bare. The
+coats draw nothing from p5's random stream, so every other mark stays where it was. At load 1
+nothing is wrapped: the code path is unchanged. Renders at load 1 match the previous version
+within the renderer's own run-to-run noise: two runs of the same code differ in 0.05 % of
+pixels, by at most a few levels.
+
+A first version replayed a log of all the washes after the whole painting. It veiled everything
+painted after them (the striations, the horizon pines, the bushes, the trunk), and replayed as
+flat glazes the wet washes lost their texture. Laying the coats in place fixed both.
+
+The toned ground of a nocturne is laid once: it is a ground, not a layer of the picture.
+
+Measured at seed 221429, 1400 × 860 (whole frame):
+
+| Medium | Load 1 | Load 2 | Load 3 |
+|---|---|---|---|
+| watercolour, mean value | 155.8 | 146.9 | 140.3 |
+| oil, render time | 78 s | 126 s | 173 s |
+
+In oil the change is in the surface (more and denser strokes, more relief), not in the value.
+The shuffle button draws load 1 or 2.
+
 ## Known gaps (v1)
 
 - **Watercolour:**
@@ -139,7 +183,7 @@ What moved it, each found by measuring rather than by eye:
 
 | Group | Parameter (default) | Effect |
 |---|---|---|
-| Painting | medium (watercolour), palette (colour / monochrome), glow of the light (1) | |
+| Painting | medium (watercolour), palette (colour / monochrome), glow of the light (1), load: overpaint rounds (1, range 1–3) | |
 | Scene | register (by seed), rare event (by seed), movement of the body, painted (1) | register and event as in 028 |
 | Watercolour | wetness (0.5), pigment load (1.15), granulation (0.5), hard edges (0.6), dry brush (0.6), rigger (0.7) | |
 | Oil | stroke width (8), coverage (1), bristles (9), dry-brush breaks (0.3), impasto (1), knife lights (260) | |
@@ -151,6 +195,7 @@ Other controls:
   - a rare event is forced only half the time;
   - oil stroke width stays within 6–16;
   - oil coverage stays within 0.7–1.6;
-  - pigment load stays within 0.8–1.45.
+  - pigment load stays within 0;8–1;45;
+  - load (overpaint rounds) is 1 or 2.
 - `R` makes a new seed and `S` saves a PNG.
 - `?under` shows the colourised frame alone, which is what the painters work from.
