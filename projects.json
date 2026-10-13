@@ -3,6 +3,14 @@
   "author": "dmaris70",
   "projects": [
     {
+      "slug": "041-fog-thicket",
+      "title": "Fog Thicket — one fog law, from a thicket to a range of mountains",
+      "year": 2026,
+      "tools": ["p5.js", "plotter", "3-D"],
+      "description": "After an unattributed photograph of saplings in fog over snow. Plants are grown in metres, in 3-D, on ground planted once and seen through a camera; fog is one law, p = exp(−distance · mean σ along the sight line), read as the chance that a stretch of line is inked at all. The dark band is never drawn: it is where twig zones of every depth project together. Two scales (the photograph's thicket; a monument of thousands of trees and stacked ranges), five cameras, line (plotter SVG) or tone.",
+      "thumb": "thumb.jpg"
+    },
+    {
       "slug": "037-watercolor-landscape",
       "title": "Watercolor Landscape v1 — the same landscape in watercolour",
       "year": 2026,

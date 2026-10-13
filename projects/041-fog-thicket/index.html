@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Fog Thicket — Generative Art</title>
+  <style>
+    html, body { margin: 0; height: 100%; background: #cfcac0; overflow: hidden; display: grid; place-items: center; }
+    canvas { display: block; }
+    #sheet { box-shadow: 0 2px 18px rgba(0,0,0,.18); }
+    a.back {
+      position: fixed; top: 14px; left: 16px; z-index: 10;
+      color: #1a1a1a; font: 13px ui-sans-serif, system-ui, sans-serif;
+      text-decoration: none; opacity: .6;
+    }
+    a.back:hover { opacity: 1; }
+    .lil-gui.root { --width: 280px; --name-width: 42%; max-height: 100vh; overflow-y: auto; }
+    body.tile { background: #e9e5dc; }
+    body.tile #sheet { box-shadow: none; }
+    body.tile a.back { display: none; }
+  </style>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.4/p5.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/lil-gui@0.19/dist/lil-gui.umd.min.js"></script>
+  <script src="../../assets/genart.js?v=3"></script>
+</head>
+<body>
+  <a class="back" href="../../">← gallery</a>
+  <script src="../../assets/strokefont.js?v=1"></script>
+  <script src="sketch.js?v=30"></script>
+</body>
+</html>
