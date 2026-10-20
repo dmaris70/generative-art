@@ -77,6 +77,9 @@ size, ray strength, lattice, caption). Keys: **R** new seed · **S** save PNG (t
 CDN — built by `tools/neort-bundle.sh`. It takes its settings from the query string
 (`?seed=7&tempo=8&reach=120&ground=paper&mode=web`). Post it with the tag `PCDTokyo2026`.
 
+**Posted:** https://neort.io/ja/art/dbbnmqml0as1gac24mc0 (20 October 2026, tags `PCDTokyo2026`,
+`NEORTchallenge`; listed on the challenge page).
+
 ### The post
 
 **Title:** Between a Square and a Cube — y² = x³ − 2
