@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>…8212890625 — Generative Art</title>
+  <style>
+    html, body { margin: 0; height: 100%; background: #f4f0e8; overflow: hidden; }
+    canvas#view { display: block; width: 100vw; height: 100vh; }
+    a.back {
+      position: fixed; top: 14px; left: 16px; z-index: 10;
+      color: #8a5a3c; font: 13px ui-sans-serif, system-ui, sans-serif;
+      text-decoration: none; opacity: .6;
+    }
+    a.back:hover { opacity: 1; }
+    .lil-gui.root { --width: 320px; --name-width: 55%; max-height: 100vh; overflow-y: auto; }
+  </style>
+  <script src="https://cdn.jsdelivr.net/npm/lil-gui@0.19/dist/lil-gui.umd.min.js"></script>
+  <script src="../../assets/genart.js?v=3"></script>
+  <script src="../../assets/strokefont.js"></script>
+</head>
+<body>
+  <a class="back" href="../../">← gallery</a>
+  <canvas id="view"></canvas>
+  <script src="receipt.js?v=1"></script>
+  <script src="sketch.js?v=1"></script>
+</body>
+</html>
