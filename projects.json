@@ -3,6 +3,14 @@
   "author": "dmaris70",
   "projects": [
     {
+      "slug": "041-between-a-square-and-a-cube",
+      "title": "Between a Square and a Cube — y² = x³ − 2",
+      "year": 2026,
+      "tools": ["canvas", "BigInt"],
+      "description": "For #PCDTokyo2026 (theme: 25). 25 = 5², 27 = 3³, and 26 is the only whole number directly between a square and a cube: the curve y² = x³ − 2 passes through exactly one pair of lattice points, (3, ±5). From that pair, straight lines alone — chord and tangent — find rational point after rational point on the curve, each written out exactly along the ray that found it, the fractions (computed exactly with BigInt) outgrowing the sheet while the curve never meets another lattice point. A star of lines through (3, 5), then its mirror; or a seeded web of chords.",
+      "thumb": "preview.png"
+    },
+    {
       "slug": "037-watercolor-landscape",
       "title": "Watercolor Landscape v1 — the same landscape in watercolour",
       "year": 2026,
