@@ -27,6 +27,10 @@
 //
 // This file is the whole piece, free of any harness: Mordell.create(canvas, options) runs it.
 // sketch.js wires it to the gallery panel; neort.html is this file inlined with defaults.
+//
+// Shape of the code: the exact arithmetic first (point, label), then the piece — layout of the
+// sheet, the ground, one step and how it is drawn, the sequence of steps, time (a three-phase
+// cycle: drawing → resting → fading → drawing again), export, and the public api.
 
 const Mordell = (function () {
   'use strict';
@@ -52,20 +56,23 @@ const Mordell = (function () {
     return neg ? -v : v;
   }
   const cache = new Map();
-  // nP for any whole n ≠ 0: { n, A, d, B, x, y } with x = A/d², y = B/d³ in lowest terms.
+  // nP for any whole n ≠ 0: { n, A, d, B, x, y } with x = A/d², y = B/d³ in lowest terms,
+  // and the digit counts of A and d (a BigInt's string is costly; it is taken once, here).
   function point(n) {
     if (cache.has(n)) return cache.get(n);
     const m = Math.abs(n);
     let p;
-    if (m === 1) p = { n: 1, A: X, d: 1n, B: Y, x: 3, y: 5 };
+    if (m === 1) p = { n: 1, A: X, d: 1n, B: Y, x: 3, y: 5, digitsA: 1, digitsD: 1 };
     else {
       ensurePsi(m + 2);
       const s = psi[m] < 0n ? -1n : 1n, d = psi[m] * s;
       const A = X * d * d - psi[m - 1] * psi[m + 1];
       const Bn = (psi[m + 2] * psi[m - 1] ** 2n - psi[m - 2] * psi[m + 1] ** 2n) / (4n * Y) * s;
       p = { n: m, A, d, B: Bn, x: 3 - toFloat(psi[m - 1] * psi[m + 1], d * d), y: toFloat(Bn, d ** 3n) };
+      p.digitsA = (A < 0n ? -A : A).toString().length;
+      p.digitsD = d.toString().length;
     }
-    if (n < 0) p = { n, A: p.A, d: p.d, B: -p.B, x: p.x, y: -p.y };
+    if (n < 0) p = Object.assign({}, p, { n, B: -p.B, y: -p.y });
     cache.set(n, p);
     return p;
   }
@@ -99,6 +106,24 @@ const Mordell = (function () {
     paper: { ground: '#f4f0e8', ink: '27,27,27', accent: '200,85,61', paper: true },
   };
   const MONO = 'ui-monospace, "SF Mono", Menlo, Consolas, "DejaVu Sans Mono", monospace';
+  // The sheet has its own units (a fixed sheet, scaled to whatever screen shows it); everything
+  // below is in those units. The frame is the window onto the plane, inset by the margin.
+  const SHEET = { square: [1000, 1000], landscape: [1400, 1000], portrait: [1000, 1250] };
+  const MARGIN = 60;
+  const MARK = {
+    lattice: 1.25,       // radius of a lattice dot
+    ring: 6,             // the two lattice points on the curve
+    hit: 4,              // the third point of a line
+    flash: 10,           // how far the hit's ring swells when it lands
+    dot: 2.3,            // the point kept
+    gap: 8,              // from a hit to the first digit along its ray
+    lift: 3,             // the digits sit this far above the ray
+    caption: 24,         // the caption's baseline above the sheet's foot
+    captionSize: 11,
+  };
+  const STEP = { ray: 0.3, flash: 0.12, type: 0.45, offFrame: 0.45 };   // shares of a step's time; off-frame hits take less
+  const FADE_SECONDS = 8;
+  const LABELS_UP_TO = 12;                   // labels: 'twelve'
 
   function mulberry32(a) {
     return function () {
@@ -114,22 +139,20 @@ const Mordell = (function () {
     const O = Object.assign({}, DEFAULTS, options || {});
     const ctx = canvas.getContext('2d');
     let W = 1000, H = 1000;                 // the sheet, in its own units
-    let F = { x: 0, y: 0, w: 0, h: 0 };     // the frame (the window onto the plane) on the sheet
-    let win = { xMin: -3, xMax: 12, yMax: 25 }, sx = 1, sy = 1;
+    let F = { x: 0, y: 0, w: 0, h: 0 };     // the frame on the sheet
+    let win = { xMin: 0, xMax: 1, yMax: 1 }, sx = 1, sy = 1;   // the window onto the plane, and its scales
     let base = null, acc = null, scale = 1, ox = 0, oy = 0, charW = 6;
     let steps = [];                         // committed steps, replayed on resize
-    let live = null;                        // the step being drawn now
-    let pass = 1, n = 2, known = null, rng = null, done = false, doneAt = 0, fade = 0;
-    let paused = false, clock = 0, last = 0, raf = 0;
+    let live = null;                        // the step being drawn now, while the phase is 'drawing'
+    let pass = 1, n = 2, known = null, rng = null;
+    let phase = 'drawing', phaseAt = 0;     // 'drawing' → 'resting' (the finished sheet) → 'fading' → 'drawing'
+    let paused = false, clock = 0, last = 0, raf = 0, resizeTimer = 0;
     let pal = PALETTE.dark;
 
     // ── layout ──
     function layout() {
-      const fmt = O.format;
-      W = fmt === 'landscape' ? 1400 : 1000;
-      H = fmt === 'portrait' ? 1250 : 1000;
-      const m = 60;
-      F = { x: m, y: m, w: W - 2 * m, h: H - 2 * m };
+      [W, H] = SHEET[O.format] || SHEET.square;
+      F = { x: MARGIN, y: MARGIN, w: W - 2 * MARGIN, h: H - 2 * MARGIN };
       // the seed nudges the window a little, so two seeds are two framings of the same drawing
       const r = mulberry32((O.seed >>> 0) ^ 0x9e3779b9);
       const dx = (r() - 0.5) * 1.5, ky = 0.85 + r() * 0.3;
@@ -158,6 +181,7 @@ const Mordell = (function () {
     const py = (y) => F.y + (win.yMax - y) * sy;
     const inFrame = (p) => p.x >= win.xMin && p.x <= win.xMax && Math.abs(p.y) <= win.yMax;
     const rgba = (c, a) => 'rgba(' + c + ',' + a + ')';
+    const labelled = (s) => O.labels === 'all' || (O.labels === 'twelve' && Math.abs(s.h) <= LABELS_UP_TO);
 
     // ── the ground: lattice, axes, the curve, the two lattice points it holds ──
     function drawBase(cx) {
@@ -167,7 +191,7 @@ const Mordell = (function () {
         cx.fillStyle = rgba(pal.ink, pal.paper ? 0.42 : 0.34);
         for (let i = Math.ceil(win.xMin); i <= Math.floor(win.xMax); i++)
           for (let j = Math.ceil(-win.yMax); j <= Math.floor(win.yMax); j++) {
-            cx.beginPath(); cx.arc(px(i), py(j), 1.25, 0, Math.PI * 2); cx.fill();
+            cx.beginPath(); cx.arc(px(i), py(j), MARK.lattice, 0, Math.PI * 2); cx.fill();
           }
       }
       cx.strokeStyle = rgba(pal.ink, 0.16); cx.lineWidth = 0.8;
@@ -182,7 +206,7 @@ const Mordell = (function () {
       cx.stroke();
       // (3, 5) and (3, −5): the only lattice points on the curve
       cx.strokeStyle = rgba(pal.accent, 0.95); cx.lineWidth = 1.6;
-      for (const s of [5, -5]) { cx.beginPath(); cx.arc(px(3), py(s), 6, 0, Math.PI * 2); cx.stroke(); }
+      for (const s of [5, -5]) { cx.beginPath(); cx.arc(px(3), py(s), MARK.ring, 0, Math.PI * 2); cx.stroke(); }
       cx.restore();
     }
 
@@ -197,7 +221,7 @@ const Mordell = (function () {
       const dir = Math.sign(Hp.x - A.x) || 1;
       let u = { x: dir, y: dir * m }; const L = Math.hypot(u.x * sx, u.y * sy);
       u = { x: (u.x * sx) / L, y: (-u.y * sy) / L };  // unit vector on the sheet (y down)
-      return { a, b, h, seg, hit: Hp, mirror: M, u, hitIn: inFrame(Hp), mirIn: inFrame(M), text: label(h), digits: Hp.d.toString().length };
+      return { a, b, h, seg, hit: Hp, mirror: M, u, hitIn: inFrame(Hp), text: label(h) };
     }
     function clipLine(P0, m) {
       // y − y0 = m (x − x0), intersected with the window's four edges
@@ -209,7 +233,9 @@ const Mordell = (function () {
       const p = pts[0], q = pts[pts.length - 1];
       return { x0: px(p[0]), y0: py(p[1]), x1: px(q[0]), y1: py(q[1]) };
     }
-    // t0: how far the ray has grown (0–1, from aP outward both ways); t1: how much of the label is typed
+    // t0: how far the ray has grown (0–1, from aP outward both ways); t1: how much of the label
+    // is typed; flash: the hit's ring swelling (1 → 0) as it lands. Every style change is kept
+    // inside save/restore so nothing leaks into the next mark.
     function drawStep(cx, s, t0, t1, flash) {
       if (!s.seg) return;
       cx.save(); cx.beginPath(); cx.rect(F.x, F.y, F.w, F.h); cx.clip();
@@ -227,32 +253,33 @@ const Mordell = (function () {
       if (s.hitIn) {
         // the third point, ringed; the vertical to its mirror; the mirror, the point kept
         cx.strokeStyle = rgba(pal.accent, 0.9); cx.lineWidth = 1.1;
-        const r = flash ? 4 + 10 * (1 - flash) : 4;
+        const r = MARK.hit + (flash ? MARK.flash * (1 - flash) : 0);
         cx.beginPath(); cx.arc(hx, hy, r, 0, Math.PI * 2); cx.stroke();
         cx.strokeStyle = rgba(pal.ink, 0.22); cx.lineWidth = 0.7; cx.setLineDash([2, 3]);
         cx.beginPath(); cx.moveTo(hx, hy); cx.lineTo(mx, my); cx.stroke(); cx.setLineDash([]);
-        cx.fillStyle = rgba(pal.accent, 0.95); cx.beginPath(); cx.arc(mx, my, 2.3, 0, Math.PI * 2); cx.fill();
+        cx.fillStyle = rgba(pal.accent, 0.95); cx.beginPath(); cx.arc(mx, my, MARK.dot, 0, Math.PI * 2); cx.fill();
         // the name of the point kept, beside it
         cx.fillStyle = rgba(pal.ink, 0.55); cx.font = Math.max(7, O.textSize - 2) + 'px ' + MONO; cx.textAlign = 'left'; cx.textBaseline = 'middle';
         const nm = (s.mirror.n < 0 ? '−' : '') + Math.abs(s.mirror.n) + 'P';
         cx.fillText(nm, mx + 5, my);
         // the exact fraction, typed along the ray outward from the hit
-        if (O.labels !== 'none' && (O.labels === 'all' || Math.abs(s.h) <= 12)) drawLabel(cx, s, hx, hy, t1);
+        if (labelled(s)) drawLabel(cx, s, hx, hy, t1);
       }
       cx.restore();
     }
     function drawLabel(cx, s, hx, hy, t1) {
       // room along the ray from the hit to the frame edge, in the outward direction
       const room = rayRoom(hx, hy, s.u);
-      const max = Math.max(0, Math.floor((room - 8) / charW));
+      const max = Math.max(0, Math.floor((room - MARK.gap) / charW));
       const str = s.text.slice(0, Math.min(max, Math.round(ease(t1) * s.text.length)));
       if (!str) return;
+      cx.save();
       cx.font = O.textSize + 'px ' + MONO; cx.textBaseline = 'alphabetic';
       cx.fillStyle = rgba(pal.ink, pal.paper ? 0.78 : 0.62);
-      cx.save(); cx.translate(hx, hy);
+      cx.translate(hx, hy);
       const ang = Math.atan2(s.u.y, s.u.x);
-      if (Math.cos(ang) >= 0) { cx.rotate(ang); cx.textAlign = 'left'; cx.fillText(str, 8, -3); }
-      else { cx.rotate(ang + Math.PI); cx.textAlign = 'right'; cx.fillText(str, -8, -3); }
+      if (Math.cos(ang) >= 0) { cx.rotate(ang); cx.textAlign = 'left'; cx.fillText(str, MARK.gap, -MARK.lift); }
+      else { cx.rotate(ang + Math.PI); cx.textAlign = 'right'; cx.fillText(str, -MARK.gap, -MARK.lift); }
       cx.restore();
     }
     function rayRoom(x, y, u) {
@@ -263,16 +290,19 @@ const Mordell = (function () {
     }
     function drawCaption(cx, s) {
       if (!O.caption || !s) return;
-      cx.fillStyle = rgba(pal.ink, 0.55); cx.font = '11px ' + MONO; cx.textAlign = 'left'; cx.textBaseline = 'alphabetic';
-      const k = Math.abs(s.mirror.n), A = s.mirror.A.toString().length;
-      cx.fillText('y² = x³ − 2 · P = (3, 5) · ' + k + 'P · x = ' + A + ' digits ⁄ (' + s.digits + ' digits)²', F.x, H - 24);
+      cx.save();
+      cx.fillStyle = rgba(pal.ink, 0.55); cx.font = MARK.captionSize + 'px ' + MONO; cx.textAlign = 'left'; cx.textBaseline = 'alphabetic';
+      const k = Math.abs(s.mirror.n);
+      cx.fillText('y² = x³ − 2 · P = (3, 5) · ' + k + 'P · x = ' + s.mirror.digitsA + ' digits ⁄ (' + s.mirror.digitsD + ' digits)²', F.x, H - MARK.caption);
+      cx.restore();
     }
 
     // ── the sequence of steps ──
     function start() {
-      steps = []; live = null; done = false; fade = 0; clock = 0;
+      steps = []; live = null; clock = 0;
+      phase = 'drawing'; phaseAt = 0;
       pass = 1; n = 2; known = new Set([1]); rng = mulberry32(O.seed >>> 0);
-      if (acc) { acc.ctx.clearRect(0, 0, W, H); }
+      if (acc) acc.ctx.clearRect(0, 0, W, H);
     }
     function nextStep() {
       if (O.mode === 'web') return webStep();
@@ -299,23 +329,22 @@ const Mordell = (function () {
     }
     function commit(s) { steps.push(s); drawStep(acc.ctx, s, 1, 1); }
 
-    // ── time ──
+    // ── time: drawing → resting → fading → drawing ──
     function frame(now) {
       raf = requestAnimationFrame(frame);
       const dt = Math.min(0.1, (now - last) / 1000); last = now;
       if (!paused) { clock += dt; advance(); }
       render();
     }
+    function enter(next) { phase = next; phaseAt = clock; }
     function advance() {
-      if (done) {
-        const t = clock - doneAt;
-        if (t > O.hold) { fade = Math.min(1, (t - O.hold) / 8); if (fade >= 1) start(); }
-        return;
-      }
+      const t = clock - phaseAt;
+      if (phase === 'resting') { if (t > O.hold) enter('fading'); return; }
+      if (phase === 'fading') { if (t > FADE_SECONDS) start(); return; }
       if (!live) {
         const s = nextStep();
-        if (!s) { done = true; doneAt = clock; return; }
-        live = { s, t0: clock, dur: O.tempo * (s.hitIn ? 1 : 0.45) };
+        if (!s) { enter('resting'); return; }
+        live = { s, t0: clock, dur: O.tempo * (s.hitIn ? 1 : STEP.offFrame) };
       }
       if (clock - live.t0 >= live.dur) { commit(live.s); live = null; }
     }
@@ -323,22 +352,23 @@ const Mordell = (function () {
       ctx.setTransform(1, 0, 0, 1, 0, 0);
       ctx.fillStyle = pal.ground; ctx.fillRect(0, 0, canvas.width, canvas.height);
       ctx.drawImage(base.c, ox, oy);
-      ctx.globalAlpha = 1 - fade; ctx.drawImage(acc.c, ox, oy);
+      ctx.globalAlpha = phase === 'fading' ? Math.max(0, 1 - (clock - phaseAt) / FADE_SECONDS) : 1;
+      ctx.drawImage(acc.c, ox, oy);
+      ctx.globalAlpha = 1;
       ctx.setTransform(scale, 0, 0, scale, ox, oy);
       if (live) {
         const t = (clock - live.t0) / live.dur;
-        const t0 = Math.min(1, t / 0.3);
-        const flash = t > 0.3 && t < 0.42 ? (t - 0.3) / 0.12 : 0;
-        const t1 = Math.max(0, Math.min(1, (t - 0.45) / 0.55));
-        drawStep(ctx, live.s, t0, t1, flash ? 1 - flash : 0);
+        const t0 = Math.min(1, t / STEP.ray);
+        const flash = t > STEP.ray && t < STEP.ray + STEP.flash ? 1 - (t - STEP.ray) / STEP.flash : 0;
+        const t1 = Math.max(0, Math.min(1, (t - STEP.type) / (1 - STEP.type)));
+        drawStep(ctx, live.s, t0, t1, flash);
         drawCaption(ctx, live.s);
       } else drawCaption(ctx, steps[steps.length - 1]);
-      ctx.globalAlpha = 1;
     }
     function instant() {
       let s;
       while ((s = nextStep())) commit(s);
-      done = true; doneAt = clock;
+      enter('resting');
     }
 
     // ── export ──
@@ -355,6 +385,7 @@ const Mordell = (function () {
     }
     function toSVG() {
       const esc = (s) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;');
+      const f = (v) => v.toFixed(2);
       const out = [];
       out.push('<svg xmlns="http://www.w3.org/2000/svg" width="' + W + '" height="' + H + '" viewBox="0 0 ' + W + ' ' + H + '">');
       out.push('<rect width="' + W + '" height="' + H + '" fill="' + pal.ground + '"/>');
@@ -364,35 +395,38 @@ const Mordell = (function () {
         out.push('<g fill="rgb(' + pal.ink + ')" fill-opacity="0.4" stroke="none">');
         for (let i = Math.ceil(win.xMin); i <= Math.floor(win.xMax); i++)
           for (let j = Math.ceil(-win.yMax); j <= Math.floor(win.yMax); j++)
-            out.push('<circle cx="' + px(i).toFixed(2) + '" cy="' + py(j).toFixed(2) + '" r="1.25"/>');
+            out.push('<circle cx="' + f(px(i)) + '" cy="' + f(py(j)) + '" r="' + MARK.lattice + '"/>');
         out.push('</g>');
       }
       let d = '';
       const N = 600;
-      for (let i = 0; i <= N; i++) { const y = -win.yMax + (2 * win.yMax * i) / N, x = Math.cbrt(y * y + 2); d += (i ? 'L' : 'M') + px(x).toFixed(2) + ' ' + py(y).toFixed(2); }
+      for (let i = 0; i <= N; i++) { const y = -win.yMax + (2 * win.yMax * i) / N, x = Math.cbrt(y * y + 2); d += (i ? 'L' : 'M') + f(px(x)) + ' ' + f(py(y)); }
       out.push('<path d="' + d + '" stroke-width="1.3"/>');
-      out.push('<g stroke="rgb(' + pal.accent + ')" stroke-width="1.6"><circle cx="' + px(3).toFixed(2) + '" cy="' + py(5).toFixed(2) + '" r="6"/><circle cx="' + px(3).toFixed(2) + '" cy="' + py(-5).toFixed(2) + '" r="6"/></g>');
+      out.push('<g stroke="rgb(' + pal.accent + ')" stroke-width="1.6"><circle cx="' + f(px(3)) + '" cy="' + f(py(5)) + '" r="' + MARK.ring + '"/><circle cx="' + f(px(3)) + '" cy="' + f(py(-5)) + '" r="' + MARK.ring + '"/></g>');
       out.push('<g stroke-opacity="' + O.rayAlpha + '">');
-      for (const s of steps) if (s.seg) out.push('<line x1="' + s.seg.x0.toFixed(2) + '" y1="' + s.seg.y0.toFixed(2) + '" x2="' + s.seg.x1.toFixed(2) + '" y2="' + s.seg.y1.toFixed(2) + '"/>');
+      for (const s of steps) if (s.seg) out.push('<line x1="' + f(s.seg.x0) + '" y1="' + f(s.seg.y0) + '" x2="' + f(s.seg.x1) + '" y2="' + f(s.seg.y1) + '"/>');
       out.push('</g>');
       out.push('<g font-family="monospace" font-size="' + O.textSize + '" fill="rgb(' + pal.ink + ')" fill-opacity="0.7" stroke="none">');
       for (const s of steps) {
         if (!s.seg || !s.hitIn) continue;
         const hx = px(s.hit.x), hy = py(s.hit.y), mx = px(s.mirror.x), my = py(s.mirror.y);
-        out.push('<circle cx="' + hx.toFixed(2) + '" cy="' + hy.toFixed(2) + '" r="4" fill="none" stroke="rgb(' + pal.accent + ')" stroke-width="1.1"/>');
-        out.push('<line x1="' + hx.toFixed(2) + '" y1="' + hy.toFixed(2) + '" x2="' + mx.toFixed(2) + '" y2="' + my.toFixed(2) + '" stroke="rgb(' + pal.ink + ')" stroke-opacity="0.25" stroke-width="0.7"/>');
-        out.push('<circle cx="' + mx.toFixed(2) + '" cy="' + my.toFixed(2) + '" r="2.3" fill="rgb(' + pal.accent + ')"/>');
-        if (O.labels === 'none' || (O.labels === 'twelve' && Math.abs(s.h) > 12)) continue;
-        const max = Math.max(0, Math.floor((rayRoom(hx, hy, s.u) - 8) / charW)), str = s.text.slice(0, max);
-        const ang = (Math.atan2(s.u.y, s.u.x) * 180) / Math.PI;
-        const flip = Math.cos((ang * Math.PI) / 180) < 0;
-        out.push('<text transform="translate(' + hx.toFixed(2) + ' ' + hy.toFixed(2) + ') rotate(' + (flip ? ang + 180 : ang).toFixed(2) + ')" x="' + (flip ? -8 : 8) + '" y="-3" text-anchor="' + (flip ? 'end' : 'start') + '">' + esc(str) + '</text>');
+        out.push('<circle cx="' + f(hx) + '" cy="' + f(hy) + '" r="' + MARK.hit + '" fill="none" stroke="rgb(' + pal.accent + ')" stroke-width="1.1"/>');
+        out.push('<line x1="' + f(hx) + '" y1="' + f(hy) + '" x2="' + f(mx) + '" y2="' + f(my) + '" stroke="rgb(' + pal.ink + ')" stroke-opacity="0.25" stroke-width="0.7"/>');
+        out.push('<circle cx="' + f(mx) + '" cy="' + f(my) + '" r="' + MARK.dot + '" fill="rgb(' + pal.accent + ')"/>');
+        if (!labelled(s)) continue;
+        const max = Math.max(0, Math.floor((rayRoom(hx, hy, s.u) - MARK.gap) / charW)), str = s.text.slice(0, max);
+        const ang = Math.atan2(s.u.y, s.u.x), flip = Math.cos(ang) < 0, deg = (ang * 180) / Math.PI;
+        out.push('<text transform="translate(' + f(hx) + ' ' + f(hy) + ') rotate(' + f(flip ? deg + 180 : deg) + ')" x="' + (flip ? -MARK.gap : MARK.gap) + '" y="-' + MARK.lift + '" text-anchor="' + (flip ? 'end' : 'start') + '">' + esc(str) + '</text>');
       }
       out.push('</g></g></svg>');
       return out.join('\n');
     }
 
     // ── public ──
+    function onResize() {               // a resize replays every step; wait for the drag to settle
+      clearTimeout(resizeTimer);
+      resizeTimer = setTimeout(() => { layout(); render(); }, 120);
+    }
     const api = {
       setOptions(o) { Object.assign(O, o); pal = PALETTE[O.ground] || PALETTE.dark; },
       reset() {
@@ -406,12 +440,13 @@ const Mordell = (function () {
       png() { return sheetPNG(); },
       svg: toSVG,
       steps: () => steps,
+      destroy() { cancelAnimationFrame(raf); clearTimeout(resizeTimer); window.removeEventListener('resize', onResize); },
       point, label,
     };
     api.reset();
     last = performance.now();
     if (!O.instant) raf = requestAnimationFrame(frame);
-    window.addEventListener('resize', api.resize);
+    window.addEventListener('resize', onResize);
     return api;
   }
 
