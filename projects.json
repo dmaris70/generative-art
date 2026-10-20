@@ -3,6 +3,14 @@
   "author": "dmaris70",
   "projects": [
     {
+      "slug": "047-edition-of-390",
+      "title": "Edition of 390",
+      "year": 2026,
+      "tools": ["canvas", "svg"],
+      "description": "For #PCDTokyo2026 (theme: 25). The room at NEORT++ is open 10:00 – 16:30 JST: 390 minutes, and each minute is one offset of the 25-grid, so one tiling with exact 25-fold symmetry that no other minute has. The screen grows the current minute's tiling, rests, and at the minute fades into the next. A code opens the visitor's page, which computes the same tiling from the phone's clock and hands it over as a plotter-ready SVG: the tiling of the minute you stood there. Nothing stored, nothing served. Outside the hours, a rehearsal.",
+      "thumb": "preview.png"
+    },
+    {
       "slug": "046-twenty-five-fold",
       "title": "Twenty-five-fold",
       "year": 2026,
