@@ -77,5 +77,51 @@ size, ray strength, lattice, caption). Keys: **R** new seed · **S** save PNG (t
 CDN — built by `tools/neort-bundle.sh`. It takes its settings from the query string
 (`?seed=7&tempo=8&reach=120&ground=paper&mode=web`). Post it with the tag `PCDTokyo2026`.
 
+### The post
+
+**Title:** Between a Square and a Cube — y² = x³ − 2
+
+**Description (EN):**
+
+> 25 = 5². 27 = 3³. 26 is the only whole number that sits directly between a square and a
+> cube — Fermat claimed it, Euler proved it. Said about a curve: y² = x³ − 2 passes through
+> exactly one pair of lattice points, (3, 5) and (3, −5).
+>
+> Start there. A line through two points of the curve meets it a third time; mirror that third
+> point across the axis and you have their sum. The tangent at (3, 5) finds 2P; the line through
+> P and 2P finds 3P; and so on — every line through the one lattice point the curve holds. The
+> points are dense on the curve, their coordinates exact fractions whose digits grow with n²:
+> 2P = (129/10², −383/10³); 120P has a 4,220-digit denominator. Each fraction is typed along the
+> ray that found it until the frame cuts it off. The curve never meets another lattice point.
+> The number 26 is never drawn.
+>
+> Exact arithmetic (BigInt, division polynomials at P); one pass through (3, 5), then the mirror
+> pass through (3, −5); the sheet rests, fades, and begins again. A fixed sheet, scaled to any
+> screen.
+>
+> Keys: space pause · → next step. URL options: ?seed=… &tempo=8 &reach=120 &ground=paper
+> &mode=web
+
+**Description (JA):**
+
+> 25 = 5²、27 = 3³。26 は、平方数と立方数のちょうど間にある唯一の整数です──フェルマーが主張し、
+> オイラーが証明しました。曲線で言えば、y² = x³ − 2 が通る格子点はただ一組、(3, 5) と (3, −5)
+> だけです。
+>
+> そこから始めます。曲線上の2点を結ぶ直線は曲線と3つ目の点で交わり、その点をx軸で折り返した
+> ものが2点の「和」です。(3, 5) での接線が 2P を、P と 2P を通る直線が 3P を見つけ、以下同様に
+> ──すべての直線が、曲線上のただ一つの格子点を通ります。点は曲線上に稠密に増え、その座標は n²
+> に比例して桁数が増える正確な分数です。2P = (129/10², −383/10³)、120P の分母は 4,220 桁。各分数
+> は、それを見つけた直線に沿って、画面の端に切られるまで書き出されます。曲線は他の格子点には
+> 決して触れません。26 という数は一度も描かれません。
+>
+> 厳密な計算(BigInt、P における分割多項式)。(3, 5) を通る一巡、次に (3, −5) を通る鏡像の一巡。
+> 描き終えると休み、消え、また始まります。画面サイズに依存しない固定の紙面。
+>
+> キー:スペース 一時停止 · → 次の一手。URL オプション:?seed=… &tempo=8 &reach=120
+> &ground=paper &mode=web
+
+**Tags:** `PCDTokyo2026`, `25`, `elliptic curve`, `number theory`, `generative`
+
 Files: `mordell.js` (the piece, harness-free), `sketch.js` (panel, keys, exports),
 `index.html`, `neort.html` (generated), `preview.png`, `web.png`.
