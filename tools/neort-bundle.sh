@@ -22,7 +22,9 @@ cat "$P/mordell.js"
 cat <<'TAIL'
 // boot: defaults, plus whatever the query string says
 (function () {
-  const q = new URLSearchParams(location.search), o = {};
+  // the exhibition pacing: the guidelines ask for works made with about a minute in mind, so a
+  // step every 2.5 s (≈ 24 steps in the first minute, both passes in ≈ 8 min) and a short rest
+  const q = new URLSearchParams(location.search), o = { tempo: 2.5, hold: 20 };
   const num = (k) => { const v = parseFloat(q.get(k)); if (isFinite(v)) o[k] = v; };
   ['reach', 'passes', 'tempo', 'hold', 'xMin', 'xMax', 'yMax', 'textSize', 'rayAlpha', 'lattice', 'caption'].forEach(num);
   ['mode', 'format', 'ground', 'labels'].forEach((k) => { if (q.get(k)) o[k] = q.get(k); });
