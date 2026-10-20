@@ -3,6 +3,14 @@
   "author": "dmaris70",
   "projects": [
     {
+      "slug": "046-twenty-five-fold",
+      "title": "Twenty-five-fold",
+      "year": 2026,
+      "tools": ["canvas"],
+      "description": "For #PCDTokyo2026 (theme: 25). A crystal can repeat with 2-, 3-, 4- or 6-fold symmetry and no other; a pattern that never repeats is not bound by that. A tiling with exact 25-fold symmetry — de Bruijn's 25 families of parallel lines read as their dual, every crossing one rhombus, twelve shapes — grown from the centre a tile a frame, then turned through the 14.4° that leaves it unchanged. Then another offset: the same symmetry, none of the same tiles.",
+      "thumb": "preview.png"
+    },
+    {
       "slug": "042-every-25-pixel-image",
       "title": "Every 25-Pixel Image, Exhausted in One Day",
       "year": 2026,
