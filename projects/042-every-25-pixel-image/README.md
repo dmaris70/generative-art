@@ -59,6 +59,9 @@ harness, no panel, no CDN — built by `tools/neort-bundle.sh 042-every-25-pixel
 query string overrides (`?clock=load`, `?start=14:00`, `?rate=3000`, `?ground=paper`,
 `?order=seed&seed=7`, `?at=20000000`). Post it with the tag `PCDTokyo2026`.
 
+**Posted:** https://neort.io/ja/art/dbbr1t6l0as1gac24n3g (20 October 2026, tags `PCDTokyo2026`,
+`NEORTchallenge`; listed on the challenge page).
+
 ### The post
 
 **Title:** Every 25-Pixel Image, Exhausted in One Day
