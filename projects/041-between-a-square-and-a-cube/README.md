@@ -61,7 +61,11 @@ taken from the exact values; the digits written along a ray are the exact point.
 ![seed 7, the web: 78 points reached by seeded chords](web.png)
 
 The seed nudges the window a little, so two seeds are two framings of the same construction;
-in the web construction it also decides the chords.
+in the web construction it also decides the chords. Six seeds of the web, ink on paper
+(reach 80, one pass): the chord choices differ fully between seeds, and a pass ends where the
+search finds no new multiple within reach, so the captions read 78P, 71P, 78P, 78P, 68P, 79P.
+
+![seeds 1–6, the web, ink on paper](web-paper-sheet.jpg)
 
 ## Controls
 
@@ -124,4 +128,4 @@ CDN — built by `tools/neort-bundle.sh`. It takes its settings from the query s
 **Tags:** `PCDTokyo2026`, `25`, `elliptic curve`, `number theory`, `generative`
 
 Files: `mordell.js` (the piece, harness-free), `sketch.js` (panel, keys, exports),
-`index.html`, `neort.html` (generated), `preview.png`, `web.png`.
+`index.html`, `neort.html` (generated), `preview.png`, `web.png`, `web-paper-sheet.jpg`.
