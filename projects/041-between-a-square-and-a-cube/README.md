@@ -78,7 +78,8 @@ size, ray strength, lattice, caption). Keys: **R** new seed · **S** save PNG (t
 ## Posting on neort.io
 
 `neort.html` is the whole piece in one file — `mordell.js` inlined, no harness, no panel, no
-CDN — built by `tools/neort-bundle.sh`. Its pacing is the exhibition's: 2.5 s per step (about
+CDN — built by `tools/neort-bundle.sh 041-between-a-square-and-a-cube "Between a Square and a Cube"
+mordell.js`, with its defaults in `neort-boot.js`. Its pacing is the exhibition's: 2.5 s per step (about
 24 steps in the first minute, both passes in about 8 minutes) and a 20 s rest, since the
 guidelines ask for works made with about a minute in mind. The query string still overrides
 (`?seed=7&tempo=8&reach=120&ground=paper&mode=web`). Post it with the tag `PCDTokyo2026`.
@@ -130,4 +131,4 @@ guidelines ask for works made with about a minute in mind. The query string stil
 **Tags:** `PCDTokyo2026`, `25`, `elliptic curve`, `number theory`, `generative`
 
 Files: `mordell.js` (the piece, harness-free), `sketch.js` (panel, keys, exports),
-`index.html`, `neort.html` (generated), `preview.png`, `web.png`, `web-paper-sheet.jpg`.
+`index.html`, `neort-boot.js`, `neort.html` (generated), `preview.png`, `web.png`, `web-paper-sheet.jpg`.
