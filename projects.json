@@ -3,6 +3,14 @@
   "author": "dmaris70",
   "projects": [
     {
+      "slug": "044-the-25th-frame",
+      "title": "The 25th Frame",
+      "year": 2026,
+      "tools": ["canvas"],
+      "description": "For #PCDTokyo2026 (theme: 25). The Soviet 25th-frame myth, the other way round: the number 25 is never in any frame. Every frame is fair-coin noise, and from one frame alone nothing can be read. Outside the figure every cell flips to its opposite on each frame, so any two frames cancel to flat grey; inside it the noise holds still (or drifts). The figure exists only in time — for the eye, through persistence of vision, and for a camera on an exposure of two frames or more. Pause it, screenshot it, and it is gone.",
+      "thumb": "preview.png"
+    },
+    {
       "slug": "043-8212890625",
       "title": "…8212890625 — the receipt of a number that is its own square",
       "year": 2026,
