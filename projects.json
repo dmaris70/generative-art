@@ -3,6 +3,14 @@
   "author": "dmaris70",
   "projects": [
     {
+      "slug": "042-every-25-pixel-image",
+      "title": "Every 25-Pixel Image, Exhausted in One Day",
+      "year": 2026,
+      "tools": ["canvas"],
+      "description": "For #PCDTokyo2026 (theme: 25). A 5 × 5 grid of cells can show 2²⁵ = 33,554,432 images; this sheet shows 25 of them on every frame and counts through all of them in binary, 1,500 a second — the top-left cell changing every image, the bottom-right once, three hours in. Every image has been shown after 6 h 12 m 49 s, one exhibition day. Locked to Tokyo time: it begins at 10:00:00 JST, finishes at 16:12:49 JST, and rests on the last 25 images. After John F. Simon Jr.'s Every Icon (1997), whose 32 × 32 grid would outlast the universe.",
+      "thumb": "preview.png"
+    },
+    {
       "slug": "041-between-a-square-and-a-cube",
       "title": "Between a Square and a Cube — y² = x³ − 2",
       "year": 2026,
