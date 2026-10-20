@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Edition of 390 — take this minute</title>
+  <meta name="description" content="The tiling of the minute you were in the room: one of 390, 25-fold, yours as a plotter-ready SVG and a PNG." />
+  <style>
+    :root { color-scheme: dark; --bg: #0b0b0e; --fg: #e8e6df; --muted: #9a9890; --accent: #e4b67d; --line: #262932; }
+    html, body { margin: 0; background: var(--bg); color: var(--fg); font: 15px/1.5 ui-sans-serif, system-ui, -apple-system, "Hiragino Sans", "Noto Sans JP", sans-serif; }
+    main { max-width: 640px; margin: 0 auto; padding: 24px 16px 48px; display: grid; gap: 16px; }
+    h1 { font: 500 clamp(1.5rem, 5vw, 2rem)/1.15 ui-monospace, "SF Mono", Menlo, Consolas, monospace; margin: 0; letter-spacing: -0.01em; }
+    p { margin: 0; max-width: 60ch; }
+    p.muted, p.ja { color: var(--muted); }
+    p.ja { font-size: 13.5px; }
+    canvas { display: block; width: 100%; aspect-ratio: 1 / 1; border: 1px solid var(--line); background: var(--bg); }
+    .row { display: flex; flex-wrap: wrap; gap: 10px; }
+    button { font: 500 14px ui-sans-serif, system-ui, sans-serif; color: var(--bg); background: var(--accent); border: 0; border-radius: 6px; padding: 11px 16px; cursor: pointer; }
+    button.quiet { color: var(--fg); background: transparent; border: 1px solid var(--line); }
+    button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+    .fine { color: var(--muted); font-size: 12.5px; }
+    code { font: 12.5px ui-monospace, Menlo, Consolas, monospace; }
+  </style>
+</head>
+<body>
+  <main>
+    <h1 id="title">Edition … of 390</h1>
+    <p id="when" class="muted"></p>
+    <canvas id="view" width="1000" height="1000" aria-label="the tiling of this minute"></canvas>
+    <p id="what"></p>
+    <p id="ja" class="ja"></p>
+    <div class="row">
+      <button id="svg" type="button">SVG for the plotter</button>
+      <button id="png" type="button" class="quiet">PNG</button>
+    </div>
+    <p id="how" class="fine"></p>
+  </main>
+  <script src="../../assets/strokefont.js?v=1"></script>
+  <script src="../046-twenty-five-fold/fold.js?v=1"></script>
+  <script src="edition.js?v=1"></script>
+  <script>
+    (function () {
+      const q = new URLSearchParams(location.search);
+      const mi = Edition.minute(Date.now());
+      const asked = q.get('m') ? Math.max(1, Math.min(390, parseInt(q.get('m'), 10))) - 1 : null;
+      const k = asked !== null ? asked : mi.open ? mi.k : 0;
+      const live = asked === null && mi.open;
+      const n = k + 1, time = Edition.timeOf(k);
+      const $ = (id) => document.getElementById(id);
+      $('title').textContent = 'Edition ' + n + ' of 390';
+      $('when').textContent = time + ' JST · ' + Edition.DAY + ' · NEORT++, Tokyo · PCDTokyo2026';
+      const M = Edition.create($('view'), { m: k, at: 1, qr: 0, caption: 0 });
+      const e = M.edition();
+      $('what').textContent = live
+        ? 'You were in the room at ' + time + '. This is the tiling of that minute: twenty-five-fold, ' + e.tiles.toLocaleString('en-US') + ' tiles, offset ' + e.offset.toFixed(4) + ' of the 25 grids. No other minute of the day has it, and no one else’s minute is this one.'
+        : asked !== null
+          ? 'The tiling of ' + time + ' on the day: twenty-five-fold, ' + e.tiles.toLocaleString('en-US') + ' tiles, offset ' + e.offset.toFixed(4) + ' of the 25 grids. Each minute the room is open has its own.'
+          : 'The room is closed. The editions are cut only while it is open, 10:00 – 16:30 JST on ' + Edition.DAY + ', one a minute: scan the code on the screen then and the tiling of that minute is yours. This is a rehearsal of edition 1, 10:00. It opens in ' + Math.floor(mi.untilOpen / 60) + ' h ' + (mi.untilOpen % 60) + ' m.';
+      $('ja').textContent = live
+        ? time + ' にあなたは会場にいました。これはその一分のタイル張りです──25回対称、' + e.tiles.toLocaleString('en-US') + ' 枚、オフセット ' + e.offset.toFixed(4) + '。この日の他のどの一分にもない、あなたの一分のものです。'
+        : asked !== null
+          ? '当日の ' + time + ' のタイル張り。会場が開いている一分一分に、それぞれのタイル張りがあります。'
+          : '会場は閉まっています。エディションは ' + Edition.DAY + ' の 10:00–16:30 JST、開場中の一分ごとにだけ切り出されます。そのとき画面のコードを読み取ると、その一分のタイル張りがあなたのものになります。これは第1版（10:00）のリハーサルです。';
+      $('how').innerHTML = 'The SVG holds every whole tile of the disc as a path, the edges as one path, and the caption in single-stroke letters, so a pen plotter can draw all of it. The same arithmetic runs here and on the screen: edition ' + n + ' is the dual of the 25-grid with the offset of seed ' + Edition.seedFor(k) + ' — nothing is stored, nothing is served. <code>?m=' + n + '</code> opens this edition again.';
+      const download = (href, name) => { const a = document.createElement('a'); a.href = href; a.download = name; a.click(); setTimeout(() => URL.revokeObjectURL(href), 2000); };
+      $('svg').addEventListener('click', () => { const s = Edition.svg(k, 4, 'dark'); download(URL.createObjectURL(new Blob([s.svg], { type: 'image/svg+xml' })), 'edition-' + n + '-of-390.svg'); });
+      $('png').addEventListener('click', () => M.png().toBlob((b) => download(URL.createObjectURL(b), 'edition-' + n + '-of-390.png')));
+    })();
+  </script>
+</body>
+</html>
