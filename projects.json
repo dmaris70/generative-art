@@ -3,6 +3,14 @@
   "author": "dmaris70",
   "projects": [
     {
+      "slug": "045-every-25-token-sketch",
+      "title": "Every 25-Token Sketch",
+      "year": 2026,
+      "tools": ["canvas", "BigInt"],
+      "description": "For #PCDTokyo2026 (theme: 25). An homage to つぶやきProcessing: every program of a fifteen-symbol pixel language, enumerated in order, shortest first, and drawn as it arrives — 8 a second on a conveyor of 25 tiles with its code beneath, while a slow lane keeps the program that scores best for structure and lets its claim fade. 5 programs of one token, 2,500 of four, 328,125 of six; the first 25-token program arrives in 2.9 × 10¹⁷ years. A Library of Babel of sketches, read from the first shelf.",
+      "thumb": "preview.png"
+    },
+    {
       "slug": "044-the-25th-frame",
       "title": "The 25th Frame",
       "year": 2026,
