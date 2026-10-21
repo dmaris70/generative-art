@@ -34,7 +34,7 @@
 <div class="hud top">
   <div>
     <h1>Every 25-Token Sketch · the relief</h1>
-    <p class="sub">A machine reading a library, modelled at full size and running the real enumeration. Drag to turn, scroll to approach.</p>
+    <p class="sub">A machine reading a library, modelled at full size and running the real enumeration. Drag to turn, scroll to approach, turn the sound on to hear it read.</p>
   </div>
 </div>
 <div class="hud bottom">
@@ -44,6 +44,9 @@
   </div>
   <div class="group" role="group" aria-label="pace">
     <button id="r1" aria-pressed="true">1 a second</button><button id="r8">8 a second</button><button id="pause">pause</button>
+  </div>
+  <div class="group" role="group" aria-label="sound">
+    <button id="sound" aria-pressed="false">sound off</button>
   </div>
 </div>
 
@@ -462,6 +465,57 @@ let rate = 1, paused = false;
 let M = Babel.create(document.getElementById('hidden'), { rate, prologue: 0 });
 const grp = (n) => String(n).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
 
+// ───────────────────────── the sound: flip-dots, the counter, the printer ─────────────────────────
+// Synthesised, nothing sampled. A flip-dot is a short bright click; many at once are a shower of
+// clicks over the flip time; the slow lane's 3,136 dots are the clatter. A counter wheel is a
+// soft mechanical tick. The printer is a stepper's buzz with the paper's hiss, 0.9 s a ticket.
+// Browsers allow sound only after a gesture, so it starts from the button.
+const audio = { ctx: null, on: false, noise: null, master: null };
+function audioEnsure() {
+  if (audio.ctx) { if (audio.ctx.state === 'suspended') audio.ctx.resume(); return; }
+  const C = window.AudioContext || window.webkitAudioContext; if (!C) return;
+  const ctx = audio.ctx = new C();
+  const n = ctx.sampleRate * 0.5, buf = ctx.createBuffer(1, n, ctx.sampleRate), d = buf.getChannelData(0);
+  for (let i = 0; i < n; i++) d[i] = Math.random() * 2 - 1;
+  audio.noise = buf;
+  audio.master = ctx.createGain(); audio.master.gain.value = 0.9;
+  const comp = ctx.createDynamicsCompressor(); comp.threshold.value = -18; comp.ratio.value = 6;
+  audio.master.connect(comp); comp.connect(ctx.destination);
+}
+function click(at, gain, freq, q, dur) {              // one short filtered noise burst
+  const ctx = audio.ctx, src = ctx.createBufferSource(); src.buffer = audio.noise; src.playbackRate.value = 0.8 + Math.random() * 0.4;
+  const bp = ctx.createBiquadFilter(); bp.type = 'bandpass'; bp.frequency.value = freq; bp.Q.value = q;
+  const g = ctx.createGain(); g.gain.setValueAtTime(0, at); g.gain.linearRampToValueAtTime(gain, at + 0.0015); g.gain.exponentialRampToValueAtTime(0.0005, at + dur);
+  src.connect(bp); bp.connect(g); g.connect(audio.master); src.start(at, Math.random() * 0.4); src.stop(at + dur + 0.01);
+}
+function soundFlips(count, loud) {                   // count dots turning over the next 0.15 s
+  if (!audio.on || !audio.ctx || count === 0) return;
+  const t0 = audio.ctx.currentTime, n = Math.min(loud ? 140 : 48, count), spread = loud ? 0.26 : 0.16;
+  const gain = (loud ? 0.22 : 0.16) * Math.min(1, 0.35 + Math.log10(1 + count) / 3);
+  for (let i = 0; i < n; i++) click(t0 + Math.random() * spread, gain * (0.6 + Math.random() * 0.4), 2600 + Math.random() * 1800, 2.5, 0.012 + Math.random() * 0.01);
+  if (loud) { const g = audio.ctx.createGain(); g.gain.setValueAtTime(0.0001, t0); g.gain.exponentialRampToValueAtTime(0.09, t0 + 0.02); g.gain.exponentialRampToValueAtTime(0.0005, t0 + 0.4);   // the panel's body resonating under the clatter
+    const o = audio.ctx.createOscillator(); o.type = 'triangle'; o.frequency.value = 180; const lp = audio.ctx.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 400; o.connect(lp); lp.connect(g); g.connect(audio.master); o.start(t0); o.stop(t0 + 0.45); }
+}
+function soundTicks(count) {                         // counter wheels stepping
+  if (!audio.on || !audio.ctx || count === 0) return;
+  const t0 = audio.ctx.currentTime;
+  for (let i = 0; i < Math.min(count, 6); i++) click(t0 + i * 0.03, 0.12, 900 + Math.random() * 300, 4, 0.02);
+}
+function soundPrint() {                              // the thermal printer: a stepper's buzz and the paper's hiss
+  if (!audio.on || !audio.ctx) return;
+  const ctx = audio.ctx, t0 = ctx.currentTime + 0.05, dur = 0.9;
+  const o = ctx.createOscillator(); o.type = 'sawtooth'; o.frequency.value = 96;
+  const bp = ctx.createBiquadFilter(); bp.type = 'bandpass'; bp.frequency.value = 1400; bp.Q.value = 1.2;
+  const g = ctx.createGain(); g.gain.setValueAtTime(0, t0); g.gain.linearRampToValueAtTime(0.07, t0 + 0.03); g.gain.setValueAtTime(0.07, t0 + dur - 0.05); g.gain.linearRampToValueAtTime(0, t0 + dur);
+  const am = ctx.createOscillator(); am.frequency.value = 62; const amg = ctx.createGain(); amg.gain.value = 0.5; am.connect(amg); amg.connect(g.gain);
+  o.connect(bp); bp.connect(g); g.connect(audio.master); o.start(t0); o.stop(t0 + dur); am.start(t0); am.stop(t0 + dur);
+  const src = ctx.createBufferSource(); src.buffer = audio.noise; src.loop = true;
+  const hp = ctx.createBiquadFilter(); hp.type = 'highpass'; hp.frequency.value = 5000;
+  const g2 = ctx.createGain(); g2.gain.setValueAtTime(0, t0); g2.gain.linearRampToValueAtTime(0.025, t0 + 0.05); g2.gain.setValueAtTime(0.025, t0 + dur - 0.05); g2.gain.linearRampToValueAtTime(0, t0 + dur);
+  src.connect(hp); hp.connect(g2); g2.connect(audio.master); src.start(t0); src.stop(t0 + dur);
+  for (let i = 0; i < 3; i++) click(t0 + dur + 0.05 + i * 0.04, 0.1, 700, 3, 0.03);   // the feed's last steps
+}
+
 // ───────────────────────── the room ─────────────────────────
 const canvas = document.getElementById('room');
 const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
@@ -624,7 +678,7 @@ function fileTickets(found) {
 const buf28 = new Uint8Array(28 * 28), buf56 = new Uint8Array(56 * 56);
 let lastNext = -1, lastChamp = -1;
 const tmpM = new THREE.Matrix4(), tmpP = new THREE.Vector3(), tmpQ = new THREE.Quaternion(), tmpS = new THREE.Vector3(1, 1, 1), ax = new THREE.Vector3(1, 0, 0);
-function setField(f, bits, now) { for (let i = 0; i < f.n * f.n; i++) if (bits[i] !== f.target[i]) { f.target[i] = bits[i]; f.flipAt[i] = now + Math.random() * 0.08; } }
+function setField(f, bits, now) { let changed = 0; for (let i = 0; i < f.n * f.n; i++) if (bits[i] !== f.target[i]) { f.target[i] = bits[i]; f.flipAt[i] = now + Math.random() * 0.08; changed++; } soundFlips(changed, f === lane); }
 function animateFields(now) {
   for (const f of fields) {
     let any = false; const n = f.n;
@@ -641,7 +695,7 @@ function animateFields(now) {
     if (any) f.mesh.instanceMatrix.needsUpdate = true;
   }
 }
-function setCounter(next, now) { const s = String(next).padStart(28, '0'); for (let i = 0; i < 28; i++) { const d = +s[i], w = wheels[i]; if (d !== w.digit) { w.from = w.digit; w.digit = d; w.at = now; } } }
+function setCounter(next, now) { const s = String(next).padStart(28, '0'); let changed = 0; for (let i = 0; i < 28; i++) { const d = +s[i], w = wheels[i]; if (d !== w.digit) { w.from = w.digit; w.digit = d; w.at = now; changed++; } } soundTicks(changed); }
 function animateWheels(now) { for (const w of wheels) { let d = w.digit; if (w.at >= 0) { const u = Math.min(1, (now - w.at) / 0.25); const from = w.from, to = w.digit, delta = ((to - from) % 10 + 10) % 10; d = from + delta * (u < 1 ? (1 - Math.cos(u * Math.PI)) / 2 : 1); if (u >= 1) w.at = -1; } w.mesh.rotation.x = ((d + 0.5) / 10) * Math.PI * 2; } }   // the rim's u runs from the face upward; rotating by +θ brings digit d to the face
 const el = { prog: document.getElementById('prog'), found: document.getElementById('found'), distinct: document.getElementById('distinct') };
 function tick(now) {
@@ -652,7 +706,7 @@ function tick(now) {
     setCounter(s.next, now);
     const px = rx(Math.max(1, s.next)); const p = mm(px, 1366, 0.012); pointer.position.set(p.x, p.y, p.z);
     el.prog.textContent = grp(s.next); el.found.textContent = grp(s.found); el.distinct.textContent = grp(s.distinct);
-    const fl = M.found(); fileTickets(fl); if (fl.length !== paperFor) layPaper(fl.length);
+    const fl = M.found(); fileTickets(fl); if (fl.length !== paperFor) { if (paperFor >= 0 && fl.length > paperFor) soundPrint(); layPaper(fl.length); }
   }
   if (champ && champ.k !== lastChamp) { lastChamp = champ.k; setField(lane, dots(champ.k, 56, now, true, buf56), now); }
 }
@@ -672,6 +726,7 @@ requestAnimationFrame(frame);
 // controls
 for (let j = 0; j < 5; j++) document.getElementById('v' + j).addEventListener('click', () => goView(j));
 function setRate(r) { rate = r; document.getElementById('r1').setAttribute('aria-pressed', String(r === 1)); document.getElementById('r8').setAttribute('aria-pressed', String(r === 8)); M.setOptions({ rate: r, from: M.stats().next }); if (!paused) M.reset(); }
+document.getElementById('sound').addEventListener('click', (e) => { audioEnsure(); audio.on = !audio.on; e.currentTarget.setAttribute('aria-pressed', String(audio.on)); e.currentTarget.textContent = audio.on ? 'sound on' : 'sound off'; if (audio.on) soundFlips(28, false); });
 document.getElementById('r1').addEventListener('click', () => setRate(1));
 document.getElementById('r8').addEventListener('click', () => setRate(8));
 document.getElementById('pause').addEventListener('click', (e) => { paused = !paused; e.currentTarget.setAttribute('aria-pressed', String(paused)); e.currentTarget.textContent = paused ? 'resume' : 'pause'; if (paused) M.destroy(); else { M = Babel.create(document.getElementById('hidden'), { rate, prologue: 0, from: lastNext }); } });

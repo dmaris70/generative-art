@@ -173,7 +173,10 @@ the wall label.
 in a gallery room, every flip-dot a disc that turns, the counter's drums, the paper from the
 slot, the brass ruler, the shelves filling — driven by the same enumeration at one program a
 second. Drag to turn, scroll to approach; views for the slow lane, the counter and the shelves;
-one or eight programs a second.
+one or eight programs a second. With the sound on, the machine is heard: each flip-dot a click,
+the slow lane's 3,136 dots a clatter with the panel ringing under it, the counter's wheels a
+soft tick, the printer a stepper's buzz and the paper's hiss for each ticket — all synthesised,
+nothing sampled.
 
 ![the relief in three dimensions](relief/model.png)
 
