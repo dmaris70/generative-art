@@ -148,6 +148,12 @@ screen beside it shows the same program; `--png` renders the same tickets as a s
 dots a pixel; 80 mm, 72 mm at nine. About 770 takeovers an exhibition day, 65 m of paper. The
 build sheet, bill of materials and the open choices are in `receipt/BUILD.md`.
 
+The room's selector is stricter than the screen's: the champion's claim fades by 0.9999 a
+program instead of 0.9992, and a ticket is printed only for a champion that held the lane 200
+programs or more — the ones that lasted. Measured at one program a second: 33 takeovers and 16
+tickets on the first exhibition day, 1.5 m of paper, against 100 tickets and 9 m under the
+screen's rule; a roll lasts about two months. The screen on neort.io keeps its own rule.
+
 ![six simulated tickets, 58 mm paper](receipt/strip.png)
 
 ## The relief: a machine reading a library
@@ -172,8 +178,8 @@ the wall label.
 `relief/model.html` is the relief in three dimensions: the panel and the bookcase at full size
 in a gallery room, every flip-dot a disc that turns, the counter's drums, the paper from the
 slot, the brass ruler, the shelves filling — driven by the same enumeration at one program a
-second. Drag to turn, scroll to approach; views for the slow lane, the counter and the shelves;
-one or eight programs a second. With the sound on, the machine is heard: each flip-dot a click,
+second. Drag to turn, scroll to approach; views for the slow lane, the counter, the receipt and
+the shelves; one or eight programs a second. With the sound on, the machine is heard: each flip-dot a click,
 the slow lane's 3,136 dots a clatter with the panel ringing under it, the counter's wheels a
 soft tick, the printer a stepper's buzz and the paper's hiss for each ticket — all synthesised,
 nothing sampled. The paper from the slot carries the tickets as the till printer prints them —

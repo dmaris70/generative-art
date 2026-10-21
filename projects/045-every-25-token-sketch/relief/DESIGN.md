@@ -23,7 +23,7 @@ simulator (`simulator.html`) runs both; `?tiles=25` shows the rejected layout.
 | element | what it is | size |
 |---|---|---|
 | the conveyor | five flip-dot fields of 28 × 28 dots, the last five programs, oldest left, one new program a second; thresholded | five × 280 × 280 mm at 10 mm pitch, 20 mm apart |
-| the slow lane | one flip-dot field of 56 × 56 dots, the champion, dithered; changes hands when a better unrepeated picture arrives, its claim fading as on the screen | 560 × 560 mm |
+| the slow lane | one flip-dot field of 56 × 56 dots, the champion, dithered; changes hands when a better unrepeated picture arrives, its claim fading by 0.9999 a program | 560 × 560 mm |
 | the program | 28 electromechanical digit wheels showing the program number with leading zeros; the last 24 wheels never turn | 504 × 30 mm |
 | the receipt | the stage-2 printer behind the panel, its slot in the face, the paper falling free to the floor | 58 mm slot |
 | the library | a brass bar engraved with the 25 shelves on a log scale, a pointer on a lead screw at the current program; it advances by a hair a day and sits at the far left for all time | 1840 mm travel |
@@ -45,7 +45,12 @@ claim as furniture.
 
 - One program a second: flip-dots settle in about 30 ms, but one a second is what a person can
   follow, and the sound of five fields flipping at once is the enumeration heard.
-- At one a second a 6.5 h day reads 23,400 programs, into the fifth shelf; about 100 takeovers.
+- At one a second a 6.5 h day reads 23,400 programs, into the fifth shelf. The relief's
+  selector fades the champion's claim by 0.9999 a program (the screen's is 0.9992), so the
+  lane changes hands about 33 times a day instead of 100; the printer keeps only a champion
+  that held the lane 200 programs or more, about 16 tickets a day, 1.5 m of paper (measured).
+  Under the screen's rule the sixth shelf would need 15 m of shelving within a month; under
+  the room's rule it holds a year.
 - The slow lane changes with a visible flip of 3,136 dots; the printer fires at the same moment.
 - The counter steps once a second; the pointer moves 0.15 mm an hour at the current shelf.
 - Outside the room's hours the machine rehearses from program 1, as the screen does.
