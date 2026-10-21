@@ -9,6 +9,13 @@
 //
 //   node receipt.js [--device /dev/usb/lp0 | --tcp host:9100 | --out file.bin | --png dir]
 //                   [--width 384|576] [--rate 8] [--start HH:MM] [--replay N] [--cut]
+//                   [--fade 0.9999] [--minhold 200]
+//
+// The room's selector is stricter than the screen's: the champion's claim fades by 0.9999 a
+// program (the screen's 0.9992), and a ticket is printed only for a champion that held the lane
+// 200 programs or more — the ones that lasted. Measured at one program a second, that is about
+// a dozen tickets an exhibition day instead of a hundred. --fade 0.9992 --minhold 0 prints as
+// the screen selects.
 //
 // --device   write ESC/POS bytes to a printer device (USB: /dev/usb/lp0; serial: /dev/ttyUSB0)
 // --tcp      send to a network printer on port 9100
@@ -20,6 +27,8 @@
 //            a screen started at the same minute agree on the program number
 // --replay   do not run live: print the found through program N at once (e.g. 30905), then exit
 // --cut      partial cut after each ticket (printers with a cutter); default: feed only
+// --fade     the champion's fade per program (default 0.9999; the screen uses 0.9992)
+// --minhold  print only a champion that held the lane at least this many programs (default 200)
 //
 // No dependencies. Tested with the ESC/POS raster command GS v 0, which Epson TM-T20/T88 and the
 // common 58 mm kiosk printers accept.
@@ -29,7 +38,7 @@ const fs = require('fs'), path = require('path'), net = require('net'), vm = req
 // ───────────────────────── arguments ─────────────────────────
 const A = {}; const argv = process.argv.slice(2);
 for (let i = 0; i < argv.length; i++) { const k = argv[i]; if (k.startsWith('--')) { const v = argv[i + 1] && !argv[i + 1].startsWith('--') ? argv[++i] : true; A[k.slice(2)] = v; } }
-const WIDTH = +(A.width || 384), RATE = +(A.rate || 8), PROLOGUE = 280;
+const WIDTH = +(A.width || 384), RATE = +(A.rate || 8), PROLOGUE = 280, FADE = +(A.fade || 0.9999), MINHOLD = +(A.minhold === undefined ? 200 : A.minhold);
 const COLS = Math.floor(WIDTH / 12);          // characters a line in the printer's font A (12 dots wide): 32 on 58 mm, 48 on 80 mm
 if (!A.device && !A.tcp && !A.out && !A.png) { console.error('nothing to print to: give --device, --tcp, --out or --png'); process.exit(2); }
 
@@ -145,8 +154,10 @@ function flush(M, when) {                      // print every found not yet prin
   const list = M.found().slice().reverse();
   for (const f of list) {
     if (seen.has(f.k)) continue;
-    seen.add(f.k); printed++;
+    seen.add(f.k);
     const held = Math.round((f.until - f.since) * RATE);
+    if (held < MINHOLD) continue;                                  // it did not last: no ticket
+    printed++;
     const entry = Object.assign({}, f, { held });
     const w = when || jst(Date.now());
     send(ticket(entry, printed, w));
@@ -156,7 +167,7 @@ function flush(M, when) {                      // print every found not yet prin
 }
 if (A.replay) {
   const n = +A.replay;
-  const M = Babel.create(canvas(), { at: n, rate: RATE, prologue: PROLOGUE });
+  const M = Babel.create(canvas(), { at: n, rate: RATE, prologue: PROLOGUE, fade: FADE });
   flush(M, 'replay through program ' + grp(n));
   const s = M.stats();
   console.log('replay done: ' + grp(s.next) + ' programs, ' + grp(s.distinct) + ' distinct pictures, ' + grp(s.dups) + ' repeats, ' + grp(printed) + ' tickets');
@@ -172,7 +183,7 @@ if (A.replay) {
     if (elapsed < 0) console.log('starts at ' + A.start + ' JST, in ' + Math.round(-elapsed) + ' s');
     else console.log('locked to ' + A.start + ' JST: beginning at program ' + grp(from + 1));
   }
-  const M = Babel.create(canvas(), { rate: RATE, prologue: PROLOGUE, from });
-  console.log('live: ' + RATE + ' programs a second, ' + WIDTH + ' dots across. Ctrl-C to stop.');
+  const M = Babel.create(canvas(), { rate: RATE, prologue: PROLOGUE, from, fade: FADE });
+  console.log('live: ' + RATE + ' programs a second, ' + WIDTH + ' dots across, fade ' + FADE + ', a ticket for a hold of ' + MINHOLD + ' or more. Ctrl-C to stop.');
   setInterval(() => { if (rafCb) { const cb = rafCb; rafCb = null; cb(Date.now()); } flush(M); }, 50);
 }

@@ -42,7 +42,8 @@
     for (let j = 0; j < n; j++) { const y = -2 + (4 * (j + 0.5)) / n; for (let i = 0; i < n; i++) { const x = -2 + (4 * (i + 0.5)) / n; let v = f(x, y, t, D, Mf); if (!isFinite(v)) v = 0; const tone = 0.5 + 0.5 * Math.sin(v); out[j * n + i] = tone > (dither ? (BAYER[j & 3][i & 3] + 0.5) / 16 : 0.5) ? 1 : 0; } }
     return out;
   }
-  const M = Babel.create(document.getElementById('hidden'), { rate: RATE, prologue: 0, at: AT });
+  const FADE = +(q.get('fade') || 0.9999), MINHOLD = +(q.get('minhold') || 200);   // the room's selector: stricter than the screen's
+  const M = Babel.create(document.getElementById('hidden'), { rate: RATE, prologue: 0, at: AT, fade: FADE });
   let scale = 1, ox = 0, oy = 0;
   function layout() {
     const dpr = Math.min(devicePixelRatio || 1, 2);
@@ -60,7 +61,8 @@
   function engrave(s, x, y, size, align) { ctx.fillStyle = 'rgba(232,230,223,0.5)'; ctx.font = size + 'px ' + MONO; ctx.textAlign = align || 'left'; ctx.fillText(s, x, y); }
   const grp = (n) => String(n).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
   function draw() {
-    const s = M.stats(), champ = M.champion(), found = M.found(), t = performance.now() / 1000;
+    const s = M.stats(), champ = M.champion(), all = M.found(), t = performance.now() / 1000;
+    const found = all.filter((f) => (f.until - f.since) * RATE >= MINHOLD);   // the printed: the ones that held the lane
     ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.fillStyle = '#141418'; ctx.fillRect(0, 0, cv.width, cv.height);
     ctx.setTransform(scale, 0, 0, scale, ox, oy);
     // the panel
@@ -105,7 +107,7 @@
     const sx = wx, sy = wy + 100;
     ctx.fillStyle = '#1b1b20'; ctx.fillRect(sx, sy, 120, 14); ctx.fillStyle = '#e8e6df'; ctx.fillRect(sx + 10, sy + 2, 100, 4);
     ctx.fillStyle = 'rgba(232,230,223,0.9)'; ctx.fillRect(sx + 10, sy + 16, 100, Math.min(TILES === 25 ? 500 : 380, 40 + found.length * 6));
-    engrave('THE RECEIPT . ' + grp(found.length) + ' FOUND', sx + 140, sy + 12, 13);
+    engrave('THE RECEIPT . ' + grp(found.length) + ' PRINTED OF ' + grp(all.length) + ' TAKEOVERS . A TICKET FOR A HOLD OF ' + MINHOLD + ' OR MORE', sx + 140, sy + 12, 13);
     // the ruler: the library on a log scale, brass
     const ry = 1380, rx0 = 80, rx1 = PANEL.w - 80, total = Math.log10(Number(Babel.CUM ? Babel.CUM[25] : 1.024e27));
     const rx = (k) => rx0 + ((rx1 - rx0) * Math.log10(Math.max(1, k))) / total;
