@@ -5,5 +5,5 @@
   ['rate', 'from', 'fade', 'prologue', 'at'].forEach(num);
   if (q.get('ground')) o.ground = q.get('ground');
   o.seed = q.get('seed') ? (parseInt(q.get('seed'), 10) >>> 0) : 1;
-  Babel.create(document.getElementById('view'), o);
+  window.BABEL = Babel.create(document.getElementById('view'), o);   // exposed for tools (found-prints.js)
 })();

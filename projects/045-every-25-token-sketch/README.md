@@ -119,6 +119,22 @@ from the piece's own buffers (8,039); recomputing the fingerprints in double pre
 
 ![the sheet after one minute: program 722, eleven found](minute.png)
 
+## The found, as prints
+
+The first physical form of the work: every sketch the slow lane kept through the fifth shelf,
+132 of them, as print masters — the 64 × 64 field as it stood when dethroned, enlarged without
+smoothing on the dark ground, 2,400 px square (20.3 cm at 300 dpi), captioned with its code
+as people read it and as the library writes it, its program number, length, score, whether it
+uses t, and how many programs it held the lane for. Oldest first, the order the library gave
+them; the one still holding the lane is last. Edition of 25 sets.
+
+`tools/found-prints.js` makes the set from the posted bundle (`node tools/found-prints.js
+<url of neort.html> <out-dir> [programs] [px]`): the prints, a contact sheet, the index
+(`found.csv`, `found.json`) and a catalogue PDF, one print a page. The index and catalogue are
+in `found/`; the 132 masters are regenerated on demand.
+
+![the found through the fifth shelf, oldest first](found/contact-sheet.png)
+
 ## Controls
 
 Panel: programs a second, the program to begin at, the champion's fade, the prologue (how many
