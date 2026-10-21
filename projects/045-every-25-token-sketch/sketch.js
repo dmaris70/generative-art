@@ -14,6 +14,7 @@ const TILE = ['0', 'false', 'off'].includes(QS.get('gui'));   // a contact-sheet
       rate: { value: 8, min: 1, max: 60, step: 1, label: 'programs a second', group: LB },
       from: { value: 0, min: 0, max: 300000, step: 1, label: 'begin at program', group: LB },
       fade: { value: 0.9992, min: 0.99, max: 1, step: 0.0001, label: "the champion's fade per program", group: LB },
+      prologue: { value: 280, min: 0, max: 3000, step: 10, label: 'the first programs at a frame each', group: LB },
       ground: { value: 0, options: { 'light on dark': 0, 'ink on paper': 1 }, label: 'ground', group: SH },
     },
     onReset: reset,
@@ -29,7 +30,7 @@ const TILE = ['0', 'false', 'off'].includes(QS.get('gui'));   // a contact-sheet
 
 function options() {
   return {
-    seed: G.seed, rate: Math.round(G.param('rate')), from: Math.round(G.param('from')), fade: G.param('fade'),
+    seed: G.seed, rate: Math.round(G.param('rate')), from: Math.round(G.param('from')), fade: G.param('fade'), prologue: Math.round(G.param('prologue')),
     ground: +G.param('ground') ? 'paper' : 'dark',
     at: AT !== null ? AT : TILE ? 3000 : null,
   };
