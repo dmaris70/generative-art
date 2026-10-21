@@ -135,6 +135,21 @@ in `found/`; the 132 masters are regenerated on demand.
 
 ![the found through the fifth shelf, oldest first](found/contact-sheet.png)
 
+## The receipt of the found
+
+The second physical form: a thermal till printer in a steel housing that prints each dethroned
+champion as it happens — the field dithered to the paper's dots, the code as people read it and
+as the library writes it, the program number, the score, how long it held the lane, the time —
+and lets the paper run to the floor. The printer's clatter marks each takeover; a day is one
+roll. `receipt/receipt.js` runs the unchanged `babel.js` without a browser and speaks ESC/POS
+to a USB or network printer, locked to the room's clock with `--start 10:00` so that the
+screen beside it shows the same program; `--png` renders the same tickets as a simulator, and
+`--replay N` prints the found through program N at once. 58 mm paper gives a 48 mm image at six
+dots a pixel; 80 mm, 72 mm at nine. About 770 takeovers an exhibition day, 65 m of paper. The
+build sheet, bill of materials and the open choices are in `receipt/BUILD.md`.
+
+![six simulated tickets, 58 mm paper](receipt/strip.png)
+
 ## Controls
 
 Panel: programs a second, the program to begin at, the champion's fade, the prologue (how many
