@@ -176,7 +176,11 @@ second. Drag to turn, scroll to approach; views for the slow lane, the counter a
 one or eight programs a second. With the sound on, the machine is heard: each flip-dot a click,
 the slow lane's 3,136 dots a clatter with the panel ringing under it, the counter's wheels a
 soft tick, the printer a stepper's buzz and the paper's hiss for each ticket — all synthesised,
-nothing sampled.
+nothing sampled. The paper from the slot carries the tickets as the till printer prints them —
+the field dithered to 384 dots, the seven lines in the printer's font, newest at the slot — so
+the receipt in the model is the receipt the room will have.
+
+![the receipt in the model](relief/model-receipt.png)
 
 ![the relief in three dimensions](relief/model.png)
 

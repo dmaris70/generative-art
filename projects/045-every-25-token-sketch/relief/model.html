@@ -40,7 +40,7 @@
 <div class="hud bottom">
   <div class="stat">program <b id="prog">0</b> · found <b id="found">0</b> · distinct <b id="distinct">0</b></div>
   <div class="group" role="group" aria-label="view">
-    <button id="v0" aria-pressed="true">three-quarter</button><button id="v1">front</button><button id="v2">the slow lane</button><button id="v3">the counter</button><button id="v4">the shelves</button>
+    <button id="v0" aria-pressed="true">three-quarter</button><button id="v1">front</button><button id="v2">the slow lane</button><button id="v3">the counter</button><button id="v4">the receipt</button><button id="v5">the shelves</button>
   </div>
   <div class="group" role="group" aria-label="pace">
     <button id="r1" aria-pressed="true">1 a second</button><button id="r8">8 a second</button><button id="pause">pause</button>
@@ -528,10 +528,10 @@ const controls = new OrbitControls(camera, canvas); controls.enableDamping = tru
 // world space: the panel face spans x −1 … 1, y 0.9 … 2.4; the lane centre is (−0.64, 1.70), the counter (0, 1.925), the shelves (1.4, 0.75)
 const VIEWS = [
   { p: [2.9, 1.9, 4.2], t: [0.55, 1.45, 0] }, { p: [0.5, 1.65, 4.6], t: [0.5, 1.55, 0] },
-  { p: [-0.5, 1.78, 1.25], t: [-0.64, 1.70, 0.08] }, { p: [0.12, 1.98, 0.78], t: [0.0, 1.92, 0.08] }, { p: [1.95, 1.35, 2.2], t: [1.4, 0.8, 0.12] },
+  { p: [-0.5, 1.78, 1.25], t: [-0.64, 1.70, 0.08] }, { p: [0.12, 1.98, 0.78], t: [0.0, 1.92, 0.08] }, { p: [-0.02, 1.52, 0.58], t: [-0.22, 1.42, 0.12] }, { p: [1.95, 1.35, 2.2], t: [1.4, 0.8, 0.12] },
 ];
 let viewFrom = null, viewTo = null, viewT = 1;
-function goView(i) { viewFrom = { p: camera.position.clone(), t: controls.target.clone() }; viewTo = { p: new THREE.Vector3(...VIEWS[i].p), t: new THREE.Vector3(...VIEWS[i].t) }; viewT = 0; for (let j = 0; j < 5; j++) document.getElementById('v' + j).setAttribute('aria-pressed', String(j === i)); }
+function goView(i) { viewFrom = { p: camera.position.clone(), t: controls.target.clone() }; viewTo = { p: new THREE.Vector3(...VIEWS[i].p), t: new THREE.Vector3(...VIEWS[i].t) }; viewT = 0; for (let j = 0; j < 6; j++) document.getElementById('v' + j).setAttribute('aria-pressed', String(j === i)); }
 camera.position.set(...VIEWS[0].p); controls.target.set(...VIEWS[0].t);
 
 // materials
@@ -540,7 +540,46 @@ const recess = new THREE.MeshStandardMaterial({ color: 0x08080a, roughness: 0.95
 const brass = new THREE.MeshStandardMaterial({ color: 0x9a7f45, roughness: 0.35, metalness: 0.85 });
 const wallMat = new THREE.MeshStandardMaterial({ color: 0xd9d5cb, roughness: 0.95 });
 const floorMat = new THREE.MeshStandardMaterial({ color: 0x5c5a56, roughness: 0.9 });
-const paperMat = new THREE.MeshStandardMaterial({ color: 0xece8de, roughness: 0.9, side: THREE.DoubleSide });
+// the paper: 58 mm wide, printed as the till printer prints it — 8 dots a millimetre, 384 dots of
+// print across, each ticket the field dithered to the dots and seven lines in the printer's font,
+// 726 dots (90.75 mm) a ticket, newest at the slot. The strip's texture holds the last 16.
+const DPM = 8, PAPER_W = 58 * DPM, PRINT_W = 384, TICKET_H = 726, KEEP = 16, LEAD = 0.03;
+const ticketCanvas = document.createElement('canvas'); ticketCanvas.width = PAPER_W; ticketCanvas.height = LEAD * 1000 * DPM + KEEP * TICKET_H + 120;
+const ticketTex = new THREE.CanvasTexture(ticketCanvas); ticketTex.colorSpace = THREE.SRGBColorSpace; ticketTex.flipY = false; ticketTex.anisotropy = 8; ticketTex.wrapS = THREE.ClampToEdgeWrapping; ticketTex.wrapT = THREE.ClampToEdgeWrapping;
+const COVERED = LEAD + (KEEP * TICKET_H + 120) / DPM / 1000;        // metres of strip the texture covers
+const paperMat = new THREE.MeshStandardMaterial({ map: ticketTex, roughness: 0.9, side: THREE.DoubleSide });
+const asciiT = (t) => t.replace(/×/g, '*').replace(/÷/g, '/').replace(/−/g, '-').replace(/·/g, '.');
+const JST = 9 * 60, jst = (ms) => { const d = new Date(ms + JST * 60000); return d.toISOString().slice(11, 19) + ' JST'; };
+const printedAt = new Map();                                        // program k → the time its ticket printed
+function drawTicket(g, f, no, y) {                                  // one ticket at canvas y, as receipt.js prints it
+  const x0 = (PAPER_W - PRINT_W) / 2;
+  // the field, 6 × 6 dots a pixel, Floyd–Steinberg on the dot grid
+  const fnk = fn(f.k), vals = new Float32Array(64 * 64); let i = 0;
+  for (let py = 0; py < 64; py++) { const yy = -2 + (4 * (py + 0.5)) / 64; for (let px = 0; px < 64; px++) { const xx = -2 + (4 * (px + 0.5)) / 64; let v = fnk(xx, yy, f.until, D, Mf); if (!isFinite(v)) v = 0; vals[i++] = 0.5 + 0.5 * Math.sin(v); } }
+  const W = PRINT_W, H = PRINT_W, e = new Float32Array(W * H), img = g.createImageData(W, H), d = img.data;
+  for (let yy = 0; yy < H; yy++) for (let xx = 0; xx < W; xx++) e[yy * W + xx] = vals[Math.floor(yy / 6) * 64 + Math.floor(xx / 6)];
+  for (let yy = 0; yy < H; yy++) for (let xx = 0; xx < W; xx++) {
+    const k = yy * W + xx, old = e[k], v = old < 0.5 ? 0 : 1, err = old - v, o = k * 4;
+    d[o] = d[o + 1] = d[o + 2] = v ? 236 : 24; d[o + 3] = 255;
+    if (xx + 1 < W) e[k + 1] += err * 7 / 16;
+    if (yy + 1 < H) { if (xx) e[k + W - 1] += err * 3 / 16; e[k + W] += err * 5 / 16; if (xx + 1 < W) e[k + W + 1] += err * 1 / 16; }
+  }
+  g.putImageData(img, x0, y + 24);
+  // the seven lines, 32 columns of the printer's font A (12 × 24 dots)
+  const held = Math.round((f.until - f.since) * rate);
+  const fit = (t) => (t.length > 32 ? t.slice(0, 31) + '~' : t);
+  const lines = [[asciiT(f.code), true], [fit(asciiT('library: ' + f.postfix))], [fit('program ' + grp(f.k + 1) + ' . ' + f.n + (f.n === 1 ? ' token' : ' tokens'))], [fit('structure ' + f.peak.toFixed(3) + ' . ' + (f.moves ? 'uses t' : 'no t'))], [fit('held the lane ' + grp(held) + (held === 1 ? ' program' : ' programs'))], [fit('found ' + grp(no) + ' . ' + (printedAt.get(f.k) || ''))], [fit('EVERY 25-TOKEN SKETCH . PCDTOKYO2026')]];
+  let ly = y + 24 + PRINT_W + 30;
+  g.fillStyle = '#181818'; g.textBaseline = 'top';
+  for (const [text, bold] of lines) { for (let c = 0; c < text.length; c += 32) { g.font = (bold ? '700 ' : '500 ') + '21px "IBM Plex Mono", ui-monospace, Menlo, Consolas, monospace'; g.fillText(text.slice(c, c + 32), x0, ly + 2); ly += 24; } }
+}
+function drawTickets(found) {                                        // the strip's texture: the last KEEP tickets, newest at the top
+  const g = ticketCanvas.getContext('2d');
+  g.fillStyle = '#ece8de'; g.fillRect(0, 0, ticketCanvas.width, ticketCanvas.height);
+  const newest = found.slice(0, KEEP);                               // found() is newest first
+  newest.forEach((f, idx) => { if (!printedAt.has(f.k)) printedAt.set(f.k, jst(Date.now())); drawTicket(g, f, found.length - idx, LEAD * 1000 * DPM + idx * TICKET_H); });
+  ticketTex.needsUpdate = true;
+}
 const oak = new THREE.MeshStandardMaterial({ color: 0x1c1a17, roughness: 0.75 });
 
 // the gallery: wall, floor
@@ -614,19 +653,19 @@ label(860, 567, 'THE RECEIPT . THE PRINTER BEHIND THE PANEL', 13, 'left', 1000);
 const slotP = mm(780, 574, 0.004);
 // a strip of paper along a curve: the hanging part keeps its width across x, the part on the floor lies flat
 function ribbon(curve, width, segs) {
-  const g = new THREE.BufferGeometry(); const pos = [], uv = [], idx = [];
+  const g = new THREE.BufferGeometry(); const pos = [], uv = [], idx = []; const L = curve.getLength();
   for (let i = 0; i <= segs; i++) {
-    const u = i / segs, p = curve.getPoint(u), tg = curve.getTangent(u);
+    const u = i / segs, p = curve.getPointAt(u), tg = curve.getTangentAt(u), v = Math.min(1, (u * L) / COVERED);
     const flat = p.y < 0.05 ? 1 : 0;                         // on the floor: width perpendicular to travel, in the floor plane
     const wx = flat ? -tg.z : 1, wz = flat ? tg.x : 0, nl = Math.hypot(wx, wz) || 1;
     pos.push(p.x - (wx / nl) * width / 2, p.y, p.z - (wz / nl) * width / 2, p.x + (wx / nl) * width / 2, p.y, p.z + (wz / nl) * width / 2);
-    uv.push(0, u, 1, u); if (i < segs) { const a = i * 2; idx.push(a, a + 1, a + 2, a + 1, a + 3, a + 2); }
+    uv.push(0, v, 1, v); if (i < segs) { const a = i * 2; idx.push(a, a + 1, a + 2, a + 1, a + 3, a + 2); }
   }
   g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); g.setAttribute('uv', new THREE.Float32BufferAttribute(uv, 2)); g.setIndex(idx); g.computeVertexNormals(); return g;
 }
 let paper = null, paperFor = -1;
-function layPaper(found) {                                   // the strip grows 85 mm a ticket; past the floor it coils
-  const len = 0.12 + found * 0.085, drop = slotP.y - 0.012;
+function layPaper(found) {                                   // the strip grows 90.75 mm a ticket; past the floor it coils
+  const len = LEAD + Math.max(1, found) * (TICKET_H / DPM / 1000), drop = slotP.y - 0.012;
   const pts = [];
   if (len <= drop) {                                         // still hanging, swinging a little out from the face
     for (let i = 0; i <= 24; i++) { const u = i / 24; pts.push(new THREE.Vector3(slotP.x, slotP.y - u * len, slotP.z + 0.012 + u * u * 0.06)); }
@@ -636,9 +675,9 @@ function layPaper(found) {                                   // the strip grows 
     for (let i = 1; i <= 120; i++) { const a = (i / 120) * turns * Math.PI * 2, r = 0.09 + 0.012 * (i / 120) * turns; pts.push(new THREE.Vector3(slotP.x + 0.09 - Math.cos(a) * r, 0.012 + 0.004 * (i / 120) * turns, slotP.z + 0.1 + Math.sin(a) * r)); }
   }
   if (paper) { scene.remove(paper); paper.geometry.dispose(); }
-  paper = new THREE.Mesh(ribbon(new THREE.CatmullRomCurve3(pts), 0.058, 160), paperMat); paper.castShadow = true; scene.add(paper); paperFor = found;
+  paper = new THREE.Mesh(ribbon(new THREE.CatmullRomCurve3(pts), 0.058, 240), paperMat); paper.castShadow = true; scene.add(paper); paperFor = found;
 }
-layPaper(0);
+drawTickets([]); layPaper(0);
 
 // the ruler: brass, engraved, a pointer on a lead screw
 box(80, 1374, 1840, 12, 0.006, brass, 0.001);
@@ -706,7 +745,7 @@ function tick(now) {
     setCounter(s.next, now);
     const px = rx(Math.max(1, s.next)); const p = mm(px, 1366, 0.012); pointer.position.set(p.x, p.y, p.z);
     el.prog.textContent = grp(s.next); el.found.textContent = grp(s.found); el.distinct.textContent = grp(s.distinct);
-    const fl = M.found(); fileTickets(fl); if (fl.length !== paperFor) { if (paperFor >= 0 && fl.length > paperFor) soundPrint(); layPaper(fl.length); }
+    const fl = M.found(); fileTickets(fl); if (fl.length !== paperFor) { if (paperFor >= 0 && fl.length > paperFor) soundPrint(); drawTickets(fl); layPaper(fl.length); }
   }
   if (champ && champ.k !== lastChamp) { lastChamp = champ.k; setField(lane, dots(champ.k, 56, now, true, buf56), now); }
 }
@@ -724,7 +763,7 @@ function frame(nowMs) {
 requestAnimationFrame(frame);
 
 // controls
-for (let j = 0; j < 5; j++) document.getElementById('v' + j).addEventListener('click', () => goView(j));
+for (let j = 0; j < 6; j++) document.getElementById('v' + j).addEventListener('click', () => goView(j));
 function setRate(r) { rate = r; document.getElementById('r1').setAttribute('aria-pressed', String(r === 1)); document.getElementById('r8').setAttribute('aria-pressed', String(r === 8)); M.setOptions({ rate: r, from: M.stats().next }); if (!paused) M.reset(); }
 document.getElementById('sound').addEventListener('click', (e) => { audioEnsure(); audio.on = !audio.on; e.currentTarget.setAttribute('aria-pressed', String(audio.on)); e.currentTarget.textContent = audio.on ? 'sound on' : 'sound off'; if (audio.on) soundFlips(28, false); });
 document.getElementById('r1').addEventListener('click', () => setRate(1));
