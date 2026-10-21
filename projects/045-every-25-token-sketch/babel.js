@@ -253,8 +253,8 @@ const Babel = (function () {
       slots[next % TILES] = entry;
       if (champ) champ.score *= O.fade;
       if (!entry.dup && (!champ || entry.score > champ.score)) {
-        if (champ) { evaluate(champ.fn, at); found.unshift({ k: champ.k, print: stamp() }); }
-        champ = Object.assign({}, entry, { since: at });
+        if (champ) { evaluate(champ.fn, at); found.unshift({ k: champ.k, n: champ.n, code: champ.code, postfix: champ.postfix, moves: champ.moves, peak: champ.peak, score: champ.score, since: champ.since, until: at, print: stamp() }); }
+        champ = Object.assign({}, entry, { since: at, peak: entry.score });
       }
       next++;
       return true;
@@ -375,6 +375,9 @@ const Babel = (function () {
       resize() { layout(); draw(); },
       png: sheetPNG,
       program, render, COUNT, CUM, stats: () => ({ next, distinct, dups, found: found.length + (champ ? 1 : 0) }),
+      // the found so far, newest first, each with its print as a data URL (for the print edition)
+      found: () => found.map((f) => ({ k: f.k, n: f.n, code: f.code, postfix: f.postfix, moves: f.moves, peak: f.peak, score: f.score, since: f.since, until: f.until, print: f.print.toDataURL() })),
+      champion: () => champ && { k: champ.k, n: champ.n, code: champ.code, postfix: champ.postfix, moves: champ.moves, peak: champ.peak, score: champ.score, since: champ.since, print: (evaluate(champ.fn, clock), stamp().toDataURL()) },
       destroy() { cancelAnimationFrame(raf); clearTimeout(resizeTimer); window.removeEventListener('resize', onResize); },
     };
     api.reset();
