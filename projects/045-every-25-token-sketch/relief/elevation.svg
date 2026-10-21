@@ -1,0 +1,214 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="2900" height="1700" viewBox="-100 -100 2900 1700">
+<rect x="-100" y="-100" width="2900" height="1700" fill="#141418"/>
+<rect x="0" y="0" width="2000" height="1500" fill="#0b0b0e" stroke="#444" stroke-width="2"/>
+<text x="20" y="-24" font-family="ui-monospace,Menlo,monospace" font-size="16" fill="#e8e6df" text-anchor="start">THE RELIEF . A MACHINE READING A LIBRARY . ELEVATION 1:1 IN MM . FOLDED 2 MM STEEL PANEL, BLACK</text>
+<rect x="74" y="74" width="292" height="292" fill="#101014" stroke="#333" stroke-width="2"/>
+<rect x="80" y="80" width="280" height="70" fill="none" stroke="#2a2a30" stroke-width="2"/>
+<rect x="80" y="150" width="280" height="70" fill="none" stroke="#2a2a30" stroke-width="2"/>
+<rect x="80" y="220" width="280" height="70" fill="none" stroke="#2a2a30" stroke-width="2"/>
+<rect x="80" y="290" width="280" height="70" fill="none" stroke="#2a2a30" stroke-width="2"/>
+<text x="220" y="230" font-family="ui-monospace,Menlo,monospace" font-size="12" fill="#9a9890" text-anchor="middle">28 x 28 DOTS</text>
+<text x="220" y="250" font-family="ui-monospace,Menlo,monospace" font-size="11" fill="#9a9890" text-anchor="middle">4 MODULES 28 x 7</text>
+<rect x="374" y="74" width="292" height="292" fill="#101014" stroke="#333" stroke-width="2"/>
+<rect x="380" y="80" width="280" height="70" fill="none" stroke="#2a2a30" stroke-width="2"/>
+<rect x="380" y="150" width="280" height="70" fill="none" stroke="#2a2a30" stroke-width="2"/>
+<rect x="380" y="220" width="280" height="70" fill="none" stroke="#2a2a30" stroke-width="2"/>
+<rect x="380" y="290" width="280" height="70" fill="none" stroke="#2a2a30" stroke-width="2"/>
+<text x="520" y="230" font-family="ui-monospace,Menlo,monospace" font-size="12" fill="#9a9890" text-anchor="middle">28 x 28 DOTS</text>
+<text x="520" y="250" font-family="ui-monospace,Menlo,monospace" font-size="11" fill="#9a9890" text-anchor="middle">4 MODULES 28 x 7</text>
+<rect x="674" y="74" width="292" height="292" fill="#101014" stroke="#333" stroke-width="2"/>
+<rect x="680" y="80" width="280" height="70" fill="none" stroke="#2a2a30" stroke-width="2"/>
+<rect x="680" y="150" width="280" height="70" fill="none" stroke="#2a2a30" stroke-width="2"/>
+<rect x="680" y="220" width="280" height="70" fill="none" stroke="#2a2a30" stroke-width="2"/>
+<rect x="680" y="290" width="280" height="70" fill="none" stroke="#2a2a30" stroke-width="2"/>
+<text x="820" y="230" font-family="ui-monospace,Menlo,monospace" font-size="12" fill="#9a9890" text-anchor="middle">28 x 28 DOTS</text>
+<text x="820" y="250" font-family="ui-monospace,Menlo,monospace" font-size="11" fill="#9a9890" text-anchor="middle">4 MODULES 28 x 7</text>
+<rect x="974" y="74" width="292" height="292" fill="#101014" stroke="#333" stroke-width="2"/>
+<rect x="980" y="80" width="280" height="70" fill="none" stroke="#2a2a30" stroke-width="2"/>
+<rect x="980" y="150" width="280" height="70" fill="none" stroke="#2a2a30" stroke-width="2"/>
+<rect x="980" y="220" width="280" height="70" fill="none" stroke="#2a2a30" stroke-width="2"/>
+<rect x="980" y="290" width="280" height="70" fill="none" stroke="#2a2a30" stroke-width="2"/>
+<text x="1120" y="230" font-family="ui-monospace,Menlo,monospace" font-size="12" fill="#9a9890" text-anchor="middle">28 x 28 DOTS</text>
+<text x="1120" y="250" font-family="ui-monospace,Menlo,monospace" font-size="11" fill="#9a9890" text-anchor="middle">4 MODULES 28 x 7</text>
+<rect x="1274" y="74" width="292" height="292" fill="#101014" stroke="#333" stroke-width="2"/>
+<rect x="1280" y="80" width="280" height="70" fill="none" stroke="#2a2a30" stroke-width="2"/>
+<rect x="1280" y="150" width="280" height="70" fill="none" stroke="#2a2a30" stroke-width="2"/>
+<rect x="1280" y="220" width="280" height="70" fill="none" stroke="#2a2a30" stroke-width="2"/>
+<rect x="1280" y="290" width="280" height="70" fill="none" stroke="#2a2a30" stroke-width="2"/>
+<text x="1420" y="230" font-family="ui-monospace,Menlo,monospace" font-size="12" fill="#9a9890" text-anchor="middle">28 x 28 DOTS</text>
+<text x="1420" y="250" font-family="ui-monospace,Menlo,monospace" font-size="11" fill="#9a9890" text-anchor="middle">4 MODULES 28 x 7</text>
+<line x1="80" y1="40" x2="360" y2="40" stroke="#c9b797" stroke-width="1.5"/>
+<text x="220" y="34" font-family="ui-monospace,Menlo,monospace" font-size="13" fill="#c9b797" text-anchor="middle">280</text>
+<line x1="360" y1="40" x2="380" y2="40" stroke="#c9b797" stroke-width="1.5"/>
+<text x="370" y="34" font-family="ui-monospace,Menlo,monospace" font-size="13" fill="#c9b797" text-anchor="middle">20</text>
+<text x="1580" y="50" font-family="ui-monospace,Menlo,monospace" font-size="13" fill="#9a9890" text-anchor="end">THE CONVEYOR . THE LAST FIVE PROGRAMS</text>
+<rect x="74" y="414" width="572" height="572" fill="#101014" stroke="#333" stroke-width="2"/>
+<rect x="80" y="420" width="280" height="70" fill="none" stroke="#2a2a30" stroke-width="2"/>
+<rect x="80" y="490" width="280" height="70" fill="none" stroke="#2a2a30" stroke-width="2"/>
+<rect x="80" y="560" width="280" height="70" fill="none" stroke="#2a2a30" stroke-width="2"/>
+<rect x="80" y="630" width="280" height="70" fill="none" stroke="#2a2a30" stroke-width="2"/>
+<rect x="80" y="700" width="280" height="70" fill="none" stroke="#2a2a30" stroke-width="2"/>
+<rect x="80" y="770" width="280" height="70" fill="none" stroke="#2a2a30" stroke-width="2"/>
+<rect x="80" y="840" width="280" height="70" fill="none" stroke="#2a2a30" stroke-width="2"/>
+<rect x="80" y="910" width="280" height="70" fill="none" stroke="#2a2a30" stroke-width="2"/>
+<rect x="360" y="420" width="280" height="70" fill="none" stroke="#2a2a30" stroke-width="2"/>
+<rect x="360" y="490" width="280" height="70" fill="none" stroke="#2a2a30" stroke-width="2"/>
+<rect x="360" y="560" width="280" height="70" fill="none" stroke="#2a2a30" stroke-width="2"/>
+<rect x="360" y="630" width="280" height="70" fill="none" stroke="#2a2a30" stroke-width="2"/>
+<rect x="360" y="700" width="280" height="70" fill="none" stroke="#2a2a30" stroke-width="2"/>
+<rect x="360" y="770" width="280" height="70" fill="none" stroke="#2a2a30" stroke-width="2"/>
+<rect x="360" y="840" width="280" height="70" fill="none" stroke="#2a2a30" stroke-width="2"/>
+<rect x="360" y="910" width="280" height="70" fill="none" stroke="#2a2a30" stroke-width="2"/>
+<text x="360" y="710" font-family="ui-monospace,Menlo,monospace" font-size="12" fill="#9a9890" text-anchor="middle">56 x 56 DOTS . 16 MODULES</text>
+<text x="80" y="1010" font-family="ui-monospace,Menlo,monospace" font-size="13" fill="#9a9890" text-anchor="start">THE SLOW LANE</text>
+<line x1="40" y1="420" x2="40" y2="980" stroke="#c9b797" stroke-width="1.5"/>
+<text x="40" y="694" font-family="ui-monospace,Menlo,monospace" font-size="13" fill="#c9b797" text-anchor="middle">560</text>
+<rect x="720" y="460" width="504" height="30" fill="#1b1b20" stroke="#333" stroke-width="2"/>
+<rect x="720" y="460" width="16" height="30" fill="#1b1b20"/>
+<rect x="738" y="460" width="16" height="30" fill="#1b1b20"/>
+<rect x="756" y="460" width="16" height="30" fill="#1b1b20"/>
+<rect x="774" y="460" width="16" height="30" fill="#1b1b20"/>
+<rect x="792" y="460" width="16" height="30" fill="#1b1b20"/>
+<rect x="810" y="460" width="16" height="30" fill="#1b1b20"/>
+<rect x="828" y="460" width="16" height="30" fill="#1b1b20"/>
+<rect x="846" y="460" width="16" height="30" fill="#1b1b20"/>
+<rect x="864" y="460" width="16" height="30" fill="#1b1b20"/>
+<rect x="882" y="460" width="16" height="30" fill="#1b1b20"/>
+<rect x="900" y="460" width="16" height="30" fill="#1b1b20"/>
+<rect x="918" y="460" width="16" height="30" fill="#1b1b20"/>
+<rect x="936" y="460" width="16" height="30" fill="#1b1b20"/>
+<rect x="954" y="460" width="16" height="30" fill="#1b1b20"/>
+<rect x="972" y="460" width="16" height="30" fill="#1b1b20"/>
+<rect x="990" y="460" width="16" height="30" fill="#1b1b20"/>
+<rect x="1008" y="460" width="16" height="30" fill="#1b1b20"/>
+<rect x="1026" y="460" width="16" height="30" fill="#1b1b20"/>
+<rect x="1044" y="460" width="16" height="30" fill="#1b1b20"/>
+<rect x="1062" y="460" width="16" height="30" fill="#1b1b20"/>
+<rect x="1080" y="460" width="16" height="30" fill="#1b1b20"/>
+<rect x="1098" y="460" width="16" height="30" fill="#1b1b20"/>
+<rect x="1116" y="460" width="16" height="30" fill="#1b1b20"/>
+<rect x="1134" y="460" width="16" height="30" fill="#1b1b20"/>
+<rect x="1152" y="460" width="16" height="30" fill="#1b1b20"/>
+<rect x="1170" y="460" width="16" height="30" fill="#1b1b20"/>
+<rect x="1188" y="460" width="16" height="30" fill="#1b1b20"/>
+<rect x="1206" y="460" width="16" height="30" fill="#1b1b20"/>
+<text x="720" y="510" font-family="ui-monospace,Menlo,monospace" font-size="13" fill="#9a9890" text-anchor="start">THE PROGRAM . 28 DIGIT WHEELS, 18 MM . ELECTROMECHANICAL</text>
+<line x1="720" y1="440" x2="1224" y2="440" stroke="#c9b797" stroke-width="1.5"/>
+<text x="972" y="434" font-family="ui-monospace,Menlo,monospace" font-size="13" fill="#c9b797" text-anchor="middle">504</text>
+<rect x="720" y="560" width="120" height="14" fill="#1b1b20" stroke="#333" stroke-width="2"/>
+<text x="860" y="572" font-family="ui-monospace,Menlo,monospace" font-size="13" fill="#9a9890" text-anchor="start">THE RECEIPT . 58 MM SLOT . THE PRINTER BEHIND THE PANEL</text>
+<rect x="730" y="576" width="100" height="400" fill="#e8e6df"/>
+<text x="860" y="600" font-family="ui-monospace,Menlo,monospace" font-size="11" fill="#9a9890" text-anchor="start">PAPER FALLS FREE TO THE FLOOR</text>
+<rect x="80" y="1374" width="1840" height="12" fill="#8a7340"/>
+<rect x="127.61534710991307" y="1374" width="1.5" height="12" fill="#2a2415"/>
+<text x="127.61534710991307" y="1404" font-family="ui-monospace,Menlo,monospace" font-size="11" fill="#9a9890" text-anchor="middle">1</text>
+<rect x="180.62469180450734" y="1374" width="1.5" height="12" fill="#2a2415"/>
+<text x="180.62469180450734" y="1404" font-family="ui-monospace,Menlo,monospace" font-size="11" fill="#9a9890" text-anchor="middle">2</text>
+<rect x="246.70569319474694" y="1374" width="1.5" height="12" fill="#2a2415"/>
+<text x="246.70569319474694" y="1404" font-family="ui-monospace,Menlo,monospace" font-size="11" fill="#9a9890" text-anchor="middle">3</text>
+<rect x="314.61577378489847" y="1374" width="1.5" height="12" fill="#2a2415"/>
+<text x="314.61577378489847" y="1404" font-family="ui-monospace,Menlo,monospace" font-size="11" fill="#9a9890" text-anchor="middle">4</text>
+<rect x="385.8704608778811" y="1374" width="1.5" height="12" fill="#2a2415"/>
+<text x="385.8704608778811" y="1404" font-family="ui-monospace,Menlo,monospace" font-size="11" fill="#9a9890" text-anchor="middle">5</text>
+<rect x="458.42751010969545" y="1374" width="1.5" height="12" fill="#2a2415"/>
+<text x="458.42751010969545" y="1404" font-family="ui-monospace,Menlo,monospace" font-size="11" fill="#9a9890" text-anchor="middle">6</text>
+<rect x="532.1833456574736" y="1374" width="1.5" height="12" fill="#2a2415"/>
+<text x="532.1833456574736" y="1404" font-family="ui-monospace,Menlo,monospace" font-size="11" fill="#9a9890" text-anchor="middle">7</text>
+<rect x="607.0200474278594" y="1374" width="1.5" height="12" fill="#2a2415"/>
+<text x="607.0200474278594" y="1404" font-family="ui-monospace,Menlo,monospace" font-size="11" fill="#9a9890" text-anchor="middle">8</text>
+<rect x="682.5471919879747" y="1374" width="1.5" height="12" fill="#2a2415"/>
+<text x="682.5471919879747" y="1404" font-family="ui-monospace,Menlo,monospace" font-size="11" fill="#9a9890" text-anchor="middle">9</text>
+<rect x="758.7547576941669" y="1374" width="1.5" height="12" fill="#2a2415"/>
+<text x="758.7547576941669" y="1404" font-family="ui-monospace,Menlo,monospace" font-size="11" fill="#9a9890" text-anchor="middle">10</text>
+<rect x="834.7377676461647" y="1374" width="1.5" height="12" fill="#2a2415"/>
+<text x="834.7377676461647" y="1404" font-family="ui-monospace,Menlo,monospace" font-size="11" fill="#9a9890" text-anchor="middle">11</text>
+<rect x="911.3710252805525" y="1374" width="1.5" height="12" fill="#2a2415"/>
+<text x="911.3710252805525" y="1404" font-family="ui-monospace,Menlo,monospace" font-size="11" fill="#9a9890" text-anchor="middle">12</text>
+<rect x="988.9146648546506" y="1374" width="1.5" height="12" fill="#2a2415"/>
+<text x="988.9146648546506" y="1404" font-family="ui-monospace,Menlo,monospace" font-size="11" fill="#9a9890" text-anchor="middle">13</text>
+<rect x="1065.2098036250231" y="1374" width="1.5" height="12" fill="#2a2415"/>
+<text x="1065.2098036250231" y="1404" font-family="ui-monospace,Menlo,monospace" font-size="11" fill="#9a9890" text-anchor="middle">14</text>
+<rect x="1142.0970119910362" y="1374" width="1.5" height="12" fill="#2a2415"/>
+<text x="1142.0970119910362" y="1404" font-family="ui-monospace,Menlo,monospace" font-size="11" fill="#9a9890" text-anchor="middle">15</text>
+<rect x="1218.730269625424" y="1374" width="1.5" height="12" fill="#2a2415"/>
+<text x="1218.730269625424" y="1404" font-family="ui-monospace,Menlo,monospace" font-size="11" fill="#9a9890" text-anchor="middle">16</text>
+<rect x="1295.6466402200974" y="1374" width="1.5" height="12" fill="#2a2415"/>
+<text x="1295.6466402200974" y="1404" font-family="ui-monospace,Menlo,monospace" font-size="11" fill="#9a9890" text-anchor="middle">17</text>
+<rect x="1372.4904686977218" y="1374" width="1.5" height="12" fill="#2a2415"/>
+<text x="1372.4904686977218" y="1404" font-family="ui-monospace,Menlo,monospace" font-size="11" fill="#9a9890" text-anchor="middle">18</text>
+<rect x="1450.2052856746106" y="1374" width="1.5" height="12" fill="#2a2415"/>
+<text x="1450.2052856746106" y="1404" font-family="ui-monospace,Menlo,monospace" font-size="11" fill="#9a9890" text-anchor="middle">19</text>
+<rect x="1526.2640577130317" y="1374" width="1.5" height="12" fill="#2a2415"/>
+<text x="1526.2640577130317" y="1404" font-family="ui-monospace,Menlo,monospace" font-size="11" fill="#9a9890" text-anchor="middle">20</text>
+<rect x="1603.3292219754767" y="1374" width="1.5" height="12" fill="#2a2415"/>
+<text x="1603.3292219754767" y="1404" font-family="ui-monospace,Menlo,monospace" font-size="11" fill="#9a9890" text-anchor="middle">21</text>
+<rect x="1680.2823214123352" y="1374" width="1.5" height="12" fill="#2a2415"/>
+<text x="1680.2823214123352" y="1404" font-family="ui-monospace,Menlo,monospace" font-size="11" fill="#9a9890" text-anchor="middle">22</text>
+<rect x="1757.3889504027738" y="1374" width="1.5" height="12" fill="#2a2415"/>
+<text x="1757.3889504027738" y="1404" font-family="ui-monospace,Menlo,monospace" font-size="11" fill="#9a9890" text-anchor="middle">23</text>
+<rect x="1834.54585141649" y="1374" width="1.5" height="12" fill="#2a2415"/>
+<text x="1834.54585141649" y="1404" font-family="ui-monospace,Menlo,monospace" font-size="11" fill="#9a9890" text-anchor="middle">24</text>
+<rect x="1911.5658476112596" y="1374" width="1.5" height="12" fill="#2a2415"/>
+<text x="1911.5658476112596" y="1404" font-family="ui-monospace,Menlo,monospace" font-size="11" fill="#9a9890" text-anchor="middle">25</text>
+<text x="80" y="1356" font-family="ui-monospace,Menlo,monospace" font-size="13" fill="#9a9890" text-anchor="start">THE LIBRARY . BRASS, ENGRAVED LOG SCALE . POINTER ON A LEAD SCREW, 1840 MM TRAVEL</text>
+<line x1="80" y1="1420" x2="1920" y2="1420" stroke="#c9b797" stroke-width="1.5"/>
+<text x="1000" y="1444" font-family="ui-monospace,Menlo,monospace" font-size="13" fill="#c9b797" text-anchor="middle">1840</text>
+<line x1="0" y1="1540" x2="2000" y2="1540" stroke="#c9b797" stroke-width="1.5"/>
+<text x="1000" y="1534" font-family="ui-monospace,Menlo,monospace" font-size="13" fill="#c9b797" text-anchor="middle">2000</text>
+<line x1="2040" y1="0" x2="2040" y2="1500" stroke="#c9b797" stroke-width="1.5"/>
+<text x="2040" y="744" font-family="ui-monospace,Menlo,monospace" font-size="13" fill="#c9b797" text-anchor="middle">1500</text>
+<rect x="2100" y="0" width="600" height="1500" fill="#17171b" stroke="#444" stroke-width="2"/>
+<rect x="2120" y="94.8" width="560" height="2" fill="#555"/>
+<text x="2128" y="54" font-family="ui-monospace,Menlo,monospace" font-size="10" fill="#9a9890" text-anchor="start"> 1  SHELF 1</text>
+<rect x="2120" y="151.6" width="560" height="2" fill="#555"/>
+<text x="2128" y="110.8" font-family="ui-monospace,Menlo,monospace" font-size="10" fill="#9a9890" text-anchor="start"> 2  SHELF 2</text>
+<rect x="2120" y="208.39999999999998" width="560" height="2" fill="#555"/>
+<text x="2128" y="167.6" font-family="ui-monospace,Menlo,monospace" font-size="10" fill="#9a9890" text-anchor="start"> 3  SHELF 3</text>
+<rect x="2120" y="265.2" width="560" height="2" fill="#555"/>
+<text x="2128" y="224.39999999999998" font-family="ui-monospace,Menlo,monospace" font-size="10" fill="#9a9890" text-anchor="start"> 4  SHELF 4</text>
+<rect x="2120" y="322" width="560" height="2" fill="#555"/>
+<text x="2128" y="281.2" font-family="ui-monospace,Menlo,monospace" font-size="10" fill="#9a9890" text-anchor="start"> 5  SHELF 5</text>
+<rect x="2120" y="378.8" width="560" height="2" fill="#555"/>
+<text x="2128" y="338" font-family="ui-monospace,Menlo,monospace" font-size="10" fill="#9a9890" text-anchor="start"> 6  SHELF 6</text>
+<rect x="2120" y="435.59999999999997" width="560" height="2" fill="#555"/>
+<text x="2128" y="394.79999999999995" font-family="ui-monospace,Menlo,monospace" font-size="10" fill="#9a9890" text-anchor="start"> 7  SHELF 7</text>
+<rect x="2120" y="492.4" width="560" height="2" fill="#555"/>
+<text x="2128" y="451.59999999999997" font-family="ui-monospace,Menlo,monospace" font-size="10" fill="#9a9890" text-anchor="start"> 8  SHELF 8</text>
+<rect x="2120" y="549.1999999999999" width="560" height="2" fill="#555"/>
+<text x="2128" y="508.4" font-family="ui-monospace,Menlo,monospace" font-size="10" fill="#9a9890" text-anchor="start"> 9  SHELF 9</text>
+<rect x="2120" y="606" width="560" height="2" fill="#555"/>
+<text x="2128" y="565.2" font-family="ui-monospace,Menlo,monospace" font-size="10" fill="#9a9890" text-anchor="start">10  SHELF 10</text>
+<rect x="2120" y="662.8" width="560" height="2" fill="#555"/>
+<text x="2128" y="622" font-family="ui-monospace,Menlo,monospace" font-size="10" fill="#9a9890" text-anchor="start">11  SHELF 11</text>
+<rect x="2120" y="719.5999999999999" width="560" height="2" fill="#555"/>
+<text x="2128" y="678.8" font-family="ui-monospace,Menlo,monospace" font-size="10" fill="#9a9890" text-anchor="start">12  SHELF 12</text>
+<rect x="2120" y="776.3999999999999" width="560" height="2" fill="#555"/>
+<text x="2128" y="735.5999999999999" font-family="ui-monospace,Menlo,monospace" font-size="10" fill="#9a9890" text-anchor="start">13  SHELF 13</text>
+<rect x="2120" y="833.1999999999999" width="560" height="2" fill="#555"/>
+<text x="2128" y="792.4" font-family="ui-monospace,Menlo,monospace" font-size="10" fill="#9a9890" text-anchor="start">14  SHELF 14</text>
+<rect x="2120" y="889.9999999999999" width="560" height="2" fill="#555"/>
+<text x="2128" y="849.1999999999999" font-family="ui-monospace,Menlo,monospace" font-size="10" fill="#9a9890" text-anchor="start">15  SHELF 15</text>
+<rect x="2120" y="946.8" width="560" height="2" fill="#555"/>
+<text x="2128" y="906" font-family="ui-monospace,Menlo,monospace" font-size="10" fill="#9a9890" text-anchor="start">16  SHELF 16</text>
+<rect x="2120" y="1003.5999999999999" width="560" height="2" fill="#555"/>
+<text x="2128" y="962.8" font-family="ui-monospace,Menlo,monospace" font-size="10" fill="#9a9890" text-anchor="start">17  SHELF 17</text>
+<rect x="2120" y="1060.3999999999999" width="560" height="2" fill="#555"/>
+<text x="2128" y="1019.5999999999999" font-family="ui-monospace,Menlo,monospace" font-size="10" fill="#9a9890" text-anchor="start">18  SHELF 18</text>
+<rect x="2120" y="1117.2" width="560" height="2" fill="#555"/>
+<text x="2128" y="1076.4" font-family="ui-monospace,Menlo,monospace" font-size="10" fill="#9a9890" text-anchor="start">19  SHELF 19</text>
+<rect x="2120" y="1174" width="560" height="2" fill="#555"/>
+<text x="2128" y="1133.2" font-family="ui-monospace,Menlo,monospace" font-size="10" fill="#9a9890" text-anchor="start">20  SHELF 20</text>
+<rect x="2120" y="1230.8" width="560" height="2" fill="#555"/>
+<text x="2128" y="1190" font-family="ui-monospace,Menlo,monospace" font-size="10" fill="#9a9890" text-anchor="start">21  SHELF 21</text>
+<rect x="2120" y="1287.6" width="560" height="2" fill="#555"/>
+<text x="2128" y="1246.8" font-family="ui-monospace,Menlo,monospace" font-size="10" fill="#9a9890" text-anchor="start">22  SHELF 22</text>
+<rect x="2120" y="1344.3999999999999" width="560" height="2" fill="#555"/>
+<text x="2128" y="1303.6" font-family="ui-monospace,Menlo,monospace" font-size="10" fill="#9a9890" text-anchor="start">23  SHELF 23</text>
+<rect x="2120" y="1401.1999999999998" width="560" height="2" fill="#555"/>
+<text x="2128" y="1360.3999999999999" font-family="ui-monospace,Menlo,monospace" font-size="10" fill="#9a9890" text-anchor="start">24  SHELF 24</text>
+<rect x="2120" y="1457.9999999999998" width="560" height="2" fill="#555"/>
+<text x="2128" y="1417.1999999999998" font-family="ui-monospace,Menlo,monospace" font-size="10" fill="#9a9890" text-anchor="start">25  SHELF 25</text>
+<text x="2100" y="-24" font-family="ui-monospace,Menlo,monospace" font-size="16" fill="#e8e6df" text-anchor="start">THE SHELVES . 25, 600 x 1500 x 250 MM . THE PRINTED FOUND FILED BY LENGTH</text>
+<line x1="2100" y1="1540" x2="2700" y2="1540" stroke="#c9b797" stroke-width="1.5"/>
+<text x="2400" y="1534" font-family="ui-monospace,Menlo,monospace" font-size="13" fill="#c9b797" text-anchor="middle">600</text>
+</svg>
