@@ -55,15 +55,19 @@ is BigInt, so the order is exact for every length the library holds.
 Structure is scored, not judged: the tonal entropy of the 64 × 64 field (0 flat … 1 every
 tone), times a preference for a middle amount of edge. Measured on typical programs, a plain
 gradient has mean edge 0.01, bands and fans 0.1–0.2, moiré and noise 0.35 and up; the
-preference peaks at 0.13, so bands, fans and rings win, gradients and noise lose. The
-champion's score fades by 0.9992 per program, so a later, only slightly worse program takes
-the lane within a few minutes.
+preference peaks at 0.13, so bands, fans and rings win, gradients and noise lose. A picture
+that varies along one axis only — a function of x alone, which is most of the early library —
+scores half, measured as the smaller of its horizontal and vertical variation being under a
+twentieth of the larger; without this rule every champion is stripes. The champion's score
+fades by 0.9992 per program, so a later, only slightly worse program takes the lane within a
+few minutes.
 
 ## What the sheet shows, besides the conveyor
 
-- **The found.** When the slow lane changes hands the outgoing champion drops into a column
-  beneath it, newest first, with its program number — the sketches a person might have posted,
-  in the order the library gave them. Twelve are shown; all are counted.
+- **The found.** When the slow lane changes hands the outgoing champion is printed as it stood
+  at that moment and drops into a column beneath the lane, with its program number — the
+  sketches a person might have posted. The latest twelve are shown, newest first; all are
+  counted. Prints, not live fields: the found do not move, and cost nothing a frame.
 - **Distinct pictures.** Many programs draw the same picture: `x + y` and `y + x`,
   `sin(floor(25))` and `sin(abs(25))`, anything that reduces to a constant. Each picture is
   hashed from its tones at t = 0 and t = 1 (16 levels, FNV-1a), the caption counts distinct
@@ -76,12 +80,18 @@ the lane within a few minutes.
 - **The prologue.** The first 280 programs — the characters of a post — pass at one a frame,
   under five seconds, so the one- and two-token shelves (constants and gradients) are over
   before the viewer has settled; then 8 a second.
+- **Motion.** A program containing `t` moves; an accent mark at the right end of its code says
+  so, and the champion's caption reads "moves in t" or "still".
+- **The library's own writing.** Under the champion's infix code, the postfix string the
+  library actually enumerates — `x x * 25 mod` — so the ordering claim can be checked by eye.
+- When the sheet begins at a later program (`?from=`), the distinct and repeat counts are from
+  that program on.
 
 | after | programs | distinct pictures | repeats | found |
 |---|---|---|---|---|
-| shelf 3 | 280 | 136 | 144 | 7 |
-| shelf 4 | 2,780 | 963 | 1,817 | 20 |
-| shelf 5 | 30,905 | 8,020 | 22,885 | 189 |
+| shelf 3 | 280 | 136 | 144 | 8 |
+| shelf 4 | 2,780 | 963 | 1,817 | 16 |
+| shelf 5 | 30,905 | 8,020 | 22,885 | 133 |
 
 ![the sheet after one minute: program 722, eleven found](minute.png)
 
