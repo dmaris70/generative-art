@@ -145,8 +145,9 @@ roll. `receipt/receipt.js` runs the unchanged `babel.js` without a browser and s
 to a USB or network printer, locked to the room's clock with `--start 10:00` so that the
 screen beside it shows the same program; `--png` renders the same tickets as a simulator, and
 `--replay N` prints the found through program N at once. 58 mm paper gives a 48 mm image at six
-dots a pixel; 80 mm, 72 mm at nine. About 770 takeovers an exhibition day, 65 m of paper. The
-build sheet, bill of materials and the open choices are in `receipt/BUILD.md`.
+dots a pixel; 80 mm, 72 mm at nine. Under the screen's rule at the screen's pace that would be
+about 770 takeovers an exhibition day and 65 m of paper; the room runs a stricter rule, below.
+The build sheet, bill of materials and the open choices are in `receipt/BUILD.md`.
 
 The room's selector is stricter than the screen's: the champion's claim fades by 0.9999 a
 program instead of 0.9992, and a ticket is printed only for a champion that held the lane 200
