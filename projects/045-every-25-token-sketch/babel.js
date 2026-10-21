@@ -8,6 +8,11 @@
 // them is a program — in order, shortest first, and draws each one as it arrives. A conveyor
 // of 25 tiles shows the last 25 programs, their code beneath them; a slow lane keeps the one
 // that scores best for having structure, and lets its claim fade so another can take it.
+// Each dethroned champion drops into a column of the found. Every picture is hashed (at t = 0
+// and t = 1), so the sheet also counts distinct pictures — many programs draw the same one —
+// and a picture already seen cannot take the lane. A ruler along the foot places the current
+// program in the whole library on a log scale, shelf by shelf. The first 280 programs pass at
+// one a frame — the 280 characters of a post — then the conveyor settles to 8 a second.
 //
 // The language: leaves x, y, t, 2, 25 · unary sin, cos, abs, sqrt, floor · binary + − × ÷ mod.
 // A pixel at (x, y) ∈ [−2, 2]² at time t takes the value of the program, shown as a tone.
@@ -33,6 +38,7 @@ const Babel = (function () {
     from: 0,             // the program to begin at (its index in the enumeration)
     ground: 'dark',      // dark · paper
     fade: 0.9992,        // the champion's score decays by this per program, so it can be beaten
+    prologue: 280,       // the first programs pass at one a frame (280: the characters of a post), then the rate
     at: null,            // a still: the conveyor and champion as they stand after this many programs
   };
   const PALETTE = {
@@ -137,6 +143,9 @@ const Babel = (function () {
     let order = [];
     let slots = [];                       // the conveyor: the last 25 programs
     let champ = null;                     // the slow lane
+    let found = [];                       // the champions dethroned, newest first
+    const seen = new Set();               // hashes of every picture so far
+    let distinct = 0, dups = 0;
     let next = 0, clock = 0, last = 0, raf = 0, nextAt = 0, resizeTimer = 0;
     const tile = document.createElement('canvas'); tile.width = RES; tile.height = RES;
     const tctx = tile.getContext('2d'); const img = tctx.createImageData(RES, RES);
@@ -185,6 +194,15 @@ const Babel = (function () {
       const g = grad / (2 * RES * RES);                              // mean edge, 0 … ~0.5
       return (H / 4) * Math.exp(-Math.pow((g - 0.13) / 0.09, 2));
     }
+    // a picture's identity: its tones at t = 0 and t = 1, quantised to 16 levels, FNV-1a hashed
+    function hashPicture(fn) {
+      let h = 0x811c9dc5;
+      for (const t of [0, 1]) {
+        evaluate(fn, t);
+        for (let i = 0; i < RES * RES; i++) { h ^= Math.min(15, Math.floor(vals[i] * 16)); h = Math.imul(h, 0x01000193) >>> 0; }
+      }
+      return h;
+    }
     function paintTile(cx, x, y, size) {
       const d = img.data;
       const [r1, g1, b1] = pal.ink.split(',').map(Number);
@@ -204,10 +222,16 @@ const Babel = (function () {
       if (!p) return false;
       const { code, fn } = render(p.tokens);
       const entry = { k: next, n: p.n, code, fn };
+      const h = hashPicture(fn);
+      entry.dup = seen.has(h);
+      if (entry.dup) dups++; else { seen.add(h); distinct++; }
       evaluate(fn, clock); entry.score = score();
       slots[next % TILES] = entry;
       if (champ) champ.score *= O.fade;
-      if (!champ || entry.score > champ.score) champ = Object.assign({}, entry, { since: clock });
+      if (!entry.dup && (!champ || entry.score > champ.score)) {
+        if (champ) found.unshift(champ);
+        champ = Object.assign({}, entry, { since: clock });
+      }
       next++;
       return true;
     }
@@ -229,8 +253,8 @@ const Babel = (function () {
         if (!e) continue;
         evaluate(e.fn, clock); paintTile(ctx, x, y, size);
         const fresh = e.k === next - 1;
-        ctx.fillStyle = rgba(fresh ? pal.accent : pal.ink, fresh ? 0.95 : 0.6); ctx.textAlign = 'left';
-        ctx.fillText(clip(e.code, size, 10), x, y + size + 14);
+        ctx.fillStyle = rgba(fresh ? pal.accent : pal.ink, fresh ? 0.95 : e.dup ? 0.3 : 0.6); ctx.textAlign = 'left';
+        ctx.fillText(clip(e.code + (e.dup ? ' = seen' : ''), size, 10), x, y + size + 14);
       }
       // the slow lane: the champion, large, on the right
       const cx0 = F.x + gw + 40, cw = F.w - gw - 40;
@@ -242,12 +266,38 @@ const Babel = (function () {
         ctx.fillText('program ' + group(champ.k + 1) + ' · ' + champ.n + (champ.n === 1 ? ' token' : ' tokens') + ' · structure ' + champ.score.toFixed(3), cx0, F.y + cw + 28 + 20 * 4 + 6);
         ctx.fillText('the best so far; its claim fades, so another can take it', cx0, F.y + cw + 28 + 20 * 4 + 22);
       }
+      // the found: the champions dethroned, newest first, two rows of six
+      const fy = F.y + cw + 28 + 20 * 4 + 50, fg = 10, fs = (cw - 5 * fg) / 6;
+      ctx.fillStyle = rgba(pal.ink, 0.55); ctx.font = '10px ' + MONO; ctx.textAlign = 'left';
+      ctx.fillText('found: ' + group(found.length + (champ ? 1 : 0)) + ' sketches a person might have posted, in the order the library gave them', cx0, fy - 8);
+      for (let i = 0; i < Math.min(12, found.length); i++) {
+        const f = found[i], x = cx0 + (i % 6) * (fs + fg), y = fy + Math.floor(i / 6) * (fs + 18);
+        evaluate(f.fn, clock); paintTile(ctx, x, y, fs);
+        ctx.fillStyle = rgba(pal.ink, 0.45); ctx.fillText(clip(group(f.k + 1), fs, 10), x, y + fs + 12);
+      }
+      // the ruler: the whole library on a log scale, a tick per shelf, the cursor at the program now
+      const ry = H - 52, total = Math.log10(Number(CUM[MAX]));
+      const rx = (k) => F.x + (F.w * Math.log10(Math.max(1, k))) / total;
+      ctx.strokeStyle = rgba(pal.ink, 0.35); ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.moveTo(F.x, ry); ctx.lineTo(F.x + F.w, ry); ctx.stroke();
+      ctx.fillStyle = rgba(pal.ink, 0.45); ctx.font = '9px ' + MONO; ctx.textAlign = 'center';
+      for (let n = 1; n <= MAX; n++) {
+        const x = rx(Number(CUM[n]));
+        ctx.fillRect(x, ry - 4, 1, 8);
+        ctx.fillText(String(n), x, ry + 16);
+      }
+      ctx.textAlign = 'left'; ctx.fillText('shelves: programs of 1 … 25 tokens, each about ten times the last', F.x, ry - 10);
+      if (next > 0) {
+        const x = rx(next);
+        ctx.fillStyle = rgba(pal.accent, 0.95); ctx.fillRect(x - 1.5, ry - 7, 3, 14);
+      }
       // the caption
       const e = slots[(next - 1 + TILES) % TILES];
       if (e) {
         const years = Number(CUM[MAX - 1] / BigInt(Math.round(O.rate))) / 31557600;
         ctx.fillStyle = rgba(pal.ink, 0.55); ctx.font = '11px ' + MONO; ctx.textAlign = 'left';
-        ctx.fillText('program ' + group(e.k + 1) + ' of the library · ' + e.n + (e.n === 1 ? ' token' : ' tokens') + ' · 15 symbols · ' + group(O.rate) + ' a second', F.x, H - 24);
+        const pace = next < O.prologue ? 'the first ' + group(O.prologue) + ' at a frame each' : group(O.rate) + ' a second';
+        ctx.fillText('program ' + group(e.k + 1) + ' of the library · ' + e.n + (e.n === 1 ? ' token' : ' tokens') + ' · ' + group(distinct) + ' distinct pictures, ' + group(dups) + ' repeats · 15 symbols · ' + pace, F.x, H - 24);
         ctx.textAlign = 'right';
         ctx.fillText('the first 25-token sketch arrives in ' + sci(years) + ' years', F.x + F.w, H - 24);
       }
@@ -264,7 +314,7 @@ const Babel = (function () {
       raf = requestAnimationFrame(frame);
       const dt = Math.min(0.1, (now - last) / 1000); last = now;
       clock += dt;
-      while (clock >= nextAt) { if (!arrive()) break; nextAt += 1 / O.rate; }
+      while (clock >= nextAt) { if (!arrive()) break; nextAt += next <= O.prologue ? 1 / 60 : 1 / O.rate; }
       draw();
     }
 
@@ -285,13 +335,13 @@ const Babel = (function () {
         pal = PALETTE[O.ground] || PALETTE.dark;
         cancelAnimationFrame(raf);
         shelve(); layout();
-        slots = []; champ = null; next = Math.max(0, Math.floor(O.from)); clock = 0; nextAt = 0;
+        slots = []; champ = null; found = []; seen.clear(); distinct = 0; dups = 0; next = Math.max(0, Math.floor(O.from)); clock = 0; nextAt = 0;
         if (O.at !== null) { for (let i = 0; i < Math.max(1, Math.floor(O.at)); i++) if (!arrive()) break; draw(); }
         else { last = performance.now(); raf = requestAnimationFrame(frame); }
       },
       resize() { layout(); draw(); },
       png: sheetPNG,
-      program, render, COUNT, CUM,
+      program, render, COUNT, CUM, stats: () => ({ next, distinct, dups, found: found.length + (champ ? 1 : 0) }),
       destroy() { cancelAnimationFrame(raf); clearTimeout(resizeTimer); window.removeEventListener('resize', onResize); },
     };
     api.reset();

@@ -7,14 +7,17 @@ found by people, one at a time. This piece does the finding by exhaustion. It en
 every program of a tiny pixel language, in order, shortest first, and draws each one as it
 arrives: a Library of Babel of sketches, read from the first shelf.
 
-![the sheet after 3,000 programs: five-token sketches on the conveyor, the slow lane's champion on the right](preview.png)
+![the sheet after 3,000 programs: five-token sketches on the conveyor, the slow lane's champion on the right, the found beneath it, the ruler along the foot](preview.png)
 
 **Mechanism (one sentence):** fifteen symbols, written postfix so that every well-formed string
 of them is a program; the programs of each length are counted by a recurrence on stack depth
 and the k-th is unranked from that table, so the order is exact and the same for everyone;
 each program is drawn as a 64 × 64 field (a sketch is short) at 8 a second onto a conveyor of
 25 tiles with its code beneath, while a slow lane keeps the program that scores best for
-having structure, and lets its claim fade so another can take it.
+having structure, and lets its claim fade so another can take it; every dethroned champion
+drops into a column of the found, every picture is hashed so the sheet counts distinct
+pictures and a picture already seen cannot take the lane, and a ruler places the current
+program in the whole library on a log scale.
 
 ## The language
 
@@ -56,21 +59,47 @@ preference peaks at 0.13, so bands, fans and rings win, gradients and noise lose
 champion's score fades by 0.9992 per program, so a later, only slightly worse program takes
 the lane within a few minutes.
 
+## What the sheet shows, besides the conveyor
+
+- **The found.** When the slow lane changes hands the outgoing champion drops into a column
+  beneath it, newest first, with its program number — the sketches a person might have posted,
+  in the order the library gave them. Twelve are shown; all are counted.
+- **Distinct pictures.** Many programs draw the same picture: `x + y` and `y + x`,
+  `sin(floor(25))` and `sin(abs(25))`, anything that reduces to a constant. Each picture is
+  hashed from its tones at t = 0 and t = 1 (16 levels, FNV-1a), the caption counts distinct
+  pictures and repeats, a repeat's code is dimmed and marked `= seen`, and a repeat cannot take
+  the lane. The library is mostly repetition: through the sixth shelf, 30,905 programs draw
+  8,020 distinct pictures.
+- **The ruler.** A line along the foot is the whole library on a log scale, a tick per shelf
+  (programs of 1 … 25 tokens, each about ten times the last), the cursor at the program now.
+  The cursor sits at the far left all day.
+- **The prologue.** The first 280 programs — the characters of a post — pass at one a frame,
+  under five seconds, so the one- and two-token shelves (constants and gradients) are over
+  before the viewer has settled; then 8 a second.
+
+| after | programs | distinct pictures | repeats | found |
+|---|---|---|---|---|
+| shelf 3 | 280 | 136 | 144 | 7 |
+| shelf 4 | 2,780 | 963 | 1,817 | 20 |
+| shelf 5 | 30,905 | 8,020 | 22,885 | 189 |
+
+![the sheet after one minute: program 722, eleven found](minute.png)
+
 ## Controls
 
-Panel: programs a second, the program to begin at, the champion's fade, ground (light on dark
-/ ink on paper). The seed shelves the library: seed 1 is the canonical order of the alphabet,
+Panel: programs a second, the program to begin at, the champion's fade, the prologue (how many
+programs pass at a frame each; 0 for none), ground (light on dark / ink on paper). The seed shelves the library: seed 1 is the canonical order of the alphabet,
 any other seed shuffles it — the same library read in another order. Keys: **R** new shelving
 · **S** save PNG. `?at=<n>` shows the sheet after n programs and stops.
 
-![ink on paper, after 40,000 programs: six tokens](paper-40000.png)
+![ink on paper, after 3,000 programs](paper-3000.png)
 
 ## Posting on neort.io
 
 `neort.html` is the whole piece in one file — `babel.js` and `neort-boot.js` inlined, no
 harness, no panel, no CDN — built by `tools/neort-bundle.sh 045-every-25-token-sketch
 "Every 25-Token Sketch" babel.js`. Canonical shelving, 8 a second. The query string overrides
-(`?rate=20`, `?from=30905`, `?seed=7`, `?ground=paper`, `?at=3000`). Post it with the tag
+(`?rate=20`, `?from=30905`, `?prologue=0`, `?seed=7`, `?ground=paper`, `?at=3000`). Post it with the tag
 `PCDTokyo2026`.
 
 ### The post
@@ -85,7 +114,10 @@ harness, no panel, no CDN — built by `tools/neort-bundle.sh 045-every-25-token
 > fifteen-symbol pixel language — x, y, t, 2, 25; sin, cos, abs, sqrt, floor; + − × ÷ mod — in
 > order, shortest first, and draws each one as it arrives, 8 a second, on a conveyor of 25
 > tiles with its code beneath. A slow lane keeps the program that scores best for structure and
-> lets its claim fade. There are 5 programs of one token, 2,500 of four, 328,125 of six; the
+> lets its claim fade; the ones it lets go collect beneath it, the found. Every picture is
+> hashed, so the sheet also counts how many programs draw the same picture — most of them. A
+> ruler along the foot places the current program in the whole library, on a log scale, where
+> it stays at the far left. There are 5 programs of one token, 2,500 of four, 328,125 of six; the
 > first 25-token program is number 72,482,416,106,745,349,561,765,281 and arrives in 2.9 × 10¹⁷
 > years. The sketch does not stop.
 
@@ -96,11 +128,14 @@ harness, no panel, no CDN — built by `tools/neort-bundle.sh 045-every-25-token
 > きました。この作品は、しらみつぶしで見つけます。15 の記号からなるピクセル言語──x, y, t, 2,
 > 25; sin, cos, abs, sqrt, floor; + − × ÷ mod──のすべてのプログラムを、短いものから順に列挙し、
 > 届いたそばから描きます。毎秒 8 つ、25 枚のタイルのコンベアに、コードを添えて。遅いレーンには
-> 構造の点数が最も高いプログラムが残り、その座は少しずつ薄れていきます。1 記号のプログラムは
+> 構造の点数が最も高いプログラムが残り、その座は少しずつ薄れていきます。座を譲ったものは、その下に
+> 「見つかったもの」として溜まっていきます。すべての絵はハッシュされ、同じ絵を描くプログラムが
+> どれだけあるか──ほとんどがそうです──も数えます。足元の目盛りは図書館全体を対数で示し、いまの
+> プログラムの位置は左端から動きません。1 記号のプログラムは
 > 5 つ、4 記号は 2,500、6 記号は 328,125。最初の 25 記号のプログラムは
 > 72,482,416,106,745,349,561,765,281 番目で、2.9 × 10¹⁷ 年後に届きます。スケッチは止まりません。
 
 **Tags:** `PCDTokyo2026`, `25`, `つぶやきProcessing`, `enumeration`, `library of babel`
 
 Files: `babel.js` (the piece, harness-free), `sketch.js` (panel, keys, export), `index.html`,
-`neort-boot.js`, `neort.html` (generated), `preview.png`, `paper-40000.png`.
+`neort-boot.js`, `neort.html` (generated), `preview.png`, `minute.png`, `paper-3000.png`.
