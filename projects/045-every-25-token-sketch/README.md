@@ -169,6 +169,14 @@ the wall label.
 
 ![the relief, simulated, after 3,000 programs](relief/simulator.png)
 
+`relief/model.html` is the relief in three dimensions: the panel and the bookcase at full size
+in a gallery room, every flip-dot a disc that turns, the counter's drums, the paper from the
+slot, the brass ruler, the shelves filling — driven by the same enumeration at one program a
+second. Drag to turn, scroll to approach; views for the slow lane, the counter and the shelves;
+one or eight programs a second.
+
+![the relief in three dimensions](relief/model.png)
+
 ## Controls
 
 Panel: programs a second, the program to begin at, the champion's fade, the prologue (how many
