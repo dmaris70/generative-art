@@ -9,7 +9,11 @@
 // pointer are stepper axes; this controller prints the targets they should hold (the program
 // number; the pointer's position in mm) on a line a second, for the motion board to follow.
 //
-//   node controller.js [--serial /dev/ttyUSB0] [--simulate] [--start HH:MM] [--rate 1]
+//   node controller.js [--serial /dev/ttyUSB0] [--simulate] [--start HH:MM] [--rate 1] [--fade 0.9999]
+//
+// The relief's selector is stricter than the screen's: the champion's claim fades by 0.9999 a
+// program, not 0.9992, so the lane changes hands about a third as often. The receipt printer
+// beside it (receipt.js) adds its own rule: a ticket only for a hold of 200 programs or more.
 //
 // --serial    the RS-485 adapter the panels hang off (115200 8N1, the XY5 default)
 // --simulate  no hardware: print the fields as text once a second
@@ -20,7 +24,7 @@
 const fs = require('fs'), path = require('path'), vm = require('vm');
 const A = {}; const argv = process.argv.slice(2);
 for (let i = 0; i < argv.length; i++) { const k = argv[i]; if (k.startsWith('--')) { const v = argv[i + 1] && !argv[i + 1].startsWith('--') ? argv[++i] : true; A[k.slice(2)] = v; } }
-const RATE = +(A.rate || 1);
+const RATE = +(A.rate || 1), FADE = +(A.fade || 0.9999);
 if (!A.serial && !A.simulate) { console.error('give --serial <device> or --simulate'); process.exit(2); }
 
 // ── the piece, loaded without a browser ──
@@ -80,7 +84,7 @@ if (A.start) {
   from = Math.max(0, Math.floor(((Date.now() - startMs) / 1000) * RATE));
   console.log('locked to ' + A.start + ' JST: beginning at program ' + (from + 1));
 }
-const P = Babel.create(canvas(), { rate: RATE, prologue: 0, from });
+const P = Babel.create(canvas(), { rate: RATE, prologue: 0, from, fade: FADE });
 const grp = (n) => String(n).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
 const total = Math.log10(Number(Babel.CUM[25]));
 const RULER_MM = 1840;                                  // the ruler's travel on the panel, 80 … 1920 mm

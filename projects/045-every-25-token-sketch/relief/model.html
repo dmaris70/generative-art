@@ -1,4 +1,4 @@
-<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head><body style="margin:0"><title>A Machine Reading a Library</title>
+<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head><body style="margin:0"><title>A Machine Reading a Library, Strict</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <style>
   /* layout: a full-window WebGL room with a thin instrument bar across the foot; the room is the page */
@@ -34,11 +34,11 @@
 <div class="hud top">
   <div>
     <h1>Every 25-Token Sketch · the relief</h1>
-    <p class="sub">A machine reading a library, modelled at full size and running the real enumeration. Drag to turn, scroll to approach, turn the sound on to hear it read.</p>
+    <p class="sub">A machine reading a library, modelled at full size and running the real enumeration with the room's stricter selector: the claim fades by 0.9999 a program, and a ticket prints only for a hold of 200 programs or more. Drag to turn, scroll to approach, turn the sound on.</p>
   </div>
 </div>
 <div class="hud bottom">
-  <div class="stat">program <b id="prog">0</b> · found <b id="found">0</b> · distinct <b id="distinct">0</b></div>
+  <div class="stat">program <b id="prog">0</b> · takeovers <b id="found">0</b> · printed <b id="printed">0</b> · distinct <b id="distinct">0</b></div>
   <div class="group" role="group" aria-label="view">
     <button id="v0" aria-pressed="true">three-quarter</button><button id="v1">front</button><button id="v2">the slow lane</button><button id="v3">the counter</button><button id="v4">the receipt</button><button id="v5">the shelves</button>
   </div>
@@ -462,7 +462,9 @@ function dots(k, n, t, dither, out) {
   return out;
 }
 let rate = 1, paused = false;
-let M = Babel.create(document.getElementById('hidden'), { rate, prologue: 0 });
+const FADE = 0.9999, MINHOLD = 200;                   // the room's selector: stricter than the screen's 0.9992, and a ticket only for a hold of 200 or more
+let M = Babel.create(document.getElementById('hidden'), { rate, prologue: 0, fade: FADE });
+const printedOf = (found) => found.filter((f) => (f.until - f.since) * rate >= MINHOLD);
 const grp = (n) => String(n).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
 
 // ───────────────────────── the sound: flip-dots, the counter, the printer ─────────────────────────
@@ -528,7 +530,7 @@ const controls = new OrbitControls(camera, canvas); controls.enableDamping = tru
 // world space: the panel face spans x −1 … 1, y 0.9 … 2.4; the lane centre is (−0.64, 1.70), the counter (0, 1.925), the shelves (1.4, 0.75)
 const VIEWS = [
   { p: [2.9, 1.9, 4.2], t: [0.55, 1.45, 0] }, { p: [0.5, 1.65, 4.6], t: [0.5, 1.55, 0] },
-  { p: [-0.5, 1.78, 1.25], t: [-0.64, 1.70, 0.08] }, { p: [0.12, 1.98, 0.78], t: [0.0, 1.92, 0.08] }, { p: [-0.02, 1.52, 0.58], t: [-0.22, 1.42, 0.12] }, { p: [1.95, 1.35, 2.2], t: [1.4, 0.8, 0.12] },
+  { p: [-0.5, 1.78, 1.25], t: [-0.64, 1.70, 0.08] }, { p: [0.12, 1.98, 0.78], t: [0.0, 1.92, 0.08] }, { p: [-0.04, 1.74, 0.52], t: [-0.22, 1.66, 0.1] }, { p: [1.95, 1.35, 2.2], t: [1.4, 0.8, 0.12] },
 ];
 let viewFrom = null, viewTo = null, viewT = 1;
 function goView(i) { viewFrom = { p: camera.position.clone(), t: controls.target.clone() }; viewTo = { p: new THREE.Vector3(...VIEWS[i].p), t: new THREE.Vector3(...VIEWS[i].t) }; viewT = 0; for (let j = 0; j < 6; j++) document.getElementById('v' + j).setAttribute('aria-pressed', String(j === i)); }
@@ -736,7 +738,7 @@ function animateFields(now) {
 }
 function setCounter(next, now) { const s = String(next).padStart(28, '0'); let changed = 0; for (let i = 0; i < 28; i++) { const d = +s[i], w = wheels[i]; if (d !== w.digit) { w.from = w.digit; w.digit = d; w.at = now; changed++; } } soundTicks(changed); }
 function animateWheels(now) { for (const w of wheels) { let d = w.digit; if (w.at >= 0) { const u = Math.min(1, (now - w.at) / 0.25); const from = w.from, to = w.digit, delta = ((to - from) % 10 + 10) % 10; d = from + delta * (u < 1 ? (1 - Math.cos(u * Math.PI)) / 2 : 1); if (u >= 1) w.at = -1; } w.mesh.rotation.x = ((d + 0.5) / 10) * Math.PI * 2; } }   // the rim's u runs from the face upward; rotating by +θ brings digit d to the face
-const el = { prog: document.getElementById('prog'), found: document.getElementById('found'), distinct: document.getElementById('distinct') };
+const el = { prog: document.getElementById('prog'), found: document.getElementById('found'), printed: document.getElementById('printed'), distinct: document.getElementById('distinct') };
 function tick(now) {
   const s = M.stats(), champ = M.champion();
   if (s.next !== lastNext) {
@@ -745,7 +747,8 @@ function tick(now) {
     setCounter(s.next, now);
     const px = rx(Math.max(1, s.next)); const p = mm(px, 1366, 0.012); pointer.position.set(p.x, p.y, p.z);
     el.prog.textContent = grp(s.next); el.found.textContent = grp(s.found); el.distinct.textContent = grp(s.distinct);
-    const fl = M.found(); fileTickets(fl); if (fl.length !== paperFor) { if (paperFor >= 0 && fl.length > paperFor) soundPrint(); drawTickets(fl); layPaper(fl.length); }
+    const pr = printedOf(M.found()); el.printed.textContent = grp(pr.length);
+    fileTickets(pr); if (pr.length !== paperFor) { if (paperFor >= 0 && pr.length > paperFor) soundPrint(); drawTickets(pr); layPaper(pr.length); }
   }
   if (champ && champ.k !== lastChamp) { lastChamp = champ.k; setField(lane, dots(champ.k, 56, now, true, buf56), now); }
 }
@@ -768,6 +771,6 @@ function setRate(r) { rate = r; document.getElementById('r1').setAttribute('aria
 document.getElementById('sound').addEventListener('click', (e) => { audioEnsure(); audio.on = !audio.on; e.currentTarget.setAttribute('aria-pressed', String(audio.on)); e.currentTarget.textContent = audio.on ? 'sound on' : 'sound off'; if (audio.on) soundFlips(28, false); });
 document.getElementById('r1').addEventListener('click', () => setRate(1));
 document.getElementById('r8').addEventListener('click', () => setRate(8));
-document.getElementById('pause').addEventListener('click', (e) => { paused = !paused; e.currentTarget.setAttribute('aria-pressed', String(paused)); e.currentTarget.textContent = paused ? 'resume' : 'pause'; if (paused) M.destroy(); else { M = Babel.create(document.getElementById('hidden'), { rate, prologue: 0, from: lastNext }); } });
+document.getElementById('pause').addEventListener('click', (e) => { paused = !paused; e.currentTarget.setAttribute('aria-pressed', String(paused)); e.currentTarget.textContent = paused ? 'resume' : 'pause'; if (paused) M.destroy(); else { M = Babel.create(document.getElementById('hidden'), { rate, prologue: 0, from: lastNext, fade: FADE }); } });
 </script>
 </body></html>
