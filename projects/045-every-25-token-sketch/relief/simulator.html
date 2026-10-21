@@ -1,0 +1,138 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>The relief — a machine reading a library (simulator)</title>
+<style>
+  html, body { margin: 0; height: 100%; background: #141418; overflow: hidden; }
+  canvas { display: block; width: 100vw; height: 100vh; }
+</style>
+</head>
+<body>
+<canvas id="relief"></canvas>
+<canvas id="hidden" width="140" height="100" style="display:none"></canvas>
+<script src="../babel.js"></script>
+<script>
+// Stage 3 of Every 25-Token Sketch in the room, simulated at 1 mm = 1 unit: a black steel panel
+// 2000 × 1500 mm carrying the conveyor as flip-dot tiles (the last programs, thresholded: a
+// flip-dot has no grey), one flip-dot field of 56 × 56 dots (the slow lane, ordered-dithered), a
+// 28-wheel digit counter (the program number), the receipt slot, and a brass log-scale ruler of
+// the library; beside it a bookcase of 25 shelves where the printed found are filed by length.
+// The enumeration is the unchanged babel.js at one program a second (flip-dots cannot go
+// faster), no prologue. ?tiles=5 (default): the last five programs at 28 × 28 dots, which read
+// as pictures; ?tiles=25: twenty-five at 14 × 14, which read as marks. ?rate=8 for a day's
+// pace; ?at=N for a still.
+(function () {
+  const q = new URLSearchParams(location.search);
+  const RATE = +(q.get('rate') || 1), AT = q.get('at') ? +q.get('at') : null, TILES = +(q.get('tiles') || 5);
+  const PITCH = 10, DOT = 3.6;                       // flip-dot pitch and dot radius, mm
+  const PANEL = { w: 2000, h: 1500 }, CASE = { x: 2100, w: 600, h: 1500 };
+  const W = 2700, H = 1500;
+  const cv = document.getElementById('relief'), ctx = cv.getContext('2d');
+  const order = [...Array(15).keys()];
+  const D = (a, b) => (Math.abs(b) < 1e-9 ? (a < 0 ? -1e9 : 1e9) : a / b);
+  const Mf = (a, b) => (Math.abs(b) < 1e-9 ? 0 : a - b * Math.floor(a / b));
+  const BAYER = [[0, 8, 2, 10], [12, 4, 14, 6], [3, 11, 1, 9], [15, 7, 13, 5]];
+  const cache = new Map();
+  function fn(k) { if (!cache.has(k)) { const p = Babel.program(k, order); cache.set(k, { fn: Babel.render(p.tokens).fn, n: p.n }); } return cache.get(k); }
+  // a program sampled on an n × n dot field at time t, ordered-dithered to on/off
+  function dots(k, n, t, dither) {
+    const f = fn(k).fn, out = new Uint8Array(n * n);
+    for (let j = 0; j < n; j++) { const y = -2 + (4 * (j + 0.5)) / n; for (let i = 0; i < n; i++) { const x = -2 + (4 * (i + 0.5)) / n; let v = f(x, y, t, D, Mf); if (!isFinite(v)) v = 0; const tone = 0.5 + 0.5 * Math.sin(v); out[j * n + i] = tone > (dither ? (BAYER[j & 3][i & 3] + 0.5) / 16 : 0.5) ? 1 : 0; } }
+    return out;
+  }
+  const M = Babel.create(document.getElementById('hidden'), { rate: RATE, prologue: 0, at: AT });
+  let scale = 1, ox = 0, oy = 0;
+  function layout() {
+    const dpr = Math.min(devicePixelRatio || 1, 2);
+    cv.width = Math.round(cv.clientWidth * dpr); cv.height = Math.round(cv.clientHeight * dpr);
+    scale = Math.min(cv.width / (W + 80), cv.height / (H + 80)); ox = (cv.width - W * scale) / 2; oy = (cv.height - H * scale) / 2;
+  }
+  addEventListener('resize', layout); layout();
+  const MONO = 'ui-monospace, Menlo, Consolas, monospace';
+  function field(x, y, n, bits) {
+    for (let j = 0; j < n; j++) for (let i = 0; i < n; i++) {
+      ctx.fillStyle = bits && bits[j * n + i] ? '#e8e6df' : '#1b1b20';
+      ctx.beginPath(); ctx.arc(x + (i + 0.5) * PITCH, y + (j + 0.5) * PITCH, DOT, 0, Math.PI * 2); ctx.fill();
+    }
+  }
+  function engrave(s, x, y, size, align) { ctx.fillStyle = 'rgba(232,230,223,0.5)'; ctx.font = size + 'px ' + MONO; ctx.textAlign = align || 'left'; ctx.fillText(s, x, y); }
+  const grp = (n) => String(n).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+  function draw() {
+    const s = M.stats(), champ = M.champion(), found = M.found(), t = performance.now() / 1000;
+    ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.fillStyle = '#141418'; ctx.fillRect(0, 0, cv.width, cv.height);
+    ctx.setTransform(scale, 0, 0, scale, ox, oy);
+    // the panel
+    ctx.fillStyle = '#0b0b0e'; ctx.fillRect(0, 0, PANEL.w, PANEL.h);
+    ctx.strokeStyle = 'rgba(232,230,223,0.15)'; ctx.lineWidth = 2; ctx.strokeRect(0, 0, PANEL.w, PANEL.h);
+    // the conveyor: the last programs, thresholded, oldest first
+    const gap = 20, cx0 = 80, cy0 = 80;
+    let below;
+    if (TILES === 25) {
+      const T = 14 * PITCH;
+      for (let i = 0; i < 25; i++) {
+        const k = s.next - 25 + i, x = cx0 + (i % 5) * (T + gap), y = cy0 + Math.floor(i / 5) * (T + gap);
+        ctx.fillStyle = '#101014'; ctx.fillRect(x - 6, y - 6, T + 12, T + 12);
+        field(x, y, 14, k >= 0 ? dots(k, 14, t, false) : null);
+      }
+      engrave('THE CONVEYOR . THE LAST 25 PROGRAMS, 14 x 14 DOTS EACH, ONE A SECOND', cx0, cy0 + 5 * T + 4 * gap + 28, 13);
+      below = cy0;
+    } else {
+      const T = 28 * PITCH;
+      for (let i = 0; i < 5; i++) {
+        const k = s.next - 5 + i, x = cx0 + i * (T + gap), y = cy0;
+        ctx.fillStyle = '#101014'; ctx.fillRect(x - 6, y - 6, T + 12, T + 12);
+        field(x, y, 28, k >= 0 ? dots(k, 28, t, false) : null);
+      }
+      engrave('THE CONVEYOR . THE LAST 5 PROGRAMS, 28 x 28 DOTS EACH, ONE A SECOND', cx0, cy0 + T + 28, 13);
+      below = cy0 + T + 60;
+    }
+    // the slow lane: 56 × 56 dots, dithered
+    const L = 56 * PITCH, lx = TILES === 25 ? 1000 : 80, ly = TILES === 25 ? 80 : below;
+    ctx.fillStyle = '#101014'; ctx.fillRect(lx - 8, ly - 8, L + 16, L + 16);
+    field(lx, ly, 56, champ ? dots(champ.k, 56, t, true) : null);
+    engrave('THE SLOW LANE . 56 x 56 DOTS' + (champ ? ' . PROGRAM ' + grp(champ.k + 1) : ''), lx, ly + L + 28, 13);
+    // the counter: 28 digit wheels, the program number, leading zeros
+    const wx = TILES === 25 ? 1000 : 720, wy = TILES === 25 ? 700 : below + 40, ww = 18, wh = 30;
+    const num = String(s.next).padStart(28, '0');
+    for (let i = 0; i < 28; i++) {
+      ctx.fillStyle = '#1b1b20'; ctx.fillRect(wx + i * ww, wy, ww - 2, wh);
+      ctx.fillStyle = i < 28 - String(s.next).length ? 'rgba(232,230,223,0.25)' : '#e8e6df'; ctx.font = '22px ' + MONO; ctx.textAlign = 'center'; ctx.fillText(num[i], wx + i * ww + ww / 2 - 1, wy + 23);
+    }
+    engrave('THE PROGRAM . 28 WHEELS . THE LAST 24 NEVER TURN', wx, wy + wh + 22, 13);
+    // the receipt slot
+    const sx = wx, sy = wy + 100;
+    ctx.fillStyle = '#1b1b20'; ctx.fillRect(sx, sy, 120, 14); ctx.fillStyle = '#e8e6df'; ctx.fillRect(sx + 10, sy + 2, 100, 4);
+    ctx.fillStyle = 'rgba(232,230,223,0.9)'; ctx.fillRect(sx + 10, sy + 16, 100, Math.min(TILES === 25 ? 500 : 380, 40 + found.length * 6));
+    engrave('THE RECEIPT . ' + grp(found.length) + ' FOUND', sx + 140, sy + 12, 13);
+    // the ruler: the library on a log scale, brass
+    const ry = 1380, rx0 = 80, rx1 = PANEL.w - 80, total = Math.log10(Number(Babel.CUM ? Babel.CUM[25] : 1.024e27));
+    const rx = (k) => rx0 + ((rx1 - rx0) * Math.log10(Math.max(1, k))) / total;
+    ctx.fillStyle = '#8a7340'; ctx.fillRect(rx0, ry - 6, rx1 - rx0, 12);
+    ctx.fillStyle = '#2a2415'; ctx.font = '11px ' + MONO; ctx.textAlign = 'center';
+    for (let n = 1; n <= 25; n++) { const x = rx(Number(M.CUM[n])); ctx.fillRect(x, ry - 6, 1.5, 12); ctx.fillText(String(n), x, ry + 24); }
+    const px = rx(Math.max(1, s.next)); ctx.fillStyle = '#e8e6df'; ctx.beginPath(); ctx.moveTo(px, ry - 16); ctx.lineTo(px - 6, ry - 28); ctx.lineTo(px + 6, ry - 28); ctx.closePath(); ctx.fill();
+    engrave('THE LIBRARY . PROGRAMS OF 1 TO 25 TOKENS ON A LOG SCALE . THE POINTER ADVANCES BY A HAIR A DAY', rx0, ry - 36, 13);
+    engrave('EVERY 25-TOKEN SKETCH . A MACHINE READING A LIBRARY', 80, PANEL.h - 40, 13);
+    engrave(grp(s.distinct) + ' DISTINCT PICTURES . ' + grp(s.dups) + ' REPEATS', PANEL.w - 80, PANEL.h - 40, 13, 'right');
+    // the bookcase: 25 shelves, the found filed by length
+    const perShelf = Array(26).fill(0); for (const f of found) perShelf[f.n]++;
+    ctx.fillStyle = '#17171b'; ctx.fillRect(CASE.x, 0, CASE.w, CASE.h);
+    ctx.strokeStyle = 'rgba(232,230,223,0.15)'; ctx.strokeRect(CASE.x, 0, CASE.w, CASE.h);
+    const sh = (CASE.h - 80) / 25;
+    for (let n = 1; n <= 25; n++) {
+      const y = 40 + (n - 1) * sh;
+      ctx.fillStyle = 'rgba(232,230,223,0.25)'; ctx.fillRect(CASE.x + 20, y + sh - 2, CASE.w - 40, 2);
+      engrave(String(n).padStart(2, ' ') + '  ' + (n <= 7 ? grp(Number(M.COUNT[n])) : Number(M.COUNT[n]).toExponential(1).replace('e+', ' x 10^')), CASE.x + 28, y + 14, 10);
+      for (let i = 0; i < Math.min(perShelf[n], 120); i++) { ctx.fillStyle = '#e8e6df'; ctx.fillRect(CASE.x + 30 + i * 4.5, y + sh - 22, 3, 18); }
+      if (n > 6) engrave(n === 7 ? 'FILLS IN THE 7TH DAY' : n === 8 ? 'FILLS IN THE 3RD MONTH' : n === 9 ? 'IN 7 YEARS' : n === 10 ? 'IN 89 YEARS' : n === 25 ? 'IN 2.9 x 10^17 YEARS' : '', CASE.x + CASE.w - 28, y + 14, 10, 'right');
+    }
+    engrave('THE SHELVES . THE FOUND FILED BY LENGTH', CASE.x + 28, CASE.h - 14, 11);
+    requestAnimationFrame(draw);
+  }
+  requestAnimationFrame(draw);
+})();
+</script>
+</body>
+</html>

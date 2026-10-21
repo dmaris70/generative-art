@@ -150,6 +150,25 @@ build sheet, bill of materials and the open choices are in `receipt/BUILD.md`.
 
 ![six simulated tickets, 58 mm paper](receipt/strip.png)
 
+## The relief: a machine reading a library
+
+The third physical form, designed and simulated, not yet built: a black steel panel of
+2000 × 1500 mm and a bookcase. The panel carries the conveyor as five flip-dot fields of
+28 × 28 dots (the last five programs, thresholded, one a second), the slow lane as a 56 × 56
+field (the champion, dithered), 28 electromechanical digit wheels for the program number (the
+last 24 never turn), the stage-2 printer behind a slot with the paper falling to the floor,
+and a brass ruler of the library on a log scale with a pointer that advances by a hair a day.
+The bookcase has 25 shelves, labelled with each shelf's count, where the printed found are
+filed by length; shelves 7 to 25 stay empty and are labelled with the year they would begin
+to fill. The simulator (`relief/simulator.html`) runs the relief on a screen at one millimetre
+a unit; `relief/tile-test.png` is the test that fixed the tile resolution (thresholded tiles
+read from 28 dots, dithered ones only from 56); `relief/controller.js` drives the flip-dot
+modules over RS-485 and prints the counter and pointer targets; `relief/elevation.svg` is the
+dimensioned drawing; `relief/DESIGN.md` has the bill of materials, the fabrication order and
+the wall label.
+
+![the relief, simulated, after 3,000 programs](relief/simulator.png)
+
 ## Controls
 
 Panel: programs a second, the program to begin at, the champion's fade, the prologue (how many
