@@ -12,9 +12,9 @@
 // 045 — Every 25-Token Sketch.
 //
 // つぶやきProcessing — "tweet Processing" — is a Tokyo-born practice: a whole sketch in the
-// 280 characters of one post. The culture lives on a fact nobody states: nearly every short
-// program draws nothing worth looking at, and the few that do are found by people, one at a
-// time. This piece does the finding by exhaustion instead. It enumerates every program of a
+// 280 characters of one post. Most short programs draw little; the ones worth keeping were
+// found by people, one at a time. This piece enumerates instead, and selects by a stated
+// preference. It enumerates every program of a
 // tiny pixel language — fifteen symbols, written postfix so that every well-formed string of
 // them is a program — in order, shortest first, and draws each one as it arrives. A conveyor
 // of 25 tiles shows the last 25 programs, their code beneath them; a slow lane keeps the one
@@ -139,7 +139,7 @@ const Babel = (function () {
       else {
         const b = st.pop(), a = st.pop(), p = PREC[sym];
         const L = a.p < p ? '(' + a.s + ')' : a.s;
-        const R = b.p < p || (b.p === p && (sym === '-' || sym === '/' || sym === 'mod')) ? '(' + b.s + ')' : b.s;
+        const R = b.p <= p ? '(' + b.s + ')' : b.s;          // x * (y mod t) is not (x * y) mod t
         st.push({ s: L + (sym === 'mod' ? ' mod ' : ' ' + sym + ' ') + R, p });
         const jb = js.pop(), ja = js.pop(); js.push(JS[sym](ja, jb));
       }
@@ -209,14 +209,28 @@ const Babel = (function () {
       const flat = Math.min(gh, gv) < 0.05 * Math.max(gh, gv);       // one-dimensional
       return (H / 4) * Math.exp(-Math.pow((g - 0.13) / 0.09, 2)) * (flat ? 0.5 : 1);
     }
-    // a picture's identity: its tones at t = 0 and t = 1, quantised to 16 levels, FNV-1a hashed
+    // a picture's identity: its tones at t = 0 and t = 1, quantised to 16 levels and packed two
+    // to a byte, hashed to 128 bits (MurmurHash3 x86_32 under four seeds). FNV-1a collided on
+    // these structured inputs within the first 10,075 programs; Murmur3's mixing does not, and
+    // at 128 bits a chance collision among a day's 187,000 programs is of order 10⁻²⁸.
+    const packed = new Uint8Array(RES * RES);          // 8,192 nibbles → 4,096 bytes
+    function murmur32(bytes, seed) {
+      let h = seed >>> 0; const n = bytes.length - (bytes.length & 3);
+      for (let i = 0; i < n; i += 4) {
+        let k = bytes[i] | (bytes[i + 1] << 8) | (bytes[i + 2] << 16) | (bytes[i + 3] << 24);
+        k = Math.imul(k, 0xcc9e2d51); k = (k << 15) | (k >>> 17); k = Math.imul(k, 0x1b873593);
+        h ^= k; h = (h << 13) | (h >>> 19); h = (Math.imul(h, 5) + 0xe6546b64) >>> 0;
+      }
+      h ^= bytes.length; h ^= h >>> 16; h = Math.imul(h, 0x85ebca6b); h ^= h >>> 13; h = Math.imul(h, 0xc2b2ae35); h ^= h >>> 16;
+      return h >>> 0;
+    }
     function hashPicture(fn) {
-      let h = 0x811c9dc5;
+      let j = 0;
       for (const t of [0, 1]) {
         evaluate(fn, t);
-        for (let i = 0; i < RES * RES; i++) { h ^= Math.min(15, Math.floor(vals[i] * 16)); h = Math.imul(h, 0x01000193) >>> 0; }
+        for (let i = 0; i < RES * RES; i += 2) packed[j++] = Math.min(15, Math.floor(vals[i] * 16)) | (Math.min(15, Math.floor(vals[i + 1] * 16)) << 4);
       }
-      return h;
+      return murmur32(packed, 0x9747b28c).toString(16) + murmur32(packed, 0x2545f491).toString(16) + murmur32(packed, 0x6c078965).toString(16) + murmur32(packed, 0x1e35a7bd).toString(16);
     }
     // a print: the field as it stands, kept as a small canvas
     function stamp() {
@@ -238,7 +252,7 @@ const Babel = (function () {
     }
 
     // ── the conveyor and the champion ──
-    function arrive() {
+    function arrive(at) {                 // at: the arrival's scheduled time
       const p = program(next, order);
       if (!p) return false;
       const { code, fn } = render(p.tokens);
@@ -246,12 +260,12 @@ const Babel = (function () {
       const h = hashPicture(fn);
       entry.dup = seen.has(h);
       if (entry.dup) dups++; else { seen.add(h); distinct++; }
-      evaluate(fn, clock); entry.score = score();
+      evaluate(fn, at); entry.score = score();
       slots[next % TILES] = entry;
       if (champ) champ.score *= O.fade;
       if (!entry.dup && (!champ || entry.score > champ.score)) {
-        if (champ) { evaluate(champ.fn, clock); found.unshift({ k: champ.k, print: stamp() }); }
-        champ = Object.assign({}, entry, { since: clock });
+        if (champ) { evaluate(champ.fn, at); found.unshift({ k: champ.k, print: stamp() }); }
+        champ = Object.assign({}, entry, { since: at });
       }
       next++;
       return true;
@@ -276,7 +290,7 @@ const Babel = (function () {
         const fresh = e.k === next - 1;
         ctx.fillStyle = rgba(fresh ? pal.accent : pal.ink, fresh ? 0.95 : e.dup ? 0.3 : 0.6); ctx.textAlign = 'left';
         ctx.fillText(clip(e.code + (e.dup ? ' = seen' : ''), size, 10), x, y + size + 14);
-        if (e.moves) { ctx.fillStyle = rgba(pal.accent, 0.9); ctx.fillRect(x + size - 5, y + size + 7, 5, 5); }   // it moves in t
+        if (e.moves) { ctx.fillStyle = rgba(pal.accent, 0.9); ctx.fillRect(x + size - 5, y + size + 7, 5, 5); }   // it uses t
       }
       // the slow lane: the champion, large, on the right
       const cx0 = F.x + gw + 40, cw = F.w - gw - 40;
@@ -287,7 +301,7 @@ const Babel = (function () {
         const ty = F.y + cw + 28 + 20 * 4;
         ctx.fillStyle = rgba(pal.ink, 0.55); ctx.font = '10px ' + MONO;
         ctx.fillText('as the library writes it: ' + champ.postfix, cx0, ty - 10);
-        ctx.fillText('program ' + group(champ.k + 1) + ' · ' + champ.n + (champ.n === 1 ? ' token' : ' tokens') + ' · structure ' + champ.score.toFixed(3) + (champ.moves ? ' · moves in t' : ' · still'), cx0, ty + 8);
+        ctx.fillText('program ' + group(champ.k + 1) + ' · ' + champ.n + (champ.n === 1 ? ' token' : ' tokens') + ' · structure ' + champ.score.toFixed(3) + (champ.moves ? ' · uses t' : ' · no t'), cx0, ty + 8);
         ctx.fillText('the best so far; its claim fades, so another can take it', cx0, ty + 24);
       }
       // the found: the champions dethroned, printed as they were, the latest twelve newest first
@@ -337,9 +351,11 @@ const Babel = (function () {
     // ── time ──
     function frame(now) {
       raf = requestAnimationFrame(frame);
-      const dt = Math.min(0.1, (now - last) / 1000); last = now;
-      clock += dt;
-      while (clock >= nextAt) { if (!arrive()) break; nextAt += next <= O.prologue ? 1 / 60 : 1 / O.rate; }
+      clock += (now - last) / 1000; last = now;        // the whole elapsed time, whatever the frame rate
+      for (let n = 0; clock >= nextAt && n < 200; n++) {  // at most 200 arrivals a frame; the rest follow
+        if (!arrive(nextAt)) break;
+        nextAt += next <= O.prologue ? 1 / 60 : 1 / O.rate;
+      }
       draw();
     }
 
@@ -361,7 +377,10 @@ const Babel = (function () {
         cancelAnimationFrame(raf);
         shelve(); layout();
         slots = []; champ = null; found = []; seen.clear(); distinct = 0; dups = 0; next = Math.max(0, Math.floor(O.from)); clock = 0; nextAt = 0;
-        if (O.at !== null) { for (let i = 0; i < Math.max(1, Math.floor(O.at)); i++) if (!arrive()) break; draw(); }
+        if (O.at !== null) {                 // the still is the live state after that many arrivals
+          for (let i = 0; i < Math.max(1, Math.floor(O.at)); i++) { clock = nextAt; if (!arrive(nextAt)) break; nextAt += next <= O.prologue ? 1 / 60 : 1 / O.rate; }
+          draw();
+        }
         else { last = performance.now(); raf = requestAnimationFrame(frame); }
       },
       resize() { layout(); draw(); },
