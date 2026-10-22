@@ -161,7 +161,7 @@ screen's rule; a roll lasts about two months. The screen on neort.io keeps its o
 
 The third physical form, designed and simulated, not yet built: a black steel panel of
 2000 × 1500 mm. The panel carries the conveyor as five flip-dot fields of
-28 × 28 dots (the last five programs, thresholded, one a second), the slow lane as a 56 × 56
+28 × 28 dots (the last five programs, thresholded, one a second), the slow lane as a 58 × 58
 field (the champion, dithered), 28 electromechanical digit wheels for the program number (the
 last 24 never turn), the stage-2 printer behind a slot with the paper falling to the floor,
 and a brass ruler of the library on a log scale with a pointer that advances by a hair a day.
@@ -183,7 +183,7 @@ room, every flip-dot a disc that turns, the counter's drums, the tickets cut ont
 the brass ruler, the engraved list — driven by the same enumeration at one program a
 second. Drag to turn, scroll to approach; views for the slow lane, the counter, the receipt and
 the list; one or eight programs a second. With the sound on, the machine is heard: each flip-dot a click,
-the slow lane's 3,136 dots a clatter with the panel ringing under it, the counter's wheels a
+the slow lane's 3,364 dots a clatter with the panel ringing under it, the counter's wheels a
 soft tick, the printer a stepper's buzz and the paper's hiss for each ticket — all synthesised,
 nothing sampled. Each ticket leaves the slot as the till printer prints it — the field dithered
 to 384 dots, the seven lines in the printer's font — hangs for two seconds, is cut, and drops

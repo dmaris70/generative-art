@@ -16,7 +16,8 @@ Flip-dots have no grey. `tile-test.png` renders eight of the found at 14, 21, 28
 thresholded and dithered. Dithered tiles below 56 dots read as noise; thresholded tiles read
 as pictures from 28 dots, as marks at 14. So the conveyor is **the last five programs at
 28 × 28 dots, thresholded**, not twenty-five at 14 × 14: five legible pictures over twenty-five
-illegible ones. The slow lane is **56 × 56 dots, ordered-dithered**, where grey returns. The
+illegible ones. The slow lane is **58 × 58 dots, ordered-dithered**, where grey returns: 580 mm,
+exactly the width of two tiles and the gap between them, so its edges fall on the conveyor's. The
 simulator (`simulator.html`) runs both; `?tiles=25` shows the rejected layout.
 
 ## The panel, 2000 × 1500 mm
@@ -24,7 +25,7 @@ simulator (`simulator.html`) runs both; `?tiles=25` shows the rejected layout.
 | element | what it is | size |
 |---|---|---|
 | the conveyor | five flip-dot fields of 28 × 28 dots, the last five programs, oldest left, one new program a second; thresholded | five × 280 × 280 mm at 10 mm pitch, 20 mm apart |
-| the slow lane | one flip-dot field of 56 × 56 dots, the champion, dithered; changes hands when a better unrepeated picture arrives, its claim fading by 0.9999 a program | 560 × 560 mm |
+| the slow lane | one flip-dot field of 58 × 58 dots, the champion, dithered; changes hands when a better unrepeated picture arrives, its claim fading by 0.9999 a program | 580 × 580 mm, flush with the first two tiles |
 | the program | 28 electromechanical digit wheels showing the program number with leading zeros; the last 24 wheels never turn | 504 × 30 mm |
 | the receipt | the stage-2 printer behind the panel, its slot in the face, a steel shelf beneath; the printer cuts, the ticket drops onto the shelf, whoever is there takes it | 58 mm slot, 140 × 100 mm shelf |
 | the list | engraved in the panel's face, aligned right in the lower right field: the 25 lengths, their counts, the day or year each begins to print; static, so engraved, not a plate | a 560 × 560 mm block |
@@ -87,7 +88,7 @@ Six lines of the list will ever be true for a visitor. The rest are the point.
   on the first two days (measured).
   Under the screen's rule the sixth shelf would need 15 m of shelving within a month; under
   the room's rule it holds a year.
-- The slow lane changes with a visible flip of 3,136 dots; the printer fires at the same moment.
+- The slow lane changes with a visible flip of 3,364 dots; the printer fires at the same moment.
 - The counter steps once a second; the pointer moves 0.15 mm an hour at the current shelf.
 - The seventh shelf begins to print on day 16, the eighth on day 186, the ninth in year 6.
 - Outside the room's hours the machine rehearses from program 1, as the screen does.
@@ -98,7 +99,7 @@ Six lines of the list will ever be true for a visitor. The rest are the point.
 
 | part | quantity | spec | cost band |
 |---|---|---|---|
-| flip-dot modules | 36 | AlfaZeta XY5 or equivalent, 28 × 7 dots, 10 mm pitch, RS-485; 20 for the conveyor (four a tile), 16 for the slow lane (two across, eight down) | high: the largest line |
+| flip-dot modules | 36 + the lane's rim | AlfaZeta XY5 or equivalent, 28 × 7 dots, 10 mm pitch, RS-485; 20 for the conveyor (four a tile), 16 for the slow lane's 56 × 56 core (two across, eight down). 58 is not a multiple of the module: the lane's outer column and row on each side (228 dots) are either a custom strip from the module maker, or fixed dots in the same discs set white or black by hand, or the 56 × 56 core in a 580 mm frame. Decide with the vendor at step 1 | high: the largest line |
 | digit wheels | 28 | electromechanical or stepper-driven 18 mm wheels, 0 to 9, white on black; the last 24 can be fixed wheels showing 0 | mid |
 | printer | 1 | the stage-2 unit, mounted behind the slot | low |
 | ruler | 1 | brass bar 1840 × 12 mm, engraved; lead screw, stepper, limit switch | mid |
