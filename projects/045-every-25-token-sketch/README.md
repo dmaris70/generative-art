@@ -165,9 +165,11 @@ The third physical form, designed and simulated, not yet built: a black steel pa
 field (the champion, dithered), 28 electromechanical digit wheels for the program number (the
 last 24 never turn), the stage-2 printer behind a slot with the paper falling to the floor,
 and a brass ruler of the library on a log scale with a pointer that advances by a hair a day.
-The printer cuts; the ticket drops into a steel tray and whoever is there takes it. An engraved
-plate beside the slot lists the 25 lengths of the library, their counts, and the day or year
-each begins to print; six of its lines will ever be true for a visitor. The simulator (`relief/simulator.html`) runs the relief on a screen at one millimetre
+The printer cuts; the ticket drops into a steel tray and whoever is there takes it. Everything
+sits on a grid of 6 × 4 cells of 280 mm: the five tiles across the top, the slow lane a double
+cell at the left, the counter and the receipt between, and at the bottom right an engraved plate,
+a double cell like the lane, that lists the 25 lengths of the library, their counts, and the day
+or year each begins to print; six of its lines will ever be true for a visitor. The simulator (`relief/simulator.html`) runs the relief on a screen at one millimetre
 a unit; `relief/tile-test.png` is the test that fixed the tile resolution (thresholded tiles
 read from 28 dots, dithered ones only from 56); `relief/controller.js` drives the flip-dot
 modules over RS-485 and prints the counter and pointer targets; `relief/elevation.svg` is the
