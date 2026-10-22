@@ -31,11 +31,11 @@ T(712,528,'THE PROGRAM . 28 DIGIT WHEELS, 18 MM (ANNOTATION)',s=11); dim(712,442
 rect(720,560,120,14,'#1b1b20'); T(860,571,'THE RECEIPT . 58 MM SLOT (ANNOTATION)',s=11)
 o.append('<rect x="710" y="612" width="140" height="4" fill="#2a2a30"/>'); T(860,620,'THE SHELF . 140 x 100 MM, SEEN EDGE-ON (ANNOTATION)',s=11); dim(710,640,850,640,'140')
 # the list, engraved in the face, aligned right
-T(1920,444,'THE LIBRARY . TOKENS . PROGRAMS . BEGINS TO PRINT','end',13)
+T(1920,804,'THE LIBRARY . TOKENS . PROGRAMS . BEGINS TO PRINT','end',13)
 for i,(n,c,b) in enumerate(rows):
-    yy=round(420+66+i*18.2,1); T(1560,yy,str(n),'end'); T(1710,yy,c,'end'); T(1920,yy,b,'end')
-T(1920,956,'SIX OF THESE LINES WILL EVER BE TRUE FOR YOU','end',13)
-T(1920,1010,'ENGRAVED IN THE FACE, 1 MM DEEP, FILLED WHITE (ANNOTATION)','end',11,'#555')
+    yy=round(780+66+i*18.2,1); T(1560,yy,str(n),'end'); T(1710,yy,c,'end'); T(1920,yy,b,'end')
+T(1920,1316,'SIX OF THESE LINES WILL EVER BE TRUE FOR YOU','end',13)
+T(1920,760,'ENGRAVED IN THE FACE, 1 MM DEEP, FILLED WHITE (ANNOTATION)','end',11,'#555')
 # the ruler along the foot
 o.append('<rect x="80" y="1374" width="1840" height="12" fill="#8a7340"/>')
 total=math.log10(CUM[25])

@@ -109,7 +109,7 @@
     ctx.fillStyle = '#2a2a30'; ctx.fillRect(sx - 10, sy + 38, 140, 6);                      // the shelf under the slot, seen edge-on
     if (found.length) { ctx.fillStyle = 'rgba(232,230,223,0.9)'; ctx.fillRect(sx + 8, sy + 34, 104, 4); }
     // the plate: the library's 25 lengths, their counts, when each begins to print
-    const px0 = 1360, py0 = 420, pw = 560, ph = 560;                    // the list, engraved in the face, aligned right in the lower right field
+    const px0 = 1360, py0 = 780, pw = 560, ph = 560;                    // the list, engraved in the face, aligned right in the lower right field
     engrave('THE LIBRARY . TOKENS . PROGRAMS . BEGINS TO PRINT', px0 + pw, py0 + 24, 13, 'right');
     PLATE.forEach(([n, c, b], i) => { const y = py0 + 56 + i * 18.4; engrave(String(n), px0 + 200, y, 14, 'right'); engrave(c, px0 + 350, y, 14, 'right'); engrave(b, px0 + pw, y, 14, 'right'); });
     engrave('SIX OF THESE LINES WILL EVER BE TRUE FOR YOU', px0 + pw, py0 + ph - 24, 13, 'right');
