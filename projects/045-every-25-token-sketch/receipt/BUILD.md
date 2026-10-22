@@ -28,6 +28,18 @@ printed last line first in the printer's upside-down mode (`--upright` to print 
 it leaves the slot footer first and the picture comes out last, uppermost: in the pocket it
 stands picture up, face out, legible without being touched.
 
+## The queue of one
+
+The pocket under the slot holds one ticket. A found that lasted joins a queue; the oldest
+waiting ticket prints only when the pocket is empty, three seconds after the last was taken,
+so whoever took it sees the machine answer. A reflective sensor in the pocket's floor (a
+TCRT5000 module on the controller's GPIO, `--sensor 17`) reports whether a ticket is standing
+there. No ticket ever lands on another, nothing can overflow, and on a quiet day the found
+wait in the queue and the registry records them as waiting. The cut is a full cut (a partial
+cut would leave the ticket hanging by a tab); a folded steel chute behind the face turns the
+paper 60° downward from the printer's mouth to the slot, so the leading edge descends into the
+pocket as the ticket is fed. Load the roll so its curl bends the same way.
+
 ## The room's rule, and how much it prints
 
 The screen's selector fades the champion's claim by 0.9992 a program; under that rule the
@@ -59,7 +71,9 @@ swap the USB cable and the roll, ten minutes, no repair.
 | spare printer | the same model | low | the service plan |
 | controller | Raspberry Pi 4, Node 18+, `receipt.js` as a systemd service with `Restart=always` | low | no moving parts; a reboot resumes at the right program from the clock |
 | paper | 58 mm thermal rolls, 80 m, top-coated archival grade (fade-resistant), phenol-free | low | one roll about two months; keep four; a day's run on a new paper first, thermal stocks differ |
-| pocket | a folded 1.5 mm steel pocket under the slot, 64 mm wide inside, 22 deep, 22 mm front, its floor 98 mm below the slot | low | the ticket slides into it as it is printed and stands when cut, picture up, face out; whoever is there takes the front one |
+| pocket | a folded 1.5 mm steel pocket under the slot, 64 mm wide inside, 8 deep, 22 mm front, its floor 98 mm below the slot | low | holds one ticket, standing, picture up, face out |
+| sensor | TCRT5000 reflective module in the pocket's floor, on a GPIO; output low when paper is over it | under 1 EUR | the queue of one: the next ticket prints when this one is taken |
+| chute | folded steel, from the printer's mouth to the slot, turning the paper 60° down | low | the ticket descends into the pocket as it is fed |
 | power | the printer's own 24 V supply, 5 V for the controller, one cable to the wall | low | |
 
 Nothing else. No display, no keyboard, no network needed except for a network printer.
@@ -79,7 +93,10 @@ good for is decided elsewhere; the printer only makes it checkable.
 node receipt.js --replay 2780 --png /tmp/strip
 
 # a USB printer, locked to the room's clock, 58 mm paper, cut tickets, the registry beside the script
-node receipt.js --device /dev/usb/lp0 --start 10:00 --sign "the foundation's secret"
+node receipt.js --device /dev/usb/lp0 --start 10:00 --sensor 17 --sign "the foundation's secret"
+
+# a rehearsal without the sensor: a taker every 20 s
+node receipt.js --device /dev/usb/lp0 --start 10:00 --taken 20
 
 # a network printer, 80 mm paper
 node receipt.js --tcp 192.168.1.50:9100 --width 576 --start 10:00
@@ -96,7 +113,7 @@ Description=Every 25-Token Sketch: the receipt of the found
 After=network.target
 
 [Service]
-ExecStart=/usr/bin/node /opt/receipt/receipt.js --device /dev/usb/lp0 --start 10:00 --log /var/lib/receipt/registry.jsonl
+ExecStart=/usr/bin/node /opt/receipt/receipt.js --device /dev/usb/lp0 --start 10:00 --sensor 17 --log /var/lib/receipt/registry.jsonl
 Restart=always
 User=pi
 
@@ -119,7 +136,7 @@ and the paper on the floor are the same list.
 
 - **58 or 80 mm.** 58 mm is the till-roll register the work wants and fits a day on one roll;
   80 mm gives a 72 mm image and a more legible ticket. Print both test strips before choosing.
-- **Cut.** Decided: the printer cuts, the ticket stands in the pocket, and whoever is there
+- **Cut.** Decided: a full cut; the ticket stands in the pocket, and whoever is there
   takes it. `--nocut` keeps the continuous strip for a showing where nothing leaves the room.
 - **Black or steel.** The housing in the Takis register is black; raw steel reads as kiosk
   hardware, which may be the more honest surface for a till printer.

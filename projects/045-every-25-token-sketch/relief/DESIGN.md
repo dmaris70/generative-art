@@ -27,9 +27,9 @@ simulator (`simulator.html`) runs both; `?tiles=25` shows the rejected layout.
 | the conveyor | five flip-dot fields of 28 × 28 dots, the last five programs, oldest left, one new program a second; thresholded | five × 280 × 280 mm at 10 mm pitch, 20 mm apart |
 | the slow lane | one flip-dot field of 58 × 58 dots, the champion, dithered; changes hands when a better unrepeated picture arrives, its claim fading by 0.9999 a program | 580 × 580 mm, flush with the first two tiles |
 | the program | 28 electromechanical digit wheels showing the program number with leading zeros; the last 24 wheels never turn | 504 × 30 mm |
-| the receipt | the stage-2 printer behind the panel, its slot in the face, a folded steel pocket 98 mm beneath; the ticket is printed last line first, so it slides into the pocket picture last and uppermost; cut, it drops 7 mm and stands, face out, the picture above the pocket's front. Each new ticket comes in behind and pushes the older ones forward: the oldest is in front, and that is the one a visitor takes. "TAKE ONE" engraved beneath | 58 mm slot, 64 × 22 × 22 mm pocket |
+| the receipt | the stage-2 printer behind the panel, a chute from its mouth to the slot in the face, a folded steel pocket 98 mm beneath that holds one ticket. The ticket is printed last line first, so it descends into the pocket picture last and uppermost; a full cut frees it and it stands, face out, the picture above the pocket's front. A sensor in the pocket's floor sees it; the found queue, and the next prints three seconds after this one is taken. "TAKE ONE" engraved beneath | 58 mm slot, 64 × 8 × 22 mm pocket |
 | the list | engraved in the panel's face, aligned right in the lower right field: the 25 lengths, their counts, the day or year each begins to print; static, so engraved, not a plate | a 560 × 560 mm block |
-| the library | a brass bar engraved with the 25 shelves on a log scale, a pointer on a lead screw at the current program; it advances by a hair a day and sits at the far left for all time | 1840 mm travel |
+| the library | a brass bar engraved with the 25 shelves on a log scale, a pointer on a belt-driven axis at the current program: it crosses 298 mm on the first day, is at 473 mm after a year and 526 after six, and never passes the ninth tick in a lifetime | 1840 mm travel |
 | engraving | the element names, in the panel's own voice: "THE CONVEYOR . THE LAST FIVE PROGRAMS, ONE A SECOND", "THE PROGRAM . 28 WHEELS . THE LAST 24 NEVER TURN" | 13 pt, filled white |
 
 Layout, as first drawn: the conveyor across the top; the slow lane at the bottom left; the
@@ -88,8 +88,12 @@ Six lines of the list will ever be true for a visitor. The rest are the point.
   on the first two days (measured).
   Under the screen's rule the sixth shelf would need 15 m of shelving within a month; under
   the room's rule it holds a year.
-- The slow lane changes with a visible flip of 3,364 dots; the printer fires at the same moment.
-- The counter steps once a second; the pointer moves 0.15 mm an hour at the current shelf.
+- The slow lane changes with a visible flip of 3,364 dots; if the pocket is empty the printer
+  fires at the same moment, otherwise the found waits its turn.
+- The counter steps once a second. The pointer's position is the logarithm of the program
+  number: 298 mm from the left at the end of day 1, 318 on day 2, 380 on day 16, 473 after a
+  year, 526 in year 6, 610 in year 100; half a millimetre a day in the first year, a tenth of
+  that after ten. The first day is the one visible journey; everything after is a hair.
 - The seventh shelf begins to print on day 16, the eighth on day 186, the ninth in year 6.
 - Outside the room's hours the machine rehearses from program 1, as the screen does.
 - Maintenance is a roll of paper every two months and a spare printer on a shelf; see
@@ -102,10 +106,10 @@ Six lines of the list will ever be true for a visitor. The rest are the point.
 | flip-dot modules | 36 + the lane's rim | AlfaZeta XY5 or equivalent, 28 × 7 dots, 10 mm pitch, RS-485; 20 for the conveyor (four a tile), 16 for the slow lane's 56 × 56 core (two across, eight down). 58 is not a multiple of the module: the lane's outer column and row on each side (228 dots) are either a custom strip from the module maker, or fixed dots in the same discs set white or black by hand, or the 56 × 56 core in a 580 mm frame. Decide with the vendor at step 1 | high: the largest line |
 | digit wheels | 28 | electromechanical or stepper-driven 18 mm wheels, 0 to 9, white on black; the last 24 can be fixed wheels showing 0 | mid |
 | printer | 1 | the stage-2 unit, mounted behind the slot | low |
-| ruler | 1 | brass bar 1840 × 12 mm, engraved; lead screw, stepper, limit switch | mid |
+| ruler | 1 | brass bar 1840 × 12 mm, engraved; a 2 m belt-driven linear axis (a camera slider's), NEMA 17 stepper, home switch; homed at power-up and driven open loop from the clock | mid |
 | controller | 1 | Linux box with Node, an RS-485 adapter, a stepper board | low |
 | panel | 1 | folded 2 mm steel, 2000 × 1500 mm, black, with cut-outs and a rear frame; wall-hung on a French cleat; about 60 kg with modules | mid |
-| pocket | 1 | folded 1.5 mm steel, 64 mm wide inside, 22 deep, 22 mm front, under the slot; holds a season of tickets standing; the list is engraved in the panel itself, with the title, the ruler's numbers and "TAKE ONE" | low |
+| pocket, sensor, chute | 1 each | folded 1.5 mm steel pocket 64 × 8 × 22 mm under the slot, one ticket standing; a TCRT5000 reflective sensor in its floor; a folded steel chute from the printer's mouth to the slot. The list is engraved in the panel itself, with the title, the ruler's numbers and "TAKE ONE" | low |
 | power | 1 | 24 V for the modules, 24 V for the printer, 12 V for the steppers, one mains cable | low |
 
 The module count is the budget. Halving the conveyor to three tiles saves eight modules and
@@ -142,7 +146,7 @@ wheels' sourcing (stepper-driven wheels from a signage maker are the fallback).
 > a library of programs of one to twenty-five tokens. The machine reads it in order, shortest
 > first, one program a second, and shows the last five. A selector with a stated preference
 > holds one picture longer; when it lets go of one it kept long enough, the printer prints it
-> and lets it go: take it. The counter names the program; its last twenty-four wheels will
+> and stands it in the pocket: take it, and the next one found will print. The counter names the program; its last twenty-four wheels will
 > never turn. The pointer on the ruler marks the reading's place in the library and will not
 > leave the left end. The list at the right gives the twenty-five lengths of the library and
 > the day or year each begins to print; six of its lines will ever be true for you. Nothing here is a

@@ -164,8 +164,9 @@ The third physical form, designed and simulated, not yet built: a black steel pa
 28 × 28 dots (the last five programs, thresholded, one a second), the slow lane as a 58 × 58
 field (the champion, dithered), 28 electromechanical digit wheels for the program number (the
 last 24 never turn), the stage-2 printer behind a slot with the paper falling to the floor,
-and a brass ruler of the library on a log scale with a pointer that advances by a hair a day.
-The printer cuts; the ticket stands in a steel pocket under the slot, picture up, and whoever is there takes it. The
+and a brass ruler of the library on a log scale whose pointer crosses a sixth of it on the
+first day and then slows to a hair.
+The printer cuts; the ticket stands in a steel pocket under the slot, picture up, and whoever is there takes it. The pocket holds one: a sensor sees it, and the next found prints when it is taken. The
 conveyor runs across the top, the slow lane sits at the bottom left with the counter and the
 slot beside it, the ruler runs along the foot, and in the dark field at the right the 25
 lengths of the library, their counts, and the day or year each begins to print are engraved in

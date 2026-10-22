@@ -10,10 +10,12 @@
 //   node receipt.js [--device /dev/usb/lp0 | --tcp host:9100 | --out file.bin | --png dir]
 //                   [--width 384|576] [--rate 8] [--start HH:MM] [--replay N] [--cut]
 //                   [--fade 0.9999] [--minhold 200] [--nocut] [--upright] [--log file] [--sign key]
+//                   [--sensor 17 | --sensor file] [--taken 20]
 //
 // The room's selector is stricter than the screen's: the champion's claim fades by 0.9999 a
 // program (the screen's 0.9992), and a ticket is printed only for a champion that held the lane
-// 200 programs or more — the ones that lasted. Measured at one program a second, that is about
+// 200 programs or more — the ones that lasted. The pocket under the slot holds one ticket: the
+// found queue, and the next prints when the last is taken (--sensor). Measured at one program a second, that is about
 // a dozen tickets an exhibition day instead of a hundred. --fade 0.9992 --minhold 0 prints as
 // the screen selects.
 //
@@ -26,8 +28,12 @@
 // --start    lock the enumeration to the clock: program 1 at HH:MM JST today, so the printer and
 //            a screen started at the same minute agree on the program number
 // --replay   do not run live: print the found through program N at once (e.g. 30905), then exit
-// --nocut    feed only, one continuous strip (default: a partial cut after each ticket, so
-//            the ticket drops into the pocket under the slot for whoever is there to take)
+// --nocut    feed only, one continuous strip (default: a full cut after each ticket, so the
+//            ticket drops into the pocket under the slot for whoever is there to take)
+// --sensor   the pocket's reflective sensor: a GPIO number on a Raspberry Pi, or a file whose
+//            first byte is 0 (a ticket is standing in the pocket) or 1 (empty). With it the
+//            pocket holds one ticket: the next found prints 3 s after the last was taken
+// --taken    no sensor: pretend each ticket is taken N seconds after it prints (a rehearsal)
 // --upright  print the ticket top first (default: last line first in the printer's upside-down
 //            mode, so the ticket comes out of the slot picture last and uppermost and stands in
 //            the pocket face out, legible, the picture above the pocket's front)
@@ -48,7 +54,7 @@ const A = {}; const argv = process.argv.slice(2);
 for (let i = 0; i < argv.length; i++) { const k = argv[i]; if (k.startsWith('--')) { const v = argv[i + 1] && !argv[i + 1].startsWith('--') ? argv[++i] : true; A[k.slice(2)] = v; } }
 const WIDTH = +(A.width || 384), RATE = +(A.rate || 8), PROLOGUE = 280, FADE = +(A.fade || 0.9999), MINHOLD = +(A.minhold === undefined ? 200 : A.minhold);
 const COLS = Math.floor(WIDTH / 12);          // characters a line in the printer's font A (12 dots wide): 32 on 58 mm, 48 on 80 mm
-const CUT = !A.nocut, FLIP = !A.upright, LOG = A.log === undefined ? path.join(__dirname, 'receipt-log.jsonl') : A.log, SIGN = typeof A.sign === 'string' ? A.sign : null;
+const CUT = !A.nocut, FLIP = !A.upright, SENSOR = A.sensor === undefined ? null : String(A.sensor), TAKEN = A.taken === undefined ? null : +A.taken, LOG = A.log === undefined ? path.join(__dirname, 'receipt-log.jsonl') : A.log, SIGN = typeof A.sign === 'string' ? A.sign : null;
 const verify = (k) => (SIGN ? require('crypto').createHmac('sha256', SIGN).update(String(k)).digest('base64').replace(/[^A-Z2-9]/g, '').slice(0, 6) : null);
 if (!A.device && !A.tcp && !A.out && !A.png) { console.error('nothing to print to: give --device, --tcp, --out or --png'); process.exit(2); }
 
@@ -120,7 +126,7 @@ function ticket(f, no, when) {
   const textOut = () => { for (const l of ls) { if (l.bold) put(ESC, 0x45, 0x01); text(l.s); if (l.bold) put(ESC, 0x45, 0x00); } };
   if (FLIP) { put(ESC, 0x64, 0x01); textOut(); put(ESC, 0x64, 0x01); rasterOut(); } else { rasterOut(); put(ESC, 0x64, 0x01); textOut(); }
   put(ESC, 0x64, CUT ? 0x03 : 0x05);                                  // feed
-  if (CUT) put(GS, 0x56, 0x01);                                       // partial cut: the ticket drops into the pocket
+  if (CUT) put(GS, 0x56, 0x00);                                       // full cut: the ticket is free and drops into the pocket (a partial cut would leave it hanging by a tab)
   return Buffer.from(bytes);
 }
 
@@ -165,22 +171,50 @@ const jst = (ms) => { const d = new Date(ms + JST * 60000); return d.toISOString
 if (A.png) fs.mkdirSync(A.png, { recursive: true });
 const seen = new Set();
 let printed = 0;
-function flush(M, when) {                      // print every found not yet printed, oldest first
+// ── the queue of one ──
+// The pocket under the slot holds one ticket. A found that lasted joins the queue; the oldest
+// waiting ticket prints only when the pocket is empty, PAUSE seconds after the last was taken,
+// so a taker sees the machine answer. The pocket is read by a reflective sensor (--sensor), or
+// a taker is simulated (--taken N: taken N seconds after printing); with neither, the pocket is
+// assumed emptied at once and every found prints as it is found (replays, strips).
+const PAUSE = 3000;
+const queue = [];                                                   // { f, held, queuedAt }
+let occupied = false, takenAt = -Infinity, printedAt = 0, sensorPath = null;
+if (SENSOR !== null) {
+  if (/^\d+$/.test(SENSOR)) {                                        // a GPIO number on a Raspberry Pi: export it and read its value
+    sensorPath = '/sys/class/gpio/gpio' + SENSOR + '/value';
+    try { if (!fs.existsSync(sensorPath)) fs.writeFileSync('/sys/class/gpio/export', SENSOR); fs.writeFileSync('/sys/class/gpio/gpio' + SENSOR + '/direction', 'in'); } catch (e) { console.error('sensor:', e.message); }
+  } else sensorPath = SENSOR;                                        // or any file whose first byte is 0 (ticket present) or 1 (empty)
+}
+const pocketHasTicket = () => { try { return fs.readFileSync(sensorPath, 'utf8').trim()[0] === '0'; } catch (e) { return occupied; } };   // the TCRT5000 module's output goes low when paper reflects
+function collect(M) {                          // every found that lasted joins the queue, oldest first
   const list = M.found().slice().reverse();
   for (const f of list) {
     if (seen.has(f.k)) continue;
     seen.add(f.k);
     const held = Math.round((f.until - f.since) * RATE);
     if (held < MINHOLD) continue;                                  // it did not last: no ticket
-    printed++;
-    const entry = Object.assign({}, f, { held });
-    const w = when || jst(Date.now());
-    send(ticket(entry, printed, w));
-    if (A.png) png(entry, printed, w, A.png);
-    if (LOG) fs.appendFileSync(LOG, JSON.stringify({ no: printed, program: f.k + 1, code: f.code, postfix: f.postfix, tokens: f.n, score: +f.peak.toFixed(4), held, printed: w, verify: verify(f.k) }) + '\n');
-    console.log('found ' + printed + ': program ' + grp(f.k + 1) + '  ' + f.code + '  held ' + grp(held) + '  ' + w);
+    queue.push({ f: Object.assign({}, f, { held }), queuedAt: Date.now() });
+    if (LOG) fs.appendFileSync(LOG, JSON.stringify({ event: 'found', program: f.k + 1, code: f.code, held, waiting: queue.length }) + '\n');
   }
 }
+function serve(when) {                         // print the oldest waiting ticket into an empty pocket
+  const now = Date.now();
+  if (occupied) {
+    const taken = sensorPath ? !pocketHasTicket() : TAKEN !== null ? now - printedAt >= TAKEN * 1000 : true;
+    if (taken) { occupied = false; takenAt = now; if (LOG && (sensorPath || TAKEN !== null)) fs.appendFileSync(LOG, JSON.stringify({ event: 'taken', no: printed, after: +((now - printedAt) / 1000).toFixed(1) }) + '\n'); }
+  }
+  if (occupied || !queue.length) return;
+  if ((sensorPath || TAKEN !== null) && now - takenAt < PAUSE) return;
+  const { f, queuedAt } = queue.shift();
+  printed++; occupied = true; printedAt = now;
+  const w = when || jst(now);
+  send(ticket(f, printed, w));
+  if (A.png) png(f, printed, w, A.png);
+  if (LOG) fs.appendFileSync(LOG, JSON.stringify({ event: 'printed', no: printed, program: f.f ? f.f.k + 1 : f.k + 1, code: f.code, postfix: f.postfix, tokens: f.n, score: +f.peak.toFixed(4), held: f.held, waited: +((now - queuedAt) / 1000).toFixed(1), waiting: queue.length, printed: w, verify: verify(f.k) }) + '\n');
+  console.log('found ' + printed + ': program ' + grp(f.k + 1) + '  ' + f.code + '  held ' + grp(f.held) + '  ' + w + (queue.length ? '  (' + queue.length + ' waiting)' : ''));
+}
+function flush(M, when) { collect(M); do { const n = printed; serve(when); if (printed === n) break; } while (!(sensorPath || TAKEN !== null)); }
 if (A.replay) {
   const n = +A.replay;
   const M = Babel.create(canvas(), { at: n, rate: RATE, prologue: PROLOGUE, fade: FADE });
@@ -200,6 +234,6 @@ if (A.replay) {
     else console.log('locked to ' + A.start + ' JST: beginning at program ' + grp(from + 1));
   }
   const M = Babel.create(canvas(), { rate: RATE, prologue: PROLOGUE, from, fade: FADE });
-  console.log('live: ' + RATE + ' programs a second, ' + WIDTH + ' dots across, fade ' + FADE + ', a ticket for a hold of ' + MINHOLD + ' or more. Ctrl-C to stop.');
+  console.log('live: ' + RATE + ' programs a second, ' + WIDTH + ' dots across, fade ' + FADE + ', a ticket for a hold of ' + MINHOLD + ' or more' + (sensorPath ? ', the pocket read at ' + sensorPath : TAKEN !== null ? ', a taker every ' + TAKEN + ' s' : '') + '. Ctrl-C to stop.');
   setInterval(() => { if (rafCb) { const cb = rafCb; rafCb = null; cb(Date.now()); } flush(M); }, 50);
 }
