@@ -3,9 +3,11 @@
 ## Construction specification for the relief
 
 Issue 1. For a fabrication contract. Read with the drawings `elevation.svg`,
-`section-a-a.svg`, `detail-pocket.svg`, `wiring.svg` and `address-map.svg` in this folder, and
-with `DESIGN.md` (the design intent) and `../receipt/BUILD.md` (the printer). Where this
-specification and those documents differ, this specification governs.
+`section-a-a.svg`, `detail-pocket.svg`, `wiring.svg`, `address-map.svg` and `carrier.svg` in
+this folder, the engraving artwork `engraving-face.svg` and `engraving-ruler.svg`, and with
+`DESIGN.md` (the design intent) and `../receipt/BUILD.md` (the printer). `HANDOVER.md` says
+how the pack is to be used. Where this specification and those documents differ, this
+specification governs.
 
 All dimensions in millimetres. Panel coordinates are measured from the top left corner of the
 panel's face, x to the right, y downward, z toward the room.
@@ -45,7 +47,9 @@ panel, from software supplied by the artist.
   image with them installed;
 - the motion board firmware (ESP32), in `firmware/motion/` with its wiring table, calibration
   procedure and host test, to the serial protocol in section 8.5;
-- the engraving artwork as vector files, generated from this specification;
+- the engraving artwork as vector files, `engraving-face.svg` and `engraving-ruler.svg`,
+  generated from this specification (text as text, the font named; the engraver converts to
+  outlines and returns a proof);
 - the wall label.
 
 **Not in this contract:** the gallery wall's structural adequacy (to be confirmed by the
@@ -296,7 +300,8 @@ THE LIBRARY . TOKENS . PROGRAMS . BEGINS TO PRINT
 SIX OF THESE LINES WILL EVER BE TRUE FOR YOU
 ```
 
-The artist supplies this as a vector file at 1 : 1.
+The artwork is `engraving-face.svg`, 1 : 1 in millimetres, with the title, the ruler's
+numbers and "TAKE ONE" on the same sheet; the bar's ticks are `engraving-ruler.svg`.
 
 ## 11. Power, control and wiring
 
