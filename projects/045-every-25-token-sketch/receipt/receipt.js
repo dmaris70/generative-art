@@ -9,7 +9,7 @@
 //
 //   node receipt.js [--device /dev/usb/lp0 | --tcp host:9100 | --out file.bin | --png dir]
 //                   [--width 384|576] [--rate 8] [--start HH:MM] [--replay N] [--cut]
-//                   [--fade 0.9999] [--minhold 200] [--nocut] [--log file] [--sign key]
+//                   [--fade 0.9999] [--minhold 200] [--nocut] [--upright] [--log file] [--sign key]
 //
 // The room's selector is stricter than the screen's: the champion's claim fades by 0.9999 a
 // program (the screen's 0.9992), and a ticket is printed only for a champion that held the lane
@@ -27,7 +27,10 @@
 //            a screen started at the same minute agree on the program number
 // --replay   do not run live: print the found through program N at once (e.g. 30905), then exit
 // --nocut    feed only, one continuous strip (default: a partial cut after each ticket, so
-//            the ticket drops into the tray for whoever is there to take)
+//            the ticket drops into the pocket under the slot for whoever is there to take)
+// --upright  print the ticket top first (default: last line first in the printer's upside-down
+//            mode, so the ticket comes out of the slot picture last and uppermost and stands in
+//            the pocket face out, legible, the picture above the pocket's front)
 // --log      append a line per ticket (program, code, time, verification code) to this file;
 //            default receipt-log.jsonl beside this script — the registry of every ticket printed
 // --sign     a secret: a 6-character verification code derived from the program number is
@@ -45,7 +48,7 @@ const A = {}; const argv = process.argv.slice(2);
 for (let i = 0; i < argv.length; i++) { const k = argv[i]; if (k.startsWith('--')) { const v = argv[i + 1] && !argv[i + 1].startsWith('--') ? argv[++i] : true; A[k.slice(2)] = v; } }
 const WIDTH = +(A.width || 384), RATE = +(A.rate || 8), PROLOGUE = 280, FADE = +(A.fade || 0.9999), MINHOLD = +(A.minhold === undefined ? 200 : A.minhold);
 const COLS = Math.floor(WIDTH / 12);          // characters a line in the printer's font A (12 dots wide): 32 on 58 mm, 48 on 80 mm
-const CUT = !A.nocut, LOG = A.log === undefined ? path.join(__dirname, 'receipt-log.jsonl') : A.log, SIGN = typeof A.sign === 'string' ? A.sign : null;
+const CUT = !A.nocut, FLIP = !A.upright, LOG = A.log === undefined ? path.join(__dirname, 'receipt-log.jsonl') : A.log, SIGN = typeof A.sign === 'string' ? A.sign : null;
 const verify = (k) => (SIGN ? require('crypto').createHmac('sha256', SIGN).update(String(k)).digest('base64').replace(/[^A-Z2-9]/g, '').slice(0, 6) : null);
 if (!A.device && !A.tcp && !A.out && !A.png) { console.error('nothing to print to: give --device, --tcp, --out or --png'); process.exit(2); }
 
@@ -87,7 +90,10 @@ function raster(vals) {
     if (x + 1 < W) g[i + 1] += err * 7 / 16;
     if (y + 1 < H) { if (x) g[i + W - 1] += err * 3 / 16; g[i + W] += err * 5 / 16; if (x + 1 < W) g[i + W + 1] += err * 1 / 16; }
   }
-  return bits;
+  if (!FLIP) return bits;
+  const out = Buffer.alloc(bits.length), rowB = W / 8;                // rotated 180°: the printer's upside-down mode turns text, not raster
+  for (let y = 0; y < H; y++) for (let b = 0; b < rowB; b++) { let v = bits[(H - 1 - y) * rowB + (rowB - 1 - b)], r = 0; for (let k = 0; k < 8; k++) { r = (r << 1) | (v & 1); v >>= 1; } out[y * rowB + b] = r; }
+  return out;
 }
 // the lines of a ticket, each within the printer's columns; the code is the only line allowed to wrap
 function lines(f, no, when) {
@@ -107,13 +113,14 @@ function ticket(f, no, when) {
   bytes.length = 0;
   put(ESC, 0x40);                                                     // initialise
   put(ESC, 0x61, 0x00);                                               // left
+  put(ESC, 0x7b, FLIP ? 0x01 : 0x00);                                 // ESC { : upside-down mode, each line turned 180°
   const bits = raster(field(f.k, f.until));
-  put(GS, 0x76, 0x30, 0x00, (WIDTH / 8) & 0xff, (WIDTH / 8) >> 8, WIDTH & 0xff, WIDTH >> 8);   // GS v 0: raster, normal size
-  for (const b of bits) bytes.push(b);
-  put(ESC, 0x64, 0x01);                                               // feed 1
-  for (const l of lines(f, no, when)) { if (l.bold) put(ESC, 0x45, 0x01); text(l.s); if (l.bold) put(ESC, 0x45, 0x00); }
+  const ls = lines(f, no, when); if (FLIP) ls.reverse();              // last line first: the footer leads, the picture comes out last and stands uppermost
+  const rasterOut = () => { put(GS, 0x76, 0x30, 0x00, (WIDTH / 8) & 0xff, (WIDTH / 8) >> 8, WIDTH & 0xff, WIDTH >> 8); for (const b of bits) bytes.push(b); };   // GS v 0: raster, normal size
+  const textOut = () => { for (const l of ls) { if (l.bold) put(ESC, 0x45, 0x01); text(l.s); if (l.bold) put(ESC, 0x45, 0x00); } };
+  if (FLIP) { put(ESC, 0x64, 0x01); textOut(); put(ESC, 0x64, 0x01); rasterOut(); } else { rasterOut(); put(ESC, 0x64, 0x01); textOut(); }
   put(ESC, 0x64, CUT ? 0x03 : 0x05);                                  // feed
-  if (CUT) put(GS, 0x56, 0x01);                                       // partial cut: the ticket drops into the tray
+  if (CUT) put(GS, 0x56, 0x01);                                       // partial cut: the ticket drops into the pocket
   return Buffer.from(bytes);
 }
 

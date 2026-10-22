@@ -3,8 +3,8 @@
 Stage 3 of Every 25-Token Sketch in the room. A black steel panel. The panel
 carries the machine: flip-dot fields that show the programs as they are read, a counter that
 names the program, a printer that keeps the found, a ruler that places the reading in the
-library. A shelf under the slot takes the cut ticket, and the library's 25 lengths are
-engraved in the face at the right.
+library. A pocket under the slot holds the cut tickets standing, picture up, for visitors to
+take, and the library's 25 lengths are engraved in the face at the right.
 
 Everything on the panel is driven by the unchanged `babel.js`, the same enumeration as the
 screen and the receipt, at one program a second. The relief, the screen and the receipt can
@@ -27,7 +27,7 @@ simulator (`simulator.html`) runs both; `?tiles=25` shows the rejected layout.
 | the conveyor | five flip-dot fields of 28 × 28 dots, the last five programs, oldest left, one new program a second; thresholded | five × 280 × 280 mm at 10 mm pitch, 20 mm apart |
 | the slow lane | one flip-dot field of 58 × 58 dots, the champion, dithered; changes hands when a better unrepeated picture arrives, its claim fading by 0.9999 a program | 580 × 580 mm, flush with the first two tiles |
 | the program | 28 electromechanical digit wheels showing the program number with leading zeros; the last 24 wheels never turn | 504 × 30 mm |
-| the receipt | the stage-2 printer behind the panel, its slot in the face, a steel shelf beneath; the printer cuts, the ticket drops onto the shelf, whoever is there takes it | 58 mm slot, 140 × 100 mm shelf |
+| the receipt | the stage-2 printer behind the panel, its slot in the face, a folded steel pocket 98 mm beneath; the ticket is printed last line first, so it slides into the pocket picture last and uppermost; cut, it drops 7 mm and stands, face out, the picture above the pocket's front. Each new ticket comes in behind and pushes the older ones forward: the oldest is in front, and that is the one a visitor takes. "TAKE ONE" engraved beneath | 58 mm slot, 64 × 22 × 22 mm pocket |
 | the list | engraved in the panel's face, aligned right in the lower right field: the 25 lengths, their counts, the day or year each begins to print; static, so engraved, not a plate | a 560 × 560 mm block |
 | the library | a brass bar engraved with the 25 shelves on a log scale, a pointer on a lead screw at the current program; it advances by a hair a day and sits at the far left for all time | 1840 mm travel |
 | engraving | the element names, in the panel's own voice: "THE CONVEYOR . THE LAST FIVE PROGRAMS, ONE A SECOND", "THE PROGRAM . 28 WHEELS . THE LAST 24 NEVER TURN" | 13 pt, filled white |
@@ -37,9 +37,9 @@ counter and the slot beside it; the ruler along the foot; the list engraved at t
 aligned to the ruler's end. No captions on the steel except the ruler's numbers and the title:
 the wall label explains. See `elevation.svg`.
 
-## The list and the shelf, in place of a bookcase
+## The list and the pocket, in place of a bookcase
 
-The tickets leave the room: the printer cuts, the ticket drops onto a steel shelf under the
+The tickets leave the room: the printer cuts, the ticket stands in the pocket under the
 slot, and whoever is there takes it. So there is no archive to shelve. What the bookcase was to
 say — that the library has 25 lengths, each about ten times the last, and that the machine
 will print from only the first few — is engraved in the panel's face at the right, where the
@@ -105,7 +105,7 @@ Six lines of the list will ever be true for a visitor. The rest are the point.
 | ruler | 1 | brass bar 1840 × 12 mm, engraved; lead screw, stepper, limit switch | mid |
 | controller | 1 | Linux box with Node, an RS-485 adapter, a stepper board | low |
 | panel | 1 | folded 2 mm steel, 2000 × 1500 mm, black, with cut-outs and a rear frame; wall-hung on a French cleat; about 60 kg with modules | mid |
-| shelf | 1 | folded steel shelf 140 × 100 mm with a 10 mm front edge, under the slot; the list is engraved in the panel itself, with the title and the ruler's numbers | low |
+| pocket | 1 | folded 1.5 mm steel, 64 mm wide inside, 22 deep, 22 mm front, under the slot; holds a season of tickets standing; the list is engraved in the panel itself, with the title, the ruler's numbers and "TAKE ONE" | low |
 | power | 1 | 24 V for the modules, 24 V for the printer, 12 V for the steppers, one mains cable | low |
 
 The module count is the budget. Halving the conveyor to three tiles saves eight modules and
@@ -131,7 +131,7 @@ the receipt and the ruler is a 16-module relief that still reads as the machine.
    height; look from three metres. Adjust the tile count. One day.
 3. Order the modules, the wheels, the steel. Six to eight weeks' lead.
 4. Assemble on the rear frame; wire the bus; run a day on the bench with the printer. Two weeks.
-5. The engraving (the list, the title, the ruler's numbers); the shelf; the wall label.
+5. The engraving (the list, the title, the ruler's numbers, "take one"); the pocket; the wall label.
 
 Four to six months. Risks: module lead time and price; the panel's weight on the wall; the
 wheels' sourcing (stepper-driven wheels from a signage maker are the fallback).

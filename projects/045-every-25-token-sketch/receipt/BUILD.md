@@ -23,7 +23,10 @@ found 10 . 11:36:05 JST
 EVERY 25-TOKEN SKETCH . PCDTOKYO2026
 ```
 
-About 85 mm of paper a ticket (image 48 mm, seven lines of text, the feed).
+About 85 mm of paper a ticket (image 48 mm, seven lines of text, the feed). The ticket is
+printed last line first in the printer's upside-down mode (`--upright` to print top first), so
+it leaves the slot footer first and the picture comes out last, uppermost: in the pocket it
+stands picture up, face out, legible without being touched.
 
 ## The room's rule, and how much it prints
 
@@ -56,7 +59,7 @@ swap the USB cable and the roll, ten minutes, no repair.
 | spare printer | the same model | low | the service plan |
 | controller | Raspberry Pi 4, Node 18+, `receipt.js` as a systemd service with `Restart=always` | low | no moving parts; a reboot resumes at the right program from the clock |
 | paper | 58 mm thermal rolls, 80 m, top-coated archival grade (fade-resistant), phenol-free | low | one roll about two months; keep four; a day's run on a new paper first, thermal stocks differ |
-| shelf | a folded steel shelf under the slot, 140 × 100 mm with a 10 mm front edge | low | the cut ticket lands on it; whoever is there takes it |
+| pocket | a folded 1.5 mm steel pocket under the slot, 64 mm wide inside, 22 deep, 22 mm front, its floor 98 mm below the slot | low | the ticket slides into it as it is printed and stands when cut, picture up, face out; whoever is there takes the front one |
 | power | the printer's own 24 V supply, 5 V for the controller, one cable to the wall | low | |
 
 Nothing else. No display, no keyboard, no network needed except for a network printer.
@@ -116,7 +119,7 @@ and the paper on the floor are the same list.
 
 - **58 or 80 mm.** 58 mm is the till-roll register the work wants and fits a day on one roll;
   80 mm gives a 72 mm image and a more legible ticket. Print both test strips before choosing.
-- **Cut.** Decided: the printer cuts, the ticket drops onto the shelf, and whoever is there
+- **Cut.** Decided: the printer cuts, the ticket stands in the pocket, and whoever is there
   takes it. `--nocut` keeps the continuous strip for a showing where nothing leaves the room.
 - **Black or steel.** The housing in the Takis register is black; raw steel reads as kiosk
   hardware, which may be the more honest surface for a till printer.

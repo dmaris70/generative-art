@@ -24,12 +24,12 @@ T(80,58,'THE CONVEYOR . THE LAST FIVE PROGRAMS, ONE A SECOND (ANNOTATION, NOT EN
 x,y=80,420; rect(x-6,y-6,592,592)
 for k in range(1,8): line(x+10,y+10+k*70,x+570,y+10+k*70,'#222',1)
 line(x+290,y+10,x+290,y+570,'#222',1); T(x+290,y+295,'58 x 58 DOTS . 580 MM, THE WIDTH OF TWO TILES AND THEIR GAP','middle',11); T(80,1030,'THE SLOW LANE (ANNOTATION)',s=11); dim(60,420,60,1000,'580',-16)
-# the counter, the slot, the shelf
+# the counter, the slot, the pocket
 rect(712,452,520,46,'#1b1b20')
 for i in range(28): rect(720+i*18,460,16,30,'#101014','#2a2a30',1)
 T(712,528,'THE PROGRAM . 28 DIGIT WHEELS, 18 MM (ANNOTATION)',s=11); dim(712,442,1232,442,'520')
 rect(720,560,120,14,'#1b1b20'); T(860,571,'THE RECEIPT . 58 MM SLOT (ANNOTATION)',s=11)
-o.append('<rect x="710" y="612" width="140" height="4" fill="#2a2a30"/>'); T(860,620,'THE SHELF . 140 x 100 MM, SEEN EDGE-ON (ANNOTATION)',s=11); dim(710,640,850,640,'140')
+rect(751,578,58,72,'#e8e6df','#e8e6df',1); rect(747,650,66,22,'#1b1b20','#444',1); T(860,662,'THE POCKET . 64 x 22 x 22 MM, FOLDED 1.5 MM STEEL . THE TICKET STANDS IN IT, PICTURE UP, FACE OUT (ANNOTATION)',s=11); dim(747,690,813,690,'66'); T(762,718,'TAKE ONE',s=11)
 # the list, engraved in the face, aligned right
 T(1920,804,'THE LIBRARY . TOKENS . PROGRAMS . BEGINS TO PRINT','end',13)
 for i,(n,c,b) in enumerate(rows):
