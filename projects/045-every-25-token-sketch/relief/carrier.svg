@@ -1,0 +1,117 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1500" height="900" viewBox="0 0 1500 900">
+<rect width="1500" height="900" fill="#141418"/>
+<text x="30" y="36" font-family="ui-monospace,Menlo,monospace" font-size="15" fill="#e8e6df" text-anchor="start">THE MOTION BOARD CARRIER . ESP32-DEVKITC + 5 x TMC2209 STEPSTICK IN SOCKETS . 120 x 100 MM, 2 LAYERS . NETS BY NAME; SEE CARRIER/README.MD FOR THE NETLIST</text>
+<rect x="40" y="70" width="1420" height="760" fill="none" stroke="#555" stroke-width="1.5"/>
+<text x="50" y="90" font-family="ui-monospace,Menlo,monospace" font-size="10" fill="#555" text-anchor="start">PCB 120 x 100, M3 HOLES ON 110 x 90</text>
+<rect x="70" y="120" width="230" height="150" fill="#1b1b20" stroke="#aaa" stroke-width="1.5"/>
+<text x="185.0" y="140" font-family="ui-monospace,Menlo,monospace" font-size="12" fill="#e8e6df" text-anchor="middle">D1 DRUM 25</text>
+<text x="185.0" y="156" font-family="ui-monospace,Menlo,monospace" font-size="10" fill="#9a9890" text-anchor="middle">TMC2209 STEPSTICK, R_SENSE 0.110</text>
+<text x="185" y="180" font-family="ui-monospace,Menlo,monospace" font-size="10" fill="#6cf" text-anchor="middle">STEP 18 / DIR 23</text>
+<text x="185" y="198" font-family="ui-monospace,Menlo,monospace" font-size="10" fill="#6cf" text-anchor="middle">EN_ALL 33 . UART_DRUMS pin 4</text>
+<text x="185" y="216" font-family="ui-monospace,Menlo,monospace" font-size="10" fill="#9a9890" text-anchor="middle">AD0=0 AD1=0 . CLK to GND</text>
+<text x="185" y="234" font-family="ui-monospace,Menlo,monospace" font-size="10" fill="#9a9890" text-anchor="middle">100 uF 35 V AT VM/GND . VIO 3V3</text>
+<rect x="130" y="80" width="110" height="30" fill="#101014" stroke="#aaa" stroke-width="1.5"/>
+<text x="185" y="99" font-family="ui-monospace,Menlo,monospace" font-size="10" fill="#e8e6df" text-anchor="middle">T1  2B 2A 1A 1B</text>
+<line x1="185" y1="110" x2="185" y2="120" stroke="#aaa" stroke-width="1"/>
+<rect x="340" y="120" width="230" height="150" fill="#1b1b20" stroke="#aaa" stroke-width="1.5"/>
+<text x="455.0" y="140" font-family="ui-monospace,Menlo,monospace" font-size="12" fill="#e8e6df" text-anchor="middle">D2 DRUM 26</text>
+<text x="455.0" y="156" font-family="ui-monospace,Menlo,monospace" font-size="10" fill="#9a9890" text-anchor="middle">TMC2209 STEPSTICK, R_SENSE 0.110</text>
+<text x="455" y="180" font-family="ui-monospace,Menlo,monospace" font-size="10" fill="#6cf" text-anchor="middle">STEP 19 / DIR 5</text>
+<text x="455" y="198" font-family="ui-monospace,Menlo,monospace" font-size="10" fill="#6cf" text-anchor="middle">EN_ALL 33 . UART_DRUMS pin 4</text>
+<text x="455" y="216" font-family="ui-monospace,Menlo,monospace" font-size="10" fill="#9a9890" text-anchor="middle">AD0=1 AD1=0 . CLK to GND</text>
+<text x="455" y="234" font-family="ui-monospace,Menlo,monospace" font-size="10" fill="#9a9890" text-anchor="middle">100 uF 35 V AT VM/GND . VIO 3V3</text>
+<rect x="400" y="80" width="110" height="30" fill="#101014" stroke="#aaa" stroke-width="1.5"/>
+<text x="455" y="99" font-family="ui-monospace,Menlo,monospace" font-size="10" fill="#e8e6df" text-anchor="middle">T2  2B 2A 1A 1B</text>
+<line x1="455" y1="110" x2="455" y2="120" stroke="#aaa" stroke-width="1"/>
+<rect x="610" y="120" width="230" height="150" fill="#1b1b20" stroke="#aaa" stroke-width="1.5"/>
+<text x="725.0" y="140" font-family="ui-monospace,Menlo,monospace" font-size="12" fill="#e8e6df" text-anchor="middle">D3 DRUM 27</text>
+<text x="725.0" y="156" font-family="ui-monospace,Menlo,monospace" font-size="10" fill="#9a9890" text-anchor="middle">TMC2209 STEPSTICK, R_SENSE 0.110</text>
+<text x="725" y="180" font-family="ui-monospace,Menlo,monospace" font-size="10" fill="#6cf" text-anchor="middle">STEP 21 / DIR 13</text>
+<text x="725" y="198" font-family="ui-monospace,Menlo,monospace" font-size="10" fill="#6cf" text-anchor="middle">EN_ALL 33 . UART_DRUMS pin 4</text>
+<text x="725" y="216" font-family="ui-monospace,Menlo,monospace" font-size="10" fill="#9a9890" text-anchor="middle">AD0=0 AD1=1 . CLK to GND</text>
+<text x="725" y="234" font-family="ui-monospace,Menlo,monospace" font-size="10" fill="#9a9890" text-anchor="middle">100 uF 35 V AT VM/GND . VIO 3V3</text>
+<rect x="670" y="80" width="110" height="30" fill="#101014" stroke="#aaa" stroke-width="1.5"/>
+<text x="725" y="99" font-family="ui-monospace,Menlo,monospace" font-size="10" fill="#e8e6df" text-anchor="middle">T3  2B 2A 1A 1B</text>
+<line x1="725" y1="110" x2="725" y2="120" stroke="#aaa" stroke-width="1"/>
+<rect x="880" y="120" width="230" height="150" fill="#1b1b20" stroke="#aaa" stroke-width="1.5"/>
+<text x="995.0" y="140" font-family="ui-monospace,Menlo,monospace" font-size="12" fill="#e8e6df" text-anchor="middle">D4 DRUM 28</text>
+<text x="995.0" y="156" font-family="ui-monospace,Menlo,monospace" font-size="10" fill="#9a9890" text-anchor="middle">TMC2209 STEPSTICK, R_SENSE 0.110</text>
+<text x="995" y="180" font-family="ui-monospace,Menlo,monospace" font-size="10" fill="#6cf" text-anchor="middle">STEP 22 / DIR 14</text>
+<text x="995" y="198" font-family="ui-monospace,Menlo,monospace" font-size="10" fill="#6cf" text-anchor="middle">EN_ALL 33 . UART_DRUMS pin 4</text>
+<text x="995" y="216" font-family="ui-monospace,Menlo,monospace" font-size="10" fill="#9a9890" text-anchor="middle">AD0=1 AD1=1 . CLK to GND</text>
+<text x="995" y="234" font-family="ui-monospace,Menlo,monospace" font-size="10" fill="#9a9890" text-anchor="middle">100 uF 35 V AT VM/GND . VIO 3V3</text>
+<rect x="940" y="80" width="110" height="30" fill="#101014" stroke="#aaa" stroke-width="1.5"/>
+<text x="995" y="99" font-family="ui-monospace,Menlo,monospace" font-size="10" fill="#e8e6df" text-anchor="middle">T4  2B 2A 1A 1B</text>
+<line x1="995" y1="110" x2="995" y2="120" stroke="#aaa" stroke-width="1"/>
+<rect x="1150" y="120" width="230" height="150" fill="#1b1b20" stroke="#aaa" stroke-width="1.5"/>
+<text x="1265.0" y="140" font-family="ui-monospace,Menlo,monospace" font-size="12" fill="#e8e6df" text-anchor="middle">D5 RULER</text>
+<text x="1265.0" y="156" font-family="ui-monospace,Menlo,monospace" font-size="10" fill="#9a9890" text-anchor="middle">TMC2209 STEPSTICK, R_SENSE 0.110</text>
+<text x="1265" y="180" font-family="ui-monospace,Menlo,monospace" font-size="10" fill="#6cf" text-anchor="middle">STEP 27 / DIR 32</text>
+<text x="1265" y="198" font-family="ui-monospace,Menlo,monospace" font-size="10" fill="#6cf" text-anchor="middle">EN_ALL 33 . UART_RULER pin 4</text>
+<text x="1265" y="216" font-family="ui-monospace,Menlo,monospace" font-size="10" fill="#9a9890" text-anchor="middle">AD0=0 AD1=0 . CLK to GND</text>
+<text x="1265" y="234" font-family="ui-monospace,Menlo,monospace" font-size="10" fill="#9a9890" text-anchor="middle">100 uF 35 V AT VM/GND . VIO 3V3</text>
+<rect x="1210" y="80" width="110" height="30" fill="#101014" stroke="#aaa" stroke-width="1.5"/>
+<text x="1265" y="99" font-family="ui-monospace,Menlo,monospace" font-size="10" fill="#e8e6df" text-anchor="middle">T5  2B 2A 1A 1B</text>
+<line x1="1265" y1="110" x2="1265" y2="120" stroke="#aaa" stroke-width="1"/>
+<rect x="70" y="320" width="230" height="60" fill="#1b1b20" stroke="#aaa" stroke-width="1.5"/>
+<text x="185.0" y="340" font-family="ui-monospace,Menlo,monospace" font-size="12" fill="#e8e6df" text-anchor="middle">T6  24 V IN</text>
+<text x="185.0" y="356" font-family="ui-monospace,Menlo,monospace" font-size="10" fill="#9a9890" text-anchor="middle">5.08 MM TERMINAL; F1 5 A; SMBJ33A; 22 uF</text>
+<line x1="300" y1="350" x2="1420" y2="350" stroke="#c9b797" stroke-width="2"/>
+<text x="860" y="342" font-family="ui-monospace,Menlo,monospace" font-size="10" fill="#c9b797" text-anchor="middle">VM, 1.5 MM TRACE, TO PIN 10 OF D1 … D5</text>
+<line x1="185" y1="270" x2="185" y2="350" stroke="#c9b797" stroke-width="1"/>
+<line x1="455" y1="270" x2="455" y2="350" stroke="#c9b797" stroke-width="1"/>
+<line x1="725" y1="270" x2="725" y2="350" stroke="#c9b797" stroke-width="1"/>
+<line x1="995" y1="270" x2="995" y2="350" stroke="#c9b797" stroke-width="1"/>
+<line x1="1265" y1="270" x2="1265" y2="350" stroke="#c9b797" stroke-width="1"/>
+<rect x="340" y="320" width="230" height="60" fill="#1b1b20" stroke="#aaa" stroke-width="1.5"/>
+<text x="455.0" y="340" font-family="ui-monospace,Menlo,monospace" font-size="12" fill="#e8e6df" text-anchor="middle">U2  BUCK 24 V -> 5 V</text>
+<text x="455.0" y="356" font-family="ui-monospace,Menlo,monospace" font-size="10" fill="#9a9890" text-anchor="middle">POLOLU D24V22F5 . TO THE DEVKIT 5V PIN</text>
+<rect x="400" y="520" width="700" height="120" fill="#1b1b20" stroke="#aaa" stroke-width="1.5"/>
+<text x="750.0" y="540" font-family="ui-monospace,Menlo,monospace" font-size="12" fill="#e8e6df" text-anchor="middle">U1  ESP32-DEVKITC V4, 38 PINS</text>
+<text x="750.0" y="556" font-family="ui-monospace,Menlo,monospace" font-size="10" fill="#9a9890" text-anchor="middle">USB AT THE BOARD EDGE, TO THE CONTROLLER</text>
+<text x="410" y="590" font-family="ui-monospace,Menlo,monospace" font-size="9" fill="#6cf" text-anchor="start">18 19 21 22 27</text>
+<text x="410" y="604" font-family="ui-monospace,Menlo,monospace" font-size="9" fill="#9a9890" text-anchor="start">STEP</text>
+<text x="508" y="590" font-family="ui-monospace,Menlo,monospace" font-size="9" fill="#6cf" text-anchor="start">23 5 13 14 32</text>
+<text x="508" y="604" font-family="ui-monospace,Menlo,monospace" font-size="9" fill="#9a9890" text-anchor="start">DIR</text>
+<text x="606" y="590" font-family="ui-monospace,Menlo,monospace" font-size="9" fill="#6cf" text-anchor="start">33</text>
+<text x="606" y="604" font-family="ui-monospace,Menlo,monospace" font-size="9" fill="#9a9890" text-anchor="start">EN_ALL</text>
+<text x="704" y="590" font-family="ui-monospace,Menlo,monospace" font-size="9" fill="#6cf" text-anchor="start">17 via 1k to UART_DRUMS</text>
+<text x="704" y="604" font-family="ui-monospace,Menlo,monospace" font-size="9" fill="#9a9890" text-anchor="start">16 from UART_DRUMS</text>
+<text x="802" y="590" font-family="ui-monospace,Menlo,monospace" font-size="9" fill="#6cf" text-anchor="start">25 via 1k to UART_RULER</text>
+<text x="802" y="604" font-family="ui-monospace,Menlo,monospace" font-size="9" fill="#9a9890" text-anchor="start">26 from UART_RULER</text>
+<text x="900" y="590" font-family="ui-monospace,Menlo,monospace" font-size="9" fill="#6cf" text-anchor="start">34 35 36 39</text>
+<text x="900" y="604" font-family="ui-monospace,Menlo,monospace" font-size="9" fill="#9a9890" text-anchor="start">INDEX 1 … 4, 10k TO 3V3</text>
+<text x="998" y="590" font-family="ui-monospace,Menlo,monospace" font-size="9" fill="#6cf" text-anchor="start">4</text>
+<text x="998" y="604" font-family="ui-monospace,Menlo,monospace" font-size="9" fill="#9a9890" text-anchor="start">HOME, INTERNAL PULL-UP</text>
+<line x1="750" y1="520" x2="750" y2="350" stroke="#6cf" stroke-width="1"/>
+<text x="760" y="440" font-family="ui-monospace,Menlo,monospace" font-size="10" fill="#6cf" text-anchor="start">STEP / DIR / EN / UART TO THE SOCKETS</text>
+<rect x="70" y="420" width="230" height="50" fill="#1b1b20" stroke="#aaa" stroke-width="1.5"/>
+<text x="185.0" y="440" font-family="ui-monospace,Menlo,monospace" font-size="12" fill="#e8e6df" text-anchor="middle">J1  INDEX DRUM 25</text>
+<text x="185.0" y="456" font-family="ui-monospace,Menlo,monospace" font-size="10" fill="#9a9890" text-anchor="middle">JST-XH 3: 3V3 GND SIG . 10k PULL-UP</text>
+<rect x="70" y="480" width="230" height="50" fill="#1b1b20" stroke="#aaa" stroke-width="1.5"/>
+<text x="185.0" y="500" font-family="ui-monospace,Menlo,monospace" font-size="12" fill="#e8e6df" text-anchor="middle">J2  INDEX DRUM 26</text>
+<text x="185.0" y="516" font-family="ui-monospace,Menlo,monospace" font-size="10" fill="#9a9890" text-anchor="middle">JST-XH 3: 3V3 GND SIG . 10k PULL-UP</text>
+<rect x="70" y="540" width="230" height="50" fill="#1b1b20" stroke="#aaa" stroke-width="1.5"/>
+<text x="185.0" y="560" font-family="ui-monospace,Menlo,monospace" font-size="12" fill="#e8e6df" text-anchor="middle">J3  INDEX DRUM 27</text>
+<text x="185.0" y="576" font-family="ui-monospace,Menlo,monospace" font-size="10" fill="#9a9890" text-anchor="middle">JST-XH 3: 3V3 GND SIG . 10k PULL-UP</text>
+<rect x="70" y="600" width="230" height="50" fill="#1b1b20" stroke="#aaa" stroke-width="1.5"/>
+<text x="185.0" y="620" font-family="ui-monospace,Menlo,monospace" font-size="12" fill="#e8e6df" text-anchor="middle">J4  INDEX DRUM 28</text>
+<text x="185.0" y="636" font-family="ui-monospace,Menlo,monospace" font-size="10" fill="#9a9890" text-anchor="middle">JST-XH 3: 3V3 GND SIG . 10k PULL-UP</text>
+<rect x="70" y="660" width="230" height="50" fill="#1b1b20" stroke="#aaa" stroke-width="1.5"/>
+<text x="185.0" y="680" font-family="ui-monospace,Menlo,monospace" font-size="12" fill="#e8e6df" text-anchor="middle">J5  HOME SWITCH</text>
+<text x="185.0" y="696" font-family="ui-monospace,Menlo,monospace" font-size="10" fill="#9a9890" text-anchor="middle">JST-XH 2: SIG GND</text>
+<line x1="300" y1="445" x2="400" y2="580" stroke="#6cf" stroke-width="1"/>
+<line x1="300" y1="685" x2="400" y2="600" stroke="#6cf" stroke-width="1"/>
+<rect x="1150" y="520" width="200" height="50" fill="#1b1b20" stroke="#aaa" stroke-width="1.5"/>
+<text x="1250.0" y="540" font-family="ui-monospace,Menlo,monospace" font-size="12" fill="#e8e6df" text-anchor="middle">JP1  EN_ALL TO GND</text>
+<text x="1250.0" y="556" font-family="ui-monospace,Menlo,monospace" font-size="10" fill="#9a9890" text-anchor="middle">BENCH TEST WITHOUT THE ESP32</text>
+<rect x="1150" y="590" width="200" height="50" fill="#1b1b20" stroke="#aaa" stroke-width="1.5"/>
+<text x="1250.0" y="610" font-family="ui-monospace,Menlo,monospace" font-size="12" fill="#e8e6df" text-anchor="middle">LED 5V . LED 3V3</text>
+<text x="1250.0" y="626" font-family="ui-monospace,Menlo,monospace" font-size="10" fill="#9a9890" text-anchor="middle">TP VM</text>
+<circle cx="60" cy="760" r="2.5" fill="#e8e6df"/>
+<text x="68" y="764" font-family="ui-monospace,Menlo,monospace" font-size="12" fill="#e8e6df" text-anchor="start">ALL ACTIVE PARTS ARE STOCK MODULES IN SOCKETS; THE PCB IS PASSIVE: SOCKETS, TERMINALS, CAPACITORS, PULL-UPS, STRAPS, FUSE, TVS</text>
+<circle cx="60" cy="782" r="2.5" fill="#e8e6df"/>
+<text x="68" y="786" font-family="ui-monospace,Menlo,monospace" font-size="12" fill="#e8e6df" text-anchor="start">MOTOR CURRENTS ARE SET BY THE FIRMWARE OVER UART; THE MODULES' VREF TRIMMERS ARE IGNORED</text>
+<circle cx="60" cy="804" r="2.5" fill="#e8e6df"/>
+<text x="68" y="808" font-family="ui-monospace,Menlo,monospace" font-size="12" fill="#e8e6df" text-anchor="start">VERIFY THE STEPSTICK HEADER AGAINST THE MODULE VENDOR'S DRAWING BEFORE ORDERING THE PCB</text>
+</svg>

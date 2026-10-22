@@ -110,7 +110,7 @@ d.T(130, 160, 'PE -> M6 STUD, PANEL', 'middle', 10, '#3c3')
 box(780, 40, 220, 60, '24 V BUS, 2 BRANCHES', 'EACH FUSED 10 A BLADE, 1.5 MM2'); wire([(700, 90), (780, 70)], '+24 -')
 box(1060, 20, 300, 50, 'CONVEYOR MODULES x 20', 'ADDR 0x00-0x13, BRANCH A'); box(1060, 90, 300, 50, 'LANE MODULES x 16 (+RIM)', 'ADDR 0x20-0x2F, BRANCH B')
 wire([(1000, 60), (1060, 45)], ''); wire([(1000, 80), (1060, 115)], '')
-box(780, 130, 220, 60, 'MOTION BOARD', 'ESP32 + 5 x TMC2209, 24 V'); wire([(700, 100), (740, 100), (740, 160), (780, 160)], '+24 -')
+box(780, 130, 220, 60, 'MOTION BOARD', 'CARRIER: ESP32 DEVKIT + 5 x TMC2209'); wire([(700, 100), (740, 100), (740, 160), (780, 160)], '+24 -')
 box(1060, 170, 140, 50, 'COUNTER STEPPERS x 4', 'NEMA 11, WHEELS 25-28'); box(1220, 170, 140, 50, 'RULER STEPPER', 'NEMA 17, BELT AXIS')
 box(1060, 240, 140, 50, 'WHEEL INDEX x 4', 'OPTICAL, ONE PER DRUM'); box(1220, 240, 140, 50, 'RULER HOME', 'MICROSWITCH AT X = 80')
 wire([(1000, 160), (1060, 195)], '4 x A B'); wire([(1000, 170), (1220, 195)], 'A B'); wire([(1000, 180), (1060, 265)], ''); wire([(1000, 185), (1220, 265)], '')
@@ -147,6 +147,45 @@ d.note(700, 360, 'ONE FRAME PER MODULE PER SECOND, THEN 0x80 0x82 0x8F REFRESH A
 d.note(700, 380, 'MOUNT EVERY MODULE DOT SIDE FLUSH 1 MM BEHIND THE FACE CUT-OUT')
 d.note(700, 400, 'VERIFY THE COMMAND BYTES AGAINST THE DATASHEET OF THE MODULES BOUGHT')
 d.done('address-map.svg')
+
+# ── 5. the motion board carrier: the ESP32, the five driver sockets, the terminals, the nets ──
+d = D(1500, 900, 'THE MOTION BOARD CARRIER . ESP32-DEVKITC + 5 x TMC2209 STEPSTICK IN SOCKETS . 120 x 100 MM, 2 LAYERS . NETS BY NAME; SEE CARRIER/README.MD FOR THE NETLIST')
+box = lambda x, y, w, h, t1, t2='': (d.R(x, y, w, h, '#1b1b20', '#aaa'), d.T(x + w / 2, y + 20, t1, 'middle', 12, '#e8e6df'), d.T(x + w / 2, y + 36, t2, 'middle', 10))
+d.R(40, 70, 1420, 760, 'none', '#555')
+d.T(50, 90, 'PCB 120 x 100, M3 HOLES ON 110 x 90', 'start', 10, '#555')
+# the drivers along the top
+names = ['D1 DRUM 25', 'D2 DRUM 26', 'D3 DRUM 27', 'D4 DRUM 28', 'D5 RULER']
+addr = ['AD0=0 AD1=0', 'AD0=1 AD1=0', 'AD0=0 AD1=1', 'AD0=1 AD1=1', 'AD0=0 AD1=0']
+steps = ['STEP 18 / DIR 23', 'STEP 19 / DIR 5', 'STEP 21 / DIR 13', 'STEP 22 / DIR 14', 'STEP 27 / DIR 32']
+uart = ['UART_DRUMS', 'UART_DRUMS', 'UART_DRUMS', 'UART_DRUMS', 'UART_RULER']
+for i in range(5):
+    x = 70 + i * 270
+    box(x, 120, 230, 150, names[i], 'TMC2209 STEPSTICK, R_SENSE 0.110')
+    d.T(x + 115, 180, steps[i], 'middle', 10, '#6cf'); d.T(x + 115, 198, 'EN_ALL 33 . ' + uart[i] + ' pin 4', 'middle', 10, '#6cf')
+    d.T(x + 115, 216, addr[i] + ' . CLK to GND', 'middle', 10); d.T(x + 115, 234, '100 uF 35 V AT VM/GND . VIO 3V3', 'middle', 10)
+    d.R(x + 60, 80, 110, 30, '#101014', '#aaa'); d.T(x + 115, 99, 'T%d  2B 2A 1A 1B' % (i + 1), 'middle', 10, '#e8e6df')
+    d.L(x + 115, 110, x + 115, 120, '#aaa', 1)
+# the 24 V input and the bus
+box(70, 320, 230, 60, 'T6  24 V IN', '5.08 MM TERMINAL; F1 5 A; SMBJ33A; 22 uF')
+d.L(300, 350, 1420, 350, '#c9b797', 2); d.T(860, 342, 'VM, 1.5 MM TRACE, TO PIN 10 OF D1 … D5', 'middle', 10, '#c9b797')
+for i in range(5): d.L(70 + i * 270 + 115, 270, 70 + i * 270 + 115, 350, '#c9b797', 1)
+box(340, 320, 230, 60, 'U2  BUCK 24 V -> 5 V', 'POLOLU D24V22F5 . TO THE DEVKIT 5V PIN')
+# the ESP32 along the bottom
+box(400, 520, 700, 120, 'U1  ESP32-DEVKITC V4, 38 PINS', 'USB AT THE BOARD EDGE, TO THE CONTROLLER')
+pins = [('18 19 21 22 27', 'STEP'), ('23 5 13 14 32', 'DIR'), ('33', 'EN_ALL'), ('17 via 1k to UART_DRUMS', '16 from UART_DRUMS'), ('25 via 1k to UART_RULER', '26 from UART_RULER'), ('34 35 36 39', 'INDEX 1 … 4, 10k TO 3V3'), ('4', 'HOME, INTERNAL PULL-UP')]
+for i, (a, b) in enumerate(pins):
+    x = 410 + i * 98; d.T(x, 590, a, 'start', 9, '#6cf'); d.T(x, 604, b, 'start', 9)
+d.L(750, 520, 750, 350, '#6cf', 1); d.T(760, 440, 'STEP / DIR / EN / UART TO THE SOCKETS', 'start', 10, '#6cf')
+# the sensor headers along the left
+for i in range(4): box(70, 420 + i * 60, 230, 50, 'J%d  INDEX DRUM %d' % (i + 1, 25 + i), 'JST-XH 3: 3V3 GND SIG . 10k PULL-UP')
+box(70, 660, 230, 50, 'J5  HOME SWITCH', 'JST-XH 2: SIG GND')
+d.L(300, 445, 400, 580, '#6cf', 1); d.L(300, 685, 400, 600, '#6cf', 1)
+# the EN jumper and the LEDs
+box(1150, 520, 200, 50, 'JP1  EN_ALL TO GND', 'BENCH TEST WITHOUT THE ESP32'); box(1150, 590, 200, 50, 'LED 5V . LED 3V3', 'TP VM')
+d.note(60, 760, 'ALL ACTIVE PARTS ARE STOCK MODULES IN SOCKETS; THE PCB IS PASSIVE: SOCKETS, TERMINALS, CAPACITORS, PULL-UPS, STRAPS, FUSE, TVS')
+d.note(60, 782, 'MOTOR CURRENTS ARE SET BY THE FIRMWARE OVER UART; THE MODULES\' VREF TRIMMERS ARE IGNORED')
+d.note(60, 804, 'VERIFY THE STEPSTICK HEADER AGAINST THE MODULE VENDOR\'S DRAWING BEFORE ORDERING THE PCB')
+d.done('carrier.svg')
 
 # ── the ruler's tick positions, for the engraver ──
 total = math.log10(CUM[25])
