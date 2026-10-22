@@ -97,7 +97,7 @@
 <circle cx="40" cy="620" r="2.5" fill="#e8e6df"/>
 <text x="48" y="624" font-family="ui-monospace,Menlo,monospace" font-size="12" fill="#e8e6df" text-anchor="start">24 V: 1.5 MM2 TO EACH BRANCH, STAR FROM THE BUS BAR; EACH MODULE ON ITS MAKER'S CONNECTOR; CHECK POLARITY BEFORE POWER</text>
 <circle cx="40" cy="640" r="2.5" fill="#e8e6df"/>
-<text x="48" y="644" font-family="ui-monospace,Menlo,monospace" font-size="12" fill="#e8e6df" text-anchor="start">STEPPERS: 4 x 0.5 MM2 TO EACH MOTOR; TMC2209 IN UART MODE, STANDSTILL CURRENT 0; INDEX AND HOME SENSORS 3 x 0.25 MM2</text>
+<text x="48" y="644" font-family="ui-monospace,Menlo,monospace" font-size="12" fill="#e8e6df" text-anchor="start">STEPPERS: 4 x 0.5 MM2 TO EACH MOTOR; TMC2209 IN UART MODE, HOLD CURRENT UNDER 10 %; INDEX AND HOME SENSORS 3 x 0.25 MM2</text>
 <circle cx="40" cy="660" r="2.5" fill="#e8e6df"/>
 <text x="48" y="664" font-family="ui-monospace,Menlo,monospace" font-size="12" fill="#e8e6df" text-anchor="start">THE TIME SWITCH CUTS THE 24 V PSU AND THE PRINTER ADAPTER OUTSIDE HOURS; THE 5 V PSU AND THE CONTROLLER STAY ON</text>
 <circle cx="40" cy="680" r="2.5" fill="#e8e6df"/>
