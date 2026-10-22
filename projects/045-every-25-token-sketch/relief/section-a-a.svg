@@ -1,0 +1,63 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1500" height="820" viewBox="0 0 1500 820">
+<rect width="1500" height="820" fill="#141418"/>
+<text x="30" y="36" font-family="ui-monospace,Menlo,monospace" font-size="15" fill="#e8e6df" text-anchor="start">SECTION A-A THROUGH THE RECEIPT SLOT, X = 780 . SCALE 2:1 . THE WALL AT THE LEFT, THE ROOM AT THE RIGHT . MM</text>
+<rect x="240" y="70" width="40" height="720" fill="#1c1c20" stroke="#444" stroke-width="1.5"/>
+<text x="260" y="62" font-family="ui-monospace,Menlo,monospace" font-size="12" fill="#777" text-anchor="middle">WALL</text>
+<rect x="280" y="90" width="200" height="6" fill="#2a2a30" stroke="#aaa" stroke-width="1.5"/>
+<rect x="280" y="764" width="200" height="6" fill="#2a2a30" stroke="#aaa" stroke-width="1.5"/>
+<rect x="280" y="90" width="80" height="80" fill="none" stroke="#888" stroke-width="1.5"/>
+<rect x="280" y="690" width="80" height="80" fill="none" stroke="#888" stroke-width="1.5"/>
+<text x="380" y="60" font-family="ui-monospace,Menlo,monospace" font-size="10" fill="#888" text-anchor="middle">REAR SUB-FRAME 100 DEEP, INSET 150</text>
+<rect x="636" y="90" width="4" height="680" fill="#2a2a30" stroke="#aaa" stroke-width="1.5"/>
+<rect x="480" y="90" width="156" height="6" fill="#2a2a30" stroke="#aaa" stroke-width="1.5"/>
+<rect x="480" y="764" width="156" height="6" fill="#2a2a30" stroke="#aaa" stroke-width="1.5"/>
+<rect x="480" y="130" width="80" height="80" fill="none" stroke="#888" stroke-width="1.5"/>
+<rect x="480" y="690" width="80" height="80" fill="none" stroke="#888" stroke-width="1.5"/>
+<text x="520" y="126" font-family="ui-monospace,Menlo,monospace" font-size="10" fill="#888" text-anchor="middle">REAR FRAME 40x40x3</text>
+<polyline points="280,110 280,190 252,162" fill="#3a3a40" stroke="#aaa" stroke-width="1.5"/>
+<polyline points="252,162 252,250 280,222 280,190" fill="#3a3a40" stroke="#aaa" stroke-width="1.5"/>
+<text x="248" y="290" font-family="ui-monospace,Menlo,monospace" font-size="10" fill="#aaa" text-anchor="end">FRENCH CLEAT, 3 MM STEEL, ON THE SUB-FRAME,</text>
+<text x="248" y="314" font-family="ui-monospace,Menlo,monospace" font-size="10" fill="#aaa" text-anchor="end">WALL HALF ON M8 ANCHORS AT 400</text>
+<circle cx="600" cy="200" r="30" fill="#1b1b20" stroke="#aaa" stroke-width="1.5"/>
+<line x1="590" y1="200" x2="610" y2="200" stroke="#aaa" stroke-width="1"/>
+<line x1="600" y1="190" x2="600" y2="210" stroke="#aaa" stroke-width="1"/>
+<rect x="636" y="154" width="4" height="92" fill="#141418" stroke="#aaa" stroke-width="1.5"/>
+<text x="600" y="164" font-family="ui-monospace,Menlo,monospace" font-size="10" fill="#9a9890" text-anchor="middle">DRUM 30 DIA x 16, AXIS Z = 60</text>
+<rect x="288" y="340" width="192" height="292" fill="#1b1b20" stroke="#aaa" stroke-width="1.5"/>
+<text x="384" y="470" font-family="ui-monospace,Menlo,monospace" font-size="11" fill="#e8e6df" text-anchor="middle">EPSON TM-T20III</text>
+<text x="384" y="498" font-family="ui-monospace,Menlo,monospace" font-size="9" fill="#9a9890" text-anchor="middle">140 x 199 x 146, ON A SHELF IN THE</text>
+<text x="384" y="526" font-family="ui-monospace,Menlo,monospace" font-size="9" fill="#9a9890" text-anchor="middle">SUB-FRAME, MOUTH AT Z = 0; ROLL</text>
+<text x="384" y="554" font-family="ui-monospace,Menlo,monospace" font-size="9" fill="#9a9890" text-anchor="middle">THROUGH THE SIDE HATCH</text>
+<rect x="288" y="632" width="192" height="6" fill="#2a2a30" stroke="#aaa" stroke-width="1.5"/>
+<text x="384" y="662" font-family="ui-monospace,Menlo,monospace" font-size="9" fill="#9a9890" text-anchor="middle">SHELF</text>
+<polyline points="480,354 540,354 636,370" fill="none" stroke="#e8e6df" stroke-width="2"/>
+<polyline points="480,382 540,382 636,398" fill="none" stroke="#e8e6df" stroke-width="2"/>
+<text x="520" y="346" font-family="ui-monospace,Menlo,monospace" font-size="10" fill="#e8e6df" text-anchor="middle">CHUTE, 1 MM STEEL, 62 WIDE</text>
+<rect x="636" y="370" width="4" height="28" fill="#141418" stroke="#aaa" stroke-width="1.5"/>
+<text x="648" y="382" font-family="ui-monospace,Menlo,monospace" font-size="10" fill="#aaa" text-anchor="start">SLOT 120 x 14</text>
+<polyline points="640,398 648,450 648,580" fill="none" stroke="#e8e6df" stroke-width="1.5"/>
+<text x="660" y="490" font-family="ui-monospace,Menlo,monospace" font-size="10" fill="#e8e6df" text-anchor="start">TICKET 58 x 90.75</text>
+<polyline points="640,594 659.0,594 659.0,550" fill="none" stroke="#e8e6df" stroke-width="3"/>
+<rect x="640" y="594" width="19.0" height="3.0" fill="#e8e6df" stroke="#e8e6df" stroke-width="1.5"/>
+<text x="668" y="554" font-family="ui-monospace,Menlo,monospace" font-size="10" fill="#e8e6df" text-anchor="start">POCKET: FLOOR 8, FRONT 22, 1.5 MM</text>
+<text x="668" y="578" font-family="ui-monospace,Menlo,monospace" font-size="10" fill="#e8e6df" text-anchor="start">TCRT5000 IN THE FLOOR AT X = 800</text>
+<text x="668" y="602" font-family="ui-monospace,Menlo,monospace" font-size="10" fill="#aaa" text-anchor="start">FIXED WITH 2 x M3 CSK THROUGH THE FACE</text>
+<line x1="640" y1="398" x2="640" y2="594" stroke="#c9b797" stroke-width="1"/>
+<line x1="635" y1="398" x2="645" y2="398" stroke="#c9b797" stroke-width="1"/>
+<line x1="635" y1="594" x2="645" y2="594" stroke="#c9b797" stroke-width="1"/>
+<text x="580" y="500.0" font-family="ui-monospace,Menlo,monospace" font-size="12" fill="#c9b797" text-anchor="start">98</text>
+<line x1="480" y1="80" x2="640" y2="80" stroke="#c9b797" stroke-width="1"/>
+<line x1="480" y1="75" x2="480" y2="85" stroke="#c9b797" stroke-width="1"/>
+<line x1="640" y1="75" x2="640" y2="85" stroke="#c9b797" stroke-width="1"/>
+<text x="560.0" y="74" font-family="ui-monospace,Menlo,monospace" font-size="12" fill="#c9b797" text-anchor="middle">80</text>
+<line x1="280" y1="80" x2="480" y2="80" stroke="#c9b797" stroke-width="1"/>
+<line x1="280" y1="75" x2="280" y2="85" stroke="#c9b797" stroke-width="1"/>
+<line x1="480" y1="75" x2="480" y2="85" stroke="#c9b797" stroke-width="1"/>
+<text x="380.0" y="74" font-family="ui-monospace,Menlo,monospace" font-size="12" fill="#c9b797" text-anchor="middle">100</text>
+<circle cx="680" cy="690" r="2.5" fill="#e8e6df"/>
+<text x="688" y="694" font-family="ui-monospace,Menlo,monospace" font-size="12" fill="#e8e6df" text-anchor="start">THE FACE: 2 MM STEEL, FOLDED 80, POWDER COATED MATT BLACK RAL 9005, FINE TEXTURE</text>
+<circle cx="680" cy="720" r="2.5" fill="#e8e6df"/>
+<text x="688" y="724" font-family="ui-monospace,Menlo,monospace" font-size="12" fill="#e8e6df" text-anchor="start">THE REAR FRAME: 40 x 40 x 3 ANGLE, 3 BAYS; MODULE RAILS 20 x 20 x 2; THE SUB-FRAME 1700 x 1200 x 100 CARRIES THE CLEAT, THE PRINTER AND THE ELECTRICS</text>
+<circle cx="680" cy="750" r="2.5" fill="#e8e6df"/>
+<text x="688" y="754" font-family="ui-monospace,Menlo,monospace" font-size="12" fill="#e8e6df" text-anchor="start">EARTH: M6 STUD ON THE REAR FRAME, 2.5 MM2 G/Y TO THE INLET PE</text>
+</svg>

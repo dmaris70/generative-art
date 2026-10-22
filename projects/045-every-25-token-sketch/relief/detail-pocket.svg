@@ -1,0 +1,59 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1300" height="760" viewBox="0 0 1300 760">
+<rect width="1300" height="760" fill="#141418"/>
+<text x="30" y="36" font-family="ui-monospace,Menlo,monospace" font-size="15" fill="#e8e6df" text-anchor="start">DETAIL: THE CHUTE, THE SLOT, THE POCKET, THE SENSOR . SCALE 4:1 . MM</text>
+<text x="120" y="80" font-family="ui-monospace,Menlo,monospace" font-size="12" fill="#e8e6df" text-anchor="start">FRONT, SEEN FROM THE ROOM</text>
+<rect x="120" y="110" width="640" height="680" fill="#0b0b0e" stroke="#444" stroke-width="1.5"/>
+<rect x="200" y="150" width="480" height="56" fill="#141418" stroke="#aaa" stroke-width="1.5"/>
+<text x="440" y="182" font-family="ui-monospace,Menlo,monospace" font-size="10" fill="#aaa" text-anchor="middle">SLOT 120 x 14, EDGES DEBURRED, 1 MM RADIUS</text>
+<rect x="324" y="222" width="232" height="288" fill="#e8e6df" stroke="#e8e6df" stroke-width="1.5"/>
+<text x="440" y="366" font-family="ui-monospace,Menlo,monospace" font-size="11" fill="#111" text-anchor="middle">TICKET</text>
+<rect x="306.0" y="510" width="268" height="88" fill="#1b1b20" stroke="#e8e6df" stroke-width="2"/>
+<text x="440" y="562" font-family="ui-monospace,Menlo,monospace" font-size="10" fill="#e8e6df" text-anchor="middle">POCKET FRONT 67 x 22 (64 INSIDE)</text>
+<circle cx="520" cy="614" r="6" fill="none" stroke="#e8e6df" stroke-dasharray="3 2"/>
+<text x="552" y="630" font-family="ui-monospace,Menlo,monospace" font-size="9" fill="#9a9890" text-anchor="start">SENSOR UNDER THE FLOOR</text>
+<circle cx="328" cy="670" r="3" fill="#aaa"/><circle cx="552" cy="670" r="3" fill="#aaa"/>
+<text x="440" y="710" font-family="ui-monospace,Menlo,monospace" font-size="9" fill="#9a9890" text-anchor="middle">M3 CSK x 2 THROUGH THE FACE, NUTS BEHIND</text>
+<text x="368" y="774" font-family="ui-monospace,Menlo,monospace" font-size="11" fill="#9a9890" text-anchor="start">TAKE ONE</text>
+<text x="560" y="774" font-family="ui-monospace,Menlo,monospace" font-size="9" fill="#9a9890" text-anchor="start">ENGRAVED, 11 PT, FILLED WHITE</text>
+<line x1="200" y1="130" x2="680" y2="130" stroke="#c9b797" stroke-width="1"/>
+<line x1="200" y1="125" x2="200" y2="135" stroke="#c9b797" stroke-width="1"/>
+<line x1="680" y1="125" x2="680" y2="135" stroke="#c9b797" stroke-width="1"/>
+<text x="440.0" y="124" font-family="ui-monospace,Menlo,monospace" font-size="12" fill="#c9b797" text-anchor="middle">120</text>
+<line x1="306.0" y1="630" x2="574.0" y2="630" stroke="#c9b797" stroke-width="1"/>
+<line x1="306.0" y1="625" x2="306.0" y2="635" stroke="#c9b797" stroke-width="1"/>
+<line x1="574.0" y1="625" x2="574.0" y2="635" stroke="#c9b797" stroke-width="1"/>
+<text x="440.0" y="640" font-family="ui-monospace,Menlo,monospace" font-size="12" fill="#c9b797" text-anchor="middle">67</text>
+<line x1="704" y1="206" x2="704" y2="598" stroke="#c9b797" stroke-width="1"/>
+<line x1="699" y1="206" x2="709" y2="206" stroke="#c9b797" stroke-width="1"/>
+<line x1="699" y1="598" x2="709" y2="598" stroke="#c9b797" stroke-width="1"/>
+<text x="718" y="406.0" font-family="ui-monospace,Menlo,monospace" font-size="12" fill="#c9b797" text-anchor="start">98</text>
+<text x="780" y="80" font-family="ui-monospace,Menlo,monospace" font-size="12" fill="#e8e6df" text-anchor="start">SIDE, SECTION AT X = 780</text>
+<rect x="1132" y="110" width="8" height="680" fill="#2a2a30" stroke="#aaa" stroke-width="1.5"/>
+<text x="1136" y="130" font-family="ui-monospace,Menlo,monospace" font-size="9" fill="#9a9890" text-anchor="start">FACE</text>
+<rect x="1132" y="150" width="8" height="56" fill="#141418" stroke="#aaa" stroke-width="1.5"/>
+<polyline points="820,118 940,118 1132,150" fill="none" stroke="#e8e6df" stroke-width="2"/>
+<polyline points="820,174 940,174 1132,206" fill="none" stroke="#e8e6df" stroke-width="2"/>
+<text x="828" y="102" font-family="ui-monospace,Menlo,monospace" font-size="9" fill="#9a9890" text-anchor="start">PRINTER MOUTH</text>
+<text x="956" y="254" font-family="ui-monospace,Menlo,monospace" font-size="9" fill="#e8e6df" text-anchor="start">CHUTE 1 MM, 62 INSIDE, 60 DEG</text>
+<polyline points="1140,206 1152,310 1156,590" fill="none" stroke="#e8e6df" stroke-width="1.5"/>
+<text x="1172" y="390" font-family="ui-monospace,Menlo,monospace" font-size="9" fill="#9a9890" text-anchor="start">TICKET, CURL TOWARD THE FACE</text>
+<polyline points="1140,598 1178.0,598 1178.0,510" fill="none" stroke="#e8e6df" stroke-width="4"/>
+<text x="1196" y="534" font-family="ui-monospace,Menlo,monospace" font-size="9" fill="#e8e6df" text-anchor="start">FRONT 22</text>
+<text x="1196" y="614" font-family="ui-monospace,Menlo,monospace" font-size="9" fill="#e8e6df" text-anchor="start">FLOOR 8 x 1.5</text>
+<rect x="1148" y="598" width="24" height="12" fill="#333" stroke="#e8e6df" stroke-width="1"/>
+<text x="1196" y="662" font-family="ui-monospace,Menlo,monospace" font-size="9" fill="#9a9890" text-anchor="start">TCRT5000, LENS UP, DO LOW WITH PAPER</text>
+<line x1="1132" y1="710" x2="1178.0" y2="710" stroke="#c9b797" stroke-width="1"/>
+<line x1="1132" y1="705" x2="1132" y2="715" stroke="#c9b797" stroke-width="1"/>
+<line x1="1178.0" y1="705" x2="1178.0" y2="715" stroke="#c9b797" stroke-width="1"/>
+<text x="1155.0" y="704" font-family="ui-monospace,Menlo,monospace" font-size="12" fill="#c9b797" text-anchor="middle">11.5</text>
+<line x1="820" y1="80" x2="1132" y2="80" stroke="#c9b797" stroke-width="1"/>
+<line x1="820" y1="75" x2="820" y2="85" stroke="#c9b797" stroke-width="1"/>
+<line x1="1132" y1="75" x2="1132" y2="85" stroke="#c9b797" stroke-width="1"/>
+<text x="976.0" y="74" font-family="ui-monospace,Menlo,monospace" font-size="12" fill="#c9b797" text-anchor="middle">78</text>
+<circle cx="120" cy="690" r="2.5" fill="#e8e6df"/>
+<text x="128" y="694" font-family="ui-monospace,Menlo,monospace" font-size="12" fill="#e8e6df" text-anchor="start">THE CHUTE AND THE POCKET ARE ONE FOLDED PART EACH, 1 MM AND 1.5 MM MILD STEEL, POWDER COATED WITH THE FACE; ALL PAPER-TOUCHING EDGES ROLLED OR DEBURRED</text>
+<circle cx="120" cy="710" r="2.5" fill="#e8e6df"/>
+<text x="128" y="714" font-family="ui-monospace,Menlo,monospace" font-size="12" fill="#e8e6df" text-anchor="start">LOAD THE ROLL SO THE PAPER CURLS TOWARD THE FACE; THE LEADING EDGE THEN DROPS INTO THE POCKET</text>
+<circle cx="120" cy="730" r="2.5" fill="#e8e6df"/>
+<text x="128" y="734" font-family="ui-monospace,Menlo,monospace" font-size="12" fill="#e8e6df" text-anchor="start">SET THE SENSOR TRIMMER SO DO IS LOW WITH ONE SHEET 3 MM ABOVE THE LENS AND HIGH WITH NONE</text>
+</svg>
