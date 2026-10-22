@@ -530,7 +530,7 @@ const controls = new OrbitControls(camera, canvas); controls.enableDamping = tru
 // world space: the panel face spans x −1 … 1, y 0.9 … 2.4; the lane centre is (−0.64, 1.70), the counter (0, 1.925), the shelves (1.4, 0.75)
 const VIEWS = [
   { p: [2.9, 1.9, 4.2], t: [0.55, 1.45, 0] }, { p: [0.5, 1.65, 4.6], t: [0.5, 1.55, 0] },
-  { p: [-0.5, 1.78, 1.25], t: [-0.64, 1.70, 0.08] }, { p: [0.12, 1.98, 0.78], t: [0.0, 1.92, 0.08] }, { p: [-0.22, 1.86, 0.62], t: [-0.22, 1.72, 0.08] }, { p: [-0.13, 1.54, 0.74], t: [-0.13, 1.52, 0.05] },
+  { p: [-0.5, 1.78, 1.25], t: [-0.64, 1.70, 0.08] }, { p: [0.12, 1.98, 0.78], t: [0.0, 1.92, 0.08] }, { p: [-0.22, 2.08, 0.42], t: [-0.22, 1.77, 0.12] }, { p: [-0.13, 1.54, 0.74], t: [-0.13, 1.52, 0.05] },
 ];
 let viewFrom = null, viewTo = null, viewT = 1;
 function goView(i) { viewFrom = { p: camera.position.clone(), t: controls.target.clone() }; viewTo = { p: new THREE.Vector3(...VIEWS[i].p), t: new THREE.Vector3(...VIEWS[i].t) }; viewT = 0; for (let j = 0; j < 6; j++) document.getElementById('v' + j).setAttribute('aria-pressed', String(j === i)); }
@@ -616,7 +616,7 @@ label(720, 520, 'THE PROGRAM . 28 WHEELS . THE LAST 24 NEVER TURN', 13, 'left', 
 box(720, 560, 120, 14, 0.006, recess, 0.0005);
 label(860, 567, 'THE RECEIPT . THE PRINTER BEHIND THE PANEL, CUTTING . TAKE THE TICKET', 13, 'left', 1200);
 const tray = new THREE.Group(); scene.add(tray);
-{ const tp = mm(780, 630, 0.0); const wallT = 0.002, tw = 0.14, td = 0.08, th = 0.04;
+{ const tp = mm(780, 630, 0.0); const wallT = 0.002, tw = 0.14, td = 0.10, th = 0.05;   // 140 wide, 100 deep, 50 high: a 90.75 mm ticket lies flat in it
   const mk = (w, h, d, x, y, z) => { const m = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), steel); m.position.set(x, y, z); m.castShadow = true; m.receiveShadow = true; tray.add(m); };
   mk(tw, wallT, td, tp.x, tp.y - th / 2, tp.z + td / 2);                                   // floor
   mk(wallT, th, td, tp.x - tw / 2, tp.y, tp.z + td / 2); mk(wallT, th, td, tp.x + tw / 2, tp.y, tp.z + td / 2);   // sides
@@ -654,18 +654,24 @@ const tickets = [];                                                  // { mesh, 
 const ticketGeom = new THREE.PlaneGeometry(0.058, TICKET_H / DPM / 1000);
 function printTicket(f, no, now) {
   const m = new THREE.Mesh(ticketGeom, new THREE.MeshStandardMaterial({ map: ticketTexture(f, no), roughness: 0.9, side: THREE.DoubleSide }));
-  m.castShadow = true; m.position.set(slotP.x, slotP.y - 0.045, slotP.z + 0.004); m.rotation.set(0.06, 0, 0); scene.add(m);
-  tickets.push({ mesh: m, k: f.k, born: now, inTray: false, slot: tickets.length });
+  m.castShadow = true; m.position.copy(HANG_P); m.quaternion.copy(HANG_Q); scene.add(m);
+  const yaw = Math.sin(f.k * 3) * 0.12, restQ = new THREE.Quaternion().setFromEuler(new THREE.Euler(0, yaw, 0)).multiply(new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(1, 0, 0), -Math.PI / 2));
+  tickets.push({ mesh: m, k: f.k, born: now, inTray: false, restQ, dx: Math.sin(f.k * 7) * 0.004, dz: Math.sin(f.k) * 0.004 });
   while (tickets.length > 24) { const old = tickets.shift(); scene.remove(old.mesh); old.mesh.material.map.dispose(); old.mesh.material.dispose(); }
 }
+// the ticket leaves the slot as the printer feeds it, first line first, so it hangs with its
+// picture lowest and its last line at the slot; cut, it tips forward and lands face up in the
+// tray, its picture toward whoever stands in front, each on the one before with a little yaw
+const HANG_P = new THREE.Vector3(slotP.x, slotP.y - 0.045, slotP.z + 0.004);
+const HANG_Q = new THREE.Quaternion().setFromEuler(new THREE.Euler(0.06, 0, Math.PI));
+const TRAY_FLOOR = trayP.y - 0.025 + 0.0015, TRAY_MID = trayP.z + 0.05;
 function animateTickets(now) {                                       // hang from the slot for 2 s, then fall into the tray and lie in a loose stack
   tickets.forEach((t, i) => {
     const age = now - t.born; if (age < 2) return;
     const u = Math.min(1, (age - 2) / 0.6), e = u * u;
-    const n = tickets.length - 1 - i;                                // 0 = newest, on top
-    const restY = trayP.y - 0.02 + 0.003 + 0.0008 * (tickets.length - 1 - n), restZ = trayP.z + 0.045 + Math.sin(t.k) * 0.004;
-    t.mesh.position.set(slotP.x + Math.sin(t.k * 7) * 0.004, slotP.y - 0.045 + (restY - (slotP.y - 0.045)) * e, slotP.z + 0.004 + (restZ - (slotP.z + 0.004)) * e);
-    t.mesh.rotation.set(0.06 + (Math.PI / 2 - 0.06) * e, (Math.sin(t.k * 3) * 0.12) * e, 0);
+    const restY = TRAY_FLOOR + 0.0008 * i, restZ = TRAY_MID + t.dz;   // i = oldest first, at the bottom
+    t.mesh.position.set(HANG_P.x + t.dx * e, HANG_P.y + (restY - HANG_P.y) * e, HANG_P.z + (restZ - HANG_P.z) * e);
+    t.mesh.quaternion.slerpQuaternions(HANG_Q, t.restQ, e);
     if (u >= 1) t.inTray = true;
   });
 }

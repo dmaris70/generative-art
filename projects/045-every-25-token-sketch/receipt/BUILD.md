@@ -56,7 +56,7 @@ swap the USB cable and the roll, ten minutes, no repair.
 | spare printer | the same model | low | the service plan |
 | controller | Raspberry Pi 4, Node 18+, `receipt.js` as a systemd service with `Restart=always` | low | no moving parts; a reboot resumes at the right program from the clock |
 | paper | 58 mm thermal rolls, 80 m, top-coated archival grade (fade-resistant), phenol-free | low | one roll about two months; keep four; a day's run on a new paper first, thermal stocks differ |
-| tray | a folded steel tray under the slot, 120 × 80 × 40 mm, open to the front | low | the ticket drops into it; whoever is there takes it |
+| tray | a folded steel tray under the slot, 140 × 100 × 50 mm, open to the front, deep enough for a 90.75 mm ticket to lie flat | low | the ticket drops into it; whoever is there takes it |
 | power | the printer's own 24 V supply, 5 V for the controller, one cable to the wall | low | |
 
 Nothing else. No display, no keyboard, no network needed except for a network printer.
