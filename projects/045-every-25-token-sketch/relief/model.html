@@ -40,7 +40,7 @@
 <div class="hud bottom">
   <div class="stat">program <b id="prog">0</b> · takeovers <b id="found">0</b> · printed <b id="printed">0</b> · distinct <b id="distinct">0</b></div>
   <div class="group" role="group" aria-label="view">
-    <button id="v0" aria-pressed="true">three-quarter</button><button id="v1">front</button><button id="v2">the slow lane</button><button id="v3">the counter</button><button id="v4">the receipt</button><button id="v5">the plate</button>
+    <button id="v0" aria-pressed="true">three-quarter</button><button id="v1">front</button><button id="v2">the slow lane</button><button id="v3">the counter</button><button id="v4">the receipt</button><button id="v5">the list</button>
   </div>
   <div class="group" role="group" aria-label="pace">
     <button id="r1" aria-pressed="true">1 a second</button><button id="r8">8 a second</button><button id="pause">pause</button>
@@ -530,7 +530,7 @@ const controls = new OrbitControls(camera, canvas); controls.enableDamping = tru
 // world space: the panel face spans x −1 … 1, y 0.9 … 2.4; the lane centre is (−0.64, 1.70), the counter (0, 1.925), the shelves (1.4, 0.75)
 const VIEWS = [
   { p: [2.9, 1.9, 4.2], t: [0.55, 1.45, 0] }, { p: [0.5, 1.65, 4.6], t: [0.5, 1.55, 0] },
-  { p: [-0.46, 1.72, 1.25], t: [-0.60, 1.65, 0.08] }, { p: [0.15, 1.95, 0.78], t: [0.03, 1.895, 0.08] }, { p: [-0.19, 2.05, 0.42], t: [-0.19, 1.74, 0.12] }, { p: [0.60, 1.35, 1.02], t: [0.60, 1.35, 0.08] },
+  { p: [-0.5, 1.78, 1.25], t: [-0.64, 1.70, 0.08] }, { p: [0.12, 1.98, 0.78], t: [0.0, 1.92, 0.08] }, { p: [-0.22, 2.06, 0.42], t: [-0.22, 1.79, 0.12] }, { p: [0.64, 1.70, 1.0], t: [0.64, 1.70, 0.08] },
 ];
 let viewFrom = null, viewTo = null, viewT = 1;
 function goView(i) { viewFrom = { p: camera.position.clone(), t: controls.target.clone() }; viewTo = { p: new THREE.Vector3(...VIEWS[i].p), t: new THREE.Vector3(...VIEWS[i].t) }; viewT = 0; for (let j = 0; j < 6; j++) document.getElementById('v' + j).setAttribute('aria-pressed', String(j === i)); }
@@ -587,15 +587,11 @@ function field(px, py, n, dither) {
   mesh.instanceMatrix.needsUpdate = true; mesh.instanceColor.needsUpdate = true;
   scene.add(mesh); fields.push(f); return f;
 }
-// the grid: 6 × 4 cells of 280 mm at a 300 mm pitch, 110 mm in from the sides and 160 from top and bottom
-const G = (c, r) => [110 + c * 300, 160 + r * 300];
-const tiles = [...Array(5)].map((_, i) => field(G(i, 0)[0], G(i, 0)[1], 28, false));   // row 1: five tiles, the sixth cell empty
-const lane = field(120, 470, 56, true);                                                   // rows 2–3, columns 1–2: a double cell, the field centred in it
-label(110, 138, 'THE CONVEYOR . THE LAST FIVE PROGRAMS, 28 x 28 DOTS EACH, ONE A SECOND', 13, 'left', 1400);
-const laneLabel = label(110, 1040 + 30, 'THE SLOW LANE . 56 x 56 DOTS', 13, 'left', 1100);
+const tiles = [...Array(5)].map((_, i) => field(80 + i * 300, 80, 28, false));   // the conveyor across the top
+const lane = field(80, 420, 56, true);                                         // the slow lane at the bottom left
 
 // the counter: 28 digit wheels, each a drum with 0 … 9 around it, in a recess
-box(740, 480, 520, 46, 0.03, recess, 0.0005);                 // row 2, columns 3–4: the counter, the slot and the tray
+box(712, 452, 520, 46, 0.03, recess, 0.0005);
 const wheels = [];
 {
   // the drum's texture runs around its rim (u) and along its axis (v): ten digits around, each standing along the rim
@@ -606,25 +602,20 @@ const wheels = [];
   const tex = new THREE.CanvasTexture(c); tex.colorSpace = THREE.SRGBColorSpace;
   const drum = new THREE.CylinderGeometry(0.015, 0.015, 0.0155, 40, 1, true); drum.rotateZ(Math.PI / 2);
   const mat = new THREE.MeshStandardMaterial({ map: tex, roughness: 0.6 });
-  for (let i = 0; i < 28; i++) { const w = new THREE.Mesh(drum, mat); const p = mm(748 + i * 18 + 9, 503, 0.012); w.position.set(p.x, p.y, p.z); w.castShadow = true; scene.add(w); wheels.push({ mesh: w, digit: 0, from: 0, at: -1 }); }
+  for (let i = 0; i < 28; i++) { const w = new THREE.Mesh(drum, mat); const p = mm(720 + i * 18 + 9, 475, 0.012); w.position.set(p.x, p.y, p.z); w.castShadow = true; scene.add(w); wheels.push({ mesh: w, digit: 0, from: 0, at: -1 }); }
   const cap = new THREE.Mesh(new THREE.CylinderGeometry(0.0152, 0.0152, 0.512, 24, 1, true), new THREE.MeshStandardMaterial({ color: 0x0b0b0e, side: THREE.BackSide })); // the dark drum housing's inner wall
-  cap.rotation.z = Math.PI / 2; const cp = mm(748 + 252, 503, 0.012); cap.position.set(cp.x, cp.y, cp.z); scene.add(cap);
+  cap.rotation.z = Math.PI / 2; const cp = mm(720 + 252, 475, 0.012); cap.position.set(cp.x, cp.y, cp.z); scene.add(cap);
 }
-label(748, 548, 'THE PROGRAM . 28 WHEELS . THE LAST 24 NEVER TURN', 13, 'left', 1000);
 
 // the receipt: the slot, a steel tray beneath it, and the cut tickets — each a 58 × 90.75 mm
 // sheet printed as the till printer prints it (the field dithered to 384 dots, seven lines in
 // the printer's font); the newest hangs from the slot for a moment, then drops into the tray
-box(748, 590, 120, 14, 0.006, recess, 0.0005);
-label(888, 597, 'THE RECEIPT . THE PRINTER BEHIND THE PANEL . TAKE THE TICKET', 13, 'left', 1000);
+box(720, 560, 120, 14, 0.006, recess, 0.0005);
 const tray = new THREE.Group(); scene.add(tray);
-{ const tp = mm(808, 660, 0.0); const wallT = 0.002, tw = 0.14, td = 0.10, th = 0.05;   // 140 wide, 100 deep, 50 high: a 90.75 mm ticket lies flat in it
+{ const tp = mm(780, 612, 0.0); const tw = 0.14, td = 0.10;       // a steel shelf under the slot, 140 × 100 mm with a 10 mm front edge: the cut ticket lands on it
   const mk = (w, h, d, x, y, z) => { const m = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), steel); m.position.set(x, y, z); m.castShadow = true; m.receiveShadow = true; tray.add(m); };
-  mk(tw, wallT, td, tp.x, tp.y - th / 2, tp.z + td / 2);                                   // floor
-  mk(wallT, th, td, tp.x - tw / 2, tp.y, tp.z + td / 2); mk(wallT, th, td, tp.x + tw / 2, tp.y, tp.z + td / 2);   // sides
-  mk(tw, th, wallT, tp.x, tp.y, tp.z + td);                                                 // front lip
+  mk(tw, 0.003, td, tp.x, tp.y, tp.z + td / 2); mk(tw, 0.01, 0.002, tp.x, tp.y + 0.0035, tp.z + td - 0.001);
 }
-label(888, 670, 'THE TRAY', 13, 'left', 600);
 const DPM = 8, PAPER_W = 58 * DPM, PRINT_W = 384, TICKET_H = 726;
 const asciiT = (t) => t.replace(/×/g, '*').replace(/÷/g, '/').replace(/−/g, '-').replace(/·/g, '.');
 const JST = 9 * 60, jst = (ms) => { const d = new Date(ms + JST * 60000); return d.toISOString().slice(11, 19) + ' JST'; };
@@ -651,7 +642,7 @@ function ticketTexture(f, no) {                                      // one tick
   for (const [text, bold] of lines) { for (let c2 = 0; c2 < text.length; c2 += 32) { g.font = (bold ? '700 ' : '500 ') + '21px "IBM Plex Mono", ui-monospace, Menlo, Consolas, monospace'; g.fillText(text.slice(c2, c2 + 32), x0, ly + 2); ly += 24; } }
   const tex = new THREE.CanvasTexture(c); tex.colorSpace = THREE.SRGBColorSpace; tex.anisotropy = 8; return tex;
 }
-const slotP = mm(808, 604, 0.004), trayP = mm(808, 660, 0.0);
+const slotP = mm(780, 574, 0.004), trayP = mm(780, 612, 0.0);
 const tickets = [];                                                  // { mesh, k, born, inTray }
 const ticketGeom = new THREE.PlaneGeometry(0.058, TICKET_H / DPM / 1000);
 function printTicket(f, no, now) {
@@ -666,7 +657,7 @@ function printTicket(f, no, now) {
 // tray, its picture toward whoever stands in front, each on the one before with a little yaw
 const HANG_P = new THREE.Vector3(slotP.x, slotP.y - 0.045, slotP.z + 0.004);
 const HANG_Q = new THREE.Quaternion().setFromEuler(new THREE.Euler(0.06, 0, Math.PI));
-const TRAY_FLOOR = trayP.y - 0.025 + 0.0015, TRAY_MID = trayP.z + 0.05;
+const TRAY_FLOOR = trayP.y + 0.003, TRAY_MID = trayP.z + 0.05;
 function animateTickets(now) {                                       // hang from the slot for 2 s, then fall into the tray and lie in a loose stack
   tickets.forEach((t, i) => {
     const age = now - t.born; if (age < 2) return;
@@ -680,27 +671,23 @@ function animateTickets(now) {                                       // hang fro
 // the plate: the library's 25 lengths, their counts, when each begins to print
 {
   const rows = [[1, "5", "DAY 1"], [2, "25", "DAY 1"], [3, "250", "DAY 1"], [4, "2,500", "DAY 1"], [5, "28,125", "DAY 1"], [6, "328,125", "DAY 2"], [7, "3,984,375", "DAY 16"], [8, "5.0 x 10^7", "DAY 186"], [9, "6.3 x 10^8", "YEAR 6"], [10, "8.2 x 10^9", "YEAR 80"], [11, "1.1 x 10^11", "1.0 x 10^3 YEARS"], [12, "1.4 x 10^12", "1.4 x 10^4 YEARS"], [13, "1.9 x 10^13", "1.8 x 10^5 YEARS"], [14, "2.6 x 10^14", "2.4 x 10^6 YEARS"], [15, "3.5 x 10^15", "3.2 x 10^7 YEARS"], [16, "4.7 x 10^16", "4.4 x 10^8 YEARS"], [17, "6.5 x 10^17", "6.0 x 10^9 YEARS"], [18, "9.0 x 10^18", "8.2 x 10^10 YEARS"], [19, "1.2 x 10^20", "1.1 x 10^12 YEARS"], [20, "1.7 x 10^21", "1.6 x 10^13 YEARS"], [21, "2.4 x 10^22", "2.2 x 10^14 YEARS"], [22, "3.4 x 10^23", "3.1 x 10^15 YEARS"], [23, "4.8 x 10^24", "4.3 x 10^16 YEARS"], [24, "6.7 x 10^25", "6.0 x 10^17 YEARS"], [25, "9.5 x 10^26", "8.5 x 10^18 YEARS"]];
-  const c = document.createElement('canvas'); c.width = 1600; c.height = 1600; const g = c.getContext('2d');   // 560 × 560 mm, the slow lane's size, at the bottom right of the grid
-  g.fillStyle = '#17171b'; g.fillRect(0, 0, 1600, 1600); g.strokeStyle = 'rgba(232,230,223,0.25)'; g.lineWidth = 3; g.strokeRect(2, 2, 1596, 1596);
-  g.fillStyle = 'rgba(232,230,223,0.72)'; g.textBaseline = 'middle';
-  g.font = '500 38px "IBM Plex Mono", ui-monospace, Menlo, monospace'; g.fillText('THE LIBRARY . TOKENS . PROGRAMS . BEGINS TO PRINT', 60, 84);
-  g.font = '500 42px "IBM Plex Mono", ui-monospace, Menlo, monospace';
-  rows.forEach(([n, cnt, b], i) => { const y = 172 + i * 52; g.textAlign = 'left'; g.fillText(String(n).padStart(2, ' '), 60, y); g.textAlign = 'right'; g.fillText(cnt, 760, y); g.fillText(b, 1540, y); });
-  g.textAlign = 'left'; g.font = '500 36px "IBM Plex Mono", ui-monospace, Menlo, monospace'; g.fillText('SIX OF THESE LINES WILL EVER BE TRUE FOR YOU', 60, 1516);
+  const c = document.createElement('canvas'); c.width = 1600; c.height = 1600; const g = c.getContext('2d');   // engraved in the face, a 560 × 560 mm block aligned right
+  g.fillStyle = 'rgba(232,230,223,0.6)'; g.textBaseline = 'middle';
+  g.font = '500 36px "IBM Plex Mono", ui-monospace, Menlo, monospace'; g.textAlign = 'right'; g.fillText('THE LIBRARY . TOKENS . PROGRAMS . BEGINS TO PRINT', 1560, 60);
+  g.font = '500 40px "IBM Plex Mono", ui-monospace, Menlo, monospace';
+  rows.forEach(([n, cnt, b], i) => { const y = 150 + i * 52; g.fillText(String(n), 560, y); g.fillText(cnt, 1000, y); g.fillText(b, 1560, y); });
+  g.font = '500 34px "IBM Plex Mono", ui-monospace, Menlo, monospace'; g.fillText('SIX OF THESE LINES WILL EVER BE TRUE FOR YOU', 1560, 1500);
   const tex = new THREE.CanvasTexture(c); tex.colorSpace = THREE.SRGBColorSpace; tex.anisotropy = 8;
-  const plateMesh = new THREE.Mesh(new THREE.BoxGeometry(0.56, 0.56, 0.003), [steel, steel, steel, steel, new THREE.MeshStandardMaterial({ map: tex, roughness: 0.6, metalness: 0.3 }), steel]);
-  const pp = mm(1320 + 280, 770 + 280, 0.0015); plateMesh.position.set(pp.x, pp.y, pp.z); plateMesh.castShadow = true; scene.add(plateMesh);   // rows 3–4, columns 5–6: a double cell like the lane
-  label(1320, 770 + 560 + 30, 'THE PLATE . THE LIBRARY\'S 25 LENGTHS', 13, 'left', 700);
+  const listMesh = new THREE.Mesh(new THREE.PlaneGeometry(0.56, 0.56), new THREE.MeshBasicMaterial({ map: tex, transparent: true, depthWrite: false }));
+  const pp = mm(1360 + 280, 420 + 280, 0.0012); listMesh.position.set(pp.x, pp.y, pp.z); scene.add(listMesh);
 }
-
 // the ruler: brass, engraved, a pointer on a lead screw
-box(110, 1200, 1180, 12, 0.006, brass, 0.001);                // row 4, columns 1–4: the ruler
+box(80, 1374, 1840, 12, 0.006, brass, 0.001);
 const total = Math.log10(Number(Babel.CUM[25]));
-const rx = (k) => 110 + (1180 * Math.log10(Math.max(1, k))) / total;
-for (let n = 1; n <= 25; n++) { const x = rx(Number(Babel.CUM[n])); box(x - 0.75, 1200, 1.5, 12, 0.0072, recess, 0.001); label(x - 10, 1230, String(n), 11, 'left', 80); }
-label(110, 1182, 'THE LIBRARY . PROGRAMS OF 1 TO 25 TOKENS ON A LOG SCALE . THE POINTER ADVANCES BY A HAIR A DAY', 13, 'left', 1600);
+const rx = (k) => 80 + (1840 * Math.log10(Math.max(1, k))) / total;
+for (let n = 1; n <= 25; n++) { const x = rx(Number(Babel.CUM[n])); box(x - 0.75, 1374, 1.5, 12, 0.0072, recess, 0.001); label(x - 10, 1404, String(n), 11, 'left', 80); }
 const pointer = new THREE.Mesh(new THREE.ConeGeometry(0.006, 0.014, 3), new THREE.MeshStandardMaterial({ color: 0xe8e6df, roughness: 0.4 })); pointer.rotation.x = Math.PI; scene.add(pointer);
-label(110, 1430, 'EVERY 25-TOKEN SKETCH . A MACHINE READING A LIBRARY', 13, 'left', 1200);
+label(80, 1460, 'EVERY 25-TOKEN SKETCH . A MACHINE READING A LIBRARY', 13, 'left', 1200);
 const countLabel = { mesh: null };
 
 // ───────────────────────── running ─────────────────────────
@@ -733,7 +720,7 @@ function tick(now) {
     lastNext = s.next;
     for (let i = 0; i < 5; i++) { const k = s.next - 5 + i; if (k >= 0) setField(tiles[i], dots(k, 28, now, false, buf28), now); }
     setCounter(s.next, now);
-    const px = rx(Math.max(1, s.next)); const p = mm(px, 1192, 0.012); pointer.position.set(p.x, p.y, p.z);
+    const px = rx(Math.max(1, s.next)); const p = mm(px, 1366, 0.012); pointer.position.set(p.x, p.y, p.z);
     el.prog.textContent = grp(s.next); el.found.textContent = grp(s.found); el.distinct.textContent = grp(s.distinct);
     const pr = printedOf(M.found()); el.printed.textContent = grp(pr.length);
     if (pr.length !== paperFor) { if (paperFor >= 0 && pr.length > paperFor) { soundPrint(); const f = pr[0]; printTicket(f, pr.length, now); } paperFor = pr.length; }

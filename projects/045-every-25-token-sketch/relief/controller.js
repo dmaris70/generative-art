@@ -87,7 +87,7 @@ if (A.start) {
 const P = Babel.create(canvas(), { rate: RATE, prologue: 0, from, fade: FADE });
 const grp = (n) => String(n).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
 const total = Math.log10(Number(Babel.CUM[25]));
-const RULER_MM = 1180;                                  // the ruler's travel on the panel, 110 … 1290 mm
+const RULER_MM = 1840;                                  // the ruler's travel on the panel, 80 … 1920 mm
 let lastNext = -1;
 setInterval(() => {
   if (rafCb) { const cb = rafCb; rafCb = null; cb(Date.now()); }

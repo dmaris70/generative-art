@@ -3,8 +3,8 @@
 Stage 3 of Every 25-Token Sketch in the room. A black steel panel. The panel
 carries the machine: flip-dot fields that show the programs as they are read, a counter that
 names the program, a printer that keeps the found, a ruler that places the reading in the
-library. Beside the slot a tray takes the cut tickets, and a plate lists the library's
-lengths.
+library. A shelf under the slot takes the cut ticket, and the library's 25 lengths are
+engraved in the face at the right.
 
 Everything on the panel is driven by the unchanged `babel.js`, the same enumeration as the
 screen and the receipt, at one program a second. The relief, the screen and the receipt can
@@ -26,27 +26,25 @@ simulator (`simulator.html`) runs both; `?tiles=25` shows the rejected layout.
 | the conveyor | five flip-dot fields of 28 × 28 dots, the last five programs, oldest left, one new program a second; thresholded | five × 280 × 280 mm at 10 mm pitch, 20 mm apart |
 | the slow lane | one flip-dot field of 56 × 56 dots, the champion, dithered; changes hands when a better unrepeated picture arrives, its claim fading by 0.9999 a program | 560 × 560 mm |
 | the program | 28 electromechanical digit wheels showing the program number with leading zeros; the last 24 wheels never turn | 504 × 30 mm |
-| the receipt | the stage-2 printer behind the panel, its slot in the face, a steel tray beneath; the printer cuts, the ticket drops, whoever is there takes it | 58 mm slot, 140 × 100 × 50 mm tray |
-| the plate | engraved steel at the bottom right of the grid, a square of the slow lane's size: the 25 lengths, their counts, the day or year each begins to print | 560 × 560 mm |
-| the library | a brass bar engraved with the 25 shelves on a log scale, a pointer on a lead screw at the current program; it advances by a hair a day and sits at the far left for all time | 1180 mm travel |
+| the receipt | the stage-2 printer behind the panel, its slot in the face, a steel shelf beneath; the printer cuts, the ticket drops onto the shelf, whoever is there takes it | 58 mm slot, 140 × 100 mm shelf |
+| the list | engraved in the panel's face, aligned right in the lower right field: the 25 lengths, their counts, the day or year each begins to print; static, so engraved, not a plate | a 560 × 560 mm block |
+| the library | a brass bar engraved with the 25 shelves on a log scale, a pointer on a lead screw at the current program; it advances by a hair a day and sits at the far left for all time | 1840 mm travel |
 | engraving | the element names, in the panel's own voice: "THE CONVEYOR . THE LAST FIVE PROGRAMS, ONE A SECOND", "THE PROGRAM . 28 WHEELS . THE LAST 24 NEVER TURN" | 13 pt, filled white |
 
-Layout: a grid of 6 × 4 cells of 280 mm at a 300 mm pitch, 110 mm in from the sides and
-160 mm from top and bottom. Row 1: the five tiles of the conveyor, the sixth cell empty.
-Rows 2–3, columns 1–2: the slow lane, a double cell. Row 2, columns 3–4: the counter, the
-slot and the tray. Rows 3–4, columns 5–6: the plate, a double cell like the lane. Row 4,
-columns 1–4: the ruler. See `elevation.svg`.
+Layout, as first drawn: the conveyor across the top; the slow lane at the bottom left; the
+counter and the slot beside it; the ruler along the foot; the list engraved at the right,
+aligned to the ruler's end. No captions on the steel except the ruler's numbers and the title:
+the wall label explains. See `elevation.svg`.
 
-## The plate and the tray, in place of a bookcase
+## The list and the shelf, in place of a bookcase
 
-The tickets leave the room: the printer cuts, the ticket drops into a steel tray under the
+The tickets leave the room: the printer cuts, the ticket drops onto a steel shelf under the
 slot, and whoever is there takes it. So there is no archive to shelve. What the bookcase was to
 say — that the library has 25 lengths, each about ten times the last, and that the machine
-will print from only the first few — is said by an engraved steel plate, 560 × 560 mm, the
-slow lane's size, the double cell at the bottom right of the grid as the lane is the double cell at the left:
-the 25 lengths, their counts, and the day or year each begins to print at one program a
-second, 6.5 hours a day. The picture the machine holds and the list of what it will never
-reach face each other across the panel.
+will print from only the first few — is engraved in the panel's face at the right, where the
+dark field is, aligned to the ruler's end: the 25 lengths, their counts, and the day or year
+each begins to print at one program a second, 6.5 hours a day. It is static information, so
+it is cut into the steel, not mounted on it.
 
 | tokens | programs | begins to print |
 |---|---|---|
@@ -76,7 +74,7 @@ reach face each other across the panel.
 | 24 | 6.7 x 10^25 | 6.0 x 10^17 YEARS |
 | 25 | 9.5 x 10^26 | 8.5 x 10^18 YEARS |
 
-Six lines of the plate will ever be true for a visitor. The rest are the point.
+Six lines of the list will ever be true for a visitor. The rest are the point.
 
 ## Behaviour
 
@@ -90,7 +88,7 @@ Six lines of the plate will ever be true for a visitor. The rest are the point.
   Under the screen's rule the sixth shelf would need 15 m of shelving within a month; under
   the room's rule it holds a year.
 - The slow lane changes with a visible flip of 3,136 dots; the printer fires at the same moment.
-- The counter steps once a second; the pointer moves 0.1 mm an hour at the current shelf.
+- The counter steps once a second; the pointer moves 0.15 mm an hour at the current shelf.
 - The seventh shelf begins to print on day 16, the eighth on day 186, the ninth in year 6.
 - Outside the room's hours the machine rehearses from program 1, as the screen does.
 - Maintenance is a roll of paper every two months and a spare printer on a shelf; see
@@ -103,10 +101,10 @@ Six lines of the plate will ever be true for a visitor. The rest are the point.
 | flip-dot modules | 36 | AlfaZeta XY5 or equivalent, 28 × 7 dots, 10 mm pitch, RS-485; 20 for the conveyor (four a tile), 16 for the slow lane (two across, eight down) | high: the largest line |
 | digit wheels | 28 | electromechanical or stepper-driven 18 mm wheels, 0 to 9, white on black; the last 24 can be fixed wheels showing 0 | mid |
 | printer | 1 | the stage-2 unit, mounted behind the slot | low |
-| ruler | 1 | brass bar 1180 × 12 mm, engraved; lead screw, stepper, limit switch | mid |
+| ruler | 1 | brass bar 1840 × 12 mm, engraved; lead screw, stepper, limit switch | mid |
 | controller | 1 | Linux box with Node, an RS-485 adapter, a stepper board | low |
 | panel | 1 | folded 2 mm steel, 2000 × 1500 mm, black, with cut-outs and a rear frame; wall-hung on a French cleat; about 60 kg with modules | mid |
-| plate and tray | 1 each | engraved 3 mm steel plate 560 × 560 mm; folded steel tray 140 × 100 × 50 mm, deep enough for a ticket to lie flat | low |
+| shelf | 1 | folded steel shelf 140 × 100 mm with a 10 mm front edge, under the slot; the list is engraved in the panel itself, with the title and the ruler's numbers | low |
 | power | 1 | 24 V for the modules, 24 V for the printer, 12 V for the steppers, one mains cable | low |
 
 The module count is the budget. Halving the conveyor to three tiles saves eight modules and
@@ -132,7 +130,7 @@ the receipt and the ruler is a 16-module relief that still reads as the machine.
    height; look from three metres. Adjust the tile count. One day.
 3. Order the modules, the wheels, the steel. Six to eight weeks' lead.
 4. Assemble on the rear frame; wire the bus; run a day on the bench with the printer. Two weeks.
-5. The plate, engraved; the tray; the wall label.
+5. The engraving (the list, the title, the ruler's numbers); the shelf; the wall label.
 
 Four to six months. Risks: module lead time and price; the panel's weight on the wall; the
 wheels' sourcing (stepper-driven wheels from a signage maker are the fallback).
@@ -145,6 +143,6 @@ wheels' sourcing (stepper-driven wheels from a signage maker are the fallback).
 > holds one picture longer; when it lets go of one it kept long enough, the printer prints it
 > and lets it go: take it. The counter names the program; its last twenty-four wheels will
 > never turn. The pointer on the ruler marks the reading's place in the library and will not
-> leave the left end. The plate lists the twenty-five lengths of the library and the day or
-> year each begins to print; six of its lines will ever be true for you. Nothing here is a
+> leave the left end. The list at the right gives the twenty-five lengths of the library and
+> the day or year each begins to print; six of its lines will ever be true for you. Nothing here is a
 > signal from outside: every dot is a count from inside the machine.
