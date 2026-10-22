@@ -469,7 +469,7 @@ const grp = (n) => String(n).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
 
 // ───────────────────────── the sound: flip-dots, the counter, the printer ─────────────────────────
 // Synthesised, nothing sampled. A flip-dot is a short bright click; many at once are a shower of
-// clicks over the flip time; the slow lane's 3,136 dots are the clatter. A counter wheel is a
+// clicks over the flip time; the slow lane's 3,364 dots are the clatter. A counter wheel is a
 // soft mechanical tick. The printer is a stepper's buzz with the paper's hiss, 0.9 s a ticket.
 // Browsers allow sound only after a gesture, so it starts from the button.
 const audio = { ctx: null, on: false, noise: null, master: null };
@@ -588,7 +588,7 @@ function field(px, py, n, dither) {
   scene.add(mesh); fields.push(f); return f;
 }
 const tiles = [...Array(5)].map((_, i) => field(80 + i * 300, 80, 28, false));   // the conveyor across the top
-const lane = field(80, 420, 56, true);                                         // the slow lane at the bottom left
+const lane = field(80, 420, 58, true);                                         // 58 × 58: exactly two tiles and the gap between them, 580 mm                                         // the slow lane at the bottom left
 
 // the counter: 28 digit wheels, each a drum with 0 … 9 around it, in a recess
 box(712, 452, 520, 46, 0.03, recess, 0.0005);
@@ -691,7 +691,7 @@ label(80, 1460, 'EVERY 25-TOKEN SKETCH . A MACHINE READING A LIBRARY', 13, 'left
 const countLabel = { mesh: null };
 
 // ───────────────────────── running ─────────────────────────
-const buf28 = new Uint8Array(28 * 28), buf56 = new Uint8Array(56 * 56);
+const buf28 = new Uint8Array(28 * 28), buf56 = new Uint8Array(58 * 58);
 let lastNext = -1, lastChamp = -1;
 const tmpM = new THREE.Matrix4(), tmpP = new THREE.Vector3(), tmpQ = new THREE.Quaternion(), tmpS = new THREE.Vector3(1, 1, 1), ax = new THREE.Vector3(1, 0, 0);
 function setField(f, bits, now) { let changed = 0; for (let i = 0; i < f.n * f.n; i++) if (bits[i] !== f.target[i]) { f.target[i] = bits[i]; f.flipAt[i] = now + Math.random() * 0.08; changed++; } soundFlips(changed, f === lane); }
@@ -725,7 +725,7 @@ function tick(now) {
     const pr = printedOf(M.found()); el.printed.textContent = grp(pr.length);
     if (pr.length !== paperFor) { if (paperFor >= 0 && pr.length > paperFor) { soundPrint(); const f = pr[0]; printTicket(f, pr.length, now); } paperFor = pr.length; }
   }
-  if (champ && champ.k !== lastChamp) { lastChamp = champ.k; setField(lane, dots(champ.k, 56, now, true, buf56), now); }
+  if (champ && champ.k !== lastChamp) { lastChamp = champ.k; setField(lane, dots(champ.k, 58, now, true, buf56), now); }
 }
 function resize() { const w = canvas.clientWidth, h = canvas.clientHeight; if (canvas.width !== Math.round(w * renderer.getPixelRatio()) || canvas.height !== Math.round(h * renderer.getPixelRatio())) { renderer.setSize(w, h, false); camera.aspect = w / h; camera.updateProjectionMatrix(); } }
 let last = performance.now();

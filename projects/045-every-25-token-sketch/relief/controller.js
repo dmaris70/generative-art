@@ -3,7 +3,8 @@
 //
 // Runs the unchanged babel.js without a browser at one program a second and drives the flip-dot
 // modules: the conveyor (the last five programs at 28 × 28 dots, thresholded) and the slow lane
-// (56 × 56 dots, ordered-dithered). Frames go out as the AlfaZeta XY5 serial protocol over
+// (58 × 58 dots on the panel, ordered-dithered; driven here as 56 × 56 on 28 × 7 modules, the
+// outer column and row of dots on each side being the frame — see DESIGN.md). Frames go out as the AlfaZeta XY5 serial protocol over
 // RS-485 (0x80, command, address, column bytes, 0x8F), one address per 28 × 7 module; verify the
 // command bytes against the datasheet of the panels bought. The digit counter and the ruler's
 // pointer are stepper axes; this controller prints the targets they should hold (the program

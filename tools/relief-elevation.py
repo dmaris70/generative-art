@@ -21,9 +21,9 @@ for i in range(5):
     T(x+140,y+135,'28 x 28 DOTS','middle',11); T(x+140,y+150,'4 MODULES 28 x 7','middle',11)
 T(80,58,'THE CONVEYOR . THE LAST FIVE PROGRAMS, ONE A SECOND (ANNOTATION, NOT ENGRAVED)',s=11); dim(80,40,360,40,'280'); dim(360,40,380,40,'20')
 # the slow lane at the bottom left
-x,y=80,420; rect(x-8,y-8,576,576)
-for k in range(1,8): line(x,y+k*70,x+560,y+k*70,'#222',1)
-line(x+280,y,x+280,y+560,'#222',1); T(x+280,y+285,'56 x 56 DOTS . 16 MODULES','middle',11); T(80,1010,'THE SLOW LANE (ANNOTATION)',s=11); dim(60,420,60,980,'560',-16)
+x,y=80,420; rect(x-6,y-6,592,592)
+for k in range(1,8): line(x+10,y+10+k*70,x+570,y+10+k*70,'#222',1)
+line(x+290,y+10,x+290,y+570,'#222',1); T(x+290,y+295,'58 x 58 DOTS . 580 MM, THE WIDTH OF TWO TILES AND THEIR GAP','middle',11); T(80,1030,'THE SLOW LANE (ANNOTATION)',s=11); dim(60,420,60,1000,'580',-16)
 # the counter, the slot, the shelf
 rect(712,452,520,46,'#1b1b20')
 for i in range(28): rect(720+i*18,460,16,30,'#101014','#2a2a30',1)
