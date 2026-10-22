@@ -27,22 +27,24 @@ simulator (`simulator.html`) runs both; `?tiles=25` shows the rejected layout.
 | the slow lane | one flip-dot field of 56 × 56 dots, the champion, dithered; changes hands when a better unrepeated picture arrives, its claim fading by 0.9999 a program | 560 × 560 mm |
 | the program | 28 electromechanical digit wheels showing the program number with leading zeros; the last 24 wheels never turn | 504 × 30 mm |
 | the receipt | the stage-2 printer behind the panel, its slot in the face, a steel tray beneath; the printer cuts, the ticket drops, whoever is there takes it | 58 mm slot, 140 × 100 × 50 mm tray |
-| the plate | engraved steel beside the slot: the 25 lengths, their counts, the day or year each begins to print | 300 × 400 mm |
+| the plate | engraved steel at the bottom right of the grid, a square of the slow lane's size: the 25 lengths, their counts, the day or year each begins to print | 560 × 560 mm |
 | the library | a brass bar engraved with the 25 shelves on a log scale, a pointer on a lead screw at the current program; it advances by a hair a day and sits at the far left for all time | 1840 mm travel |
 | engraving | the element names, in the panel's own voice: "THE CONVEYOR . THE LAST FIVE PROGRAMS, ONE A SECOND", "THE PROGRAM . 28 WHEELS . THE LAST 24 NEVER TURN" | 13 pt, filled white |
 
-Layout: the conveyor across the top; the slow lane below it at the left; the counter, the
-receipt slot with its tray, and the plate to its right; the ruler along the foot. See
-`elevation.svg`.
+Layout, on the conveyor's grid of 280 mm squares: the conveyor across the top; below it the
+slow lane at the left and the plate at the right, each a square of two tiles; between them the
+counter and the receipt slot with its tray; the ruler along the foot. See `elevation.svg`.
 
 ## The plate and the tray, in place of a bookcase
 
 The tickets leave the room: the printer cuts, the ticket drops into a steel tray under the
 slot, and whoever is there takes it. So there is no archive to shelve. What the bookcase was to
 say — that the library has 25 lengths, each about ten times the last, and that the machine
-will print from only the first few — is said by an engraved steel plate, 300 × 400 mm, beside
-the slot: the 25 lengths, their counts, and the day or year each begins to print at one
-program a second, 6.5 hours a day.
+will print from only the first few — is said by an engraved steel plate, 560 × 560 mm, the
+slow lane's size, at the bottom right of the grid where the slow lane is at the bottom left:
+the 25 lengths, their counts, and the day or year each begins to print at one program a
+second, 6.5 hours a day. The picture the machine holds and the list of what it will never
+reach face each other across the panel.
 
 | tokens | programs | begins to print |
 |---|---|---|
@@ -102,7 +104,7 @@ Six lines of the plate will ever be true for a visitor. The rest are the point.
 | ruler | 1 | brass bar 1840 × 12 mm, engraved; lead screw, stepper, limit switch | mid |
 | controller | 1 | Linux box with Node, an RS-485 adapter, a stepper board | low |
 | panel | 1 | folded 2 mm steel, 2000 × 1500 mm, black, with cut-outs and a rear frame; wall-hung on a French cleat; about 60 kg with modules | mid |
-| plate and tray | 1 each | engraved 3 mm steel plate 300 × 400 mm; folded steel tray 140 × 100 × 50 mm, deep enough for a ticket to lie flat | low |
+| plate and tray | 1 each | engraved 3 mm steel plate 560 × 560 mm; folded steel tray 140 × 100 × 50 mm, deep enough for a ticket to lie flat | low |
 | power | 1 | 24 V for the modules, 24 V for the printer, 12 V for the steppers, one mains cable | low |
 
 The module count is the budget. Halving the conveyor to three tiles saves eight modules and
