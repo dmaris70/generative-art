@@ -108,7 +108,7 @@ Six lines of the list will ever be true for a visitor. The rest are the point.
 | printer | 1 | the stage-2 unit, mounted behind the slot | low |
 | ruler | 1 | brass bar 1840 × 12 mm, engraved; a 2 m belt-driven linear axis (a camera slider's), NEMA 17 stepper, home switch; homed at power-up and driven open loop from the clock | mid |
 | controller | 1 | Linux box with Node, an RS-485 adapter, a stepper board | low |
-| panel | 1 | folded 2 mm steel, 2000 × 1500 mm, black, with cut-outs and a rear frame; wall-hung on a French cleat; about 60 kg with modules | mid |
+| panel | 1 | folded 2 mm steel, 2000 × 1500 × 80 mm, black, with cut-outs and a rear frame; a rear sub-frame 100 mm deep, inset 150 mm, carries the cleat, the printer and the electrics, so the slab reads 80 deep over a shadow gap; about 80 kg with modules | mid |
 | pocket, sensor, chute | 1 each | folded 1.5 mm steel pocket 64 × 8 × 22 mm under the slot, one ticket standing; a TCRT5000 reflective sensor in its floor; a folded steel chute from the printer's mouth to the slot. The list is engraved in the panel itself, with the title, the ruler's numbers and "TAKE ONE" | low |
 | power | 1 | 24 V for the modules, 24 V for the printer, 12 V for the steppers, one mains cable | low |
 
