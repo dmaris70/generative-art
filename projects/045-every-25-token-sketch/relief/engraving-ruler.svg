@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1840mm" height="12mm" viewBox="0 0 1840 12">
+<rect width="1840" height="12" fill="none" stroke="#f00" stroke-width="0.2"/>
+<!-- THE RULER BAR, 1:1, UNITS MM: brass 1840 x 12 x 3; 25 ticks 1.5 wide, full height, engraved 0.3 deep and filled black. Tick positions from the bar's left end. -->
+<rect x="46.95" y="0" width="1.5" height="12" fill="#000"/>
+<rect x="94.65" y="0" width="1.5" height="12" fill="#000"/>
+<rect x="162.89" y="0" width="1.5" height="12" fill="#000"/>
+<rect x="231.13" y="0" width="1.5" height="12" fill="#000"/>
+<rect x="302.86" y="0" width="1.5" height="12" fill="#000"/>
+<rect x="375.67" y="0" width="1.5" height="12" fill="#000"/>
+<rect x="449.66" y="0" width="1.5" height="12" fill="#000"/>
+<rect x="524.52" y="0" width="1.5" height="12" fill="#000"/>
+<rect x="599.87" y="0" width="1.5" height="12" fill="#000"/>
+<rect x="675.67" y="0" width="1.5" height="12" fill="#000"/>
+<rect x="751.90" y="0" width="1.5" height="12" fill="#000"/>
+<rect x="828.32" y="0" width="1.5" height="12" fill="#000"/>
+<rect x="905.09" y="0" width="1.5" height="12" fill="#000"/>
+<rect x="982.01" y="0" width="1.5" height="12" fill="#000"/>
+<rect x="1059.13" y="0" width="1.5" height="12" fill="#000"/>
+<rect x="1136.52" y="0" width="1.5" height="12" fill="#000"/>
+<rect x="1214.03" y="0" width="1.5" height="12" fill="#000"/>
+<rect x="1291.77" y="0" width="1.5" height="12" fill="#000"/>
+<rect x="1369.72" y="0" width="1.5" height="12" fill="#000"/>
+<rect x="1447.68" y="0" width="1.5" height="12" fill="#000"/>
+<rect x="1525.74" y="0" width="1.5" height="12" fill="#000"/>
+<rect x="1603.99" y="0" width="1.5" height="12" fill="#000"/>
+<rect x="1682.26" y="0" width="1.5" height="12" fill="#000"/>
+<rect x="1760.70" y="0" width="1.5" height="12" fill="#000"/>
+<rect x="1839.25" y="0" width="1.5" height="12" fill="#000"/>
+</svg>

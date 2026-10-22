@@ -1,0 +1,109 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="2000mm" height="1500mm" viewBox="0 0 2000 1500">
+<rect width="2000" height="1500" fill="#fff"/>
+<!-- ENGRAVING ARTWORK, 1:1, UNITS MM. The panel face outline is for registration only (do not cut). Font IBM Plex Mono Medium; font sizes are cap-height-equivalent in mm: 13 pt = 4.6 mm, 14 pt = 4.9 mm, 11 pt = 3.9 mm. Convert text to outlines before cutting. Fill white after engraving. -->
+<rect x="0" y="0" width="2000" height="1500" fill="none" stroke="#f00" stroke-width="0.2"/>
+<text x="1920" y="804" font-family="IBM Plex Mono, Menlo, monospace" font-weight="500" font-size="4.6" fill="#000" text-anchor="end">THE LIBRARY . TOKENS . PROGRAMS . BEGINS TO PRINT</text>
+<text x="1560" y="846.0" font-family="IBM Plex Mono, Menlo, monospace" font-weight="500" font-size="4.9" fill="#000" text-anchor="end">1</text>
+<text x="1710" y="846.0" font-family="IBM Plex Mono, Menlo, monospace" font-weight="500" font-size="4.9" fill="#000" text-anchor="end">5</text>
+<text x="1920" y="846.0" font-family="IBM Plex Mono, Menlo, monospace" font-weight="500" font-size="4.9" fill="#000" text-anchor="end">DAY 1</text>
+<text x="1560" y="864.2" font-family="IBM Plex Mono, Menlo, monospace" font-weight="500" font-size="4.9" fill="#000" text-anchor="end">2</text>
+<text x="1710" y="864.2" font-family="IBM Plex Mono, Menlo, monospace" font-weight="500" font-size="4.9" fill="#000" text-anchor="end">25</text>
+<text x="1920" y="864.2" font-family="IBM Plex Mono, Menlo, monospace" font-weight="500" font-size="4.9" fill="#000" text-anchor="end">DAY 1</text>
+<text x="1560" y="882.4" font-family="IBM Plex Mono, Menlo, monospace" font-weight="500" font-size="4.9" fill="#000" text-anchor="end">3</text>
+<text x="1710" y="882.4" font-family="IBM Plex Mono, Menlo, monospace" font-weight="500" font-size="4.9" fill="#000" text-anchor="end">250</text>
+<text x="1920" y="882.4" font-family="IBM Plex Mono, Menlo, monospace" font-weight="500" font-size="4.9" fill="#000" text-anchor="end">DAY 1</text>
+<text x="1560" y="900.6" font-family="IBM Plex Mono, Menlo, monospace" font-weight="500" font-size="4.9" fill="#000" text-anchor="end">4</text>
+<text x="1710" y="900.6" font-family="IBM Plex Mono, Menlo, monospace" font-weight="500" font-size="4.9" fill="#000" text-anchor="end">2,500</text>
+<text x="1920" y="900.6" font-family="IBM Plex Mono, Menlo, monospace" font-weight="500" font-size="4.9" fill="#000" text-anchor="end">DAY 1</text>
+<text x="1560" y="918.8" font-family="IBM Plex Mono, Menlo, monospace" font-weight="500" font-size="4.9" fill="#000" text-anchor="end">5</text>
+<text x="1710" y="918.8" font-family="IBM Plex Mono, Menlo, monospace" font-weight="500" font-size="4.9" fill="#000" text-anchor="end">28,125</text>
+<text x="1920" y="918.8" font-family="IBM Plex Mono, Menlo, monospace" font-weight="500" font-size="4.9" fill="#000" text-anchor="end">DAY 1</text>
+<text x="1560" y="937.0" font-family="IBM Plex Mono, Menlo, monospace" font-weight="500" font-size="4.9" fill="#000" text-anchor="end">6</text>
+<text x="1710" y="937.0" font-family="IBM Plex Mono, Menlo, monospace" font-weight="500" font-size="4.9" fill="#000" text-anchor="end">328,125</text>
+<text x="1920" y="937.0" font-family="IBM Plex Mono, Menlo, monospace" font-weight="500" font-size="4.9" fill="#000" text-anchor="end">DAY 2</text>
+<text x="1560" y="955.2" font-family="IBM Plex Mono, Menlo, monospace" font-weight="500" font-size="4.9" fill="#000" text-anchor="end">7</text>
+<text x="1710" y="955.2" font-family="IBM Plex Mono, Menlo, monospace" font-weight="500" font-size="4.9" fill="#000" text-anchor="end">3,984,375</text>
+<text x="1920" y="955.2" font-family="IBM Plex Mono, Menlo, monospace" font-weight="500" font-size="4.9" fill="#000" text-anchor="end">DAY 16</text>
+<text x="1560" y="973.4" font-family="IBM Plex Mono, Menlo, monospace" font-weight="500" font-size="4.9" fill="#000" text-anchor="end">8</text>
+<text x="1710" y="973.4" font-family="IBM Plex Mono, Menlo, monospace" font-weight="500" font-size="4.9" fill="#000" text-anchor="end">5.0 x 10^7</text>
+<text x="1920" y="973.4" font-family="IBM Plex Mono, Menlo, monospace" font-weight="500" font-size="4.9" fill="#000" text-anchor="end">DAY 186</text>
+<text x="1560" y="991.6" font-family="IBM Plex Mono, Menlo, monospace" font-weight="500" font-size="4.9" fill="#000" text-anchor="end">9</text>
+<text x="1710" y="991.6" font-family="IBM Plex Mono, Menlo, monospace" font-weight="500" font-size="4.9" fill="#000" text-anchor="end">6.3 x 10^8</text>
+<text x="1920" y="991.6" font-family="IBM Plex Mono, Menlo, monospace" font-weight="500" font-size="4.9" fill="#000" text-anchor="end">YEAR 6</text>
+<text x="1560" y="1009.8" font-family="IBM Plex Mono, Menlo, monospace" font-weight="500" font-size="4.9" fill="#000" text-anchor="end">10</text>
+<text x="1710" y="1009.8" font-family="IBM Plex Mono, Menlo, monospace" font-weight="500" font-size="4.9" fill="#000" text-anchor="end">8.2 x 10^9</text>
+<text x="1920" y="1009.8" font-family="IBM Plex Mono, Menlo, monospace" font-weight="500" font-size="4.9" fill="#000" text-anchor="end">YEAR 80</text>
+<text x="1560" y="1028.0" font-family="IBM Plex Mono, Menlo, monospace" font-weight="500" font-size="4.9" fill="#000" text-anchor="end">11</text>
+<text x="1710" y="1028.0" font-family="IBM Plex Mono, Menlo, monospace" font-weight="500" font-size="4.9" fill="#000" text-anchor="end">1.1 x 10^11</text>
+<text x="1920" y="1028.0" font-family="IBM Plex Mono, Menlo, monospace" font-weight="500" font-size="4.9" fill="#000" text-anchor="end">1.0 x 10^3 YEARS</text>
+<text x="1560" y="1046.2" font-family="IBM Plex Mono, Menlo, monospace" font-weight="500" font-size="4.9" fill="#000" text-anchor="end">12</text>
+<text x="1710" y="1046.2" font-family="IBM Plex Mono, Menlo, monospace" font-weight="500" font-size="4.9" fill="#000" text-anchor="end">1.4 x 10^12</text>
+<text x="1920" y="1046.2" font-family="IBM Plex Mono, Menlo, monospace" font-weight="500" font-size="4.9" fill="#000" text-anchor="end">1.4 x 10^4 YEARS</text>
+<text x="1560" y="1064.4" font-family="IBM Plex Mono, Menlo, monospace" font-weight="500" font-size="4.9" fill="#000" text-anchor="end">13</text>
+<text x="1710" y="1064.4" font-family="IBM Plex Mono, Menlo, monospace" font-weight="500" font-size="4.9" fill="#000" text-anchor="end">1.9 x 10^13</text>
+<text x="1920" y="1064.4" font-family="IBM Plex Mono, Menlo, monospace" font-weight="500" font-size="4.9" fill="#000" text-anchor="end">1.8 x 10^5 YEARS</text>
+<text x="1560" y="1082.6" font-family="IBM Plex Mono, Menlo, monospace" font-weight="500" font-size="4.9" fill="#000" text-anchor="end">14</text>
+<text x="1710" y="1082.6" font-family="IBM Plex Mono, Menlo, monospace" font-weight="500" font-size="4.9" fill="#000" text-anchor="end">2.6 x 10^14</text>
+<text x="1920" y="1082.6" font-family="IBM Plex Mono, Menlo, monospace" font-weight="500" font-size="4.9" fill="#000" text-anchor="end">2.4 x 10^6 YEARS</text>
+<text x="1560" y="1100.8" font-family="IBM Plex Mono, Menlo, monospace" font-weight="500" font-size="4.9" fill="#000" text-anchor="end">15</text>
+<text x="1710" y="1100.8" font-family="IBM Plex Mono, Menlo, monospace" font-weight="500" font-size="4.9" fill="#000" text-anchor="end">3.5 x 10^15</text>
+<text x="1920" y="1100.8" font-family="IBM Plex Mono, Menlo, monospace" font-weight="500" font-size="4.9" fill="#000" text-anchor="end">3.2 x 10^7 YEARS</text>
+<text x="1560" y="1119.0" font-family="IBM Plex Mono, Menlo, monospace" font-weight="500" font-size="4.9" fill="#000" text-anchor="end">16</text>
+<text x="1710" y="1119.0" font-family="IBM Plex Mono, Menlo, monospace" font-weight="500" font-size="4.9" fill="#000" text-anchor="end">4.7 x 10^16</text>
+<text x="1920" y="1119.0" font-family="IBM Plex Mono, Menlo, monospace" font-weight="500" font-size="4.9" fill="#000" text-anchor="end">4.4 x 10^8 YEARS</text>
+<text x="1560" y="1137.2" font-family="IBM Plex Mono, Menlo, monospace" font-weight="500" font-size="4.9" fill="#000" text-anchor="end">17</text>
+<text x="1710" y="1137.2" font-family="IBM Plex Mono, Menlo, monospace" font-weight="500" font-size="4.9" fill="#000" text-anchor="end">6.5 x 10^17</text>
+<text x="1920" y="1137.2" font-family="IBM Plex Mono, Menlo, monospace" font-weight="500" font-size="4.9" fill="#000" text-anchor="end">6.0 x 10^9 YEARS</text>
+<text x="1560" y="1155.4" font-family="IBM Plex Mono, Menlo, monospace" font-weight="500" font-size="4.9" fill="#000" text-anchor="end">18</text>
+<text x="1710" y="1155.4" font-family="IBM Plex Mono, Menlo, monospace" font-weight="500" font-size="4.9" fill="#000" text-anchor="end">9.0 x 10^18</text>
+<text x="1920" y="1155.4" font-family="IBM Plex Mono, Menlo, monospace" font-weight="500" font-size="4.9" fill="#000" text-anchor="end">8.2 x 10^10 YEARS</text>
+<text x="1560" y="1173.6" font-family="IBM Plex Mono, Menlo, monospace" font-weight="500" font-size="4.9" fill="#000" text-anchor="end">19</text>
+<text x="1710" y="1173.6" font-family="IBM Plex Mono, Menlo, monospace" font-weight="500" font-size="4.9" fill="#000" text-anchor="end">1.2 x 10^20</text>
+<text x="1920" y="1173.6" font-family="IBM Plex Mono, Menlo, monospace" font-weight="500" font-size="4.9" fill="#000" text-anchor="end">1.1 x 10^12 YEARS</text>
+<text x="1560" y="1191.8" font-family="IBM Plex Mono, Menlo, monospace" font-weight="500" font-size="4.9" fill="#000" text-anchor="end">20</text>
+<text x="1710" y="1191.8" font-family="IBM Plex Mono, Menlo, monospace" font-weight="500" font-size="4.9" fill="#000" text-anchor="end">1.7 x 10^21</text>
+<text x="1920" y="1191.8" font-family="IBM Plex Mono, Menlo, monospace" font-weight="500" font-size="4.9" fill="#000" text-anchor="end">1.6 x 10^13 YEARS</text>
+<text x="1560" y="1210.0" font-family="IBM Plex Mono, Menlo, monospace" font-weight="500" font-size="4.9" fill="#000" text-anchor="end">21</text>
+<text x="1710" y="1210.0" font-family="IBM Plex Mono, Menlo, monospace" font-weight="500" font-size="4.9" fill="#000" text-anchor="end">2.4 x 10^22</text>
+<text x="1920" y="1210.0" font-family="IBM Plex Mono, Menlo, monospace" font-weight="500" font-size="4.9" fill="#000" text-anchor="end">2.2 x 10^14 YEARS</text>
+<text x="1560" y="1228.2" font-family="IBM Plex Mono, Menlo, monospace" font-weight="500" font-size="4.9" fill="#000" text-anchor="end">22</text>
+<text x="1710" y="1228.2" font-family="IBM Plex Mono, Menlo, monospace" font-weight="500" font-size="4.9" fill="#000" text-anchor="end">3.4 x 10^23</text>
+<text x="1920" y="1228.2" font-family="IBM Plex Mono, Menlo, monospace" font-weight="500" font-size="4.9" fill="#000" text-anchor="end">3.1 x 10^15 YEARS</text>
+<text x="1560" y="1246.4" font-family="IBM Plex Mono, Menlo, monospace" font-weight="500" font-size="4.9" fill="#000" text-anchor="end">23</text>
+<text x="1710" y="1246.4" font-family="IBM Plex Mono, Menlo, monospace" font-weight="500" font-size="4.9" fill="#000" text-anchor="end">4.8 x 10^24</text>
+<text x="1920" y="1246.4" font-family="IBM Plex Mono, Menlo, monospace" font-weight="500" font-size="4.9" fill="#000" text-anchor="end">4.3 x 10^16 YEARS</text>
+<text x="1560" y="1264.6" font-family="IBM Plex Mono, Menlo, monospace" font-weight="500" font-size="4.9" fill="#000" text-anchor="end">24</text>
+<text x="1710" y="1264.6" font-family="IBM Plex Mono, Menlo, monospace" font-weight="500" font-size="4.9" fill="#000" text-anchor="end">6.7 x 10^25</text>
+<text x="1920" y="1264.6" font-family="IBM Plex Mono, Menlo, monospace" font-weight="500" font-size="4.9" fill="#000" text-anchor="end">6.0 x 10^17 YEARS</text>
+<text x="1560" y="1282.8" font-family="IBM Plex Mono, Menlo, monospace" font-weight="500" font-size="4.9" fill="#000" text-anchor="end">25</text>
+<text x="1710" y="1282.8" font-family="IBM Plex Mono, Menlo, monospace" font-weight="500" font-size="4.9" fill="#000" text-anchor="end">9.5 x 10^26</text>
+<text x="1920" y="1282.8" font-family="IBM Plex Mono, Menlo, monospace" font-weight="500" font-size="4.9" fill="#000" text-anchor="end">8.5 x 10^18 YEARS</text>
+<text x="1920" y="1316" font-family="IBM Plex Mono, Menlo, monospace" font-weight="500" font-size="4.6" fill="#000" text-anchor="end">SIX OF THESE LINES WILL EVER BE TRUE FOR YOU</text>
+<text x="762" y="716" font-family="IBM Plex Mono, Menlo, monospace" font-weight="500" font-size="3.9" fill="#000" text-anchor="start">TAKE ONE</text>
+<text x="80" y="1460" font-family="IBM Plex Mono, Menlo, monospace" font-weight="500" font-size="4.6" fill="#000" text-anchor="start">EVERY 25-TOKEN SKETCH . A MACHINE READING A LIBRARY</text>
+<text x="127.7" y="1404" font-family="IBM Plex Mono, Menlo, monospace" font-weight="500" font-size="3.9" fill="#000" text-anchor="middle">1</text>
+<text x="175.4" y="1404" font-family="IBM Plex Mono, Menlo, monospace" font-weight="500" font-size="3.9" fill="#000" text-anchor="middle">2</text>
+<text x="243.6" y="1404" font-family="IBM Plex Mono, Menlo, monospace" font-weight="500" font-size="3.9" fill="#000" text-anchor="middle">3</text>
+<text x="311.9" y="1404" font-family="IBM Plex Mono, Menlo, monospace" font-weight="500" font-size="3.9" fill="#000" text-anchor="middle">4</text>
+<text x="383.6" y="1404" font-family="IBM Plex Mono, Menlo, monospace" font-weight="500" font-size="3.9" fill="#000" text-anchor="middle">5</text>
+<text x="456.4" y="1404" font-family="IBM Plex Mono, Menlo, monospace" font-weight="500" font-size="3.9" fill="#000" text-anchor="middle">6</text>
+<text x="530.4" y="1404" font-family="IBM Plex Mono, Menlo, monospace" font-weight="500" font-size="3.9" fill="#000" text-anchor="middle">7</text>
+<text x="605.3" y="1404" font-family="IBM Plex Mono, Menlo, monospace" font-weight="500" font-size="3.9" fill="#000" text-anchor="middle">8</text>
+<text x="680.6" y="1404" font-family="IBM Plex Mono, Menlo, monospace" font-weight="500" font-size="3.9" fill="#000" text-anchor="middle">9</text>
+<text x="756.4" y="1404" font-family="IBM Plex Mono, Menlo, monospace" font-weight="500" font-size="3.9" fill="#000" text-anchor="middle">10</text>
+<text x="832.7" y="1404" font-family="IBM Plex Mono, Menlo, monospace" font-weight="500" font-size="3.9" fill="#000" text-anchor="middle">11</text>
+<text x="909.1" y="1404" font-family="IBM Plex Mono, Menlo, monospace" font-weight="500" font-size="3.9" fill="#000" text-anchor="middle">12</text>
+<text x="985.8" y="1404" font-family="IBM Plex Mono, Menlo, monospace" font-weight="500" font-size="3.9" fill="#000" text-anchor="middle">13</text>
+<text x="1062.8" y="1404" font-family="IBM Plex Mono, Menlo, monospace" font-weight="500" font-size="3.9" fill="#000" text-anchor="middle">14</text>
+<text x="1139.9" y="1404" font-family="IBM Plex Mono, Menlo, monospace" font-weight="500" font-size="3.9" fill="#000" text-anchor="middle">15</text>
+<text x="1217.3" y="1404" font-family="IBM Plex Mono, Menlo, monospace" font-weight="500" font-size="3.9" fill="#000" text-anchor="middle">16</text>
+<text x="1294.8" y="1404" font-family="IBM Plex Mono, Menlo, monospace" font-weight="500" font-size="3.9" fill="#000" text-anchor="middle">17</text>
+<text x="1372.5" y="1404" font-family="IBM Plex Mono, Menlo, monospace" font-weight="500" font-size="3.9" fill="#000" text-anchor="middle">18</text>
+<text x="1450.5" y="1404" font-family="IBM Plex Mono, Menlo, monospace" font-weight="500" font-size="3.9" fill="#000" text-anchor="middle">19</text>
+<text x="1528.4" y="1404" font-family="IBM Plex Mono, Menlo, monospace" font-weight="500" font-size="3.9" fill="#000" text-anchor="middle">20</text>
+<text x="1606.5" y="1404" font-family="IBM Plex Mono, Menlo, monospace" font-weight="500" font-size="3.9" fill="#000" text-anchor="middle">21</text>
+<text x="1684.7" y="1404" font-family="IBM Plex Mono, Menlo, monospace" font-weight="500" font-size="3.9" fill="#000" text-anchor="middle">22</text>
+<text x="1763.0" y="1404" font-family="IBM Plex Mono, Menlo, monospace" font-weight="500" font-size="3.9" fill="#000" text-anchor="middle">23</text>
+<text x="1841.4" y="1404" font-family="IBM Plex Mono, Menlo, monospace" font-weight="500" font-size="3.9" fill="#000" text-anchor="middle">24</text>
+<text x="1920.0" y="1404" font-family="IBM Plex Mono, Menlo, monospace" font-weight="500" font-size="3.9" fill="#000" text-anchor="middle">25</text>
+</svg>

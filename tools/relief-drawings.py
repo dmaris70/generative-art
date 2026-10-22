@@ -188,6 +188,29 @@ d.note(60, 782, 'MOTOR CURRENTS ARE SET BY THE FIRMWARE OVER UART; THE MODULES\'
 d.note(60, 804, 'VERIFY THE STEPSTICK HEADER AGAINST THE MODULE VENDOR\'S DRAWING BEFORE ORDERING THE PCB')
 d.done('carrier.svg')
 
+# ── 6. the engraving artwork, 1:1 in mm, for the engraver: black on white, text as text (convert to outlines in IBM Plex Mono Medium) ──
+rows_e = [[1,"5","DAY 1"],[2,"25","DAY 1"],[3,"250","DAY 1"],[4,"2,500","DAY 1"],[5,"28,125","DAY 1"],[6,"328,125","DAY 2"],[7,"3,984,375","DAY 16"],[8,"5.0 x 10^7","DAY 186"],[9,"6.3 x 10^8","YEAR 6"],[10,"8.2 x 10^9","YEAR 80"],[11,"1.1 x 10^11","1.0 x 10^3 YEARS"],[12,"1.4 x 10^12","1.4 x 10^4 YEARS"],[13,"1.9 x 10^13","1.8 x 10^5 YEARS"],[14,"2.6 x 10^14","2.4 x 10^6 YEARS"],[15,"3.5 x 10^15","3.2 x 10^7 YEARS"],[16,"4.7 x 10^16","4.4 x 10^8 YEARS"],[17,"6.5 x 10^17","6.0 x 10^9 YEARS"],[18,"9.0 x 10^18","8.2 x 10^10 YEARS"],[19,"1.2 x 10^20","1.1 x 10^12 YEARS"],[20,"1.7 x 10^21","1.6 x 10^13 YEARS"],[21,"2.4 x 10^22","2.2 x 10^14 YEARS"],[22,"3.4 x 10^23","3.1 x 10^15 YEARS"],[23,"4.8 x 10^24","4.3 x 10^16 YEARS"],[24,"6.7 x 10^25","6.0 x 10^17 YEARS"],[25,"9.5 x 10^26","8.5 x 10^18 YEARS"]]
+FE = 'font-family="IBM Plex Mono, Menlo, monospace" font-weight="500"'
+e = ['<svg xmlns="http://www.w3.org/2000/svg" width="2000mm" height="1500mm" viewBox="0 0 2000 1500">', '<rect width="2000" height="1500" fill="#fff"/>',
+     '<!-- ENGRAVING ARTWORK, 1:1, UNITS MM. The panel face outline is for registration only (do not cut). Font IBM Plex Mono Medium; font sizes are cap-height-equivalent in mm: 13 pt = 4.6 mm, 14 pt = 4.9 mm, 11 pt = 3.9 mm. Convert text to outlines before cutting. Fill white after engraving. -->',
+     '<rect x="0" y="0" width="2000" height="1500" fill="none" stroke="#f00" stroke-width="0.2"/>']
+TE = lambda x, y, t, a='start', sz=4.6: e.append(f'<text x="{x}" y="{y}" {FE} font-size="{sz}" fill="#000" text-anchor="{a}">{t}</text>')
+TE(1920, 804, 'THE LIBRARY . TOKENS . PROGRAMS . BEGINS TO PRINT', 'end', 4.6)
+for i, (n, c, b) in enumerate(rows_e):
+    yy = round(780 + 66 + i * 18.2, 1); TE(1560, yy, str(n), 'end', 4.9); TE(1710, yy, c, 'end', 4.9); TE(1920, yy, b, 'end', 4.9)
+TE(1920, 1316, 'SIX OF THESE LINES WILL EVER BE TRUE FOR YOU', 'end', 4.6)
+TE(762, 716, 'TAKE ONE', 'start', 3.9)
+TE(80, 1460, 'EVERY 25-TOKEN SKETCH . A MACHINE READING A LIBRARY', 'start', 4.6)
+for n in range(1, 26):
+    xx = 80 + 1840 * math.log10(CUM[n]) / math.log10(CUM[25]); TE(f'{xx:.1f}', 1404, str(n), 'middle', 3.9)
+e.append('</svg>'); open(os.path.join(out, 'engraving-face.svg'), 'w').write('\n'.join(e))
+# the brass bar: 1840 × 12, 25 tick lines 1.5 wide, engraved 0.3 deep
+r = ['<svg xmlns="http://www.w3.org/2000/svg" width="1840mm" height="12mm" viewBox="0 0 1840 12">', '<rect width="1840" height="12" fill="none" stroke="#f00" stroke-width="0.2"/>',
+     '<!-- THE RULER BAR, 1:1, UNITS MM: brass 1840 x 12 x 3; 25 ticks 1.5 wide, full height, engraved 0.3 deep and filled black. Tick positions from the bar\'s left end. -->']
+for n in range(1, 26):
+    xx = 1840 * math.log10(CUM[n]) / math.log10(CUM[25]); r.append(f'<rect x="{xx - 0.75:.2f}" y="0" width="1.5" height="12" fill="#000"/>')
+r.append('</svg>'); open(os.path.join(out, 'engraving-ruler.svg'), 'w').write('\n'.join(r))
+
 # ── the ruler's tick positions, for the engraver ──
 total = math.log10(CUM[25])
 with open(os.path.join(out, 'ruler-ticks.md'), 'w') as f:
