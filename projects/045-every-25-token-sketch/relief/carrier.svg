@@ -66,23 +66,23 @@
 <rect x="340" y="320" width="230" height="60" fill="#1b1b20" stroke="#aaa" stroke-width="1.5"/>
 <text x="455.0" y="340" font-family="ui-monospace,Menlo,monospace" font-size="12" fill="#e8e6df" text-anchor="middle">U2  BUCK 24 V -> 5 V</text>
 <text x="455.0" y="356" font-family="ui-monospace,Menlo,monospace" font-size="10" fill="#9a9890" text-anchor="middle">POLOLU D24V22F5 . TO THE DEVKIT 5V PIN</text>
-<rect x="400" y="520" width="700" height="120" fill="#1b1b20" stroke="#aaa" stroke-width="1.5"/>
-<text x="750.0" y="540" font-family="ui-monospace,Menlo,monospace" font-size="12" fill="#e8e6df" text-anchor="middle">U1  ESP32-DEVKITC V4, 38 PINS</text>
-<text x="750.0" y="556" font-family="ui-monospace,Menlo,monospace" font-size="10" fill="#9a9890" text-anchor="middle">USB AT THE BOARD EDGE, TO THE CONTROLLER</text>
-<text x="410" y="590" font-family="ui-monospace,Menlo,monospace" font-size="9" fill="#6cf" text-anchor="start">18 19 21 22 27</text>
-<text x="410" y="604" font-family="ui-monospace,Menlo,monospace" font-size="9" fill="#9a9890" text-anchor="start">STEP</text>
-<text x="508" y="590" font-family="ui-monospace,Menlo,monospace" font-size="9" fill="#6cf" text-anchor="start">23 5 13 14 32</text>
-<text x="508" y="604" font-family="ui-monospace,Menlo,monospace" font-size="9" fill="#9a9890" text-anchor="start">DIR</text>
-<text x="606" y="590" font-family="ui-monospace,Menlo,monospace" font-size="9" fill="#6cf" text-anchor="start">33</text>
-<text x="606" y="604" font-family="ui-monospace,Menlo,monospace" font-size="9" fill="#9a9890" text-anchor="start">EN_ALL</text>
-<text x="704" y="590" font-family="ui-monospace,Menlo,monospace" font-size="9" fill="#6cf" text-anchor="start">17 via 1k to UART_DRUMS</text>
-<text x="704" y="604" font-family="ui-monospace,Menlo,monospace" font-size="9" fill="#9a9890" text-anchor="start">16 from UART_DRUMS</text>
-<text x="802" y="590" font-family="ui-monospace,Menlo,monospace" font-size="9" fill="#6cf" text-anchor="start">25 via 1k to UART_RULER</text>
-<text x="802" y="604" font-family="ui-monospace,Menlo,monospace" font-size="9" fill="#9a9890" text-anchor="start">26 from UART_RULER</text>
-<text x="900" y="590" font-family="ui-monospace,Menlo,monospace" font-size="9" fill="#6cf" text-anchor="start">34 35 36 39</text>
-<text x="900" y="604" font-family="ui-monospace,Menlo,monospace" font-size="9" fill="#9a9890" text-anchor="start">INDEX 1 … 4, 10k TO 3V3</text>
-<text x="998" y="590" font-family="ui-monospace,Menlo,monospace" font-size="9" fill="#6cf" text-anchor="start">4</text>
-<text x="998" y="604" font-family="ui-monospace,Menlo,monospace" font-size="9" fill="#9a9890" text-anchor="start">HOME, INTERNAL PULL-UP</text>
+<rect x="400" y="520" width="960" height="150" fill="#1b1b20" stroke="#aaa" stroke-width="1.5"/>
+<text x="880.0" y="540" font-family="ui-monospace,Menlo,monospace" font-size="12" fill="#e8e6df" text-anchor="middle">U1  ESP32-DEVKITC V4, 38 PINS</text>
+<text x="880.0" y="556" font-family="ui-monospace,Menlo,monospace" font-size="10" fill="#9a9890" text-anchor="middle">USB AT THE BOARD EDGE, TO THE CONTROLLER</text>
+<text x="415" y="585" font-family="ui-monospace,Menlo,monospace" font-size="10" fill="#6cf" text-anchor="start">GPIO 18 19 21 22 27</text>
+<text x="415" y="601" font-family="ui-monospace,Menlo,monospace" font-size="9" fill="#9a9890" text-anchor="start">STEP D1 … D5</text>
+<text x="650" y="585" font-family="ui-monospace,Menlo,monospace" font-size="10" fill="#6cf" text-anchor="start">GPIO 23 5 13 14 32</text>
+<text x="650" y="601" font-family="ui-monospace,Menlo,monospace" font-size="9" fill="#9a9890" text-anchor="start">DIR D1 … D5</text>
+<text x="885" y="585" font-family="ui-monospace,Menlo,monospace" font-size="10" fill="#6cf" text-anchor="start">GPIO 33</text>
+<text x="885" y="601" font-family="ui-monospace,Menlo,monospace" font-size="9" fill="#9a9890" text-anchor="start">EN_ALL</text>
+<text x="1120" y="585" font-family="ui-monospace,Menlo,monospace" font-size="10" fill="#6cf" text-anchor="start">GPIO 17 via 1k, GPIO 16</text>
+<text x="1120" y="601" font-family="ui-monospace,Menlo,monospace" font-size="9" fill="#9a9890" text-anchor="start">UART_DRUMS tx, rx</text>
+<text x="415" y="630" font-family="ui-monospace,Menlo,monospace" font-size="10" fill="#6cf" text-anchor="start">GPIO 25 via 1k, GPIO 26</text>
+<text x="415" y="646" font-family="ui-monospace,Menlo,monospace" font-size="9" fill="#9a9890" text-anchor="start">UART_RULER tx, rx</text>
+<text x="650" y="630" font-family="ui-monospace,Menlo,monospace" font-size="10" fill="#6cf" text-anchor="start">GPIO 34 35 36 39</text>
+<text x="650" y="646" font-family="ui-monospace,Menlo,monospace" font-size="9" fill="#9a9890" text-anchor="start">INDEX 1 … 4, 10k TO 3V3</text>
+<text x="885" y="630" font-family="ui-monospace,Menlo,monospace" font-size="10" fill="#6cf" text-anchor="start">GPIO 4</text>
+<text x="885" y="646" font-family="ui-monospace,Menlo,monospace" font-size="9" fill="#9a9890" text-anchor="start">HOME, INTERNAL PULL-UP</text>
 <line x1="750" y1="520" x2="750" y2="350" stroke="#6cf" stroke-width="1"/>
 <text x="760" y="440" font-family="ui-monospace,Menlo,monospace" font-size="10" fill="#6cf" text-anchor="start">STEP / DIR / EN / UART TO THE SOCKETS</text>
 <rect x="70" y="420" width="230" height="50" fill="#1b1b20" stroke="#aaa" stroke-width="1.5"/>
@@ -100,14 +100,14 @@
 <rect x="70" y="660" width="230" height="50" fill="#1b1b20" stroke="#aaa" stroke-width="1.5"/>
 <text x="185.0" y="680" font-family="ui-monospace,Menlo,monospace" font-size="12" fill="#e8e6df" text-anchor="middle">J5  HOME SWITCH</text>
 <text x="185.0" y="696" font-family="ui-monospace,Menlo,monospace" font-size="10" fill="#9a9890" text-anchor="middle">JST-XH 2: SIG GND</text>
-<line x1="300" y1="445" x2="400" y2="580" stroke="#6cf" stroke-width="1"/>
-<line x1="300" y1="685" x2="400" y2="600" stroke="#6cf" stroke-width="1"/>
-<rect x="1150" y="520" width="200" height="50" fill="#1b1b20" stroke="#aaa" stroke-width="1.5"/>
-<text x="1250.0" y="540" font-family="ui-monospace,Menlo,monospace" font-size="12" fill="#e8e6df" text-anchor="middle">JP1  EN_ALL TO GND</text>
-<text x="1250.0" y="556" font-family="ui-monospace,Menlo,monospace" font-size="10" fill="#9a9890" text-anchor="middle">BENCH TEST WITHOUT THE ESP32</text>
-<rect x="1150" y="590" width="200" height="50" fill="#1b1b20" stroke="#aaa" stroke-width="1.5"/>
-<text x="1250.0" y="610" font-family="ui-monospace,Menlo,monospace" font-size="12" fill="#e8e6df" text-anchor="middle">LED 5V . LED 3V3</text>
-<text x="1250.0" y="626" font-family="ui-monospace,Menlo,monospace" font-size="10" fill="#9a9890" text-anchor="middle">TP VM</text>
+<line x1="300" y1="445" x2="400" y2="590" stroke="#6cf" stroke-width="1"/>
+<line x1="300" y1="685" x2="400" y2="640" stroke="#6cf" stroke-width="1"/>
+<rect x="1390" y="520" width="60" height="50" fill="#1b1b20" stroke="#aaa" stroke-width="1.5"/>
+<text x="1420.0" y="540" font-family="ui-monospace,Menlo,monospace" font-size="12" fill="#e8e6df" text-anchor="middle">JP1</text>
+<text x="1420.0" y="556" font-family="ui-monospace,Menlo,monospace" font-size="10" fill="#9a9890" text-anchor="middle">EN</text>
+<rect x="1390" y="590" width="60" height="50" fill="#1b1b20" stroke="#aaa" stroke-width="1.5"/>
+<text x="1420.0" y="610" font-family="ui-monospace,Menlo,monospace" font-size="12" fill="#e8e6df" text-anchor="middle">LED</text>
+<text x="1420.0" y="626" font-family="ui-monospace,Menlo,monospace" font-size="10" fill="#9a9890" text-anchor="middle">5V 3V3</text>
 <circle cx="60" cy="760" r="2.5" fill="#e8e6df"/>
 <text x="68" y="764" font-family="ui-monospace,Menlo,monospace" font-size="12" fill="#e8e6df" text-anchor="start">ALL ACTIVE PARTS ARE STOCK MODULES IN SOCKETS; THE PCB IS PASSIVE: SOCKETS, TERMINALS, CAPACITORS, PULL-UPS, STRAPS, FUSE, TVS</text>
 <circle cx="60" cy="782" r="2.5" fill="#e8e6df"/>
