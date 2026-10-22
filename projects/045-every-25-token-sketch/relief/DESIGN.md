@@ -95,7 +95,9 @@ Six lines of the list will ever be true for a visitor. The rest are the point.
   year, 526 in year 6, 610 in year 100; half a millimetre a day in the first year, a tenth of
   that after ten. The first day is the one visible journey; everything after is a hair.
 - The seventh shelf begins to print on day 16, the eighth on day 186, the ninth in year 6.
-- Outside the room's hours the machine rehearses from program 1, as the screen does.
+- Outside the room's hours the time switch cuts the modules and the printer: the dots hold the
+  last five programs and the champion at no power, and the controller resumes at the program the
+  clock says when the room opens. (The screen rehearses; the relief sleeps.)
 - Maintenance is a roll of paper every two months and a spare printer on a shelf; see
   `../receipt/BUILD.md`.
 
