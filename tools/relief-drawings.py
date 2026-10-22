@@ -171,17 +171,18 @@ d.L(300, 350, 1420, 350, '#c9b797', 2); d.T(860, 342, 'VM, 1.5 MM TRACE, TO PIN 
 for i in range(5): d.L(70 + i * 270 + 115, 270, 70 + i * 270 + 115, 350, '#c9b797', 1)
 box(340, 320, 230, 60, 'U2  BUCK 24 V -> 5 V', 'POLOLU D24V22F5 . TO THE DEVKIT 5V PIN')
 # the ESP32 along the bottom
-box(400, 520, 700, 120, 'U1  ESP32-DEVKITC V4, 38 PINS', 'USB AT THE BOARD EDGE, TO THE CONTROLLER')
-pins = [('18 19 21 22 27', 'STEP'), ('23 5 13 14 32', 'DIR'), ('33', 'EN_ALL'), ('17 via 1k to UART_DRUMS', '16 from UART_DRUMS'), ('25 via 1k to UART_RULER', '26 from UART_RULER'), ('34 35 36 39', 'INDEX 1 … 4, 10k TO 3V3'), ('4', 'HOME, INTERNAL PULL-UP')]
+box(400, 520, 960, 150, 'U1  ESP32-DEVKITC V4, 38 PINS', 'USB AT THE BOARD EDGE, TO THE CONTROLLER')
+pins = [('GPIO 18 19 21 22 27', 'STEP D1 … D5'), ('GPIO 23 5 13 14 32', 'DIR D1 … D5'), ('GPIO 33', 'EN_ALL'), ('GPIO 17 via 1k, GPIO 16', 'UART_DRUMS tx, rx'), ('GPIO 25 via 1k, GPIO 26', 'UART_RULER tx, rx'), ('GPIO 34 35 36 39', 'INDEX 1 … 4, 10k TO 3V3'), ('GPIO 4', 'HOME, INTERNAL PULL-UP')]
 for i, (a, b) in enumerate(pins):
-    x = 410 + i * 98; d.T(x, 590, a, 'start', 9, '#6cf'); d.T(x, 604, b, 'start', 9)
+    x = 415 + (i % 4) * 235; y = 585 if i < 4 else 630
+    d.T(x, y, a, 'start', 10, '#6cf'); d.T(x, y + 16, b, 'start', 9)
 d.L(750, 520, 750, 350, '#6cf', 1); d.T(760, 440, 'STEP / DIR / EN / UART TO THE SOCKETS', 'start', 10, '#6cf')
 # the sensor headers along the left
 for i in range(4): box(70, 420 + i * 60, 230, 50, 'J%d  INDEX DRUM %d' % (i + 1, 25 + i), 'JST-XH 3: 3V3 GND SIG . 10k PULL-UP')
 box(70, 660, 230, 50, 'J5  HOME SWITCH', 'JST-XH 2: SIG GND')
-d.L(300, 445, 400, 580, '#6cf', 1); d.L(300, 685, 400, 600, '#6cf', 1)
+d.L(300, 445, 400, 590, '#6cf', 1); d.L(300, 685, 400, 640, '#6cf', 1)
 # the EN jumper and the LEDs
-box(1150, 520, 200, 50, 'JP1  EN_ALL TO GND', 'BENCH TEST WITHOUT THE ESP32'); box(1150, 590, 200, 50, 'LED 5V . LED 3V3', 'TP VM')
+box(1390, 520, 60, 50, 'JP1', 'EN'); box(1390, 590, 60, 50, 'LED', '5V 3V3')
 d.note(60, 760, 'ALL ACTIVE PARTS ARE STOCK MODULES IN SOCKETS; THE PCB IS PASSIVE: SOCKETS, TERMINALS, CAPACITORS, PULL-UPS, STRAPS, FUSE, TVS')
 d.note(60, 782, 'MOTOR CURRENTS ARE SET BY THE FIRMWARE OVER UART; THE MODULES\' VREF TRIMMERS ARE IGNORED')
 d.note(60, 804, 'VERIFY THE STEPSTICK HEADER AGAINST THE MODULE VENDOR\'S DRAWING BEFORE ORDERING THE PCB')
