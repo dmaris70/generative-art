@@ -43,8 +43,8 @@ panel, from software supplied by the artist.
 
 - the software: `controller.js`, `receipt.js`, their systemd units, and the Raspberry Pi
   image with them installed;
-- the motion board firmware (ESP32), to the serial protocol in section 8.5, before the
-  counter and ruler are commissioned;
+- the motion board firmware (ESP32), in `firmware/motion/` with its wiring table, calibration
+  procedure and host test, to the serial protocol in section 8.5;
 - the engraving artwork as vector files, generated from this specification;
 - the wall label.
 
@@ -211,18 +211,23 @@ their own stub shafts, in line, their steppers on a bracket off the rear frame. 
 
 An ESP32 development board with five TMC2209 stepper drivers (four counter drums, the ruler)
 on a carrier board, powered from 24 V, with inputs for the four drum indices and the ruler's
-home switch. The firmware is supplied by the artist. It receives from the controller, over USB
-serial at 115200 baud, one line per second of the form
+home switch. The firmware is in `firmware/motion/`; its README gives the pin assignment, the
+driver addressing (drums on one UART at addresses 0 … 3, the ruler on a second), the pull-ups
+the carrier must fit, and the calibration of the index and home offsets. It receives from the
+controller, over USB serial at 115200 baud, one line per second of the form
 
 ```
 program 0000000000000000000000000397 | pointer 298.123 mm | lane program 339 x / cos(y) | found 16 | distinct 7,265
 ```
 
-and moves drums 25 … 28 to the last four digits of the program number and the pointer to the
-millimetre position, homing all five axes at power-up. The contractor wires the board, sets the
-driver currents (TMC2209 in UART mode, run current 0.6 A for the drums, 1.2 A for the ruler,
-standstill current zero), and proves each axis moves and homes with a test command before the
-firmware is loaded.
+and moves drums 25 … 28 to the last four digits of the program number (forward only, 9 rolling
+to 0, one digit in 0.25 s) and the pointer to the millimetre position (at up to 1 mm/s), homing
+all five axes at power-up. The firmware sets the driver currents over UART (run 0.6 A for the
+drums, 1.2 A for the ruler; hold 8 % and 10 % of run, enough to keep a drum on its digit and the
+belt still) and runs the drivers in stealthChop so the motors are silent. The contractor wires
+the board to the README's table, builds and loads the firmware, and uses its `home`, `drum`,
+`pointer`, `status` and `test` commands for acceptance tests 4 and 5; the measured index and
+home offsets are entered in the firmware's calibration constants and recorded in the handover.
 
 ## 9. The receipt
 
