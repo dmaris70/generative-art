@@ -12,6 +12,7 @@ It homes the five axes at power-up and then follows the controller's lines. The 
 | `test_core.cpp` | a host test with a simulated machine: `g++ -std=c++17 -o test_core test_core.cpp && ./test_core` |
 | `motion.ino` | the ESP32 sketch: pins, the 20 kHz step timer, the TMC2209 UART set-up, the serial commands |
 | `platformio.ini` | build and upload with PlatformIO; or open `motion.ino` in the Arduino IDE with the ESP32 core 2.x and the TMCStepper library |
+| `carrier/README.md` | the carrier PCB: sockets, netlist, connectors, board, bill of materials, bring-up |
 
 ## Wiring
 

@@ -209,9 +209,13 @@ their own stub shafts, in line, their steppers on a bracket off the rear frame. 
 
 ### 8.5 The motion board and its protocol
 
-An ESP32 development board with five TMC2209 stepper drivers (four counter drums, the ruler)
-on a carrier board, powered from 24 V, with inputs for the four drum indices and the ruler's
-home switch. The firmware is in `firmware/motion/`; its README gives the pin assignment, the
+An ESP32-DevKitC and five TMC2209 StepStick modules in sockets on a passive carrier PCB,
+120 × 100 mm, specified net by net in `firmware/motion/carrier/README.md` and drawn in
+`carrier.svg`: the terminals for the five motors, the 24 V input with its fuse, a 24 → 5 V buck
+module, the four index headers with their pull-ups and the home switch header. The contractor
+lays the board out from the netlist (any board house makes it) and the artist approves the
+layout with the shop drawings; every active part is a stock module in a socket. The firmware
+is in `firmware/motion/`; its README gives the pin assignment, the
 driver addressing (drums on one UART at addresses 0 … 3, the ruler on a second), the pull-ups
 the carrier must fit, and the calibration of the index and home offsets. It receives from the
 controller, over USB serial at 115200 baud, one line per second of the form
@@ -371,7 +375,7 @@ Performed in the workshop with the artist's software running, and repeated on th
 | controller | 1 | Raspberry Pi Zero 2 W, 32 GB card, vented case | stock |
 | USB hub | 1 | powered, 4 port | stock |
 | RS-485 adapter | 1 | USB to RS-485, FTDI, isolated | stock |
-| motion board | 1 | ESP32 dev board, carrier with 5 × TMC2209 (UART mode) | stock |
+| motion board | 1 | the carrier PCB of `firmware/motion/carrier/README.md` with ESP32-DevKitC, 5 × BIGTREETECH TMC2209 V1.3, Pololu D24V22F5 buck, terminals, headers; under 60 EUR in parts plus the board | board house + stock |
 | 24 V supply | 1 | Mean Well LRS-350-24 | stock |
 | 5 V supply | 1 | Mean Well RS-15-5 | stock |
 | time switch | 1 | DIN digital, 16 A, battery backed | stock |
