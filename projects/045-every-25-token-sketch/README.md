@@ -140,8 +140,8 @@ in `found/`; the 132 masters are regenerated on demand.
 The second physical form: a thermal till printer in a steel housing that prints each dethroned
 champion as it happens — the field dithered to the paper's dots, the code as people read it and
 as the library writes it, the program number, the score, how long it held the lane, the time —
-and lets the paper run to the floor. The printer's clatter marks each takeover; a day is one
-roll. `receipt/receipt.js` runs the unchanged `babel.js` without a browser and speaks ESC/POS
+and cuts each ticket into a tray for whoever is there to take. The printer's clatter marks
+each takeover; the only consumable is the roll. `receipt/receipt.js` runs the unchanged `babel.js` without a browser and speaks ESC/POS
 to a USB or network printer, locked to the room's clock with `--start 10:00` so that the
 screen beside it shows the same program; `--png` renders the same tickets as a simulator, and
 `--replay N` prints the found through program N at once. 58 mm paper gives a 48 mm image at six
@@ -160,14 +160,14 @@ screen's rule; a roll lasts about two months. The screen on neort.io keeps its o
 ## The relief: a machine reading a library
 
 The third physical form, designed and simulated, not yet built: a black steel panel of
-2000 × 1500 mm and a bookcase. The panel carries the conveyor as five flip-dot fields of
+2000 × 1500 mm. The panel carries the conveyor as five flip-dot fields of
 28 × 28 dots (the last five programs, thresholded, one a second), the slow lane as a 56 × 56
 field (the champion, dithered), 28 electromechanical digit wheels for the program number (the
 last 24 never turn), the stage-2 printer behind a slot with the paper falling to the floor,
 and a brass ruler of the library on a log scale with a pointer that advances by a hair a day.
-The bookcase has 25 shelves, labelled with each shelf's count, where the printed found are
-filed by length; shelves 7 to 25 stay empty and are labelled with the year they would begin
-to fill. The simulator (`relief/simulator.html`) runs the relief on a screen at one millimetre
+The printer cuts; the ticket drops into a steel tray and whoever is there takes it. An engraved
+plate beside the slot lists the 25 lengths of the library, their counts, and the day or year
+each begins to print; six of its lines will ever be true for a visitor. The simulator (`relief/simulator.html`) runs the relief on a screen at one millimetre
 a unit; `relief/tile-test.png` is the test that fixed the tile resolution (thresholded tiles
 read from 28 dots, dithered ones only from 56); `relief/controller.js` drives the flip-dot
 modules over RS-485 and prints the counter and pointer targets; `relief/elevation.svg` is the
@@ -176,18 +176,21 @@ the wall label.
 
 ![the relief, simulated, after 3,000 programs](relief/simulator.png)
 
-`relief/model.html` is the relief in three dimensions: the panel and the bookcase at full size
-in a gallery room, every flip-dot a disc that turns, the counter's drums, the paper from the
-slot, the brass ruler, the shelves filling — driven by the same enumeration at one program a
+`relief/model.html` is the relief in three dimensions: the panel at full size in a gallery
+room, every flip-dot a disc that turns, the counter's drums, the tickets cut into the tray,
+the brass ruler, the plate — driven by the same enumeration at one program a
 second. Drag to turn, scroll to approach; views for the slow lane, the counter, the receipt and
-the shelves; one or eight programs a second. With the sound on, the machine is heard: each flip-dot a click,
+the plate; one or eight programs a second. With the sound on, the machine is heard: each flip-dot a click,
 the slow lane's 3,136 dots a clatter with the panel ringing under it, the counter's wheels a
 soft tick, the printer a stepper's buzz and the paper's hiss for each ticket — all synthesised,
-nothing sampled. The paper from the slot carries the tickets as the till printer prints them —
-the field dithered to 384 dots, the seven lines in the printer's font, newest at the slot — so
-the receipt in the model is the receipt the room will have.
+nothing sampled. Each ticket leaves the slot as the till printer prints it — the field dithered
+to 384 dots, the seven lines in the printer's font — hangs for two seconds, is cut, and drops
+into the tray, so the tickets in the model are the tickets the room will hand out. Beside the
+slot the plate lists the library's twenty-five lengths and the day or year each begins to print.
 
-![the receipt in the model](relief/model-receipt.png)
+![the receipt and the tray in the model](relief/model-receipt.png)
+
+![the plate in the model](relief/model-plate.png)
 
 ![the relief in three dimensions](relief/model.png)
 

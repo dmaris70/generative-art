@@ -9,7 +9,7 @@
 //
 //   node receipt.js [--device /dev/usb/lp0 | --tcp host:9100 | --out file.bin | --png dir]
 //                   [--width 384|576] [--rate 8] [--start HH:MM] [--replay N] [--cut]
-//                   [--fade 0.9999] [--minhold 200]
+//                   [--fade 0.9999] [--minhold 200] [--nocut] [--log file] [--sign key]
 //
 // The room's selector is stricter than the screen's: the champion's claim fades by 0.9999 a
 // program (the screen's 0.9992), and a ticket is printed only for a champion that held the lane
@@ -26,7 +26,12 @@
 // --start    lock the enumeration to the clock: program 1 at HH:MM JST today, so the printer and
 //            a screen started at the same minute agree on the program number
 // --replay   do not run live: print the found through program N at once (e.g. 30905), then exit
-// --cut      partial cut after each ticket (printers with a cutter); default: feed only
+// --nocut    feed only, one continuous strip (default: a partial cut after each ticket, so
+//            the ticket drops into the tray for whoever is there to take)
+// --log      append a line per ticket (program, code, time, verification code) to this file;
+//            default receipt-log.jsonl beside this script — the registry of every ticket printed
+// --sign     a secret: a 6-character verification code derived from the program number is
+//            printed on the ticket and logged, so a ticket can be checked against the registry
 // --fade     the champion's fade per program (default 0.9999; the screen uses 0.9992)
 // --minhold  print only a champion that held the lane at least this many programs (default 200)
 //
@@ -40,6 +45,8 @@ const A = {}; const argv = process.argv.slice(2);
 for (let i = 0; i < argv.length; i++) { const k = argv[i]; if (k.startsWith('--')) { const v = argv[i + 1] && !argv[i + 1].startsWith('--') ? argv[++i] : true; A[k.slice(2)] = v; } }
 const WIDTH = +(A.width || 384), RATE = +(A.rate || 8), PROLOGUE = 280, FADE = +(A.fade || 0.9999), MINHOLD = +(A.minhold === undefined ? 200 : A.minhold);
 const COLS = Math.floor(WIDTH / 12);          // characters a line in the printer's font A (12 dots wide): 32 on 58 mm, 48 on 80 mm
+const CUT = !A.nocut, LOG = A.log === undefined ? path.join(__dirname, 'receipt-log.jsonl') : A.log, SIGN = typeof A.sign === 'string' ? A.sign : null;
+const verify = (k) => (SIGN ? require('crypto').createHmac('sha256', SIGN).update(String(k)).digest('base64').replace(/[^A-Z2-9]/g, '').slice(0, 6) : null);
 if (!A.device && !A.tcp && !A.out && !A.png) { console.error('nothing to print to: give --device, --tcp, --out or --png'); process.exit(2); }
 
 // ───────────────────────── the piece, loaded without a browser ─────────────────────────
@@ -92,6 +99,7 @@ function lines(f, no, when) {
     { s: fit('structure ' + f.peak.toFixed(3) + ' . ' + (f.moves ? 'uses t' : 'no t')) },
     { s: fit('held the lane ' + grp(f.held) + (f.held === 1 ? ' program' : ' programs')) },
     { s: fit('found ' + grp(no) + ' . ' + when) },
+    ...(SIGN ? [{ s: fit('no. ' + grp(f.k + 1) + ' . ' + verify(f.k)) }] : []),
     { s: fit('EVERY 25-TOKEN SKETCH . PCDTOKYO2026') },
   ];
 }
@@ -104,8 +112,8 @@ function ticket(f, no, when) {
   for (const b of bits) bytes.push(b);
   put(ESC, 0x64, 0x01);                                               // feed 1
   for (const l of lines(f, no, when)) { if (l.bold) put(ESC, 0x45, 0x01); text(l.s); if (l.bold) put(ESC, 0x45, 0x00); }
-  put(ESC, 0x64, A.cut ? 0x03 : 0x05);                                // feed
-  if (A.cut) put(GS, 0x56, 0x01);                                     // partial cut
+  put(ESC, 0x64, CUT ? 0x03 : 0x05);                                  // feed
+  if (CUT) put(GS, 0x56, 0x01);                                       // partial cut: the ticket drops into the tray
   return Buffer.from(bytes);
 }
 
@@ -162,6 +170,7 @@ function flush(M, when) {                      // print every found not yet prin
     const w = when || jst(Date.now());
     send(ticket(entry, printed, w));
     if (A.png) png(entry, printed, w, A.png);
+    if (LOG) fs.appendFileSync(LOG, JSON.stringify({ no: printed, program: f.k + 1, code: f.code, postfix: f.postfix, tokens: f.n, score: +f.peak.toFixed(4), held, printed: w, verify: verify(f.k) }) + '\n');
     console.log('found ' + printed + ': program ' + grp(f.k + 1) + '  ' + f.code + '  held ' + grp(held) + '  ' + w);
   }
 }
