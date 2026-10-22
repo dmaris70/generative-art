@@ -530,7 +530,7 @@ const controls = new OrbitControls(camera, canvas); controls.enableDamping = tru
 // world space: the panel face spans x −1 … 1, y 0.9 … 2.4; the lane centre is (−0.64, 1.70), the counter (0, 1.925), the shelves (1.4, 0.75)
 const VIEWS = [
   { p: [2.9, 1.9, 4.2], t: [0.55, 1.45, 0] }, { p: [0.5, 1.65, 4.6], t: [0.5, 1.55, 0] },
-  { p: [-0.5, 1.78, 1.25], t: [-0.64, 1.70, 0.08] }, { p: [0.12, 1.98, 0.78], t: [0.0, 1.92, 0.08] }, { p: [-0.22, 2.08, 0.42], t: [-0.22, 1.77, 0.12] }, { p: [-0.13, 1.54, 0.74], t: [-0.13, 1.52, 0.05] },
+  { p: [-0.5, 1.78, 1.25], t: [-0.64, 1.70, 0.08] }, { p: [0.12, 1.98, 0.78], t: [0.0, 1.92, 0.08] }, { p: [-0.22, 2.08, 0.42], t: [-0.22, 1.77, 0.12] }, { p: [0.64, 1.70, 1.02], t: [0.64, 1.70, 0.08] },
 ];
 let viewFrom = null, viewTo = null, viewT = 1;
 function goView(i) { viewFrom = { p: camera.position.clone(), t: controls.target.clone() }; viewTo = { p: new THREE.Vector3(...VIEWS[i].p), t: new THREE.Vector3(...VIEWS[i].t) }; viewT = 0; for (let j = 0; j < 6; j++) document.getElementById('v' + j).setAttribute('aria-pressed', String(j === i)); }
@@ -614,7 +614,7 @@ label(720, 520, 'THE PROGRAM . 28 WHEELS . THE LAST 24 NEVER TURN', 13, 'left', 
 // sheet printed as the till printer prints it (the field dithered to 384 dots, seven lines in
 // the printer's font); the newest hangs from the slot for a moment, then drops into the tray
 box(720, 560, 120, 14, 0.006, recess, 0.0005);
-label(860, 567, 'THE RECEIPT . THE PRINTER BEHIND THE PANEL, CUTTING . TAKE THE TICKET', 13, 'left', 1200);
+label(860, 567, 'THE RECEIPT . THE PRINTER BEHIND THE PANEL . TAKE THE TICKET', 13, 'left', 1000);
 const tray = new THREE.Group(); scene.add(tray);
 { const tp = mm(780, 630, 0.0); const wallT = 0.002, tw = 0.14, td = 0.10, th = 0.05;   // 140 wide, 100 deep, 50 high: a 90.75 mm ticket lies flat in it
   const mk = (w, h, d, x, y, z) => { const m = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), steel); m.position.set(x, y, z); m.castShadow = true; m.receiveShadow = true; tray.add(m); };
@@ -678,17 +678,17 @@ function animateTickets(now) {                                       // hang fro
 // the plate: the library's 25 lengths, their counts, when each begins to print
 {
   const rows = [[1, "5", "DAY 1"], [2, "25", "DAY 1"], [3, "250", "DAY 1"], [4, "2,500", "DAY 1"], [5, "28,125", "DAY 1"], [6, "328,125", "DAY 2"], [7, "3,984,375", "DAY 16"], [8, "5.0 x 10^7", "DAY 186"], [9, "6.3 x 10^8", "YEAR 6"], [10, "8.2 x 10^9", "YEAR 80"], [11, "1.1 x 10^11", "1.0 x 10^3 YEARS"], [12, "1.4 x 10^12", "1.4 x 10^4 YEARS"], [13, "1.9 x 10^13", "1.8 x 10^5 YEARS"], [14, "2.6 x 10^14", "2.4 x 10^6 YEARS"], [15, "3.5 x 10^15", "3.2 x 10^7 YEARS"], [16, "4.7 x 10^16", "4.4 x 10^8 YEARS"], [17, "6.5 x 10^17", "6.0 x 10^9 YEARS"], [18, "9.0 x 10^18", "8.2 x 10^10 YEARS"], [19, "1.2 x 10^20", "1.1 x 10^12 YEARS"], [20, "1.7 x 10^21", "1.6 x 10^13 YEARS"], [21, "2.4 x 10^22", "2.2 x 10^14 YEARS"], [22, "3.4 x 10^23", "3.1 x 10^15 YEARS"], [23, "4.8 x 10^24", "4.3 x 10^16 YEARS"], [24, "6.7 x 10^25", "6.0 x 10^17 YEARS"], [25, "9.5 x 10^26", "8.5 x 10^18 YEARS"]];
-  const c = document.createElement('canvas'); c.width = 1200; c.height = 1600; const g = c.getContext('2d');
-  g.fillStyle = '#17171b'; g.fillRect(0, 0, 1200, 1600); g.strokeStyle = 'rgba(232,230,223,0.25)'; g.lineWidth = 3; g.strokeRect(2, 2, 1196, 1596);
+  const c = document.createElement('canvas'); c.width = 1600; c.height = 1600; const g = c.getContext('2d');   // 560 × 560 mm, the slow lane's size, at the bottom right of the grid
+  g.fillStyle = '#17171b'; g.fillRect(0, 0, 1600, 1600); g.strokeStyle = 'rgba(232,230,223,0.25)'; g.lineWidth = 3; g.strokeRect(2, 2, 1596, 1596);
   g.fillStyle = 'rgba(232,230,223,0.72)'; g.textBaseline = 'middle';
-  g.font = '500 32px "IBM Plex Mono", ui-monospace, Menlo, monospace'; g.fillText('THE LIBRARY . TOKENS . PROGRAMS . BEGINS TO PRINT', 48, 70);
-  g.font = '500 36px "IBM Plex Mono", ui-monospace, Menlo, monospace';
-  rows.forEach(([n, cnt, b], i) => { const y = 140 + i * 54; g.textAlign = 'left'; g.fillText(String(n).padStart(2, ' '), 48, y); g.textAlign = 'right'; g.fillText(cnt, 560, y); g.fillText(b, 1150, y); });
-  g.textAlign = 'left'; g.font = '500 30px "IBM Plex Mono", ui-monospace, Menlo, monospace'; g.fillText('SIX OF THESE LINES WILL EVER BE TRUE FOR YOU', 48, 1540);
+  g.font = '500 38px "IBM Plex Mono", ui-monospace, Menlo, monospace'; g.fillText('THE LIBRARY . TOKENS . PROGRAMS . BEGINS TO PRINT', 60, 84);
+  g.font = '500 42px "IBM Plex Mono", ui-monospace, Menlo, monospace';
+  rows.forEach(([n, cnt, b], i) => { const y = 172 + i * 52; g.textAlign = 'left'; g.fillText(String(n).padStart(2, ' '), 60, y); g.textAlign = 'right'; g.fillText(cnt, 760, y); g.fillText(b, 1540, y); });
+  g.textAlign = 'left'; g.font = '500 36px "IBM Plex Mono", ui-monospace, Menlo, monospace'; g.fillText('SIX OF THESE LINES WILL EVER BE TRUE FOR YOU', 60, 1516);
   const tex = new THREE.CanvasTexture(c); tex.colorSpace = THREE.SRGBColorSpace; tex.anisotropy = 8;
-  const plateMesh = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.4, 0.003), [steel, steel, steel, steel, new THREE.MeshStandardMaterial({ map: tex, roughness: 0.6, metalness: 0.3 }), steel]);
-  const pp = mm(720 + 150, 680 + 200, 0.0015); plateMesh.position.set(pp.x, pp.y, pp.z); plateMesh.castShadow = true; scene.add(plateMesh);
-  label(1040, 700, 'THE PLATE', 13, 'left', 400);
+  const plateMesh = new THREE.Mesh(new THREE.BoxGeometry(0.56, 0.56, 0.003), [steel, steel, steel, steel, new THREE.MeshStandardMaterial({ map: tex, roughness: 0.6, metalness: 0.3 }), steel]);
+  const pp = mm(1360 + 280, 420 + 280, 0.0015); plateMesh.position.set(pp.x, pp.y, pp.z); plateMesh.castShadow = true; scene.add(plateMesh);
+  label(1360, 420 + 560 + 30, 'THE PLATE . THE LIBRARY\'S 25 LENGTHS', 13, 'left', 700);
 }
 
 // the ruler: brass, engraved, a pointer on a lead screw

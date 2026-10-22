@@ -114,11 +114,12 @@
     engrave('THE RECEIPT . ' + grp(found.length) + ' PRINTED OF ' + grp(all.length) + ' TAKEOVERS . A TICKET FOR A HOLD OF ' + MINHOLD + ' OR MORE . TAKE IT', sx + 140, sy + 12, 13);
     engrave('THE TRAY', sx + 140, sy + 60, 13);
     // the plate: the library's 25 lengths, their counts, when each begins to print
-    const px0 = sx, py0 = sy + 110, pw = 300, ph = 400;
+    const px0 = 1360, py0 = 420, pw = 560, ph = 560;                    // a square the slow lane's size, at the bottom right of the grid
     ctx.fillStyle = '#17171b'; ctx.fillRect(px0, py0, pw, ph); ctx.strokeStyle = 'rgba(232,230,223,0.25)'; ctx.strokeRect(px0, py0, pw, ph);
-    engrave('THE LIBRARY . TOKENS . PROGRAMS . BEGINS TO PRINT', px0 + 12, py0 + 18, 9);
-    PLATE.forEach(([n, c, b], i) => { const y = py0 + 36 + i * 14.2; engrave(String(n).padStart(2, ' '), px0 + 12, y, 9); engrave(c, px0 + 100, y, 9, 'right'); engrave(b, px0 + pw - 12, y, 9, 'right'); });
-    engrave('SIX OF THESE LINES WILL EVER BE TRUE FOR YOU', px0 + 12, py0 + ph - 12, 9);
+    engrave('THE LIBRARY . TOKENS . PROGRAMS . BEGINS TO PRINT', px0 + 20, py0 + 30, 13);
+    PLATE.forEach(([n, c, b], i) => { const y = py0 + 62 + i * 18.4; engrave(String(n).padStart(2, ' '), px0 + 20, y, 14); engrave(c, px0 + 270, y, 14, 'right'); engrave(b, px0 + pw - 20, y, 14, 'right'); });
+    engrave('SIX OF THESE LINES WILL EVER BE TRUE FOR YOU', px0 + 20, py0 + ph - 24, 13);
+    engrave('THE PLATE . THE LIBRARY\'S 25 LENGTHS', px0, py0 + ph + 30, 13);
     // the ruler: the library on a log scale, brass
     const ry = 1380, rx0 = 80, rx1 = PANEL.w - 80, total = Math.log10(Number(Babel.CUM ? Babel.CUM[25] : 1.024e27));
     const rx = (k) => rx0 + ((rx1 - rx0) * Math.log10(Math.max(1, k))) / total;

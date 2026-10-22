@@ -185,8 +185,9 @@ the slow lane's 3,136 dots a clatter with the panel ringing under it, the counte
 soft tick, the printer a stepper's buzz and the paper's hiss for each ticket — all synthesised,
 nothing sampled. Each ticket leaves the slot as the till printer prints it — the field dithered
 to 384 dots, the seven lines in the printer's font — hangs for two seconds, is cut, and drops
-into the tray, so the tickets in the model are the tickets the room will hand out. Beside the
-slot the plate lists the library's twenty-five lengths and the day or year each begins to print.
+into the tray, so the tickets in the model are the tickets the room will hand out. At the
+bottom right, a square plate the slow lane's size lists the library's twenty-five lengths and
+the day or year each begins to print.
 
 ![the receipt and the tray in the model](relief/model-receipt.png)
 
