@@ -38,7 +38,7 @@
   </div>
 </div>
 <div class="hud bottom">
-  <div class="stat">program <b id="prog">0</b> · takeovers <b id="found">0</b> · printed <b id="printed">0</b> · distinct <b id="distinct">0</b></div>
+  <div class="stat">program <b id="prog">0</b> · takeovers <b id="found">0</b> · printed <b id="printed">0</b> · waiting <b id="waiting">0</b> · distinct <b id="distinct">0</b></div>
   <div class="group" role="group" aria-label="view">
     <button id="v0" aria-pressed="true">three-quarter</button><button id="v1">front</button><button id="v2">the slow lane</button><button id="v3">the counter</button><button id="v4">the receipt</button><button id="v5">the list</button>
   </div>
@@ -612,11 +612,13 @@ const wheels = [];
 // the printer's font); the newest hangs from the slot for a moment, then drops into the tray
 box(720, 560, 120, 14, 0.006, recess, 0.0005);
 const tray = new THREE.Group(); scene.add(tray);
-{ const tp = mm(780, 672, 0.0); const w = 0.064, d = 0.022, h = 0.022, t = 0.0015;   // the pocket: folded 1.5 mm steel under the slot, 64 mm wide, 22 deep, a 22 mm front; the ticket stands in it, picture up, face out
+{ const tp = mm(780, 672, 0.0); const w = 0.064, d = 0.008, h = 0.022, t = 0.0015;   // the pocket: folded 1.5 mm steel under the slot, 64 mm wide, 8 deep, a 22 mm front; it holds one ticket, standing, picture up, face out
   const mk = (w, h, d, x, y, z) => { const m = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), steel); m.position.set(x, y, z); m.castShadow = true; m.receiveShadow = true; tray.add(m); };
   mk(w + 2 * t, t, d, tp.x, tp.y - t / 2, tp.z + d / 2);                                                    // floor
   mk(t, h, d, tp.x - w / 2 - t / 2, tp.y + h / 2, tp.z + d / 2); mk(t, h, d, tp.x + w / 2 + t / 2, tp.y + h / 2, tp.z + d / 2);   // sides
   mk(w + 2 * t, h, t, tp.x, tp.y + h / 2, tp.z + d - t / 2);                                                // front
+  const eye = new THREE.Mesh(new THREE.CylinderGeometry(0.0015, 0.0015, 0.001, 10), new THREE.MeshStandardMaterial({ color: 0x111111, roughness: 0.3 }));   // the reflective sensor, in the pocket's floor
+  eye.position.set(tp.x + 0.02, tp.y + 0.0005, tp.z + d / 2); tray.add(eye);
 }
 label(762, 716, 'TAKE ONE', 11, 'left', 200);
 const DPM = 8, PAPER_W = 58 * DPM, PRINT_W = 384, TICKET_H = 726;
@@ -649,32 +651,37 @@ const slotP = mm(780, 574, 0.004), trayP = mm(780, 672, 0.0);   // the slot's fo
 const tickets = [];                                                  // { mesh, k, born, inTray }
 const ticketGeom = new THREE.PlaneGeometry(0.058, TICKET_H / DPM / 1000);
 function printTicket(f, no, now) {
-  const m = new THREE.Mesh(ticketGeom, new THREE.MeshStandardMaterial({ map: ticketTexture(f, no), roughness: 0.9, side: THREE.DoubleSide }));
+  const m = new THREE.Mesh(ticketGeom, new THREE.MeshStandardMaterial({ map: ticketTexture(f, no), roughness: 0.9, side: THREE.DoubleSide, transparent: true }));
   m.castShadow = true; m.position.copy(HANG_P); m.quaternion.copy(HANG_Q); scene.add(m);
-  tickets.push({ mesh: m, k: f.k, born: now, inTray: false, yaw: Math.sin(f.k * 3) * 0.03, dx: Math.sin(f.k * 7) * 0.001 });
-  while (tickets.length > 24) { const old = tickets.shift(); scene.remove(old.mesh); old.mesh.material.map.dispose(); old.mesh.material.dispose(); }
+  tickets.push({ mesh: m, k: f.k, born: now, takenAt: -1, dx: Math.sin(f.k * 7) * 0.001 });
 }
-// the printer prints the ticket last line first (receipt.js, upside-down mode), so it comes out
-// of the slot with its picture last and uppermost, face out, and slides straight down into the
-// pocket as it is fed; cut, it drops the last few millimetres and stands. Each new ticket comes
-// in behind the stack, against the panel, and pushes the older ones forward against the front:
-// the oldest is in front, leaning out a little, and that is the one a visitor takes
+// the queue of one. The printer prints the ticket last line first (receipt.js, upside-down
+// mode), so it comes out of the slot picture last and uppermost, face out, slides down a chute
+// into the pocket as it is fed and, cut, drops the last few millimetres and stands. The pocket
+// holds one ticket: a sensor in its floor sees it, and the next found prints three seconds
+// after it is taken. Here a visitor takes it after 8 to 24 seconds.
 const HANG_P = new THREE.Vector3(slotP.x, slotP.y - 0.045, slotP.z + 0.004);
 const HANG_Q = new THREE.Quaternion().setFromEuler(new THREE.Euler(0.03, 0, 0));
-const STAND_Y = trayP.y + TICKET_H / DPM / 2000 + 0.001, POCKET_BACK = trayP.z + 0.004, POCKET_FRONT = trayP.z + 0.019;
-const q = new THREE.Quaternion();
-function animateTickets(now) {                                       // hang from the slot for 2 s, then drop into the pocket and stand
-  const n = tickets.length;
-  tickets.forEach((t, i) => {
-    const age = now - t.born; if (age < 2) return;
-    const u = Math.min(1, (age - 2) / 0.4), e = u * u;
-    const back = n - 1 - i;                                          // 0 = the newest, against the panel; older ones pushed forward
-    const z = Math.min(POCKET_FRONT, POCKET_BACK + 0.0006 * back), tilt = 0.12 * (z - POCKET_BACK) / (POCKET_FRONT - POCKET_BACK);
-    q.setFromEuler(new THREE.Euler(tilt, t.yaw, 0));
-    t.mesh.position.set(HANG_P.x + t.dx, HANG_P.y + (STAND_Y - HANG_P.y) * e, HANG_P.z + (z - HANG_P.z) * e);
-    t.mesh.quaternion.slerpQuaternions(HANG_Q, q, e);
-    if (u >= 1) t.inTray = true;
-  });
+const STAND_P = new THREE.Vector3(slotP.x, trayP.y + TICKET_H / DPM / 2000 + 0.001, trayP.z + 0.004);
+const STAND_Q = new THREE.Quaternion().setFromEuler(new THREE.Euler(0.05, 0, 0));
+const queue = [], queued = new Set();                                // found that lasted, waiting for the pocket
+let pocket = null, takenAt = -Infinity, nextTake = 0;
+window.pocketHas = () => !!(pocket && pocket.takenAt < 0 && performance.now() / 1000 - pocket.born > 1.5);
+function serveQueue(now) {
+  if (pocket && now >= nextTake && pocket.takenAt < 0) { pocket.takenAt = now; takenAt = now; }
+  if (pocket && pocket.takenAt >= 0 && now - pocket.takenAt > 0.8) { scene.remove(pocket.mesh); pocket.mesh.material.map.dispose(); pocket.mesh.material.dispose(); tickets.splice(tickets.indexOf(pocket), 1); pocket = null; }
+  if (!pocket && queue.length && now - takenAt >= 3) { const f = queue.shift(); soundPrint(); printTicket(f, ++printedNo, now); pocket = tickets[tickets.length - 1]; nextTake = now + 8 + 16 * Math.random(); }
+  el.waiting.textContent = grp(queue.length);
+}
+let printedNo = 0;
+function animateTickets(now) {                                       // hang from the slot for 1 s, drop into the pocket and stand; taken, lift away
+  for (const t of tickets) {
+    if (t.takenAt >= 0) { const u = Math.min(1, (now - t.takenAt) / 0.8); t.mesh.position.set(STAND_P.x + t.dx, STAND_P.y + 0.12 * u, STAND_P.z + 0.25 * u * u); t.mesh.material.opacity = 1 - u; continue; }
+    const age = now - t.born; if (age < 1) continue;
+    const u = Math.min(1, (age - 1) / 0.3), e = u * u;
+    t.mesh.position.set(HANG_P.x + t.dx, HANG_P.y + (STAND_P.y - HANG_P.y) * e, HANG_P.z + (STAND_P.z - HANG_P.z) * e);
+    t.mesh.quaternion.slerpQuaternions(HANG_Q, STAND_Q, e);
+  }
 }
 // the plate: the library's 25 lengths, their counts, when each begins to print
 {
@@ -721,7 +728,7 @@ function animateFields(now) {
 }
 function setCounter(next, now) { const s = String(next).padStart(28, '0'); let changed = 0; for (let i = 0; i < 28; i++) { const d = +s[i], w = wheels[i]; if (d !== w.digit) { w.from = w.digit; w.digit = d; w.at = now; changed++; } } soundTicks(changed); }
 function animateWheels(now) { for (const w of wheels) { let d = w.digit; if (w.at >= 0) { const u = Math.min(1, (now - w.at) / 0.25); const from = w.from, to = w.digit, delta = ((to - from) % 10 + 10) % 10; d = from + delta * (u < 1 ? (1 - Math.cos(u * Math.PI)) / 2 : 1); if (u >= 1) w.at = -1; } w.mesh.rotation.x = ((d + 0.5) / 10) * Math.PI * 2; } }   // the rim's u runs from the face upward; rotating by +θ brings digit d to the face
-const el = { prog: document.getElementById('prog'), found: document.getElementById('found'), printed: document.getElementById('printed'), distinct: document.getElementById('distinct') };
+const el = { prog: document.getElementById('prog'), found: document.getElementById('found'), printed: document.getElementById('printed'), waiting: document.getElementById('waiting'), distinct: document.getElementById('distinct') };
 function tick(now) {
   const s = M.stats(), champ = M.champion();
   if (s.next !== lastNext) {
@@ -730,10 +737,11 @@ function tick(now) {
     setCounter(s.next, now);
     const px = rx(Math.max(1, s.next)); const p = mm(px, 1366, 0.012); pointer.position.set(p.x, p.y, p.z);
     el.prog.textContent = grp(s.next); el.found.textContent = grp(s.found); el.distinct.textContent = grp(s.distinct);
-    const pr = printedOf(M.found()); el.printed.textContent = grp(pr.length);
-    if (pr.length !== paperFor) { if (paperFor >= 0 && pr.length > paperFor) { soundPrint(); const f = pr[0]; printTicket(f, pr.length, now); } paperFor = pr.length; }
+    const pr = printedOf(M.found()); el.printed.textContent = grp(printedNo);
+    if (pr.length !== paperFor) { if (paperFor >= 0) for (let i = pr.length - paperFor - 1; i >= 0; i--) if (!queued.has(pr[i].k)) { queued.add(pr[i].k); queue.push(pr[i]); } paperFor = pr.length; }
   }
   if (champ && champ.k !== lastChamp) { lastChamp = champ.k; setField(lane, dots(champ.k, 58, now, true, buf56), now); }
+  serveQueue(now);
 }
 function resize() { const w = canvas.clientWidth, h = canvas.clientHeight; if (canvas.width !== Math.round(w * renderer.getPixelRatio()) || canvas.height !== Math.round(h * renderer.getPixelRatio())) { renderer.setSize(w, h, false); camera.aspect = w / h; camera.updateProjectionMatrix(); } }
 let last = performance.now();
