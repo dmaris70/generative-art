@@ -84,10 +84,12 @@
 <text x="972.0" y="436" font-family="ui-monospace,Menlo,monospace" font-size="13" fill="#c9b797" text-anchor="middle">520</text>
 <rect x="720" y="560" width="120" height="14" fill="#1b1b20" stroke="#333" stroke-width="2"/>
 <text x="860" y="571" font-family="ui-monospace,Menlo,monospace" font-size="11" fill="#9a9890" text-anchor="start">THE RECEIPT . 58 MM SLOT (ANNOTATION)</text>
-<rect x="710" y="612" width="140" height="4" fill="#2a2a30"/>
-<text x="860" y="620" font-family="ui-monospace,Menlo,monospace" font-size="11" fill="#9a9890" text-anchor="start">THE SHELF . 140 x 100 MM, SEEN EDGE-ON (ANNOTATION)</text>
-<line x1="710" y1="640" x2="850" y2="640" stroke="#c9b797" stroke-width="1.5"/>
-<text x="780.0" y="634" font-family="ui-monospace,Menlo,monospace" font-size="13" fill="#c9b797" text-anchor="middle">140</text>
+<rect x="751" y="578" width="58" height="72" fill="#e8e6df" stroke="#e8e6df" stroke-width="1"/>
+<rect x="747" y="650" width="66" height="22" fill="#1b1b20" stroke="#444" stroke-width="1"/>
+<text x="860" y="662" font-family="ui-monospace,Menlo,monospace" font-size="11" fill="#9a9890" text-anchor="start">THE POCKET . 64 x 22 x 22 MM, FOLDED 1.5 MM STEEL . THE TICKET STANDS IN IT, PICTURE UP, FACE OUT (ANNOTATION)</text>
+<line x1="747" y1="690" x2="813" y2="690" stroke="#c9b797" stroke-width="1.5"/>
+<text x="780.0" y="684" font-family="ui-monospace,Menlo,monospace" font-size="13" fill="#c9b797" text-anchor="middle">66</text>
+<text x="762" y="718" font-family="ui-monospace,Menlo,monospace" font-size="11" fill="#9a9890" text-anchor="start">TAKE ONE</text>
 <text x="1920" y="804" font-family="ui-monospace,Menlo,monospace" font-size="13" fill="#9a9890" text-anchor="end">THE LIBRARY . TOKENS . PROGRAMS . BEGINS TO PRINT</text>
 <text x="1560" y="846.0" font-family="ui-monospace,Menlo,monospace" font-size="12" fill="#9a9890" text-anchor="end">1</text>
 <text x="1710" y="846.0" font-family="ui-monospace,Menlo,monospace" font-size="12" fill="#9a9890" text-anchor="end">5</text>

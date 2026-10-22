@@ -106,8 +106,8 @@
     // the receipt: the slot, the tray beneath, the last ticket in it
     const sx = wx, sy = wy + 108;
     ctx.fillStyle = '#1b1b20'; ctx.fillRect(sx, sy, 120, 14); ctx.fillStyle = '#e8e6df'; ctx.fillRect(sx + 10, sy + 2, 100, 4);
-    ctx.fillStyle = '#2a2a30'; ctx.fillRect(sx - 10, sy + 38, 140, 6);                      // the shelf under the slot, seen edge-on
-    if (found.length) { ctx.fillStyle = 'rgba(232,230,223,0.9)'; ctx.fillRect(sx + 8, sy + 34, 104, 4); }
+    if (found.length) { ctx.fillStyle = 'rgba(232,230,223,0.9)'; ctx.fillRect(sx + 31, sy + 16, 58, 74); }   // the last ticket, standing in the pocket, picture up
+    ctx.fillStyle = '#2a2a30'; ctx.fillRect(sx + 27, sy + 90, 66, 22);                       // the pocket under the slot: its front
     // the plate: the library's 25 lengths, their counts, when each begins to print
     const px0 = 1360, py0 = 780, pw = 560, ph = 560;                    // the list, engraved in the face, aligned right in the lower right field
     engrave('THE LIBRARY . TOKENS . PROGRAMS . BEGINS TO PRINT', px0 + pw, py0 + 24, 13, 'right');

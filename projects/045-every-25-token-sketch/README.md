@@ -140,7 +140,7 @@ in `found/`; the 132 masters are regenerated on demand.
 The second physical form: a thermal till printer in a steel housing that prints each dethroned
 champion as it happens — the field dithered to the paper's dots, the code as people read it and
 as the library writes it, the program number, the score, how long it held the lane, the time —
-and cuts each ticket onto a shelf for whoever is there to take. The printer's clatter marks
+and cuts each ticket into a pocket under the slot, where it stands picture up for whoever is there to take. The printer's clatter marks
 each takeover; the only consumable is the roll. `receipt/receipt.js` runs the unchanged `babel.js` without a browser and speaks ESC/POS
 to a USB or network printer, locked to the room's clock with `--start 10:00` so that the
 screen beside it shows the same program; `--png` renders the same tickets as a simulator, and
@@ -165,7 +165,7 @@ The third physical form, designed and simulated, not yet built: a black steel pa
 field (the champion, dithered), 28 electromechanical digit wheels for the program number (the
 last 24 never turn), the stage-2 printer behind a slot with the paper falling to the floor,
 and a brass ruler of the library on a log scale with a pointer that advances by a hair a day.
-The printer cuts; the ticket drops onto a steel shelf and whoever is there takes it. The
+The printer cuts; the ticket stands in a steel pocket under the slot, picture up, and whoever is there takes it. The
 conveyor runs across the top, the slow lane sits at the bottom left with the counter and the
 slot beside it, the ruler runs along the foot, and in the dark field at the right the 25
 lengths of the library, their counts, and the day or year each begins to print are engraved in
@@ -179,19 +179,19 @@ the wall label.
 ![the relief, simulated, after 3,000 programs](relief/simulator.png)
 
 `relief/model.html` is the relief in three dimensions: the panel at full size in a gallery
-room, every flip-dot a disc that turns, the counter's drums, the tickets cut onto the shelf,
+room, every flip-dot a disc that turns, the counter's drums, the tickets standing in the pocket,
 the brass ruler, the engraved list — driven by the same enumeration at one program a
 second. Drag to turn, scroll to approach; views for the slow lane, the counter, the receipt and
 the list; one or eight programs a second. With the sound on, the machine is heard: each flip-dot a click,
 the slow lane's 3,364 dots a clatter with the panel ringing under it, the counter's wheels a
 soft tick, the printer a stepper's buzz and the paper's hiss for each ticket — all synthesised,
 nothing sampled. Each ticket leaves the slot as the till printer prints it — the field dithered
-to 384 dots, the seven lines in the printer's font — hangs for two seconds, is cut, and drops
-onto the shelf, so the tickets in the model are the tickets the room will hand out. At the
+to 384 dots, the seven lines in the printer's font — slides into the pocket picture last, is cut, and
+stands, so the tickets in the model are the tickets the room will hand out. At the
 right, engraved in the face, the library's twenty-five lengths and the day or year each begins
 to print.
 
-![the receipt and the shelf in the model](relief/model-receipt.png)
+![the receipt and the pocket in the model](relief/model-receipt.png)
 
 ![the list in the model](relief/model-plate.png)
 
