@@ -71,7 +71,7 @@
     ctx.fillStyle = '#0b0b0e'; ctx.fillRect(0, 0, PANEL.w, PANEL.h);
     ctx.strokeStyle = 'rgba(232,230,223,0.15)'; ctx.lineWidth = 2; ctx.strokeRect(0, 0, PANEL.w, PANEL.h);
     // the conveyor: the last programs, thresholded, oldest first
-    const gap = 20, cx0 = 80, cy0 = 80;
+    const gap = 20, cx0 = 110, cy0 = 160;              // the 6 × 4 grid: 280 mm cells at a 300 mm pitch, 110 in from the sides, 160 from top and bottom
     let below;
     if (TILES === 25) {
       const T = 14 * PITCH;
@@ -89,16 +89,16 @@
         ctx.fillStyle = '#101014'; ctx.fillRect(x - 6, y - 6, T + 12, T + 12);
         field(x, y, 28, k >= 0 ? dots(k, 28, t, false) : null);
       }
-      engrave('THE CONVEYOR . THE LAST 5 PROGRAMS, 28 x 28 DOTS EACH, ONE A SECOND', cx0, cy0 + T + 28, 13);
-      below = cy0 + T + 60;
+      engrave('THE CONVEYOR . THE LAST 5 PROGRAMS, 28 x 28 DOTS EACH, ONE A SECOND', cx0, cy0 - 20, 13);
+      below = 470;
     }
     // the slow lane: 56 × 56 dots, dithered
-    const L = 56 * PITCH, lx = TILES === 25 ? 1000 : 80, ly = TILES === 25 ? 80 : below;
+    const L = 56 * PITCH, lx = TILES === 25 ? 1000 : 120, ly = TILES === 25 ? 80 : below;
     ctx.fillStyle = '#101014'; ctx.fillRect(lx - 8, ly - 8, L + 16, L + 16);
     field(lx, ly, 56, champ ? dots(champ.k, 56, t, true) : null);
     engrave('THE SLOW LANE . 56 x 56 DOTS' + (champ ? ' . PROGRAM ' + grp(champ.k + 1) : ''), lx, ly + L + 28, 13);
     // the counter: 28 digit wheels, the program number, leading zeros
-    const wx = TILES === 25 ? 1000 : 720, wy = TILES === 25 ? 700 : below + 40, ww = 18, wh = 30;
+    const wx = TILES === 25 ? 1000 : 748, wy = TILES === 25 ? 700 : 480, ww = 18, wh = 30;
     const num = String(s.next).padStart(28, '0');
     for (let i = 0; i < 28; i++) {
       ctx.fillStyle = '#1b1b20'; ctx.fillRect(wx + i * ww, wy, ww - 2, wh);
@@ -107,29 +107,29 @@
     engrave('THE PROGRAM . 28 WHEELS . THE LAST 24 NEVER TURN', wx, wy + wh + 22, 13);
     // the receipt slot
     // the receipt: the slot, the tray beneath, the last ticket in it
-    const sx = wx, sy = wy + 100;
+    const sx = wx, sy = wy + 110;
     ctx.fillStyle = '#1b1b20'; ctx.fillRect(sx, sy, 120, 14); ctx.fillStyle = '#e8e6df'; ctx.fillRect(sx + 10, sy + 2, 100, 4);
     ctx.fillStyle = '#1b1b20'; ctx.fillRect(sx - 10, sy + 30, 140, 50); ctx.strokeStyle = 'rgba(232,230,223,0.25)'; ctx.strokeRect(sx - 10, sy + 30, 140, 50);
     if (found.length) { ctx.fillStyle = 'rgba(232,230,223,0.9)'; ctx.fillRect(sx + 8, sy + 36, 104, 38); }
     engrave('THE RECEIPT . ' + grp(found.length) + ' PRINTED OF ' + grp(all.length) + ' TAKEOVERS . A TICKET FOR A HOLD OF ' + MINHOLD + ' OR MORE . TAKE IT', sx + 140, sy + 12, 13);
     engrave('THE TRAY', sx + 140, sy + 60, 13);
     // the plate: the library's 25 lengths, their counts, when each begins to print
-    const px0 = 1360, py0 = 420, pw = 560, ph = 560;                    // a square the slow lane's size, at the bottom right of the grid
+    const px0 = 1320, py0 = 770, pw = 560, ph = 560;                    // rows 3–4, columns 5–6: a double cell like the lane
     ctx.fillStyle = '#17171b'; ctx.fillRect(px0, py0, pw, ph); ctx.strokeStyle = 'rgba(232,230,223,0.25)'; ctx.strokeRect(px0, py0, pw, ph);
     engrave('THE LIBRARY . TOKENS . PROGRAMS . BEGINS TO PRINT', px0 + 20, py0 + 30, 13);
     PLATE.forEach(([n, c, b], i) => { const y = py0 + 62 + i * 18.4; engrave(String(n).padStart(2, ' '), px0 + 20, y, 14); engrave(c, px0 + 270, y, 14, 'right'); engrave(b, px0 + pw - 20, y, 14, 'right'); });
     engrave('SIX OF THESE LINES WILL EVER BE TRUE FOR YOU', px0 + 20, py0 + ph - 24, 13);
     engrave('THE PLATE . THE LIBRARY\'S 25 LENGTHS', px0, py0 + ph + 30, 13);
     // the ruler: the library on a log scale, brass
-    const ry = 1380, rx0 = 80, rx1 = PANEL.w - 80, total = Math.log10(Number(Babel.CUM ? Babel.CUM[25] : 1.024e27));
+    const ry = 1200, rx0 = 110, rx1 = 1290, total = Math.log10(Number(Babel.CUM ? Babel.CUM[25] : 1.024e27));
     const rx = (k) => rx0 + ((rx1 - rx0) * Math.log10(Math.max(1, k))) / total;
     ctx.fillStyle = '#8a7340'; ctx.fillRect(rx0, ry - 6, rx1 - rx0, 12);
     ctx.fillStyle = '#2a2415'; ctx.font = '11px ' + MONO; ctx.textAlign = 'center';
     for (let n = 1; n <= 25; n++) { const x = rx(Number(M.CUM[n])); ctx.fillRect(x, ry - 6, 1.5, 12); ctx.fillText(String(n), x, ry + 24); }
     const px = rx(Math.max(1, s.next)); ctx.fillStyle = '#e8e6df'; ctx.beginPath(); ctx.moveTo(px, ry - 16); ctx.lineTo(px - 6, ry - 28); ctx.lineTo(px + 6, ry - 28); ctx.closePath(); ctx.fill();
     engrave('THE LIBRARY . PROGRAMS OF 1 TO 25 TOKENS ON A LOG SCALE . THE POINTER ADVANCES BY A HAIR A DAY', rx0, ry - 36, 13);
-    engrave('EVERY 25-TOKEN SKETCH . A MACHINE READING A LIBRARY', 80, PANEL.h - 40, 13);
-    engrave(grp(s.distinct) + ' DISTINCT PICTURES . ' + grp(s.dups) + ' REPEATS', PANEL.w - 80, PANEL.h - 40, 13, 'right');
+    engrave('EVERY 25-TOKEN SKETCH . A MACHINE READING A LIBRARY', 110, PANEL.h - 70, 13);
+    engrave(grp(s.distinct) + ' DISTINCT PICTURES . ' + grp(s.dups) + ' REPEATS', PANEL.w - 110, PANEL.h - 70, 13, 'right');
     requestAnimationFrame(draw);
   }
   requestAnimationFrame(draw);

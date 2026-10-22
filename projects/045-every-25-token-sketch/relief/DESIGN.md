@@ -28,12 +28,14 @@ simulator (`simulator.html`) runs both; `?tiles=25` shows the rejected layout.
 | the program | 28 electromechanical digit wheels showing the program number with leading zeros; the last 24 wheels never turn | 504 × 30 mm |
 | the receipt | the stage-2 printer behind the panel, its slot in the face, a steel tray beneath; the printer cuts, the ticket drops, whoever is there takes it | 58 mm slot, 140 × 100 × 50 mm tray |
 | the plate | engraved steel at the bottom right of the grid, a square of the slow lane's size: the 25 lengths, their counts, the day or year each begins to print | 560 × 560 mm |
-| the library | a brass bar engraved with the 25 shelves on a log scale, a pointer on a lead screw at the current program; it advances by a hair a day and sits at the far left for all time | 1840 mm travel |
+| the library | a brass bar engraved with the 25 shelves on a log scale, a pointer on a lead screw at the current program; it advances by a hair a day and sits at the far left for all time | 1180 mm travel |
 | engraving | the element names, in the panel's own voice: "THE CONVEYOR . THE LAST FIVE PROGRAMS, ONE A SECOND", "THE PROGRAM . 28 WHEELS . THE LAST 24 NEVER TURN" | 13 pt, filled white |
 
-Layout, on the conveyor's grid of 280 mm squares: the conveyor across the top; below it the
-slow lane at the left and the plate at the right, each a square of two tiles; between them the
-counter and the receipt slot with its tray; the ruler along the foot. See `elevation.svg`.
+Layout: a grid of 6 × 4 cells of 280 mm at a 300 mm pitch, 110 mm in from the sides and
+160 mm from top and bottom. Row 1: the five tiles of the conveyor, the sixth cell empty.
+Rows 2–3, columns 1–2: the slow lane, a double cell. Row 2, columns 3–4: the counter, the
+slot and the tray. Rows 3–4, columns 5–6: the plate, a double cell like the lane. Row 4,
+columns 1–4: the ruler. See `elevation.svg`.
 
 ## The plate and the tray, in place of a bookcase
 
@@ -41,7 +43,7 @@ The tickets leave the room: the printer cuts, the ticket drops into a steel tray
 slot, and whoever is there takes it. So there is no archive to shelve. What the bookcase was to
 say — that the library has 25 lengths, each about ten times the last, and that the machine
 will print from only the first few — is said by an engraved steel plate, 560 × 560 mm, the
-slow lane's size, at the bottom right of the grid where the slow lane is at the bottom left:
+slow lane's size, the double cell at the bottom right of the grid as the lane is the double cell at the left:
 the 25 lengths, their counts, and the day or year each begins to print at one program a
 second, 6.5 hours a day. The picture the machine holds and the list of what it will never
 reach face each other across the panel.
@@ -88,7 +90,7 @@ Six lines of the plate will ever be true for a visitor. The rest are the point.
   Under the screen's rule the sixth shelf would need 15 m of shelving within a month; under
   the room's rule it holds a year.
 - The slow lane changes with a visible flip of 3,136 dots; the printer fires at the same moment.
-- The counter steps once a second; the pointer moves 0.15 mm an hour at the current shelf.
+- The counter steps once a second; the pointer moves 0.1 mm an hour at the current shelf.
 - The seventh shelf begins to print on day 16, the eighth on day 186, the ninth in year 6.
 - Outside the room's hours the machine rehearses from program 1, as the screen does.
 - Maintenance is a roll of paper every two months and a spare printer on a shelf; see
@@ -101,7 +103,7 @@ Six lines of the plate will ever be true for a visitor. The rest are the point.
 | flip-dot modules | 36 | AlfaZeta XY5 or equivalent, 28 × 7 dots, 10 mm pitch, RS-485; 20 for the conveyor (four a tile), 16 for the slow lane (two across, eight down) | high: the largest line |
 | digit wheels | 28 | electromechanical or stepper-driven 18 mm wheels, 0 to 9, white on black; the last 24 can be fixed wheels showing 0 | mid |
 | printer | 1 | the stage-2 unit, mounted behind the slot | low |
-| ruler | 1 | brass bar 1840 × 12 mm, engraved; lead screw, stepper, limit switch | mid |
+| ruler | 1 | brass bar 1180 × 12 mm, engraved; lead screw, stepper, limit switch | mid |
 | controller | 1 | Linux box with Node, an RS-485 adapter, a stepper board | low |
 | panel | 1 | folded 2 mm steel, 2000 × 1500 mm, black, with cut-outs and a rear frame; wall-hung on a French cleat; about 60 kg with modules | mid |
 | plate and tray | 1 each | engraved 3 mm steel plate 560 × 560 mm; folded steel tray 140 × 100 × 50 mm, deep enough for a ticket to lie flat | low |
