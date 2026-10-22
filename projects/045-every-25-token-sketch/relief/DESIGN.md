@@ -26,7 +26,7 @@ simulator (`simulator.html`) runs both; `?tiles=25` shows the rejected layout.
 | the conveyor | five flip-dot fields of 28 × 28 dots, the last five programs, oldest left, one new program a second; thresholded | five × 280 × 280 mm at 10 mm pitch, 20 mm apart |
 | the slow lane | one flip-dot field of 56 × 56 dots, the champion, dithered; changes hands when a better unrepeated picture arrives, its claim fading by 0.9999 a program | 560 × 560 mm |
 | the program | 28 electromechanical digit wheels showing the program number with leading zeros; the last 24 wheels never turn | 504 × 30 mm |
-| the receipt | the stage-2 printer behind the panel, its slot in the face, a steel tray beneath; the printer cuts, the ticket drops, whoever is there takes it | 58 mm slot, 120 × 80 × 40 mm tray |
+| the receipt | the stage-2 printer behind the panel, its slot in the face, a steel tray beneath; the printer cuts, the ticket drops, whoever is there takes it | 58 mm slot, 140 × 100 × 50 mm tray |
 | the plate | engraved steel beside the slot: the 25 lengths, their counts, the day or year each begins to print | 300 × 400 mm |
 | the library | a brass bar engraved with the 25 shelves on a log scale, a pointer on a lead screw at the current program; it advances by a hair a day and sits at the far left for all time | 1840 mm travel |
 | engraving | the element names, in the panel's own voice: "THE CONVEYOR . THE LAST FIVE PROGRAMS, ONE A SECOND", "THE PROGRAM . 28 WHEELS . THE LAST 24 NEVER TURN" | 13 pt, filled white |
@@ -102,7 +102,7 @@ Six lines of the plate will ever be true for a visitor. The rest are the point.
 | ruler | 1 | brass bar 1840 × 12 mm, engraved; lead screw, stepper, limit switch | mid |
 | controller | 1 | Linux box with Node, an RS-485 adapter, a stepper board | low |
 | panel | 1 | folded 2 mm steel, 2000 × 1500 mm, black, with cut-outs and a rear frame; wall-hung on a French cleat; about 60 kg with modules | mid |
-| plate and tray | 1 each | engraved 3 mm steel plate 300 × 400 mm; folded steel tray 120 × 80 × 40 mm | low |
+| plate and tray | 1 each | engraved 3 mm steel plate 300 × 400 mm; folded steel tray 140 × 100 × 50 mm, deep enough for a ticket to lie flat | low |
 | power | 1 | 24 V for the modules, 24 V for the printer, 12 V for the steppers, one mains cable | low |
 
 The module count is the budget. Halving the conveyor to three tiles saves eight modules and
