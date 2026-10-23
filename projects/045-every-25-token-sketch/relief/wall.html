@@ -1,0 +1,226 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Every 25-Token Sketch — the relief, for a wall</title>
+<style>
+  html, body { margin: 0; height: 100%; background: #000; overflow: hidden; cursor: none; }
+  canvas { display: block; width: 100vw; height: 100vh; }
+</style>
+</head>
+<body>
+<canvas id="wall"></canvas>
+<canvas id="hidden" width="140" height="100" style="display:none"></canvas>
+<script src="../babel.js"></script>
+<script>
+// The relief as a picture for an LED wall or any screen: the black steel panel, 2000 × 1500,
+// drawn at the screen's size with its flip-dots turning, its counter rolling, its tickets
+// printing into the pocket, its pointer creeping along the ruler — the same enumeration as the
+// room, at one program a second, locked to the clock so that a restart resumes where the day
+// is. No controls on screen. Query options:
+//   ?start=09:00   program 1 at this local time today (default 09:00); the number follows the clock
+//   ?rate=1        programs a second (the relief's pace; 8 is the screen's)
+//   ?fade=0.9999 ?minhold=200   the room's selector (the defaults); ?fade=0.9992&minhold=0 the screen's
+//   ?hold=45       seconds a ticket stands in the pocket before a visitor takes it, here imagined
+//   ?sound=1       the flip-dots, the wheels and the printer, synthesised; needs a click or a kiosk
+//                  flag to start (Chrome: --autoplay-policy=no-user-gesture-required)
+//   ?dim=0.8       brightness 0 … 1 for a bright wall
+//   ?record=120    record the canvas for N seconds and save wall.webm (for a video fallback)
+// Keys: F full screen, S sound, Space pause.
+(function () {
+  const q = new URLSearchParams(location.search);
+  const RATE = +(q.get('rate') || 1), FADE = +(q.get('fade') || 0.9999), MINHOLD = q.get('minhold') === null ? 200 : +q.get('minhold');
+  const HOLD = +(q.get('hold') || 45), DIM = Math.max(0.1, Math.min(1, +(q.get('dim') || 1))), START = q.get('start') || '09:00', REC = +(q.get('record') || 0);
+  let sound = q.get('sound') === '1', paused = false;
+  const PITCH = 10, DOT = 3.7, W = 2000, H = 1500;
+  const ROWS = [[1, "5", "DAY 1"], [2, "25", "DAY 1"], [3, "250", "DAY 1"], [4, "2,500", "DAY 1"], [5, "28,125", "DAY 1"], [6, "328,125", "DAY 2"], [7, "3,984,375", "DAY 16"], [8, "5.0 x 10^7", "DAY 186"], [9, "6.3 x 10^8", "YEAR 6"], [10, "8.2 x 10^9", "YEAR 80"], [11, "1.1 x 10^11", "1.0 x 10^3 YEARS"], [12, "1.4 x 10^12", "1.4 x 10^4 YEARS"], [13, "1.9 x 10^13", "1.8 x 10^5 YEARS"], [14, "2.6 x 10^14", "2.4 x 10^6 YEARS"], [15, "3.5 x 10^15", "3.2 x 10^7 YEARS"], [16, "4.7 x 10^16", "4.4 x 10^8 YEARS"], [17, "6.5 x 10^17", "6.0 x 10^9 YEARS"], [18, "9.0 x 10^18", "8.2 x 10^10 YEARS"], [19, "1.2 x 10^20", "1.1 x 10^12 YEARS"], [20, "1.7 x 10^21", "1.6 x 10^13 YEARS"], [21, "2.4 x 10^22", "2.2 x 10^14 YEARS"], [22, "3.4 x 10^23", "3.1 x 10^15 YEARS"], [23, "4.8 x 10^24", "4.3 x 10^16 YEARS"], [24, "6.7 x 10^25", "6.0 x 10^17 YEARS"], [25, "9.5 x 10^26", "8.5 x 10^18 YEARS"]];
+  const cv = document.getElementById('wall'), ctx = cv.getContext('2d');
+  const MONO = '"IBM Plex Mono", ui-monospace, Menlo, Consolas, monospace';
+  const order = [...Array(15).keys()];
+  const D = (a, b) => (Math.abs(b) < 1e-9 ? (a < 0 ? -1e9 : 1e9) : a / b);
+  const Mf = (a, b) => (Math.abs(b) < 1e-9 ? 0 : a - b * Math.floor(a / b));
+  const BAYER = [[0, 8, 2, 10], [12, 4, 14, 6], [3, 11, 1, 9], [15, 7, 13, 5]];
+  const cache = new Map();
+  function fn(k) { if (!cache.has(k)) { const p = Babel.program(k, order); cache.set(k, { fn: Babel.render(p.tokens).fn, n: p.n }); if (cache.size > 400) cache.delete(cache.keys().next().value); } return cache.get(k); }
+  function dots(k, n, t, dither, out) {
+    const f = fn(k).fn;
+    for (let j = 0; j < n; j++) { const y = -2 + (4 * (j + 0.5)) / n; for (let i = 0; i < n; i++) { const x = -2 + (4 * (i + 0.5)) / n; let v = f(x, y, t, D, Mf); if (!isFinite(v)) v = 0; const tone = 0.5 + 0.5 * Math.sin(v); out[j * n + i] = tone > (dither ? (BAYER[j & 3][i & 3] + 0.5) / 16 : 0.5) ? 1 : 0; } }
+    return out;
+  }
+  // the program from the clock: program 1 at START today, RATE a second since
+  function fromClock() { const [h, m] = START.split(':').map(Number); const now = new Date(), s = new Date(now); s.setHours(h, m, 0, 0); let el = (now - s) / 1000; if (el < 0) el += 86400; return Math.floor(el * RATE); }
+  const M = Babel.create(document.getElementById('hidden'), { rate: RATE, prologue: 0, from: fromClock(), fade: FADE });
+  const grp = (n) => String(n).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+  const printedOf = (found) => found.filter((f) => (f.until - f.since) * RATE >= MINHOLD);
+
+  // ── layout ──
+  let scale = 1, ox = 0, oy = 0;
+  function layout() {
+    const dpr = Math.min(devicePixelRatio || 1, 2);
+    cv.width = Math.round(cv.clientWidth * dpr); cv.height = Math.round(cv.clientHeight * dpr);
+    scale = Math.min(cv.width / W, cv.height / H); ox = (cv.width - W * scale) / 2; oy = (cv.height - H * scale) / 2;
+  }
+  addEventListener('resize', layout); layout();
+
+  // ── flip-dot fields: each dot has a state, a target and a flip time; a change sweeps across the field ──
+  function makeField(x, y, n, dither) { return { x, y, n, dither, state: new Uint8Array(n * n), target: new Uint8Array(n * n), at: new Float32Array(n * n).fill(-1), buf: new Uint8Array(n * n) }; }
+  const tiles = [...Array(5)].map((_, i) => makeField(80 + i * 300, 80, 28, false));
+  const lane = makeField(80, 420, 58, true);
+  let flipsThisFrame = 0;
+  function setField(f, bits, now) { for (let i = 0; i < bits.length; i++) if (bits[i] !== f.target[i]) { f.target[i] = bits[i]; f.at[i] = now + (i % f.n) * 0.004; } }
+  function drawField(f, now) {
+    const n = f.n;
+    for (let j = 0; j < n; j++) for (let i = 0; i < n; i++) {
+      const k = j * n + i; let v = f.state[k], sx = 1;
+      if (f.at[k] >= 0) {
+        const u = (now - f.at[k]) / 0.07;
+        if (u >= 1) { f.state[k] = f.target[k]; f.at[k] = -1; v = f.state[k]; flipsThisFrame++; }
+        else if (u > 0) { sx = Math.abs(Math.cos(u * Math.PI)); v = u < 0.5 ? f.state[k] : f.target[k]; }
+      }
+      ctx.fillStyle = v ? '#e8e6df' : '#1a1a1e';
+      const cx = f.x + (i + 0.5) * PITCH, cy = f.y + (j + 0.5) * PITCH;
+      if (sx === 1) { ctx.beginPath(); ctx.arc(cx, cy, DOT, 0, Math.PI * 2); ctx.fill(); }
+      else { ctx.beginPath(); ctx.ellipse(cx, cy, Math.max(0.3, DOT * sx), DOT, 0, 0, Math.PI * 2); ctx.fill(); }
+    }
+  }
+
+  // ── the counter: 28 wheels; a wheel rolls to its new digit in 0.25 s ──
+  const wheels = [...Array(28)].map(() => ({ d: 0, from: 0, at: -1 }));
+  function setCounter(n, now) { const s = String(n).padStart(28, '0'); for (let i = 0; i < 28; i++) { const d = +s[i]; if (d !== wheels[i].d) { wheels[i].from = wheels[i].d; wheels[i].d = d; wheels[i].at = now; } } }
+  function drawCounter(now) {
+    ctx.fillStyle = '#17171b'; ctx.fillRect(712, 452, 520, 46);
+    for (let i = 0; i < 28; i++) {
+      const w = wheels[i], x = 720 + i * 18, y = 460;
+      ctx.fillStyle = '#0d0d10'; ctx.fillRect(x, y, 16, 30);
+      ctx.save(); ctx.beginPath(); ctx.rect(x, y, 16, 30); ctx.clip();
+      ctx.fillStyle = i < 28 - String(M.stats().next).length ? 'rgba(232,230,223,0.28)' : '#e8e6df';
+      ctx.font = '500 20px ' + MONO; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      let off = 0;
+      if (w.at >= 0) { const u = Math.min(1, (now - w.at) / 0.25); off = (1 - (1 - Math.cos(u * Math.PI)) / 2) * 30; if (u >= 1) w.at = -1; ctx.fillText(String(w.from), x + 8, y + 15 - 30 + off); }
+      ctx.fillText(String(w.d), x + 8, y + 15 + off);
+      ctx.restore();
+    }
+    ctx.fillStyle = 'rgba(0,0,0,0.35)'; ctx.fillRect(712, 452, 520, 6); ctx.fillRect(712, 492, 520, 6);   // the recess's shadow
+  }
+
+  // ── the ticket, as the printer prints it: the field dithered to 384 dots, seven lines ──
+  const DPM = 8, PAPER_W = 58 * DPM, PRINT_W = 384, TICKET_H = 726;
+  const ascii = (t) => t.replace(/×/g, '*').replace(/÷/g, '/').replace(/−/g, '-').replace(/·/g, '.');
+  function ticketImage(f, no) {
+    const c = document.createElement('canvas'); c.width = PAPER_W; c.height = TICKET_H; const g = c.getContext('2d');
+    g.fillStyle = '#ece8de'; g.fillRect(0, 0, c.width, c.height);
+    const x0 = (PAPER_W - PRINT_W) / 2, fk = fn(f.k).fn, vals = new Float32Array(64 * 64); let i = 0;
+    for (let py = 0; py < 64; py++) { const yy = -2 + (4 * (py + 0.5)) / 64; for (let px = 0; px < 64; px++) { const xx = -2 + (4 * (px + 0.5)) / 64; let v = fk(xx, yy, f.until, D, Mf); if (!isFinite(v)) v = 0; vals[i++] = 0.5 + 0.5 * Math.sin(v); } }
+    const Wd = PRINT_W, Hd = PRINT_W, e = new Float32Array(Wd * Hd), img = g.createImageData(Wd, Hd), d = img.data;
+    for (let yy = 0; yy < Hd; yy++) for (let xx = 0; xx < Wd; xx++) e[yy * Wd + xx] = vals[Math.floor(yy / 6) * 64 + Math.floor(xx / 6)];
+    for (let yy = 0; yy < Hd; yy++) for (let xx = 0; xx < Wd; xx++) {
+      const k = yy * Wd + xx, old = e[k], v = old < 0.5 ? 0 : 1, err = old - v, o = k * 4;
+      d[o] = d[o + 1] = d[o + 2] = v ? 236 : 24; d[o + 3] = 255;
+      if (xx + 1 < Wd) e[k + 1] += err * 7 / 16;
+      if (yy + 1 < Hd) { if (xx) e[k + Wd - 1] += err * 3 / 16; e[k + Wd] += err * 5 / 16; if (xx + 1 < Wd) e[k + Wd + 1] += err * 1 / 16; }
+    }
+    g.putImageData(img, x0, 24);
+    const held = Math.round((f.until - f.since) * RATE), fit = (t) => (t.length > 32 ? t.slice(0, 31) + '~' : t);
+    const when = new Date().toTimeString().slice(0, 8);
+    const lines = [[ascii(f.code), true], [fit(ascii('library: ' + f.postfix))], [fit('program ' + grp(f.k + 1) + ' . ' + f.n + (f.n === 1 ? ' token' : ' tokens'))], [fit('structure ' + f.peak.toFixed(3) + ' . ' + (f.moves ? 'uses t' : 'no t'))], [fit('held the lane ' + grp(held) + (held === 1 ? ' program' : ' programs'))], [fit('found ' + grp(no) + ' . ' + when)], [fit('EVERY 25-TOKEN SKETCH . PCDTOKYO2026')]];
+    let ly = 24 + PRINT_W + 30; g.fillStyle = '#181818'; g.textBaseline = 'top'; g.textAlign = 'left';
+    for (const [text, bold] of lines) { g.font = (bold ? '700 ' : '500 ') + '21px ' + MONO; g.fillText(text.slice(0, 32), x0, ly + 2); ly += 24; }
+    return c;
+  }
+
+  // ── the queue of one: the found that lasted wait; one ticket stands in the pocket; a visitor takes it after HOLD s ──
+  const queue = [], queued = new Set();
+  let pocket = null, lastTaken = -Infinity, printedNo = 0, paperFor = -1;
+  function serve(now) {
+    const pr = printedOf(M.found());
+    if (pr.length !== paperFor) { if (paperFor >= 0) for (let i = pr.length - paperFor - 1; i >= 0; i--) if (!queued.has(pr[i].k)) { queued.add(pr[i].k); queue.push(pr[i]); } paperFor = pr.length; }
+    if (pocket && pocket.takenAt < 0 && now - pocket.printedAt > HOLD) { pocket.takenAt = now; lastTaken = now; }
+    if (pocket && pocket.takenAt >= 0 && now - pocket.takenAt > 0.8) pocket = null;
+    if (!pocket && queue.length && now - lastTaken >= 3) { const f = queue.shift(); pocket = { f, img: ticketImage(f, ++printedNo), printedAt: now, takenAt: -1 }; soundPrint(); }
+  }
+  function drawReceipt(now) {
+    ctx.fillStyle = '#17171b'; ctx.fillRect(720, 560, 120, 14);                                 // the slot
+    ctx.fillStyle = '#060608'; ctx.fillRect(728, 563, 104, 5);
+    if (pocket) {
+      const u = Math.min(1, (now - pocket.printedAt) / 0.7), fed = 90.75 * u;                    // the ticket comes out of the slot picture up, last line first
+      let alpha = 1, lift = 0;
+      if (pocket.takenAt >= 0) { const v = Math.min(1, (now - pocket.takenAt) / 0.8); alpha = 1 - v; lift = 60 * v; }
+      ctx.save(); ctx.globalAlpha = alpha;
+      const top = 574 + fed - 90.75 - lift, visibleFrom = 574 - lift;                            // the top edge; above the slot is hidden
+      ctx.beginPath(); ctx.rect(740, visibleFrom, 80, 200); ctx.clip();
+      ctx.drawImage(pocket.img, 751, top + 7 + (u < 1 ? 0 : 0), 58, 90.75);
+      ctx.restore();
+    }
+    ctx.fillStyle = '#1b1b20'; ctx.fillRect(746.5, 650, 67, 22);                                 // the pocket's front
+    ctx.fillStyle = 'rgba(232,230,223,0.12)'; ctx.fillRect(746.5, 650, 67, 1);
+    engrave('TAKE ONE', 762, 716, 11);
+  }
+
+  // ── the list, the ruler, the title ──
+  function engrave(s, x, y, size, align) { ctx.fillStyle = 'rgba(232,230,223,0.55)'; ctx.font = '500 ' + size + 'px ' + MONO; ctx.textAlign = align || 'left'; ctx.textBaseline = 'alphabetic'; ctx.fillText(s, x, y); }
+  function drawList() {
+    engrave('THE LIBRARY . TOKENS . PROGRAMS . BEGINS TO PRINT', 1920, 804, 13, 'right');
+    ROWS.forEach(([n, c, b], i) => { const y = 846 + i * 18.2; engrave(String(n), 1560, y, 14, 'right'); engrave(c, 1710, y, 14, 'right'); engrave(b, 1920, y, 14, 'right'); });
+    engrave('SIX OF THESE LINES WILL EVER BE TRUE FOR YOU', 1920, 1316, 13, 'right');
+  }
+  const total = Math.log10(Number(Babel.CUM[25]));
+  const rx = (k) => 80 + (1840 * Math.log10(Math.max(1, k))) / total;
+  function drawRuler(next) {
+    ctx.fillStyle = '#8a7340'; ctx.fillRect(80, 1374, 1840, 12);
+    ctx.fillStyle = '#2a2415';
+    for (let n = 1; n <= 25; n++) { const x = rx(Number(Babel.CUM[n])); ctx.fillRect(x - 0.75, 1374, 1.5, 12); engrave(String(n), x, 1404, 11, 'center'); }
+    const px = rx(Math.max(1, next)); ctx.fillStyle = '#e8e6df'; ctx.beginPath(); ctx.moveTo(px, 1368); ctx.lineTo(px - 6, 1356); ctx.lineTo(px + 6, 1356); ctx.closePath(); ctx.fill();
+    engrave('EVERY 25-TOKEN SKETCH . A MACHINE READING A LIBRARY', 80, 1460, 13);
+  }
+
+  // ── sound, synthesised: a click per flip, a tick per wheel, the printer's buzz and hiss ──
+  let AC = null, master = null;
+  function audio() { if (!sound) return null; if (!AC) { AC = new (window.AudioContext || window.webkitAudioContext)(); master = AC.createGain(); master.gain.value = 0.5; master.connect(AC.destination); } if (AC.state === 'suspended') AC.resume(); return AC; }
+  function click(n, when) { const ac = audio(); if (!ac) return; const dur = 0.012, buf = ac.createBuffer(1, Math.ceil(ac.sampleRate * dur), ac.sampleRate), d = buf.getChannelData(0); for (let i = 0; i < d.length; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / d.length, 3); const s = ac.createBufferSource(); s.buffer = buf; const f = ac.createBiquadFilter(); f.type = 'bandpass'; f.frequency.value = 2200 + Math.random() * 800; f.Q.value = 2; const g = ac.createGain(); g.gain.value = Math.min(0.5, 0.06 * Math.sqrt(n)); s.connect(f); f.connect(g); g.connect(master); s.start(when); }
+  function soundPrint() { const ac = audio(); if (!ac) return; const t = ac.currentTime; const o = ac.createOscillator(); o.type = 'square'; o.frequency.value = 180; const g = ac.createGain(); g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(0.05, t + 0.02); g.gain.exponentialRampToValueAtTime(0.0001, t + 0.7); o.connect(g); g.connect(master); o.start(t); o.stop(t + 0.75); const buf = ac.createBuffer(1, ac.sampleRate * 0.7, ac.sampleRate), d = buf.getChannelData(0); for (let i = 0; i < d.length; i++) d[i] = (Math.random() * 2 - 1) * 0.3; const s = ac.createBufferSource(); s.buffer = buf; const hp = ac.createBiquadFilter(); hp.type = 'highpass'; hp.frequency.value = 3000; const hg = ac.createGain(); hg.gain.value = 0.04; s.connect(hp); hp.connect(hg); hg.connect(master); s.start(t); }
+  addEventListener('keydown', (e) => { if (e.key === 'f' || e.key === 'F') { if (document.fullscreenElement) document.exitFullscreen(); else document.documentElement.requestFullscreen().catch(() => {}); } if (e.key === 's' || e.key === 'S') { sound = !sound; if (sound) audio(); } if (e.key === ' ') paused = !paused; });
+  addEventListener('click', () => { if (sound) audio(); });
+
+  // ── the frame ──
+  let lastNext = -1, lastChamp = -1, last = performance.now();
+  const buf28 = new Uint8Array(28 * 28), buf58 = new Uint8Array(58 * 58);
+  function frame(nowMs) {
+    requestAnimationFrame(frame);
+    const now = nowMs / 1000; last = nowMs;
+    const s = M.stats(), champ = M.champion();
+    if (s.next !== lastNext) {
+      lastNext = s.next;
+      for (let i = 0; i < 5; i++) { const k = s.next - 5 + i; if (k >= 0) setField(tiles[i], dots(k, 28, now, false, buf28), now); }
+      setCounter(s.next, now);
+      serve(now);
+    }
+    if (champ && champ.k !== lastChamp) { lastChamp = champ.k; setField(lane, dots(champ.k, 58, now, true, buf58), now); }
+    // draw
+    ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.fillStyle = '#000'; ctx.fillRect(0, 0, cv.width, cv.height);
+    ctx.setTransform(scale, 0, 0, scale, ox, oy);
+    ctx.fillStyle = '#0b0b0e'; ctx.fillRect(0, 0, W, H);
+    flipsThisFrame = 0;
+    for (const t of tiles) { ctx.fillStyle = '#101014'; ctx.fillRect(t.x - 6, t.y - 6, 292, 292); drawField(t, now); }
+    ctx.fillStyle = '#101014'; ctx.fillRect(lane.x - 6, lane.y - 6, 592, 592); drawField(lane, now);
+    drawCounter(now); drawReceipt(now); drawList(); drawRuler(s.next);
+    if (DIM < 1) { ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.fillStyle = 'rgba(0,0,0,' + (1 - DIM) + ')'; ctx.fillRect(0, 0, cv.width, cv.height); }
+    if (flipsThisFrame && sound) click(flipsThisFrame, audio().currentTime);
+  }
+  requestAnimationFrame(frame);
+  // the piece's own clock drives the enumeration; pause holds the screen, not the clock, so the number stays true to the hour
+  // (a paused wall simply stops drawing; the enumeration keeps the time)
+  const draw0 = frame; void draw0;
+
+  // ── recording, for a video fallback: ?record=N saves wall.webm after N seconds ──
+  if (REC > 0 && cv.captureStream && window.MediaRecorder) {
+    const stream = cv.captureStream(30), chunks = [];
+    const rec = new MediaRecorder(stream, { mimeType: MediaRecorder.isTypeSupported('video/webm;codecs=vp9') ? 'video/webm;codecs=vp9' : 'video/webm', videoBitsPerSecond: 16e6 });
+    rec.ondataavailable = (e) => { if (e.data.size) chunks.push(e.data); };
+    rec.onstop = () => { const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob(chunks, { type: 'video/webm' })); a.download = 'wall.webm'; document.body.appendChild(a); a.click(); };
+    rec.start(1000); setTimeout(() => rec.stop(), REC * 1000);
+  }
+})();
+</script>
+</body>
+</html>
