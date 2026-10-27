@@ -33,7 +33,8 @@ board. Two things change on day one:
 
 Listed, not chosen. Each is a bounded study with a visible result on the sheet.
 
-**New dogmas** (one file each in `lib/styles/`, five tenets each):
+**New dogmas** (one file each in `lib/styles/`, five tenets each). All nine below are built, see
+the 2026-10-27 entry on the nine styles in section 4:
 Kahn (served and servant spaces, the plan reads as rooms around hollow piers); Loos (Raumplan:
 split levels, the section is the drawing); Terragni (rationalist frame, the half-open grid);
 Aalto (fan plans, one free curve against orthogonal wings); Wright Prairie (long low roofs, the
@@ -170,3 +171,33 @@ Checks: 864 paints (12 styles, 12 seeds, six sheets), zero failures, zero page e
 montage of A-06 read for overprint, clipping and caption fit. Known limits: styles that draw their
 stairs as glyphs rather than solids (Mexican modern) report no verticals; dogma thresholds are
 set from a 40-seed survey and will want revisiting when rarity is loaded.
+
+**2026-10-27 — nine new grammars (21 in all).** The ten architects listed in section 3 as new
+dogmas are built as nine styles, Leonidov and Melnikov sharing one. Each is one file in
+`lib/styles/` with a sheet palette, titles, sub-styles, five tenets over the drawn scene, model
+declarations through `ctx.M`, and two further dogmas in `lib/dogmas.js` that test the measured
+model. A small shared kit (`lib/kit.js`) holds the drawing helpers they use: a hipped roof, a
+cylinder, a faceted sphere, a flight of steps, and apertures cut in a wall face.
+
+| Style | Source | Grammar | Tenets over the scene |
+|---|---|---|---|
+| KAHN | served and servant | a grid of single-volume rooms between hollow brick piers; one geometric opening in each wall; a roof light per room | served and servant; hollow servants; one room one light; geometric apertures; clear span |
+| LOOS | Raumplan | a plain white cube; inside, four zones stacked with rooms of different heights so no two floors line up | plain outside; raumplan; ceilings vary; outside is a cube; stair lands between |
+| TERRAGNI | Casa del Fascio | a block half as high as it is wide; a six-bay frame; a glazed court; one open frame face, one panelled | half a cube; central court; frame expressed; one bay; solid and void |
+| AALTO | free curve | brick wings at right angles against one fan or serpentine; funnel roof lights; copper roofs | one free curve; two orthogonal wings; daylight from above; stepped down; brick base |
+| WRIGHT | prairie house | a hearth and a pinwheel of wings under low hipped roofs with deep eaves; window bands; garden walls | hearth at the centre; deep eaves; horizontal emphasis; band on every wing; wings radiate |
+| BAWA | tropical modernism | three or four pavilions round a water court; verandas; deep tile roofs; covered corners | courtyard central; deep eaves; veranda on every pavilion; water in the court; covered route |
+| ANDO | concrete and light | a concrete box on a 2.4 m module with tie holes, a free plane, a basin, steps, and one slot of light | one slot of light; concrete only; on the 2.4 m module; plane and volume; water and step |
+| CONSTRUCTIVIST | Leonidov, Melnikov | a sphere on a drum, a guyed mast, a bar on two piers, cantilevered boxes, a diagonal ramp | three primitives; clash; cantilever; under tension; diagonal |
+| SCARPA | the joint | stepped concrete walls floating on shadow gaps, a tile ribbon, a stone-edged water channel, two interlocking circles | shadow gap; stepped reveal; water channel; three materials meet; interlocked circles |
+
+Every tenet can fail on some seeds by construction, since a tenet every seed passes measures
+nothing: the first survey of 40 seeds per style put the tenet pass rates between about 28 and
+100 per cent, and the model dogmas between about 25 and 60. Constructivist's clash test was
+loosened from three overlaps to two after it passed only 28 per cent. The programme vocabulary
+gained a civic group (assembly, lecture, council, atrium) and the room names these styles use.
+Checks: 1008 paints (21 styles, 8 seeds, six sheets), zero failures, zero page errors; board of
+all 21 styles; section, diagram and plan sheets read for Loos, Kahn and Constructivist.
+Known limits: styles built from curved prisms (Aalto's fan and serpentine, the Constructivist
+sphere) show as outline in sections and plans, not poché, because the orthographic renderer cuts
+only axis-aligned solids; Wright's overlapping hipped roofs read dense in the axonometric.

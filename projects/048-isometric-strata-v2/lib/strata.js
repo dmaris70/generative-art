@@ -5,7 +5,7 @@
  *   Strata.paint(g, state, { wobble, ink });   // g: the window (p5 global mode) or a p5.Graphics
  *
  * build() turns a seed and a few overrides into a specification, a Scene of
- * 3-D primitives (one of twelve styles on one of six sites), the legend
+ * 3-D primitives (one of twenty-one styles on one of six sites), the legend
  * tallied from what was placed, and the fits for the six sheets of the drawing
  * set (site plan, plans, sections, elevations, axonometric). paint() draws the
  * sheet the state names, scaled to the renderer's width. The sketch and
@@ -54,10 +54,37 @@
   TEATRO: { colors: [[240, 236, 226], [160, 50, 44], [220, 180, 80], [140, 142, 146], [30, 100, 110]], water: [100, 130, 150] },
   EARTH: { colors: [[192, 96, 58], [75, 125, 138], [210, 161, 58], [111, 154, 90], [156, 107, 74]] },
   CONCRETE: { colors: [[120, 118, 112], [156, 152, 144], [192, 96, 58], [98, 110, 118], [180, 176, 166]] },
+  BRICK: { colors: [[170, 92, 70], [206, 198, 184], [120, 126, 130], [92, 60, 48], [150, 170, 180]], water: [120, 150, 166] },
+  KIMBELL: { colors: [[214, 196, 160], [150, 148, 142], [176, 196, 206], [96, 88, 76], [140, 166, 180]], water: [130, 160, 176] },
+  DHAKA: { colors: [[188, 182, 170], [160, 86, 64], [238, 232, 222], [112, 108, 100], [120, 150, 160]], water: [120, 150, 160] },
+  MULLER: { colors: [[240, 236, 226], [96, 120, 98], [190, 184, 172], [70, 62, 54], [130, 150, 160]], water: [130, 150, 160] },
+  STEINER: { colors: [[236, 228, 214], [140, 110, 80], [200, 194, 184], [56, 54, 52], [130, 150, 160]], water: [130, 150, 160] },
+  MOLLER: { colors: [[244, 240, 230], [170, 120, 86], [176, 172, 164], [60, 58, 56], [130, 150, 160]], water: [130, 150, 160] },
+  COMO: { colors: [[232, 228, 216], [128, 132, 138], [150, 196, 206], [196, 188, 172], [120, 150, 166]], water: [120, 150, 166] },
+  NOVOCOMUM: { colors: [[226, 218, 200], [150, 98, 76], [160, 190, 196], [180, 176, 166], [120, 150, 166]], water: [120, 150, 166] },
+  MARBLE: { colors: [[238, 236, 230], [104, 110, 118], [170, 200, 210], [204, 200, 190], [120, 150, 166]], water: [120, 150, 166] },
+  SAYNATSALO: { colors: [[168, 92, 72], [236, 230, 216], [110, 140, 128], [186, 150, 104], [140, 160, 176]], water: [130, 156, 176] },
+  VIIPURI: { colors: [[196, 120, 90], [240, 236, 226], [96, 128, 116], [170, 136, 96], [140, 160, 176]], water: [130, 156, 176] },
+  FINLANDIA: { colors: [[206, 202, 194], [244, 242, 236], [70, 110, 100], [150, 120, 90], [140, 164, 180]], water: [130, 156, 176] },
+  PRAIRIE: { colors: [[196, 152, 112], [120, 64, 44], [216, 190, 150], [140, 160, 140], [96, 70, 50]], water: [120, 150, 150] },
+  ROBIE: { colors: [[188, 108, 76], [96, 80, 60], [224, 204, 170], [150, 170, 150], [100, 76, 56]], water: [120, 150, 150] },
+  TALIESIN: { colors: [[206, 190, 160], [100, 76, 60], [190, 170, 140], [130, 160, 140], [90, 70, 54]], water: [120, 150, 150] },
+  KANDY: { colors: [[196, 118, 84], [236, 226, 206], [120, 96, 70], [96, 140, 110], [110, 150, 160]], water: [110, 150, 160] },
+  LUNUGANGA: { colors: [[176, 98, 70], [230, 218, 196], [108, 86, 62], [84, 128, 98], [110, 150, 160]], water: [110, 150, 160] },
+  CEYLON: { colors: [[186, 130, 92], [240, 232, 214], [132, 104, 76], [110, 150, 112], [110, 150, 160]], water: [110, 150, 160] },
+  SMOOTH: { colors: [[176, 174, 170], [150, 148, 146], [246, 244, 238], [110, 112, 114], [110, 140, 152]], water: [110, 140, 152] },
+  SHUTTER: { colors: [[164, 160, 152], [138, 134, 128], [246, 242, 232], [100, 98, 94], [110, 140, 152]], water: [110, 140, 152] },
+  SLIT: { colors: [[132, 132, 134], [108, 108, 112], [248, 246, 238], [70, 72, 76], [110, 140, 152]], water: [110, 140, 152] },
+  ROSTA: { colors: [[236, 230, 218], [196, 48, 40], [40, 42, 46], [150, 152, 156], [120, 140, 156]], water: [120, 140, 156] },
+  VKHUTEMAS: { colors: [[230, 226, 214], [210, 60, 48], [60, 60, 64], [176, 170, 150], [120, 140, 156]], water: [120, 140, 156] },
+  SUPREM: { colors: [[238, 234, 224], [220, 170, 40], [34, 34, 38], [160, 158, 150], [120, 140, 156]], water: [120, 140, 156] },
+  BRION: { colors: [[168, 166, 160], [206, 198, 180], [196, 70, 52], [48, 50, 54], [110, 140, 150]], water: [110, 140, 150] },
+  VERONA: { colors: [[176, 170, 160], [214, 196, 168], [60, 120, 150], [52, 52, 56], [110, 140, 150]], water: [110, 140, 150] },
+  VENICE: { colors: [[160, 160, 156], [220, 208, 184], [210, 150, 50], [44, 46, 50], [110, 140, 150]], water: [110, 140, 150] },
   RUSTED: { colors: [[176, 84, 48], [140, 66, 40], [210, 161, 58], [92, 96, 100], [200, 140, 100]] },
 };
 
-  const STYLE_KEYS = ['mexican', 'decon', 'geodesic', 'brutalist', 'corbusier', 'destijl', 'metabolism', 'palladio', 'archigram', 'mies', 'cycladic', 'rossi'];
+  const STYLE_KEYS = ['mexican', 'decon', 'geodesic', 'brutalist', 'corbusier', 'destijl', 'metabolism', 'palladio', 'archigram', 'mies', 'cycladic', 'rossi', 'kahn', 'loos', 'terragni', 'aalto', 'wright', 'bawa', 'ando', 'constructivist', 'scarpa'];
 
   // The drawing set: one seed is a numbered set of six sheets. A-05 is the
   // axonometric v1.0 drew; the other four are the orthographic sheets a working
@@ -122,7 +149,7 @@
   const plot = Object.assign({ x: -size.w / 2, y: -size.d / 2 }, size);
   const ctx = {
     rng: R.fork('style'), scene: scene, plot: plot, floors: floors, floorH: spec.floorH,
-    palette: palette, detail: detailN, shape: spec.shape, annex: false, substyle: spec.substyle, M: M,
+    palette: palette, detail: detailN, shape: spec.shape, annex: false, substyle: spec.substyle, type: spec.type, M: M,
   };
   const extra = style.build(ctx) || {};
 
