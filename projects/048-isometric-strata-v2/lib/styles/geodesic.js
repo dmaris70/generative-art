@@ -112,6 +112,7 @@
           const pr = G.prism(hex2, hex);
           for (const f of pr.sides) if (f.visible) S.face(f.pts, { fill: { color: tone, alpha: 90, mode: 'flat' }, edge: MAST });
           S.face(hex, { fill: { color: pal[2] || tone, alpha: 60, mode: 'flat' }, edge: MAST });
+          if (ctx.M) { ctx.M.prism(hex, z - 0.3, z, 'slab'); ctx.M.space({ name: 'DECK', kind: 'terrace', poly: hex.map((q) => [q[0], q[1]]), z: z - 0.3, h: 0.3, level: 0 }); }
           // deck rail
           S.line(hex.map((p) => [p[0], p[1], z + 0.9]).concat([[hex[0][0], hex[0][1], z + 0.9]]), FAINT, { depth: D([c[0], c[1], z]) + 0.05 });
           for (let i = 0; i < 6; i++) S.line([hex[i], [hex[i][0], hex[i][1], z + 0.9]], FAINT, { depth: D(hex[i]) + 0.05 });
@@ -125,6 +126,11 @@
 
         // the dome
         const dz = Hg, dr2 = r;
+        if (ctx.M) {
+          const ring = G.regular(c[0], c[1], dz, dr2, 20).map((q) => [q[0], q[1]]);
+          ctx.M.prism(ring, dz, dz + dr2, 'volume');
+          ctx.M.space({ name: 'DOME HALL', kind: 'room', poly: ring, z: dz, h: dr2, level: 0 });
+        }
         const V = dome.verts.map((v) => [c[0] + v[0] * dr2, c[1] + v[1] * dr2, dz + v[2] * dr2]);
         const up = (i) => dome.verts[i][2] > -0.02;
         for (const e of dome.edges) {

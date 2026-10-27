@@ -175,6 +175,17 @@
         S.count('PLANE');
       }
 
+      // ---- the model ----
+      if (ctx.M) {
+        for (let k = 0; k < N; k++) {
+          const z = plH + k * FH;
+          ctx.M.space({ name: k === 0 ? 'OPEN PLAN' : 'OPEN PLAN', kind: 'room', x: bx, y: by, w: bw, d: bd, z: z, h: FH - 0.35, level: k, area: bw * bd - cw * cd });
+          ctx.M.space({ name: 'CORE', kind: 'service', x: cxm, y: cym, w: cw, d: cd, z: z, h: FH - 0.35, level: k });
+        }
+        ctx.M.space({ name: 'PLINTH TERRACE', kind: 'terrace', x: px, y: py, w: pw, d: pd, z: 0, h: plH, level: 0, area: pw * pd - bw * bd - (pool ? pool.w * pool.d : 0) });
+        if (pool) ctx.M.space({ name: 'POOL', kind: 'water', x: pool.x, y: pool.y, w: pool.w, d: pool.d, z: plH, h: 0, level: 0 });
+      }
+
       // ---- the tenets ----
       const partTags = ['core', 'plane', 'pool'];
       const opaque = S.items.filter((it) => it.tag === 'core' || it.tag === 'plane').length / 3; // three faces each

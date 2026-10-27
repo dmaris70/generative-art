@@ -85,3 +85,31 @@ pick the sheet in the client; the board's `sheets` set lays the five out for one
 Verified on seeds 940 (Mexican modern, plaza), 7 (Metabolism tower, city) and 12 (Cycladic,
 hillside): no console errors, the tower's twelve floors align with the margin scale, the
 hillside's contours read in the site plan and the terrain steps in section B-B.
+
+**2026-10-27 — the volumetric model (solids, structure, spaces, quantities).** The drawing set
+was first drawn by re-projecting the axonometric's faces, which cannot show a true cut. The
+engine now holds a model beneath the drawings, in three layers:
+
+1. *Solids.* `Scene.box` records every box as a solid (`scene.solids`); the orthographic
+   renderer (`lib/ortho.js`) draws plans, sections and elevations from those solids with true
+   faces, poché where the cut passes through mass (thin members hatch instead), structural-grid
+   bubbles, overall and level dimensions, and level marks.
+2. *Declarations.* Each style declares through `ctx.M` (`lib/model.js`): a structural grid,
+   spaces (name, kind, footprint, level, height) and structural prisms. The recorder has its own
+   rng so declaring never moves a style's random stream.
+3. *Derivation.* `Model.derive` classifies solids (core, stair, base, column, wall, slab,
+   mass, ornament) and measures: footprint, plan fill, envelope and solid/envelope ratio,
+   slenderness, open ground, column count and bay, wall length, floor area, programme, open
+   space. Structure is decided from the measured shares: FRAME, CORE, MASS, WALL or HYBRID.
+
+Honesty rule: every figure in the schedule's QUANTITIES block and in `properties.model` is
+measured from the drawn model, never asserted. Plans label each room with its name and area,
+sections label the spaces the cut passes through, and the schedule gains five architectural
+traits (structure, massing, proportion, ground, plan), unranked while v2 carries no rarity.
+
+Checks: 600-paint sweep (seed × style × sheet) with zero failures and zero page errors; the
+quantity survey separates the twelve styles as expected (Mies, Corbusier, Brutalist, Decon,
+Geodesic read FRAME; Metabolism CORE; Cycladic and Rossi MASS; De Stijl WALL; Mexican and
+Palladio split WALL/MASS; Archigram FRAME/MASS). Room labels place small spaces first and step
+larger ones to a free corner rather than overprint. Known limit: a label can still touch a core
+outline on very small plans.

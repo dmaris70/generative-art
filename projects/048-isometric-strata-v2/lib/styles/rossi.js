@@ -167,6 +167,7 @@
         const x = cell.x + (cw - s) / 2, y = cell.y + (cd - s) / 2;
         if (kind === 'cube') {
           S.box(x, y, 0, s, s, s, { color: red, alpha: 170, mode: 'pencil', spacing: 2.6, angle: 'edge', edge: EDGE, tag: 'cube' });
+          if (ctx.M) for (let q = 0, nq = Math.max(2, Math.round(s / FH)); q < nq; q++) ctx.M.space({ name: 'CUBE HALL', kind: 'room', x: x + 0.3, y: y + 0.3, w: s - 0.6, d: s - 0.6, z: (s / nq) * q, h: s / nq - 0.2, level: q });
           punch(x, y, s, s, s, Math.max(2, Math.round(s / FH)));
           shadow([[x, y], [x + s, y], [x + s, y + s], [x, y + s]], s, [x + s / 2, y + s / 2]);
           solids.push({ type: 'cube', cx: x + s / 2, cy: y + s / 2, mass: s * s * s });
@@ -189,6 +190,7 @@
           const w = cw * 0.8, d = Math.min(cd * 0.5, 7), h = FH * 2;
           const gx = cell.x + (cw - w) / 2, gy = cell.y + (cd - d) / 2;
           S.box(gx, gy, 0, w, d, h, { color: bone, alpha: 170, mode: 'pencil', spacing: 2.6, angle: 'edge', edge: EDGE, tag: 'gable' });
+          if (ctx.M) for (let q = 0; q < 2; q++) ctx.M.space({ name: 'GABLE HALL', kind: 'room', x: gx + 0.3, y: gy + 0.3, w: w - 0.6, d: d - 0.6, z: (h / 2) * q, h: h / 2 - 0.2, level: q });
           punch(gx, gy, w, d, h, 2);
           const rh = d * 0.45, ym = gy + d / 2;
           S.face([[gx, gy + d, h], [gx + w, gy + d, h], [gx + w, ym, h + rh], [gx, ym, h + rh]], { fill: { color: G.shade(grey, 1.05), alpha: 170, mode: 'pencil', spacing: 2.2, angle: 'edge' }, edge: EDGE, tag: 'roof' });

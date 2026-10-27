@@ -71,6 +71,15 @@
         }
         S.face(top, { fill: R.chance(0.6) ? { color: tone, alpha: alpha * 0.5, mode: 'hatch', spacing: sp * 1.6, angle: 'edge' } : null, edge: EDGE });
         S.count('VOLUMES');
+        if (ctx.M) {
+          const nF = Math.max(1, Math.round(h / FH));
+          for (let k = 0; k < nF; k++) {
+            const t0 = k / nF, t1 = (k + 1) / nF, tm = (t0 + t1) / 2;
+            const at = (t) => bz.map((p, i) => [p[0] + (top[i][0] - p[0]) * t, p[1] + (top[i][1] - p[1]) * t]);
+            ctx.M.prism(at(tm), z0 + h * t0, z0 + h * t1, 'volume');
+            ctx.M.space({ name: ctx.M.R.pick(['GALLERY', 'STUDIO', 'HALL', 'LOFT', 'GALLERY']), kind: 'room', poly: at(tm), z: z0 + h * t0, h: h / nF - 0.2, level: k });
+          }
+        }
         // floor plates: the section between base and top, dashed
         const n = Math.round(h / FH);
         for (let k = 1; k < n; k++) {

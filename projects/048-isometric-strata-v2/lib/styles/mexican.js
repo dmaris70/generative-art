@@ -171,12 +171,14 @@
       // ---- tower ----
       const nT = ctx.annex ? (R.chance(0.4) ? 1 : 0) : R.chance(0.35) ? 2 : 1;
       const used = new Set();
+      const towerLv = {};
       for (let t = 0; t < nT && rooms.length; t++) {
         const c = R.pick(rooms);
         if (used.has(c.join())) continue;
         used.add(c.join());
         const x = P.x + c[0] * cell + 0.3, y = P.y + c[1] * cell + 0.3, s = cell - 0.6;
         const h = floors * FH * (t === 0 ? 1 : R.range(0.7, 0.9));
+        towerLv[c.join()] = Math.max(1, Math.round(h / FH));
         const col = wallColor();
         S.box(x, y, 0, s, s, h, { color: col, alpha: 115, mode: 'pencil', edge: EDGE, spacing: 2.4 });
         // a lighter inner shaft, the roof mesh and a slit
@@ -188,6 +190,27 @@
         S.face(f, { fill: { color: [250, 246, 236], alpha: 235, mode: 'flat' }, edge: { alpha: 90, weight: 0.6, wob: 0.4 }, depth: global.ISO.depth(f[0]) + 0.3 });
         S.count('LUZ');
         S.count('TORRE');
+      }
+
+      // ---- the model: what each cell is ----
+      if (ctx.M) {
+        const MR = ctx.M.R, ins = 0.2;
+        const names = ['SALA', 'ESTUDIO', 'RECAMARA', 'COCINA', 'BIBLIOTECA', 'TALLER', 'GALERIA', 'COMEDOR'];
+        for (let i = 0; i < nx; i++) {
+          for (let j = 0; j < ny; j++) {
+            const r = role[i][j];
+            if (!r) continue;
+            const x = P.x + i * cell, y = P.y + j * cell;
+            if (r === 'ROOM') {
+              const L = towerLv[i + ',' + j] || lev[i][j];
+              for (let k = 0; k < L; k++) {
+                const nm = ctx.substyle === 'CAPILLA' && k === 0 && MR.chance(0.3) ? 'CAPILLA' : towerLv[i + ',' + j] && k === L - 1 ? 'MIRADOR' : MR.pick(names);
+                ctx.M.space({ name: nm, kind: 'room', x: x + ins, y: y + ins, w: cell - 2 * ins, d: cell - 2 * ins, z: k * FH, h: FH - 0.22, level: k });
+              }
+            } else if (r === 'PATIO') ctx.M.space({ name: 'PATIO', kind: 'court', x: x, y: y, w: cell, d: cell, z: 0, h: 0, level: 0 });
+            else ctx.M.space({ name: 'ESTANQUE', kind: 'water', x: x + 0.5, y: y + 0.5, w: cell - 1, d: cell - 1, z: 0, h: 0, level: 0 });
+          }
+        }
       }
 
       // ---- masses, stone, lattice, stairs ----

@@ -175,6 +175,7 @@
         const gap = cell * 0.6;
         const wy = front - wd; // wings align to the front
         const wing = (x0) => {
+          if (ctx.M) ctx.M.space({ name: 'WING', kind: 'room', x: x0, y: wy, w: ww, d: wd, z: pod, h: wh - pod, level: 0 });
           S.box(x0, wy, pod, ww, wd, wh - pod, { color: stucco, alpha: 130, mode: 'pencil', spacing: 2.6, edge: EDGE, tag: 'wing' });
           // a shallow hipped roof
           const e = G.rect(x0 - 0.3, wy - 0.3, wh, ww + 0.6, wd + 0.6);
@@ -246,6 +247,23 @@
       for (let i = 0; i < avenueN; i++) {
         global.Site.tree(ctx, cx - 2.2, gy + 1 + i * sp, 1.0);
         global.Site.tree(ctx, cx + 2.2, gy + 1 + i * sp, 1.0);
+      }
+
+      // ---- the model: the piano nobile and the floors above ----
+      if (ctx.M) {
+        const plate = global.Model.polyArea(loop), fill = plate / (bw * bd);
+        ctx.M.prism(loop, pod, H, 'wall', 0.6);
+        const salaW = Math.min(bw * 0.4, 9), salaD = bd * 0.6, salaX = cx - salaW / 2, salaY = by + bd * 0.2;
+        const names = [['SALA', 'CAMERE'], ['SALA', 'CAMERE'], ['SALONE', 'CAMERE']];
+        for (let k = 0; k < N; k++) {
+          const z = pod + k * FH, nm = names[Math.min(k, 2)];
+          ctx.M.space({ name: nm[0], kind: 'room', x: salaX, y: salaY, w: salaW, d: salaD, z: z, h: FH - 0.15, level: k, area: salaW * salaD });
+          const side = (bw - salaW) / 2;
+          ctx.M.space({ name: nm[1], kind: 'room', x: bx, y: by, w: side, d: bd, z: z, h: FH - 0.15, level: k, area: side * bd * fill });
+          ctx.M.space({ name: nm[1], kind: 'room', x: bx + side + salaW, y: by, w: side, d: bd, z: z, h: FH - 0.15, level: k, area: side * bd * fill });
+        }
+        ctx.M.space({ name: 'PORTICO', kind: 'loggia', x: px0, y: py0, w: pw, d: pdp, z: pod, h: colH, level: 0 });
+        ctx.M.space({ name: 'PODIUM', kind: 'terrace', x: P.x, y: P.y, w: P.w, d: P.d, z: 0, h: pod, level: 0, area: P.w * P.d - plate });
       }
 
       // ---- the tenets ----
