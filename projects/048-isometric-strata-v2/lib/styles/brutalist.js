@@ -50,6 +50,7 @@
       for (let i = 0; i <= P.nx; i++) S.line([[P.x + i * cell, P.y - 2, 0.02], [P.x + i * cell, P.y + P.d + 2, 0.02]], { alpha: 70, weight: 0.6, wob: 0.4, dash: [5, 4] }, { layer: 0 });
       for (let j = 0; j <= P.ny; j++) S.line([[P.x - 2, P.y + j * cell, 0.02], [P.x + P.w + 2, P.y + j * cell, 0.02]], { alpha: 70, weight: 0.6, wob: 0.4, dash: [5, 4] }, { layer: 0 });
       S.count('GRID');
+      if (ctx.M) ctx.M.grid(Array.from({ length: P.nx + 1 }, (_, i) => P.x + i * cell), Array.from({ length: P.ny + 1 }, (_, j) => P.y + j * cell));
 
       // split: frame region (slabs) on the -x side, pilotis field on the +x side
       const split = Math.max(1, Math.min(P.nx - 1, Math.round(P.nx * R.range(0.45, 0.65))));

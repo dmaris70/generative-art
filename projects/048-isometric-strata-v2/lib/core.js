@@ -292,6 +292,7 @@
   function Scene() {
     this.items = [];
     this.counts = {};
+    this.solids = [];   // every axis-aligned solid placed through box(): the building's real volumes
   }
 
   Scene.prototype.add = function (it) {
@@ -348,6 +349,10 @@
         edge: edge, layer: o.layer, depth: o.depth, tag: o.tag,
       });
     const out = { top: mk(f.top, sh[0], 'top'), left: mk(f.left, sh[1], 'left'), right: mk(f.right, sh[2], 'right') };
+    // the solid itself, with all six faces' worth of information, for the orthographic sheets
+    const sIdx = this.solids.length;
+    out.top.solid = out.left.solid = out.right.solid = sIdx;
+    this.solids.push({ x: x, y: y, z: z, w: w, d: d, h: h, tag: o.tag || null, color: o.color || null, alpha: alpha, mode: o.mode || 'pencil', spacing: o.spacing, edge: edge, shade: sh, layer: o.layer === undefined ? 1 : o.layer });
     if (o.xray) {
       for (const e of geom.boxHidden(x, y, z, w, d, h)) {
         this.line(e, o.xrayPen || { alpha: 55, weight: 0.7, wob: 0.8 }, { layer: o.layer, depth: depth([x, y, z]) - 0.01 });
