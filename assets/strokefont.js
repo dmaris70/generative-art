@@ -1,4 +1,11 @@
 /*
+ * FROZEN DEPENDENCY — this file is one of the 26 files fingerprinted by the Isometric Strata
+ * freeze (projects/011-isometric-strata/edition/freeze-1.0.json, tag v1.0). Any edit, even a
+ * comment, changes that fingerprint on this branch: the frozen generator then lives only at
+ * the tag and the toolchain commit named in README ("Isometric Strata"). Edit knowingly, keep
+ * behaviour backwards-compatible for that piece, and never re-run the freeze to "fix" it —
+ * the fingerprint is printed on every archived sheet.
+ *
  * strokefont.js — a single-stroke (engraving) font for plotter work.
  *
  * Every glyph is a set of polylines on a 4×6 grid (x right, y down, baseline at
