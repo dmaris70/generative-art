@@ -1,4 +1,11 @@
 /*
+ * FROZEN DEPENDENCY — this file is one of the 26 files fingerprinted by the Isometric Strata
+ * freeze (projects/011-isometric-strata/edition/freeze-1.0.json, tag v1.0). Any edit, even a
+ * comment, changes that fingerprint on this branch: the frozen generator then lives only at
+ * the tag and the toolchain commit named in README ("Isometric Strata"). Edit knowingly, keep
+ * behaviour backwards-compatible for that piece, and never re-run the freeze to "fix" it —
+ * the fingerprint is printed on every archived sheet.
+ *
  * genart.js — a tiny, dependency-light harness for reproducible browser art.
  *
  * Inspired by the parameter/seed model of thi-ng/genart-api (MIT), reimplemented

@@ -315,17 +315,27 @@ its own hash. Re-runs skip tokens whose files already match the manifest, so a l
 can be resumed. The full edition renders in about 43 minutes of drawing time (10 s a token,
 two drawings each) to 768 files and 6.5 GB, every hash re-verified after the run.
 
-To regenerate the edition on any machine (Node 22, a checkout of the repo):
+To regenerate the edition on any machine (Node 22):
 
 ```
+git clone https://github.com/dmaris70/generative-art.git && cd generative-art
+git checkout d45ee08          # the toolchain of record: freeze verifies, every tool present
 npm i playwright@1.56.1 && npx playwright install chromium
 STRATA_EXPORT_DIR=/Volumes/SANDISK/isometric-strata node tools/strata-export.mjs all
 ```
 
-The tool verifies the freeze first and refuses to run on a modified generator. The same
-Playwright version gives the same Chromium build, so the files come out byte-identical to
-the recorded manifest; a different Chromium may rasterise differently, in which case the
-run is still a valid edition of the frozen generator, but its hashes are its own.
+Three things fix the output. The **generator** is tag `v1.0` (commit 68afafb); `d45ee08` is the
+last commit on `main` whose tree still matches that freeze and which carries the full
+toolchain (the export tool was added after the tag). The **render environment** is Playwright
+1.56.1, whose Chromium (build 1194) produced the archived edition: a later Chromium rasterises
+differently and gives a valid rendering with different hashes (checked 2026-10-27 with
+Playwright 1.63 / Chromium 1243: identical generator, different bytes). And the **freeze gate**:
+the tool verifies the fingerprint first and refuses to run on a changed tree, which `main` now
+is, because a shared harness file inside the fingerprint (`assets/genart.js`) was edited for a
+later piece without altering the drawings. The fingerprint is not re-done for that: it is printed
+on every archived sheet and carried in every metadata file, so it stays what it was. The
+authoritative edition is the offline archive and its manifest; `edition/decisions.json` records
+all of this under `reproduction`.
 
 **Content storage** is Arweave (`edition/decisions.json` records why). Once the PNGs are
 uploaded, `tools/strata-publish.mjs uris.json` binds the metadata to them: it rewrites `image`
