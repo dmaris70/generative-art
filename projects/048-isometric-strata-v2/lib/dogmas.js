@@ -85,6 +85,42 @@
       t('OPEN BEATS ROOMED', q.open >= 0.85 * q.gfa, 'open space at least 85 per cent of floor area'),
       t('COMPACT', q.fill >= 0.6, 'plan fills at least 60 per cent of its envelope'),
     ],
+    kahn: (q) => [
+      t('THICK SERVANTS', q.density >= 0.15, 'solid volume at least 15 per cent of the envelope'),
+      t('A SEQUENCE OF ROOMS', q.rooms >= 4, 'at least four served rooms'),
+    ],
+    loos: (q) => [
+      t('ROOMS BY HEIGHT', q.rooms >= 16, 'at least sixteen rooms in the cube'),
+      t('ONE STAIR', q.circ.verticals.length <= 1, 'a single stair joins every level'),
+    ],
+    terragni: (q) => [
+      t('OPEN GROUND', q.groundOpen !== null && q.groundOpen >= 0.9, 'at least 90 per cent of the ground open'),
+      t('REGULAR BAY', q.bayCV !== null && q.bayCV < 0.1, 'column spacing varies by under 10 per cent'),
+    ],
+    aalto: (q) => [
+      t('BRICK MASS', q.density >= 0.33, 'solid volume at least a third of the envelope'),
+      t('ARTICULATED PLAN', q.fill < 0.62, 'plan fills under 62 per cent of its envelope'),
+    ],
+    wright: (q) => [
+      t('SPREADING PLAN', q.fill <= 0.25, 'plan fills a quarter or less of its envelope'),
+      t('MANY ROOMS', q.rooms >= 8, 'at least eight rooms'),
+    ],
+    bawa: (q) => [
+      t('OPEN HOUSE', q.density <= 0.04, 'solid volume at most 4 per cent of the envelope'),
+      t('COURT AND VERANDA', q.open >= 0.35 * q.gfa, 'open space at least 35 per cent of floor area'),
+    ],
+    ando: (q) => [
+      t('ONE ROOM', q.rooms <= 1, 'a single room'),
+      t('OPEN BEYOND', q.open >= 1.5 * q.gfa, 'open space at least one and a half times the floor area'),
+    ],
+    constructivist: (q) => [
+      t('TALL COMPOSITION', q.slenderness >= 1.6, 'at least 1.6 as tall as the root of its footprint'),
+      t('ISLAND ON A PLAZA', q.groundOpen !== null && q.groundOpen >= 0.6, 'at least 60 per cent of the ground open'),
+    ],
+    scarpa: (q) => [
+      t('MUCH WALL', q.wallLen >= 100, 'at least 100 metres of wall'),
+      t('OPEN COURT', q.groundOpen !== null && q.groundOpen >= 0.69, 'at least 69 per cent of the ground open'),
+    ],
     rossi: (q) => [
       t('MONUMENT', q.density >= 0.15, 'solid volume at least 15 per cent of the envelope'),
       t('LOW AND LONG', q.slenderness < 0.68, 'no taller than 0.68 of the root of its footprint'),
