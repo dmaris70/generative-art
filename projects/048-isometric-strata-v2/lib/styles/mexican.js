@@ -41,6 +41,7 @@
       const pal = ctx.palette.colors;
       const paper = [238, 232, 218];
       const mask = plan.mask(nx, ny, ctx.shape, R);
+      if (ctx.M) ctx.M.grid(Array.from({ length: nx + 1 }, (_, i) => P.x + i * cell), Array.from({ length: ny + 1 }, (_, j) => P.y + j * cell));
 
       const wallColor = () => R.weighted(pal.map((c, i) => [c, i === 0 ? 4 : i === 1 ? 2 : 1]));
       const EDGE = { alpha: 165, weight: 0.95, wob: 1, passes: 2 };

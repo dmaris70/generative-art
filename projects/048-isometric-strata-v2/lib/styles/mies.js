@@ -109,6 +109,11 @@
         column(bx + bw + colOff, y);
       }
 
+      if (ctx.M) {
+        const uniq = (a) => [...new Set(a.map((v) => Math.round(v * 100) / 100))];
+        ctx.M.grid(uniq(columns.map((c) => c[0])), uniq(columns.map((c) => c[1])));
+      }
+
       // ---- the glass skin, ruled by mullions on the module ----
       const gz0 = plH, gz1 = plH + H;
       const glassFace = (a, b, visible) => {
@@ -132,7 +137,11 @@
       for (let k = 1; k < N; k++) {
         const z = plH + k * FH;
         S.box(bx, by, z - 0.35, bw, bd, 0.35, { color: stone, alpha: 60, mode: 'flat', edge: THIN, tag: 'slab' });
-        S.box(bx - 0.02, by - 0.02, z - 0.35, bw + 0.04, bd + 0.04, 0.9, { color: steel, alpha: 120, mode: 'flat', edge: null, tag: 'slab' });
+        // the spandrel is a band round the edge, not a second plate: four thin boxes
+        const sp = 0.14, sz = z - 0.35, sh = 0.9;
+        for (const r of [[bx - 0.02, by - 0.02, bw + 0.04, sp], [bx - 0.02, by + bd - sp + 0.02, bw + 0.04, sp], [bx - 0.02, by - 0.02 + sp, sp, bd - 2 * sp + 0.04], [bx + bw - sp + 0.02, by - 0.02 + sp, sp, bd - 2 * sp + 0.04]]) {
+          S.box(r[0], r[1], sz, r[2], r[3], sh, { color: steel, alpha: 120, mode: 'flat', edge: null, tag: 'slab' });
+        }
       }
 
       // ---- the roof plane, overhanging by half a module ----

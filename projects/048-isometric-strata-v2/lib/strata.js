@@ -114,11 +114,12 @@
   };
 
   const scene = new ISO.Scene();
+  const M = Model.create();
   const size = style.size(R, false);
   const plot = Object.assign({ x: -size.w / 2, y: -size.d / 2 }, size);
   const ctx = {
     rng: R.fork('style'), scene: scene, plot: plot, floors: floors, floorH: spec.floorH,
-    palette: palette, detail: detailN, shape: spec.shape, annex: false, substyle: spec.substyle,
+    palette: palette, detail: detailN, shape: spec.shape, annex: false, substyle: spec.substyle, M: M,
   };
   const extra = style.build(ctx) || {};
 
@@ -141,7 +142,7 @@
     union = { x: x0, y: y0, w: x1 - x0, d: y1 - y0 };
   }
 
-  const buildingItems = scene.items.length;
+  const buildingItems = scene.items.length, buildingSolids = scene.solids.length;
   Site.build({
     rng: R.fork('site'), scene: scene, plot: union, site: spec.site, density: spec.density,
     detail: detailN, floorH: spec.floorH, buildingH: floors * spec.floorH, water: palette.water, palette: palette,
@@ -229,24 +230,34 @@
   // A-03 sections: A-A along x looking at +y, B-B along y looking at +x
   const ss = Math.min((F.w - 2 * pad) / span, (bandH - 2 * pad - labelH) / hgt);
   const secBand = (i, c0) => { const b = bandAt(i); b.ox = b.x + b.w / 2 - c0 * ss; b.ground = b.y + labelH + (b.h - labelH) / 2 + (hgt / 2) * ss - ss; return b; };
+  // A-A looks toward -y (north) with +x on the right; B-B looks toward -x (west) with -y on the right
   const sections = { s: ss, cuts: [
-    { label: 'SECTION  A-A', axis: 1, max: cutY, sx: (p) => p[0], depth: (c) => c[1], band: secBand(0, cx), x0: px0, x1: px1 },
-    { label: 'SECTION  B-B', axis: 0, max: cutX, sx: (p) => p[1], depth: (c) => c[0], band: secBand(1, cy), x0: py0, x1: py1 },
+    { label: 'SECTION  A-A', dir: 'y', cut: cutY, sx: (p) => p[0], band: secBand(0, cx), x0: px0, x1: px1, u0: union.x, u1: union.x + union.w },
+    { label: 'SECTION  B-B', dir: 'x', cut: cutX, sx: (p) => -p[1], band: secBand(1, -cy), x0: -py1, x1: -py0, u0: -(union.y + union.d), u1: -union.y },
   ] };
 
-  // A-04 elevations: four cells, one scale, each centred on the plot
-  const gapX = 40, cellW = (F.w - gapX) / 2, cellH = (F.h - gapY) / 2;
-  const se = Math.min((cellW - 2 * pad) / span, (cellH - 2 * pad - labelH) / hgt);
+  // A-04 elevations: four views at one scale, each centred on the plot. A low wide
+  // building is drawn in four full-width bands; a tall one in a two-by-two grid
+  const gapX = 40;
+  const cellW22 = (F.w - gapX) / 2, cellH22 = (F.h - gapY) / 2, cellH41 = (F.h - 3 * gapY) / 4;
+  const s22 = Math.min((cellW22 - 2 * pad) / span, (cellH22 - 2 * pad - labelH) / hgt);
+  const s41 = Math.min((F.w - 2 * pad) / span, (cellH41 - 2 * pad - labelH) / hgt);
+  const stacked = s41 > s22 * 1.15;
+  const se = stacked ? s41 : s22;
   const cellAt = (i, c0) => {
-    const b = { x: F.x + (i % 2) * (cellW + gapX), y: F.y + Math.floor(i / 2) * (cellH + gapY), w: cellW, h: cellH };
+    const b = stacked
+      ? { x: F.x, y: F.y + i * (cellH41 + gapY), w: F.w, h: cellH41 }
+      : { x: F.x + (i % 2) * (cellW22 + gapX), y: F.y + Math.floor(i / 2) * (cellH22 + gapY), w: cellW22, h: cellH22 };
     b.ox = b.x + b.w / 2 - c0 * se; b.ground = b.y + labelH + (b.h - labelH) / 2 + (hgt / 2) * se - se; return b;
   };
-  // facing +y from the south: right is +x and the far things have the larger y
-  const elevations = { s: se, cells: [
-    { label: 'SOUTH ELEVATION', sx: (p) => p[0], depth: (c) => -c[1], cell: cellAt(0, cx), x0: px0, x1: px1 },
-    { label: 'NORTH ELEVATION', sx: (p) => -p[0], depth: (c) => c[1], cell: cellAt(1, -cx), x0: -px1, x1: -px0 },
-    { label: 'EAST ELEVATION', sx: (p) => p[1], depth: (c) => c[0], cell: cellAt(2, cy), x0: py0, x1: py1 },
-    { label: 'WEST ELEVATION', sx: (p) => -p[1], depth: (c) => -c[0], cell: cellAt(3, -cy), x0: -py1, x1: -py0 },
+  // each from its own side: south stands at +y (right is +x), north at -y (right -x),
+  // east at +x (right -y), west at -x (right +y)
+  const ux0 = union.x, ux1 = union.x + union.w, uy0 = union.y, uy1 = union.y + union.d;
+  const elevations = { s: se, stacked: stacked, cells: [
+    { label: 'SOUTH ELEVATION', side: 'S', sx: Ortho.SIDES.S.sx, cell: cellAt(0, cx), x0: px0, x1: px1, u0: ux0, u1: ux1 },
+    { label: 'NORTH ELEVATION', side: 'N', sx: Ortho.SIDES.N.sx, cell: cellAt(1, -cx), x0: -px1, x1: -px0, u0: -ux1, u1: -ux0 },
+    { label: 'EAST ELEVATION', side: 'E', sx: Ortho.SIDES.E.sx, cell: cellAt(2, -cy), x0: -py1, x1: -py0, u0: -uy1, u1: -uy0 },
+    { label: 'WEST ELEVATION', side: 'W', sx: Ortho.SIDES.W.sx, cell: cellAt(3, cy), x0: py0, x1: py1, u0: uy0, u1: uy1 },
   ] };
 
   // A-01 site plan: the block around the plot, from above, no cut — the plot
@@ -259,8 +270,11 @@
 
   // the v1.0 ortho record, kept for the token layer (the plan cut it reports)
   const ortho = { s: sp, cutZ: cutZ, cutZ2: cutZ2, cutY: cutY, cutX: cutX, ext: { x0: px0, x1: px1, y0: py0, y1: py1, z1: ez1, sx0: sx0, sx1: sx1, sy0: sy0, sy1: sy1 } };
-  const set = { plans: plans, sections: sections, elevations: elevations, site: site };
-  return { seed: seed, spec: spec, scene: scene, meta: meta, fit: fit, ortho: ortho, set: set, tenets: extra.tenets || null, stats: { buildingItems: buildingItems, siteItems: scene.items.length - buildingItems, union: union } };
+  const datumZ = extra.datum || 0;
+  const levels = [];
+  for (let k = 0; k <= floors; k++) levels.push({ n: k, z: datumZ + k * spec.floorH, name: k === 0 ? 'GROUND' : k === floors ? 'ROOF' : 'L' + (k + 1) });
+  const set = { plans: plans, sections: sections, elevations: elevations, site: site, levels: levels, datum: datumZ, height: datumZ + floors * spec.floorH };
+  return { seed: seed, spec: spec, scene: scene, meta: meta, fit: fit, ortho: ortho, set: set, model: M, tenets: extra.tenets || null, stats: { buildingSolids: buildingSolids, buildingItems: buildingItems, siteItems: scene.items.length - buildingItems, union: union } };
 }
 
   // ---- the orthographic sheets ----
@@ -284,8 +298,8 @@
   }
 
   function planMarks(hand, P, O) {
-    sectionMark(hand, P([O.ext.x0 - 2, O.cutY, 0]), P([O.ext.x1 + 2, O.cutY, 0]), 'A', 1);
-    sectionMark(hand, P([O.cutX, O.ext.y0 - 2, 0]), P([O.cutX, O.ext.y1 + 2, 0]), 'B', -1);
+    sectionMark(hand, P([O.ext.x0 - 2, O.cutY, 0]), P([O.ext.x1 + 2, O.cutY, 0]), 'A', -1);
+    sectionMark(hand, P([O.cutX, O.ext.y0 - 2, 0]), P([O.cutX, O.ext.y1 + 2, 0]), 'B', 1);
   }
 
   function northMark(hand, x, y) {
@@ -301,16 +315,45 @@
     return g1;
   }
 
+  const fmt = (v) => v.toFixed(2);
+  // overall dimensions of the plot on a plan, the structural grid with its bubbles
+  function planFurniture(hand, state, P, S) {
+    const u = state.stats.union, g = state.model.grids[0];
+    const ext = { x0: u.x - 22 / S, x1: u.x + u.w + 22 / S, y0: u.y - 22 / S, y1: u.y + u.d + 22 / S };
+    if (g && g.xs.length > 1 && g.ys.length > 1) {
+      // bubbles on the grid lines that fall inside the plot's extent
+      Ortho.gridLines(hand, g, P, ext, Ortho.labels(g.xs.length, true), Ortho.labels(g.ys.length, false));
+    }
+    Ortho.dim(hand, P([u.x, u.y, 0]), P([u.x + u.w, u.y, 0]), -62, fmt(u.w), 9);
+    Ortho.dim(hand, P([u.x, u.y, 0]), P([u.x, u.y + u.d, 0]), 62, fmt(u.d), 9);
+  }
+  // level markers down the right of a section or an elevation
+  function levelMarks(hand, state, b, s) {
+    const L = state.set.levels, x1 = b.x + b.w - 14, x0 = x1 - 80;
+    for (const l of L) {
+      if (l.n === 0) continue;
+      const y = b.ground - l.z * s;
+      if (y < b.y + 24) continue;
+      Ortho.level(hand, x0, x1, y, '+' + fmt(l.z), 'right');
+    }
+  }
+  // the overall height beside the building
+  function heightDim(hand, state, b, s, u0) {
+    const H = state.set.height, x = b.ox + u0 * s;
+    Ortho.dim(hand, [x, b.ground], [x, b.ground - H * s], -34, fmt(H), 9);
+  }
+
   // A-01: everything the site generator placed, seen from above
   function paintSite(hand, state) {
     const S = state.set.site, O = state.ortho, F = Sheet.layout({ schedule: state.spec.schedule }).frame;
     const P = (p) => [S.ox + p[0] * S.s, S.oy + p[1] * S.s];
     clipRect(hand, F);
-    Hand.renderView(state.scene, hand, P, { axis: 2, max: Infinity, view: 'plan', depth: (c) => c[2] });
+    Ortho.plan(state.scene, hand, P, Infinity);
     // the plot's boundary, dashed, and the section marks
     const u = state.stats.union;
     hand.line([P([u.x, u.y]), P([u.x + u.w, u.y]), P([u.x + u.w, u.y + u.d]), P([u.x, u.y + u.d]), P([u.x, u.y])], { alpha: 150, weight: 0.9, wob: 0.4, dash: [10, 6] });
     planMarks(hand, P, O);
+    planFurniture(hand, state, P, S.s);
     hand.unclip();
     hand.text('SITE PLAN', F.x + 14, F.y + 10, 11, LBL);
     northMark(hand, F.x + F.w - 40, F.y + 10);
@@ -324,8 +367,9 @@
       const b = c.band;
       const P = (p) => [b.ox + p[0] * Pl.s, b.oy + p[1] * Pl.s];
       clipRect(hand, b);
-      Hand.renderView(scene, hand, P, { axis: 2, max: c.z, view: 'plan', depth: (q) => q[2] });
+      Ortho.plan(scene, hand, P, c.z);
       planMarks(hand, P, O);
+      planFurniture(hand, state, P, Pl.s);
       hand.unclip();
       hand.text(c.label, b.x + 14, b.y + 10, 11, LBL);
       northMark(hand, b.x + b.w - 40, b.y + 10);
@@ -343,8 +387,10 @@
       const b = c.band;
       const P = (p) => [b.ox + c.sx(p) * Se.s, b.ground - p[2] * Se.s];
       clipRect(hand, b);
-      Hand.renderView(scene, hand, P, { axis: c.axis, max: c.max, view: 'section', depth: c.depth });
+      Ortho.section(scene, hand, P, c.dir, c.cut);
       const g1 = groundLine(hand, (q) => [b.ox + q[0] * Se.s, b.ground - q[1] * Se.s], c.x0, c.x1);
+      heightDim(hand, state, b, Se.s, c.u0);
+      levelMarks(hand, state, b, Se.s);
       hand.unclip();
       hand.text(c.label, b.x + 14, b.y + 10, 11, LBL);
       // the datum label sits at the ground line's end, kept inside the band
@@ -364,15 +410,21 @@
       const b = c.cell;
       const P = (p) => [b.ox + c.sx(p) * El.s, b.ground - p[2] * El.s];
       clipRect(hand, b);
-      Hand.renderView(scene, hand, P, { axis: 2, max: Infinity, view: 'section', depth: c.depth });
+      Ortho.elevation(scene, hand, P, c.side);
       groundLine(hand, (q) => [b.ox + q[0] * El.s, b.ground - q[1] * El.s], c.x0, c.x1);
+      heightDim(hand, state, b, El.s, c.u0);
+      levelMarks(hand, state, b, El.s);
       hand.unclip();
       hand.text(c.label, b.x + 14, b.y + 10, 11, LBL);
       if (!first) first = { yBase: b.ground, step: state.spec.floorH * El.s, n: state.spec.floors };
     }
-    const c1 = El.cells[1].cell, c2 = El.cells[2].cell;
-    hand.line([[c1.x - 20, c1.y], [c1.x - 20, c1.y + c1.h * 2 + 40]], RULE);
-    hand.line([[c2.x, c2.y - 20], [c2.x + c2.w * 2 + 40, c2.y - 20]], RULE);
+    if (El.stacked) {
+      for (let i = 1; i < 4; i++) { const c = El.cells[i].cell; hand.line([[c.x, c.y - 20], [c.x + c.w, c.y - 20]], RULE); }
+    } else {
+      const c1 = El.cells[1].cell, c2 = El.cells[2].cell;
+      hand.line([[c1.x - 20, c1.y], [c1.x - 20, c1.y + c1.h * 2 + 40]], RULE);
+      hand.line([[c2.x, c2.y - 20], [c2.x + c2.w * 2 + 40, c2.y - 20]], RULE);
+    }
     return first;
   }
 
