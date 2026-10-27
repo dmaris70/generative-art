@@ -3,6 +3,13 @@
   "author": "dmaris70",
   "projects": [
     {
+      "slug": "048-isometric-strata-v2",
+      "title": "Isometric Strata v2",
+      "year": 2026,
+      "tools": ["p5.js", "lil-gui"],
+      "description": "The second line of the drawing-sheet engine, opened 2026-10-27 from the frozen v1.0: same twelve grammars, hand, paper and token layer, carried forward under a development version and vendored harness so the first series stays untouched. New dogmas, sheet types and rendering studies land here until it is frozen as its own generator."
+    },
+    {
       "slug": "047-edition-of-390",
       "title": "Edition of 390",
       "year": 2026,
