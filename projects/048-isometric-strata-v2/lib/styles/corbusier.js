@@ -65,6 +65,7 @@
           S.line([[x, y + 0.32, 0], [x, y + 0.32, H]], THIN, { tag: 'pilotis' });
           S.line(base.concat([base[0]]), THIN, { tag: 'pilotis', layer: 0 });
           nPil++;
+          if (ctx.M) ctx.M.prism(base, 0, H, 'column');
         }
       }
       S.count('PILOTIS', nPil);
@@ -82,6 +83,7 @@
         for (const f of pr.sides) if (f.visible) S.face(f.pts, { fill: { color: white, alpha: 150, mode: 'flat' }, edge: EDGE, tag: 'slab' });
         S.face(top, { fill: { color: white, alpha: 90, mode: 'flat' }, edge: EDGE, tag: 'slab' });
         S.count('FLOORS');
+        if (ctx.M) ctx.M.prism(top, z - 0.3, z, 'slab');
       }
 
       // ---- 2. free façade with 3. ribbon windows, on floors 2..N ----
@@ -231,6 +233,19 @@
       S.box(ex, ey, FH * 0.75, 3, 2.2, 0.18, { color: white, alpha: 150, mode: 'flat', edge: EDGE, tag: 'canopy' });
       S.line([[ex + 1.5, ey + 2.2, 0], [ex + 1.5, ey + 2.2, FH * 0.75]], THIN, { tag: 'canopy' });
       S.count('CANOPY');
+
+      // ---- the model: pilotis, floors, the roof garden ----
+      if (ctx.M) {
+        const MR = ctx.M.R, cs2 = cs * cs;
+        const prog = ['SALON', 'BEDROOMS', 'STUDIO', 'LIBRARY', 'GUEST FLOOR'];
+        ctx.M.space({ name: 'PILOTIS', kind: 'loggia', poly: slabPoly(0), z: 0, h: FH, level: 0 });
+        for (let k = 1; k < N; k++) {
+          const poly = slabPoly(k * FH), a = global.Model.polyArea(poly);
+          ctx.M.space({ name: prog[(k - 1) % prog.length] === 'SALON' || MR.chance(0.5) ? prog[(k - 1) % prog.length] : MR.pick(prog), kind: 'room', poly: poly, z: k * FH, h: FH - 0.3, level: k, area: a - cs2 });
+        }
+        for (let k = 0; k < N; k++) ctx.M.space({ name: 'CORE', kind: 'service', x: cx, y: cy, w: cs, d: cs, z: k * FH, h: FH, level: k });
+        ctx.M.space({ name: 'ROOF GARDEN', kind: 'terrace', poly: slabPoly(H), z: H, h: 0.9, level: N });
+      }
 
       // ---- the five predicates, run over what was drawn ----
       const items = S.items.filter((it) => it.tag);

@@ -59,6 +59,7 @@
         S.line([[px0 + pw * t, py0 + pd, FH * 0.8], [px0 + pw * t, py0 + pd, railZ]], FAINT, { depth: D([px0 + pw * t, py0 + pd, railZ]) + 0.2 });
       }
       S.count('DECK');
+      if (ctx.M) ctx.M.space({ name: 'PODIUM DECK', kind: 'terrace', x: px0, y: py0, w: pw, d: pd, z: 0, h: FH * 0.8, level: 0 });
 
       // ---- the shafts ----
       const shafts = [];
@@ -84,6 +85,7 @@
         }
         S.count('CORE');
         S.count('FLOORS', Math.round(shH / FH));
+        if (ctx.M) for (let k = 0; k * FH + FH <= shH; k++) ctx.M.space({ name: 'CORE', kind: 'service', x: sx, y: sy, w: ss, d: ss, z: k * FH, h: FH, level: k });
         // service spines: pipes running the full height on each face
         const pipeCol = R.chance(0.5) ? accent : dark;
         const faces = ['+x', '+y', '-x', '-y'];
@@ -145,6 +147,7 @@
               }
               S.box(bx, by, z, bw, bd, CH, { color: capsuleCol, alpha: 160, mode: 'pencil', spacing: 2.4, edge: EDGE, tag: 'capsule', shade: [1.03, 0.98, 0.9] });
               capsules.push({ x: bx, y: by, z: z, w: bw, d: bd, h: CH, face: f, shaft: sh, lane: l, level: k });
+              if (ctx.M) ctx.M.space({ name: 'CAPSULE', kind: 'unit', x: bx, y: by, w: bw, d: bd, z: z, h: CH, level: k });
               // porthole on the outer face (the visible faces only)
               if (f === '+x' || f === '+y') {
                 const r = 0.55, pts = [];

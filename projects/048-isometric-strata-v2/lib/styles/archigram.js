@@ -132,6 +132,7 @@
         S.box(dx0, dy0, z - 0.25, dw, dd, 0.25, { color: white, alpha: 60, mode: 'flat', edge: THIN, tag: 'deck' });
         for (let gx = dx0 + 1; gx < dx0 + dw; gx += 1) S.line([[gx, dy0, z + 0.01], [gx, dy0 + dd, z + 0.01]], FAINT, { depth: D([gx, dy0 + dd, z]) + 0.02 });
         S.count('DECK');
+        if (ctx.M) ctx.M.space({ name: 'DECK', kind: 'terrace', x: dx0, y: dy0, w: dw, d: dd, z: z - 0.25, h: 0.25, level: k });
       }
 
       // ---- pods: the only thing inside, plugged onto decks or onto pods ----
@@ -149,6 +150,7 @@
         S.face(door, { fill: { color: acc[0], alpha: 140, mode: 'flat' }, edge: THIN, tag: 'porthole', depth: D(door[0]) + 0.2 });
         pods.push({ x: x, y: y, z: z, tag: tag || 'pod' });
         S.count('POD');
+        if (ctx.M && tag !== 'lifted') ctx.M.space({ name: 'POD', kind: 'unit', x: x, y: y, w: PW, d: PW, z: z, h: PH, level: Math.round(z / FH) });
       };
       for (const k of deckLevels) {
         const z = k * FH;

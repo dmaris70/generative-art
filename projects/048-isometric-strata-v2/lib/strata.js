@@ -114,7 +114,7 @@
   };
 
   const scene = new ISO.Scene();
-  const M = Model.create();
+  const M = Model.create(seed);
   const size = style.size(R, false);
   const plot = Object.assign({ x: -size.w / 2, y: -size.d / 2 }, size);
   const ctx = {
@@ -274,6 +274,7 @@
   const levels = [];
   for (let k = 0; k <= floors; k++) levels.push({ n: k, z: datumZ + k * spec.floorH, name: k === 0 ? 'GROUND' : k === floors ? 'ROOF' : 'L' + (k + 1) });
   const set = { plans: plans, sections: sections, elevations: elevations, site: site, levels: levels, datum: datumZ, height: datumZ + floors * spec.floorH };
+  M.q = Model.derive(M, scene, { buildingSolids: buildingSolids, plot: plot, floors: floors, floorH: spec.floorH, datum: datumZ });
   return { seed: seed, spec: spec, scene: scene, meta: meta, fit: fit, ortho: ortho, set: set, model: M, tenets: extra.tenets || null, stats: { buildingSolids: buildingSolids, buildingItems: buildingItems, siteItems: scene.items.length - buildingItems, union: union } };
 }
 
@@ -313,6 +314,74 @@
     hand.line([g0, g1], { alpha: 235, weight: 2.4, wob: 0.3 });
     hand.poly([[g0[0], g0[1]], [g1[0], g1[1]], [g1[0], g1[1] + 26], [g0[0], g0[1] + 26]], { color: [70, 76, 88], alpha: 110, mode: 'hatch', spacing: 4, angle: Math.PI / 4 }, null);
     return g1;
+  }
+
+  // ---- room labels: a name and an area where the cut passes through a space ----
+  const LBL2 = { color: [48, 54, 64], alpha: 195 }, LBL3 = { color: [70, 76, 88], alpha: 170 };
+  // label geometry: a name over an area, sized to the space; returns the rect it needs
+  function labelSpec(hand, sp, avail) {
+    const nm = sp.name;
+    let sz = 7.5;
+    while (sz > 5.5 && hand.textWidth(nm, sz) > avail * 0.94) sz -= 0.5;
+    const area = (sp.area >= 9.5 ? Math.round(sp.area) : sp.area.toFixed(1)) + ' M2';
+    const named = hand.textWidth(nm, sz) <= avail * 0.94;
+    if (!named && avail <= 24) return null;
+    const w = named ? Math.max(hand.textWidth(nm, sz), hand.textWidth(area, sz - 0.5)) : hand.textWidth(area, 5.5);
+    return { nm: nm, area: area, sz: sz, named: named, w: w, h: named ? sz * 2 + 4 : 9 };
+  }
+  function labelDraw(hand, L, x, y) {
+    if (L.named) {
+      hand.text(L.nm, x - hand.textWidth(L.nm, L.sz) / 2, y - L.sz - 1, L.sz, LBL2);
+      hand.text(L.area, x - hand.textWidth(L.area, L.sz - 0.5) / 2, y + 2, L.sz - 0.5, LBL3);
+    } else hand.text(L.area, x - hand.textWidth(L.area, 5.5) / 2, y - 3, 5.5, LBL3);
+  }
+  // small spaces claim their centre first; larger ones step to a free corner of
+  // their own footprint, or go unlabelled rather than print over another label
+  function planLabels(hand, state, P, cutZ, s) {
+    if (!isFinite(cutZ)) return;
+    const FH = state.spec.floorH;
+    const list = [];
+    for (const sp of state.model.spaces) {
+      if (sp.kind === 'unit') continue;
+      const enclosed = sp.kind === 'room' || sp.kind === 'service' || sp.kind === 'circulation';
+      const on = enclosed ? sp.z <= cutZ && cutZ < sp.z + sp.h : sp.z <= cutZ && cutZ - sp.z < FH * 1.1;
+      if (!on || (sp.kind === 'service' && sp.area < 6) || (sp.kind === 'terrace' && sp.area > 60)) continue;
+      list.push(sp);
+    }
+    list.sort((a, b) => a.area - b.area);
+    const placed = [];
+    const free = (r) => placed.every((q) => r.x1 < q.x0 || r.x0 > q.x1 || r.y1 < q.y0 || r.y0 > q.y1);
+    for (const sp of list) {
+      const bb = sp.bb, p0 = P([bb.x0, bb.y0, 0]), p1 = P([bb.x1, bb.y1, 0]);
+      const X0 = Math.min(p0[0], p1[0]), X1 = Math.max(p0[0], p1[0]), Y0 = Math.min(p0[1], p1[1]), Y1 = Math.max(p0[1], p1[1]);
+      const L = labelSpec(hand, sp, Math.min(X1 - X0, Math.sqrt(sp.area) * 1.6 * s));
+      if (!L) continue;
+      const hw = L.w / 2 + 1, m = 4;
+      const cands = [[(X0 + X1) / 2, (Y0 + Y1) / 2],
+        [X0 + m + hw, Y0 + m + L.h / 2 + 3], [X1 - m - hw, Y0 + m + L.h / 2 + 3],
+        [X0 + m + hw, Y1 - m - L.h / 2 + 3], [X1 - m - hw, Y1 - m - L.h / 2 + 3]];
+      for (const c of cands) {
+        const r = { x0: c[0] - hw, x1: c[0] + hw, y0: c[1] - L.h + 1, y1: c[1] + 6 };
+        if (r.x0 < X0 || r.x1 > X1 || r.y0 < Y0 || r.y1 > Y1) continue;
+        if (!free(r)) continue;
+        placed.push(r);
+        labelDraw(hand, L, c[0], c[1]);
+        break;
+      }
+    }
+  }
+  function sectionLabels(hand, state, b, s, c) {
+    for (const sp of state.model.spaces) {
+      if (sp.kind === 'unit' || sp.kind === 'terrace' || sp.kind === 'water' || sp.h <= 0) continue;
+      const bb = sp.bb, lo = c.dir === 'y' ? bb.y0 : bb.x0, hi = c.dir === 'y' ? bb.y1 : bb.x1;
+      if (!(lo < c.cut && c.cut < hi)) continue;
+      const sx = c.dir === 'y' ? (bb.x0 + bb.x1) / 2 : -(bb.y0 + bb.y1) / 2;
+      const wpx = (c.dir === 'y' ? bb.x1 - bb.x0 : bb.y1 - bb.y0) * s, hpx = sp.h * s;
+      if (hpx < 13 || wpx < 30) continue;
+      const x = b.ox + sx * s, y = b.ground - (sp.z + sp.h / 2) * s;
+      const nm = sp.name, sz = Math.min(7, hpx * 0.4);
+      if (hand.textWidth(nm, sz) <= wpx * 0.92) hand.text(nm, x - hand.textWidth(nm, sz) / 2, y - sz / 2, sz, LBL3);
+    }
   }
 
   const fmt = (v) => v.toFixed(2);
@@ -368,6 +437,7 @@
       const P = (p) => [b.ox + p[0] * Pl.s, b.oy + p[1] * Pl.s];
       clipRect(hand, b);
       Ortho.plan(scene, hand, P, c.z);
+      planLabels(hand, state, P, c.z, Pl.s);
       planMarks(hand, P, O);
       planFurniture(hand, state, P, Pl.s);
       hand.unclip();
@@ -388,6 +458,7 @@
       const P = (p) => [b.ox + c.sx(p) * Se.s, b.ground - p[2] * Se.s];
       clipRect(hand, b);
       Ortho.section(scene, hand, P, c.dir, c.cut);
+      sectionLabels(hand, state, b, Se.s, c);
       const g1 = groundLine(hand, (q) => [b.ox + q[0] * Se.s, b.ground - q[1] * Se.s], c.x0, c.x1);
       heightDim(hand, state, b, Se.s, c.u0);
       levelMarks(hand, state, b, Se.s);

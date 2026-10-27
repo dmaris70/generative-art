@@ -64,6 +64,11 @@
         const col = pal[(k - 1) % pal.length];
         const base = plan.toWorld(frameLoop, P.x, P.y, cell, z - 0.45);
         const top = base.map((p) => [p[0], p[1], z]);
+        if (ctx.M) {
+          ctx.M.prism(base, z - 0.45, z, 'slab');
+          const nm = ctx.M.R.pick(['DWELLING', 'STUDIO', 'GALLERY', 'WORKSHOP', 'DWELLING']);
+          ctx.M.space({ name: nm, kind: 'room', poly: base.map((q) => [q[0], q[1]]), z: z - FH, h: FH - 0.45, level: k - 1 });
+        }
         const pr = G.prism(base, top);
         for (const f of pr.sides) if (f.visible) S.face(f.pts, { fill: { color: G.shade(col, 0.9), alpha: 120, mode: 'pencil', spacing: 2.4, angle: 'edge' }, edge: EDGE });
         S.face(top, { fill: { color: col, alpha: 70, mode: 'pencil', spacing: 3, angle: 'edge' }, edge: EDGE });
@@ -132,6 +137,7 @@
           S.line([[x + s, y + s, z0], [x, y + s, z1]], colPen(col), { depth: D([x + s, y + s, z0]) + 0.1 });
         }
         S.count('CORES');
+        if (ctx.M) for (let k = 0; k * FH + FH <= h + 0.01; k++) ctx.M.space({ name: 'CORE', kind: 'service', x: x, y: y, w: s, d: s, z: k * FH, h: FH, level: k });
       }
 
       // ---- pilotis field ----

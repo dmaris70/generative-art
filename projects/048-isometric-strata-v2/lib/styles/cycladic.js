@@ -114,6 +114,7 @@
           global.Site.tree(ctx, x + s * 0.5, y + s * 0.5, R.range(0.8, 1.2));
           S.count('COURT');
           S.count('WALL', 2);
+          if (ctx.M) ctx.M.space({ name: 'COURT', kind: 'court', x: x, y: y, w: s, d: s, z: z0, h: 1.4, level: 0 });
           continue;
         }
         const storeys = role === 'chapel' ? 1 : R.chance(0.45) ? 2 : 1;
@@ -122,6 +123,12 @@
         const house = { i: i, j: j, x: x, y: y, s: s, z0: z0, h: h, top: 'terrace', parapet: false };
         houses.push(house);
         S.count('CUBE');
+        if (ctx.M) {
+          for (let k = 0; k < storeys; k++) {
+            const nm = role === 'chapel' ? 'CHAPEL' : role === 'vault' ? 'VAULTED ROOM' : k === 0 ? 'HOUSE' : 'UPPER ROOM';
+            ctx.M.space({ name: nm, kind: 'room', x: x + 0.2, y: y + 0.2, w: s - 0.4, d: s - 0.4, z: z0 + k * SH, h: SH - 0.2, level: k });
+          }
+        }
         // a door on the +y face, shutters on the +x face
         shutter(x + s * R.range(0.15, 0.6), y + s, z0, 'y', 0.9, 2.0, 'door');
         for (let k = 0; k < storeys; k++) if (R.chance(0.8)) shutter(x + s, y + s * R.range(0.2, 0.6), z0 + k * SH + 1.0, 'x', 0.8, 1.0, 'shutter');
@@ -175,6 +182,7 @@
           S.box(x - 0.05, y - 0.05, pz, 0.22, s + 0.1, 0.35, { color: white, alpha: 200, mode: 'flat', edge: THIN, tag: 'parapet' });
           house.parapet = true;
           S.count('TERRACE');
+          if (ctx.M) ctx.M.space({ name: 'ROOF TERRACE', kind: 'terrace', x: x, y: y, w: s, d: s, z: pz, h: 0.35, level: storeys });
           if (R.chance(0.35)) {
             const px0 = x + 0.4, py0 = y + 0.4, pw = s - 0.8, pd = s * 0.5, ph = 2.2;
             for (const [qx, qy] of [[px0, py0], [px0 + pw, py0], [px0, py0 + pd], [px0 + pw, py0 + pd]]) S.line([[qx, qy, pz], [qx, qy, pz + ph]], { color: wood, alpha: 180, weight: 0.9, wob: 0.5 }, { tag: 'pergola', depth: D([qx, qy, pz]) + 0.3 });

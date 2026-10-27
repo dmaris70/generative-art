@@ -157,6 +157,13 @@
       }
       S.count('POST', nPost);
 
+      // ---- the model: one continuous room per floor ----
+      if (ctx.M) {
+        const MR = ctx.M.R, poly = loop.map((q) => [q[0], q[1]]);
+        const prog = ['LIVING', 'STUDY', 'BEDROOM', 'STUDIO'];
+        for (let k = 0; k < N; k++) ctx.M.space({ name: k === 0 ? 'LIVING' : MR.pick(prog), kind: 'room', poly: poly, z: k * FH, h: FH - 0.22, level: k });
+      }
+
       // ---- slabs: every floor plate overruns the volume on one or two sides ----
       for (let k = 1; k <= N; k++) {
         const z = k * FH;

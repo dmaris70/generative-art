@@ -32,6 +32,34 @@
     return n < 60 ? 'SPARSE' : n < 150 ? 'MODERATE' : n < 300 ? 'DENSE' : 'CROWDED';
   }
 
+  // the building's own traits, measured from its model (lib/model.js)
+  function archTraits(state) {
+    const q = state.model && state.model.q;
+    if (!q) return [];
+    const b = global.Model.bands(q);
+    return [
+      { trait_type: 'Structure', value: b.structure },
+      { trait_type: 'Massing', value: b.massing },
+      { trait_type: 'Proportion', value: b.proportion },
+      { trait_type: 'Ground', value: b.ground },
+      { trait_type: 'Plan', value: b.plan },
+    ];
+  }
+
+  // the measured quantities, rounded, for the metadata
+  function modelProps(state) {
+    const q = state.model && state.model.q;
+    if (!q || !(q.footprint > 0)) return null;
+    const r1 = (v) => (v === null || v === undefined ? null : Math.round(v * 10) / 10), r3 = (v) => (v === null || v === undefined ? null : Math.round(v * 1000) / 1000);
+    return {
+      footprint_m2: Math.round(q.footprint), plan_fill: r3(q.fill), height_m: r1(q.height), envelope_m: [r1(q.envelope.w), r1(q.envelope.d), r1(q.envelope.h)],
+      solid_over_envelope: r3(q.density), slenderness: r3(q.slenderness), ground_open: r3(q.groundOpen),
+      structure: q.structure, columns: q.columns, bay_m: r1(q.bay), wall_length_m: Math.round(q.wallLen),
+      floor_area_m2: Math.round(q.gfa), rooms: q.rooms, programme: q.programme, open_space_m2: Math.round(q.open),
+      level_area_m2: q.levelArea.map((a) => Math.round(a)), bands: global.Model.bands(q),
+    };
+  }
+
   function traits(state) {
     const sp = state.spec, sc = state.scene;
     let parts = 0;
@@ -55,7 +83,7 @@
       { trait_type: 'Scale', value: state.meta.scale },
       { trait_type: 'Tenets', value: ten },
       { trait_type: 'Parts', value: partsBucket(parts) },
-    ];
+    ].concat(archTraits(state));
   }
 
   function rarity(state) {
@@ -115,6 +143,7 @@
           palette: sp.palette.colors.map(hex), cut: sp.sheet === 1 || sp.sheet === 2 ? Math.round(state.ortho.cutZ * 100) / 100 : null,
         },
         legend: Object.assign({}, state.scene.counts),
+        model: modelProps(state),
         tenets: state.tenets ? state.tenets.map((t) => ({ name: t.name, ok: t.ok })) : null,
       },
     };
@@ -199,6 +228,29 @@
       hand.text('#' + c.map((v) => ('0' + v.toString(16)).slice(-2)).join('').toUpperCase(), sx, y + 13, 5.5, DIM);
     }
     y += 32;
+
+    // quantities: measured from the building's model, not asserted
+    const mq = state.model && state.model.q;
+    if (mq && mq.footprint > 0) {
+      section('QUANTITIES');
+      const pct = (v) => Math.round(v * 100) + ' %';
+      row('FOOTPRINT', Math.round(mq.footprint) + ' M2');
+      row('PLAN FILL', pct(mq.fill));
+      row('HEIGHT', mq.height.toFixed(1) + ' M');
+      row('SOLID / ENVELOPE', (mq.density * 100).toFixed(1) + ' %');
+      row('STRUCTURE', mq.structure);
+      if (mq.columns > 0) row('COLUMNS / BAY', mq.columns + (mq.bay ? ' / ' + mq.bay.toFixed(1) + ' M' : ''));
+      if (mq.wallLen > 0) row('WALL LENGTH', Math.round(mq.wallLen) + ' M');
+      if (mq.groundOpen !== null) row('GROUND OPEN', pct(mq.groundOpen));
+      if (mq.gfa > 0) row('FLOOR AREA', Math.round(mq.gfa) + ' M2');
+      if (mq.rooms > 0) {
+        const top = Object.entries(mq.programme).sort((a, b) => b[1] - a[1] || (a[0] < b[0] ? -1 : 1)).slice(0, 3).map((e) => e[0] + ' ' + e[1]).join(' / ');
+        row('ROOMS', mq.rooms);
+        hand.text(top, x1, y - 2, 6.5, DIM, { align: 'right' });
+        y += 11;
+      }
+      if (mq.open > 0) row('OPEN SPACE', Math.round(mq.open) + ' M2');
+    }
 
     // tenets
     if (state.tenets) {
