@@ -151,7 +151,8 @@
 
   function print(g, ink, spec) {
     const pd = (ink.pixelDensity ? ink.pixelDensity() : 1) || 1;
-    const Wp = Math.round(ink.width * pd), Hp = Math.round(ink.height * pd);
+    // the canvas's own pixel size: a fractional css size floors, so width * density is not its row stride
+    const Wp = ink.canvas ? ink.canvas.width : Math.round(ink.width * pd), Hp = ink.canvas ? ink.canvas.height : Math.round(ink.height * pd);
     const k = Wp / SW;
     const seed = spec.seed >>> 0;
     const inks = spec.inks;
