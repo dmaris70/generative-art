@@ -30,10 +30,7 @@
     "derivation": "Isopsephy (the Milesian letter-number system) of the artist's name: Δημήτρης = Δ4 η8 μ40 ή8 τ300 ρ100 η8 ς200 = 668; Μάρης = Μ40 ά1 ρ100 η8 ς200 = 349. Attic acrophonic: ΗΗΗΗΗΗΔΔΔΔΔΔΠΙΙΙ and ΗΗΗΔΔΔΔΠΙΙΙΙ.",
     "note": "Appears in metadata and on the collection page only, never on the frozen sheets. DA-MA-TE (Demeter's Linear B form) was excluded for name collisions."
   },
-  "open": [
-    "mint price and mechanics",
-    "launch date"
-  ],
+  "open": [],
   "archive": {
     "status": "verified",
     "date": "2026-09-13",
@@ -102,5 +99,76 @@
         "consequence": "the fingerprint describes the tree at the tag, not main; regenerate from a checkout of d45ee08. The freeze is not re-done: the fingerprint is printed on every archived sheet and carried in every metadata file"
       }
     ]
+  },
+  "mint": {
+    "decidedAt": "2026-10-27",
+    "mechanism": {
+      "choice": "pre-mint, then list",
+      "detail": "all 256 tokens minted to the artist wallet with Manifold Batch Token Creator from a CSV (token id = edition number, metadata = the bound metadata from tools/strata-publish.mjs); the 24 reserves are held; the 232 offered tokens are listed at a fixed price and buyers choose their sheet",
+      "reasons": [
+        "confirmed workable on a Manifold ERC-721 contract (unique tokens, batch mint, later sales from the same contract)",
+        "a curated, pre-rendered edition has nothing to reveal: the sheet is the token, so buyer choice is the honest sale",
+        "no platform fee on Manifold 1/1 minting; gas is the only mint cost and is paid once, up front"
+      ],
+      "rejected": {
+        "claim page with reveal": "per-token unique metadata on Manifold claim pages is not confirmed; a reveal also hides a curated sheet behind a placeholder for no reason",
+        "auctions only": "slow and labour-intensive for 232 lots; price discovery can happen on secondary",
+        "hybrid auction for legendary": "splits the launch into two mechanisms for a first series; revisit for a later drop"
+      }
+    },
+    "pricing": {
+      "structure": "flat",
+      "band": {
+        "min_eth": 0.05,
+        "max_eth": 0.1
+      },
+      "exact": "set within the band at listing time, after the comps brief; one number for every offered sheet",
+      "reasons": [
+        "first series under a new pseudonym: distribution and sell-through over margin",
+        "the measured rarity and the tiers are on every sheet and in every metadata file; secondary can price them",
+        "tiering by rarity or view would price the top of a first series out of reach and adds admin"
+      ]
+    },
+    "launch": {
+      "rule": "gated by readiness, no calendar date until the gates are met",
+      "date": "T = (Arweave bind complete) + 14 days of public preview",
+      "gates": [
+        {
+          "id": "G1",
+          "gate": "512 PNGs on Arweave, receipt received",
+          "owner": "principal"
+        },
+        {
+          "id": "G2",
+          "gate": "tools/strata-publish.mjs bound all 256 metadata files; spot-check of fetched bytes against sha256 passes",
+          "owner": "assistant"
+        },
+        {
+          "id": "G3",
+          "gate": "bound metadata uploaded; token URIs final; Batch Token Creator CSV generated from them",
+          "owner": "assistant"
+        },
+        {
+          "id": "G4",
+          "gate": "contract deployed on Ethereum mainnet via Manifold; 256 tokens batch-minted; reserves marked held",
+          "owner": "principal"
+        },
+        {
+          "id": "G5",
+          "gate": "comps brief delivered; exact price fixed within the band",
+          "owner": "assistant then principal"
+        },
+        {
+          "id": "G6",
+          "gate": "14-day preview: portfolio board public, collection page live, listings visible but not purchasable",
+          "owner": "principal"
+        },
+        {
+          "id": "G7",
+          "gate": "listings opened at T",
+          "owner": "principal"
+        }
+      ]
+    }
   }
 }
