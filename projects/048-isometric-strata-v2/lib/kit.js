@@ -38,13 +38,13 @@
   }
 
   // a faceted sphere from a frequency-2 geodesic, the faces turned to the light by their normals
-  function sphere(S, cx, cy, cz, r, col, tag) {
+  function sphere(S, cx, cy, cz, r, col, tag, zs) {
     const g = G.geodesic(2);
     for (const f of g.faces) {
       const a = g.verts[f[0]], b = g.verts[f[1]], c = g.verts[f[2]];
       const n = G.norm([a[0] + b[0] + c[0], a[1] + b[1] + c[1], a[2] + b[2] + c[2]]);
       if (n[0] + n[1] + n[2] <= -0.15) continue;
-      const pts = [a, b, c].map((v) => [cx + v[0] * r, cy + v[1] * r, cz + v[2] * r]);
+      const pts = [a, b, c].map((v) => [cx + v[0] * r, cy + v[1] * r, cz + v[2] * r * (zs || 1)]);
       S.face(pts, { fill: { color: G.shade(col, 0.7 + 0.35 * Math.max(0, Math.min(1, (n[2] + 0.4 * (n[1] - n[0]) + 1) / 2))), alpha: 200, mode: 'flat' }, edge: FAINT, tag: tag });
     }
   }
@@ -75,5 +75,40 @@
     S.face(pts, { fill: { color: col || VOID, alpha: 175, mode: 'flat' }, edge: THIN, tag: tag || 'aperture' });
   }
 
-  global.Kit = { EDGE: EDGE, THIN: THIN, FAINT: FAINT, VOID: VOID, hip: hip, cyl: cyl, sphere: sphere, steps: steps, aperture: aperture };
+  // a tube lying along x or y: a ring of n points swept the length, the far end closed
+  function tube(S, x0, y0, z, len, r, dir, col, tag, n) {
+    const k = n || 12;
+    const pt = (t, a) => (dir === 'x' ? [x0 + t, y0 + Math.cos(a) * r, z + Math.sin(a) * r] : [x0 + Math.cos(a) * r, y0 + t, z + Math.sin(a) * r]);
+    for (let i = 0; i < k; i++) {
+      const a0 = (i / k) * Math.PI * 2, a1 = ((i + 1) / k) * Math.PI * 2, m = (a0 + a1) / 2;
+      const nrm = dir === 'x' ? [0, Math.cos(m), Math.sin(m)] : [Math.cos(m), 0, Math.sin(m)];
+      if (nrm[0] + nrm[1] + nrm[2] < -0.05) continue;
+      S.face([pt(0, a0), pt(len, a0), pt(len, a1), pt(0, a1)], { fill: { color: G.shade(col, 0.78 + 0.3 * Math.max(0, Math.min(1, (nrm[2] + 1) / 2))), alpha: 175, mode: 'flat' }, edge: null, tag: tag });
+    }
+    const cap = []; for (let i = 0; i < k; i++) cap.push(pt(len, (i / k) * Math.PI * 2));
+    S.face(cap, { fill: { color: G.shade(col, 0.9), alpha: 150, mode: 'flat' }, edge: FAINT, tag: tag });
+  }
+
+  // a sector of an annulus about (cx, cy), radii r0..r1, angles a0..a1 (radians from +x toward +y), z0..z1
+  function annulus(S, cx, cy, r0, r1, a0, a1, z0, z1, col, tag, seg) {
+    const n = seg || Math.max(2, Math.round((a1 - a0) / 0.18));
+    const at = (r, a, z) => [cx + Math.cos(a) * r, cy + Math.sin(a) * r, z];
+    const vf = (pts, nx, ny, k) => { if (nx + ny > 1e-6) S.face(pts, { fill: { color: G.shade(col, k), alpha: 170, mode: 'pencil', spacing: 2.8, angle: 'edge' }, edge: THIN, tag: tag }); };
+    for (let j = 0; j < n; j++) {
+      const a = a0 + (j / n) * (a1 - a0), b = a0 + ((j + 1) / n) * (a1 - a0), m = (a + b) / 2;
+      vf([at(r1, a, z0), at(r1, b, z0), at(r1, b, z1), at(r1, a, z1)], Math.cos(m), Math.sin(m), 0.88 + 0.2 * Math.max(0, Math.cos(m)));
+      if (r0 > 0.01) vf([at(r0, a, z0), at(r0, b, z0), at(r0, b, z1), at(r0, a, z1)], -Math.cos(m), -Math.sin(m), 0.8);
+    }
+    vf([at(r0, a0, z0), at(r1, a0, z0), at(r1, a0, z1), at(r0, a0, z1)], Math.sin(a0), -Math.cos(a0), 0.84);
+    vf([at(r0, a1, z0), at(r1, a1, z0), at(r1, a1, z1), at(r0, a1, z1)], -Math.sin(a1), Math.cos(a1), 0.84);
+    const top = [];
+    for (let j = 0; j <= n; j++) top.push(at(r1, a0 + (j / n) * (a1 - a0), z1));
+    for (let j = n; j >= 0; j--) top.push(at(r0, a0 + (j / n) * (a1 - a0), z1));
+    S.face(top, { fill: { color: G.shade(col, 1.08), alpha: 150, mode: 'flat' }, edge: EDGE, tag: tag });
+    const poly = []; for (let j = 0; j <= n; j++) poly.push([cx + Math.cos(a0 + (j / n) * (a1 - a0)) * r1, cy + Math.sin(a0 + (j / n) * (a1 - a0)) * r1]);
+    for (let j = n; j >= 0; j--) poly.push([cx + Math.cos(a0 + (j / n) * (a1 - a0)) * r0, cy + Math.sin(a0 + (j / n) * (a1 - a0)) * r0]);
+    return poly;
+  }
+
+  global.Kit = { EDGE: EDGE, THIN: THIN, FAINT: FAINT, VOID: VOID, hip: hip, cyl: cyl, sphere: sphere, tube: tube, annulus: annulus, steps: steps, aperture: aperture };
 })(window);

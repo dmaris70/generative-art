@@ -121,6 +121,54 @@
       t('MUCH WALL', q.wallLen >= 100, 'at least 100 metres of wall'),
       t('OPEN COURT', q.groundOpen !== null && q.groundOpen >= 0.69, 'at least 69 per cent of the ground open'),
     ],
+    superstudio: (q) => [
+      t('SOLID MONUMENT', q.density >= 0.4, 'solid volume at least 40 per cent of the envelope'),
+      t('LOW AND LONG', q.slenderness <= 0.68, 'no taller than two thirds the root of its footprint'),
+    ],
+    friedman: (q) => [
+      t('OPEN BELOW', q.groundOpen !== null && q.groundOpen >= 0.975, 'at least 97.5 per cent of the ground open'),
+      t('MANY UNITS', q.rooms >= 24, 'at least twenty-four units'),
+    ],
+    constant: (q) => [
+      t('WIDE SECTORS', q.open >= 374, 'at least 374 square metres of deck'),
+      t('DEEP ROUTE', q.circ.depth >= 4, 'a route at least four steps deep'),
+    ],
+    soleri: (q) => [
+      t('DENSE', q.density >= 0.39, 'solid volume at least 39 per cent of the envelope'),
+      t('COMPACT PLAN', q.fill >= 0.78, 'plan fills at least 78 per cent of its envelope'),
+    ],
+    santelia: (q) => [
+      t('TALL', q.slenderness >= 1.24, 'at least 1.24 as tall as the root of its footprint'),
+      t('FOUR LIFTS', q.circ.verticals.length >= 4, 'at least four lift shafts'),
+    ],
+    otto: (q) => [
+      t('WIDE HALL', q.gfa >= 516, 'at least 516 square metres under the skin'),
+      t('MANY MASTS', q.columns >= 3, 'at least three masts'),
+    ],
+    price: (q) => [
+      t('OPEN BELOW', q.groundOpen !== null && q.groundOpen >= 0.85, 'at least 85 per cent of the ground open'),
+      t('DEEP FRAME', q.circ.depth >= 5, 'a route at least five steps deep'),
+    ],
+    boullee: (q) => [
+      t('ONE HALL', q.rooms <= 1, 'a single hall'),
+      t('RISING FORM', q.slenderness >= 1.03, 'at least as tall as the root of its footprint'),
+    ],
+    ferriss: (q) => [
+      t('DENSE CLUSTER', q.density >= 0.26, 'solid volume at least 26 per cent of the envelope'),
+      t('VERTICAL', q.slenderness >= 1.67, 'at least 1.67 as tall as the root of its footprint'),
+    ],
+    antfarm: (q) => [
+      t('LARGE AIR', q.gfa >= 199, 'at least 199 square metres of air hall'),
+      t('LONG PASSAGES', q.circ.routeLen >= 28, 'at least 28 metres of passage and route'),
+    ],
+    fresco: (q) => [
+      t('MANY SEGMENTS', q.rooms >= 49, 'at least forty-nine segments'),
+      t('LONG ROUTE', q.circ.depth >= 16, 'a route at least sixteen steps deep'),
+    ],
+    shukhov: (q) => [
+      t('TALL AS A TOWER', q.slenderness >= 3.3, 'at least 3.3 as tall as the root of its footprint'),
+      t('ONE TOWER', q.columns <= 6, 'a single ring of footings'),
+    ],
     rossi: (q) => [
       t('MONUMENT', q.density >= 0.15, 'solid volume at least 15 per cent of the envelope'),
       t('LOW AND LONG', q.slenderness < 0.68, 'no taller than 0.68 of the root of its footprint'),
