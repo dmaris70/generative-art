@@ -119,9 +119,120 @@
   const ENCLOSED = { room: 1, service: 1, circulation: 1, unit: 1 };
   const OPEN = { court: 1, terrace: 1, water: 1, loggia: 1 };
 
+  // ---- the programme vocabulary: every room name belongs to a group ----
+  const GROUPS = [
+    ['SLEEPING', /RECAMARA|CAMERE|BEDROOM|GUEST|CAPSULE|POD|UPPER ROOM/],
+    ['WORK', /ESTUDIO|STUDIO|STUDY|TALLER|WORKSHOP|BIBLIOTECA|LIBRARY/],
+    ['SERVICE', /COCINA|CORE|KITCHEN|SERVICE/],
+    ['SACRED', /CHAPEL|CAPILLA/],
+    ['LIVING', /SALA|SALON|LIVING|COMEDOR|HALL|OPEN PLAN|GALL|MIRADOR|VAULTED|WING|DWELLING|HOUSE|LOFT/],
+  ];
+  function groupOf(sp) {
+    if (OPEN[sp.kind]) return 'OPEN';
+    if (sp.kind === 'circulation') return 'CIRCULATION';
+    if (sp.kind === 'service') return 'SERVICE';
+    for (const g of GROUPS) if (g[1].test(sp.name || '')) return g[0];
+    return 'OTHER';
+  }
+
+  // ---- circulation: how one gets about, derived from the spaces and the vertical solids ----
+  // Verticals are clusters of core and stair solids. On each level the spaces that exist at
+  // mid-height (plus courts and loggias at that level) are nodes; the route is the minimum
+  // spanning tree of the nodes, edge length the gap between footprints. The way in is the
+  // entry steps if the building has them, else the south edge of the plot, to the nearest node.
+  // It is a diagram of access, not a layout of doors.
+  function circulation(M, bs, info) {
+    const FH = info.floorH, D = info.datum, N = Math.max(1, info.floors);
+    const vb = bs.filter((b) => b.cls === 'core' || b.cls === 'stair');
+    const cl = [];
+    for (const b of vb) {
+      const c = [(b.x0 + b.x1) / 2, (b.y0 + b.y1) / 2];
+      let hit = null;
+      for (const k of cl) if (Math.hypot(k.c[0] - c[0], k.c[1] - c[1]) < 4.5 + Math.max(k.w, k.d) * 0.25) { hit = k; break; }
+      if (!hit) { cl.push({ c: c, x0: b.x0, y0: b.y0, x1: b.x1, y1: b.y1, z0: b.z0, z1: b.z1, core: b.cls === 'core', n: 1, w: b.x1 - b.x0, d: b.y1 - b.y0 }); continue; }
+      hit.x0 = Math.min(hit.x0, b.x0); hit.y0 = Math.min(hit.y0, b.y0); hit.x1 = Math.max(hit.x1, b.x1); hit.y1 = Math.max(hit.y1, b.y1);
+      hit.z0 = Math.min(hit.z0, b.z0); hit.z1 = Math.max(hit.z1, b.z1); hit.core = hit.core || b.cls === 'core'; hit.n++;
+      hit.c = [(hit.x0 + hit.x1) / 2, (hit.y0 + hit.y1) / 2]; hit.w = hit.x1 - hit.x0; hit.d = hit.y1 - hit.y0;
+    }
+    const verticals = [], entrySteps = [];
+    const span = (z0, z1) => {
+      const k0 = Math.max(0, Math.floor((z0 - D) / FH + 0.25)), k1 = Math.min(N - 1, Math.ceil((z1 - D) / FH - 0.25) - 1);
+      return [k0, Math.max(k0, k1)];
+    };
+    for (const k of cl) {
+      if (!k.core && k.z1 - k.z0 < 0.8 * FH) { entrySteps.push(k); continue; }
+      const r = span(k.z0, k.z1);
+      verticals.push({ kind: k.core ? 'CORE' : 'STAIR', c: k.c, bb: { x0: k.x0, y0: k.y0, x1: k.x1, y1: k.y1 }, k0: r[0], k1: r[1], z0: k.z0, z1: k.z1 });
+    }
+    // a core or stair a style only declared as a space (one per level, stacked) is a vertical too
+    for (const sp of M.spaces) {
+      if (!(sp.kind === 'service' || sp.kind === 'circulation') || !/CORE|STAIR/.test(sp.name || '')) continue;
+      const c = [(sp.bb.x0 + sp.bb.x1) / 2, (sp.bb.y0 + sp.bb.y1) / 2], z1 = sp.z + Math.max(sp.h, FH);
+      const hit = verticals.find((v) => Math.hypot(v.c[0] - c[0], v.c[1] - c[1]) < 2.5 + 0.25 * Math.max(v.bb.x1 - v.bb.x0, v.bb.y1 - v.bb.y0));
+      if (hit) {
+        hit.z0 = Math.min(hit.z0, sp.z); hit.z1 = Math.max(hit.z1, z1);
+        const r = span(hit.z0, hit.z1); hit.k0 = r[0]; hit.k1 = r[1];
+      } else {
+        const r = span(sp.z, z1);
+        verticals.push({ kind: /STAIR/.test(sp.name) ? 'STAIR' : 'CORE', c: c, bb: { x0: sp.bb.x0, y0: sp.bb.y0, x1: sp.bb.x1, y1: sp.bb.y1 }, k0: r[0], k1: r[1], z0: sp.z, z1: z1 });
+      }
+    }
+    const gap = (a, b) => Math.hypot(Math.max(0, Math.max(a.x0, b.x0) - Math.min(a.x1, b.x1)), Math.max(0, Math.max(a.y0, b.y0) - Math.min(a.y1, b.y1)));
+    const levels = [];
+    let routeLen = 0, depth = 0;
+    const plot = info.plot;
+    for (let k = 0; k < N; k++) {
+      const a = D + k * FH, mid = a + FH / 2, nodes = [];
+      for (const sp of M.spaces) {
+        if (sp.kind === 'water') continue;
+        const on = ENCLOSED[sp.kind] ? sp.z <= mid && mid < sp.z + Math.max(sp.h, 0.01) : OPEN[sp.kind] && Math.abs(sp.z - a) < 1.0;
+        if (on) nodes.push({ kind: sp.kind, name: sp.name, bb: sp.bb, c: [(sp.bb.x0 + sp.bb.x1) / 2, (sp.bb.y0 + sp.bb.y1) / 2], area: sp.area });
+      }
+      for (const v of verticals) if (v.k0 <= k && k <= v.k1) nodes.push({ kind: 'vertical', name: v.kind, bb: v.bb, c: v.c, area: 0 });
+      const edges = [];
+      if (nodes.length > 1) {
+        const inT = new Array(nodes.length).fill(false), best = nodes.map(() => ({ d: Infinity, from: -1 }));
+        inT[0] = true;
+        for (let j = 1; j < nodes.length; j++) best[j] = { d: gap(nodes[0].bb, nodes[j].bb) + 1e-3 * Math.hypot(nodes[0].c[0] - nodes[j].c[0], nodes[0].c[1] - nodes[j].c[1]), from: 0 };
+        for (let it = 1; it < nodes.length; it++) {
+          let m = -1;
+          for (let j = 0; j < nodes.length; j++) if (!inT[j] && (m < 0 || best[j].d < best[m].d)) m = j;
+          inT[m] = true;
+          const f = best[m].from, len = Math.hypot(nodes[m].c[0] - nodes[f].c[0], nodes[m].c[1] - nodes[f].c[1]);
+          edges.push({ a: f, b: m, len: len, far: gap(nodes[f].bb, nodes[m].bb) > 3 });
+          routeLen += len;
+          for (let j = 0; j < nodes.length; j++) if (!inT[j]) {
+            const d = gap(nodes[m].bb, nodes[j].bb) + 1e-3 * Math.hypot(nodes[m].c[0] - nodes[j].c[0], nodes[m].c[1] - nodes[j].c[1]);
+            if (d < best[j].d) best[j] = { d: d, from: m };
+          }
+        }
+      }
+      // the way in (ground level) or the vertical that brings you here (upper levels)
+      let root = -1, entry = null;
+      if (k === 0) {
+        const es = entrySteps.length ? entrySteps[0].c : [plot.x + plot.w / 2, plot.y + plot.d];
+        entry = { p: es, steps: entrySteps.length > 0 };
+        let bd = Infinity;
+        nodes.forEach((n, j) => { const d = Math.hypot(n.c[0] - es[0], n.c[1] - es[1]); if (d < bd) { bd = d; root = j; } });
+      } else {
+        root = nodes.findIndex((n) => n.kind === 'vertical');
+      }
+      const hop = nodes.map(() => -1);
+      if (root >= 0) {
+        hop[root] = 0;
+        let changed = true;
+        while (changed) { changed = false; for (const e of edges) { if (hop[e.a] >= 0 && hop[e.b] < 0) { hop[e.b] = hop[e.a] + 1; changed = true; } else if (hop[e.b] >= 0 && hop[e.a] < 0) { hop[e.a] = hop[e.b] + 1; changed = true; } } }
+        for (const h of hop) if (h > depth) depth = h;
+      }
+      levels.push({ k: k, nodes: nodes, edges: edges, entry: entry, root: root, hop: hop });
+    }
+    return { levels: levels, verticals: verticals, entrySteps: entrySteps.length, routeLen: routeLen, depth: depth, nodes: levels.reduce((n, l) => n + l.nodes.length, 0) };
+  }
+
   // everything a sheet can quote, measured from the model
   function derive(M, scene, info) {
     const bs = bodies(M, scene, info.buildingSolids).filter((b) => b.cls !== 'other');
+    M.bodies = bs;
     const built = bs.filter((b) => b.cls !== 'base');
     const q = { levels: info.floors, floorH: info.floorH, datum: info.datum, plotArea: info.plot.w * info.plot.d };
     if (!built.length) return Object.assign(q, { footprint: 0, fill: 0, density: 0, structure: 'NONE', height: 0, columns: 0, wallLen: 0, bay: null, gfa: 0, rooms: 0, programme: {}, open: 0, levelArea: [], envelope: { w: 0, d: 0, h: 0 }, groundOpen: null, slenderness: 0, solidVol: 0, envVol: 0, volumes: {} });
@@ -150,12 +261,16 @@
     const cols = built.filter((b) => b.cls === 'column');
     const wallLen = built.filter((b) => b.cls === 'wall').reduce((s, b) => s + (b.len || Math.max(b.w, b.d)), 0);
     // bay: the median distance from each column to its nearest neighbour
-    let bay = null;
+    let bay = null, bayCV = null;
     if (cols.length >= 4) {
       const pts = cols.map((c) => [(c.x0 + c.x1) / 2, (c.y0 + c.y1) / 2]), ds = [];
       for (const p of pts) { let m = Infinity; for (const r of pts) if (r !== p) m = Math.min(m, Math.hypot(p[0] - r[0], p[1] - r[1])); if (m < Infinity && m > 0.3) ds.push(m); }
       ds.sort((a, b) => a - b);
-      if (ds.length) bay = ds[Math.floor(ds.length / 2)];
+      if (ds.length) {
+        bay = ds[Math.floor(ds.length / 2)];
+        const mu = ds.reduce((a, b) => a + b, 0) / ds.length;
+        bayCV = mu > 0 ? Math.sqrt(ds.reduce((a, b) => a + (b - mu) * (b - mu), 0) / ds.length) / mu : null;
+      }
     }
 
     // what carries it: a frame if columns are a real share of the carrying volume, a core
@@ -171,18 +286,20 @@
 
     // spaces
     let gfa = 0, rooms = 0, open = 0;
-    const programme = {};
+    const programme = {}, groups = {};
     for (const sp of M.spaces) {
       if (ENCLOSED[sp.kind]) { gfa += sp.area; if (sp.kind === 'room' || sp.kind === 'unit') { rooms++; programme[sp.name] = (programme[sp.name] || 0) + 1; } }
       else if (OPEN[sp.kind]) open += sp.area;
+      if (ENCLOSED[sp.kind] || OPEN[sp.kind]) { const g = groupOf(sp); groups[g] = (groups[g] || 0) + sp.area; }
     }
+    const circ = circulation(M, bs.filter((b) => b.cls === 'core' || b.cls === 'stair'), info);
 
     return Object.assign(q, {
       footprint: footprint, fill: envW * envD > 0 ? footprint / (envW * envD) : 0, envelope: { w: envW, d: envD, h: z1 }, envVol: envVol,
       solidVol: solidVol, density: envVol > 0 ? solidVol / envVol : 0, height: z1, slenderness: footprint > 0 ? z1 / Math.sqrt(footprint) : 0,
       levelArea: levelArea, groundOpen: footprint > 0 ? Math.max(0, 1 - groundCover / footprint) : null,
       columns: cols.length, wallLen: wallLen, bay: bay, volumes: vol, structure: structure,
-      gfa: gfa, rooms: rooms, programme: programme, open: open,
+      gfa: gfa, rooms: rooms, programme: programme, open: open, groups: groups, bayCV: bayCV, circ: circ,
     });
   }
 
@@ -198,5 +315,5 @@
     };
   }
 
-  global.Model = { create: create, derive: derive, bands: bands, classify: classify, polyArea: polyArea, polyCentroid: polyCentroid };
+  global.Model = { create: create, derive: derive, bands: bands, classify: classify, groupOf: groupOf, GROUPS: GROUPS, polyArea: polyArea, polyCentroid: polyCentroid };
 })(window);

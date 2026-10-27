@@ -12,7 +12,7 @@
 // Keys: R reseed · S save PNG.
 
 const SETS = {
-  sheets: { cols: 3, count: 5, label: 'ONE SEED, THE DRAWING SET A-01 TO A-05' },
+  sheets: { cols: 3, count: 6, label: 'ONE SEED, THE DRAWING SET A-01 TO A-06' },
   styles: { cols: 4, count: 12, label: 'ONE SHEET PER STYLE' },
   sites: { cols: 3, count: 6, label: 'ONE STYLE, SIX SITES' },
   papers: { cols: 3, count: 6, label: 'ONE STYLE, SIX INK PAIRS' },
