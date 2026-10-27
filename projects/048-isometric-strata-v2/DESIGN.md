@@ -113,3 +113,28 @@ Geodesic read FRAME; Metabolism CORE; Cycladic and Rossi MASS; De Stijl WALL; Me
 Palladio split WALL/MASS; Archigram FRAME/MASS). Room labels place small spaces first and step
 larger ones to a free corner rather than overprint. Known limit: a label can still touch a core
 outline on very small plans.
+
+**2026-10-27 — architectural risograph (paper and print).** v2 prints as a risograph on grey
+grid stock instead of pencil on vintage paper. The stock follows the supplied reference: pale
+grey, a ruling every 10 sheet units with a heavier line every 50, and a registration cross every
+150 across and down, each on a heavy line. `lib/riso.js` holds the stock, the inks and the print.
+
+Process, per sheet: the drawing is made as before in dark and warm colours on a white buffer
+(supersampled 2x on 1x displays so hairlines survive), then separated into two drums.
+- *Key drum* (cool ink: blue, federal blue, teal, indigo, black, steel): linework, text, chrome,
+  hatching, dark and cool tones.
+- *Accent drum* (warm ink: fluorescent orange or pink, sunflower, bright red, orange, yellow):
+  warm hues, plus wide areas of mid-tone shading and fill. Wide means it survives a morphological
+  opening, so strokes and text stay in the key ink and fills do not fringe the linework.
+- Each drum is screened at its own angle (15 and 75 degrees), the accent drum is misregistered a
+  few pixels in a seeded direction, and the two multiply onto the stock with density wander,
+  edge roughness and speckle dropout.
+- A colour bar of tint steps and the overprint, and a printer's slug naming the inks, print in the
+  bottom margin.
+
+Ink pair is a trait (`Inks`), chosen from six pairs by a hash of the seed alone so it moves no
+other draw; `p_inks` in the client and the board's `papers` set (now six ink pairs) override it.
+The pencil papers remain reachable by name. Checks: 600-paint sweep, zero failures and zero page
+errors (about 58 s against 36 s before, the cost of the print); 12-style board and six-pair board
+read as one family. Known limit: warm-less palettes put their colour only in the accent shading,
+so a few seeds read near one-ink.

@@ -15,7 +15,7 @@ const SETS = {
   sheets: { cols: 3, count: 5, label: 'ONE SEED, THE DRAWING SET A-01 TO A-05' },
   styles: { cols: 4, count: 12, label: 'ONE SHEET PER STYLE' },
   sites: { cols: 3, count: 6, label: 'ONE STYLE, SIX SITES' },
-  papers: { cols: 3, count: 6, label: 'ONE STYLE, THREE PAPERS, AXON AND SECTIONS' },
+  papers: { cols: 3, count: 6, label: 'ONE STYLE, SIX INK PAIRS' },
   seeds: { cols: 4, count: 12, label: 'ONE STYLE, TWELVE SEEDS' },
   edition: { cols: 4, count: 12, label: 'THE CURATED EDITION, TWELVE PER PAGE' },
 };
@@ -82,7 +82,7 @@ function plan() {
     if (ctrl.set === 'sheets') out.push({ seed: seed, mode: ctrl.style, sheet: i + 1 });
     else if (ctrl.set === 'styles') out.push({ seed: seed, mode: i + 1, sheet: 5 });
     else if (ctrl.set === 'sites') out.push({ seed: seed, mode: styleN, sheet: 5, site: Site.TYPES[i] });
-    else if (ctrl.set === 'papers') out.push({ seed: seed, mode: styleN, sheet: i < 3 ? 5 : 3, paper: ['VINTAGE', 'STANDARD', 'ROUGH'][i % 3] });
+    else if (ctrl.set === 'papers') out.push({ seed: seed, mode: styleN, sheet: 5, inks: i + 1 });
     else out.push({ seed: (seed + i * 7919) >>> 0, mode: styleN, sheet: 0 });
   }
   return { seed: seed, set: set, styleN: styleN, specs: out };
@@ -111,7 +111,7 @@ function rebuild() {
     };
   });
   next = 0;
-  tex = Paper.texture(width, height, 'VINTAGE', board.seed);
+  tex = Paper.texture(width, height, 'STANDARD', board.seed);
   boardHand = Hand.create(window, ISO.rng(board.seed ^ 0x77), { wob: 0.5, weightScale: 1 });
   loop();
 }
@@ -124,7 +124,7 @@ function fitCanvas() {
 
 function windowResized() {
   fitCanvas();
-  tex = Paper.texture(width, height, 'VINTAGE', board.seed);
+  tex = Paper.texture(width, height, 'STANDARD', board.seed);
   redraw();
 }
 

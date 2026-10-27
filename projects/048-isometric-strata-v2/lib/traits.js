@@ -72,6 +72,7 @@
       { trait_type: 'View', value: sp.view },
       { trait_type: 'Site', value: sp.site },
       { trait_type: 'Paper', value: sp.paper },
+      { trait_type: 'Inks', value: sp.inks ? sp.inks.name : 'NONE' },
       { trait_type: 'Grid', value: sp.grid },
       { trait_type: 'Ink', value: sp.ink },
       { trait_type: 'Palette', value: sp.paletteName },

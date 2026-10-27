@@ -101,7 +101,10 @@
     detail: ['', 'MINIMAL', 'DETAILED', 'TECHNICAL'][detailN],
     detailN: detailN,
     density: ['', 'FEW', 'MODERATE', 'DENSE'][densityN],
-    paper: opts.paper || R.weighted([['STANDARD', 3], ['VINTAGE', 3], ['ROUGH', 2]]),
+    // v2 prints as a risograph. The legacy draw is kept so every later draw from R
+    // lands where it did before; the three pencil papers stay reachable by name.
+    paper: opts.paper || (R.weighted([['STANDARD', 3], ['VINTAGE', 3], ['ROUGH', 2]]), 'RISO'),
+    inks: global.Riso ? global.Riso.pair(seed, opts.inks) : null,
     grid: R.weighted([['LARGE', 3], ['SMALL', 2]]),
     ink: R.weighted([['FINE', 2], ['MEDIUM', 4], ['HEAVY', 1]]),
     floors: floors,
@@ -523,32 +526,56 @@ function paint(g, state, opts) {
   const R = ISO.rng(state.seed ^ 0x5a5a);
   const wob = opts.wobble === undefined ? 1 : opts.wobble;
   const inkScale = (opts.ink === undefined ? 1 : opts.ink) * (spec.ink === 'FINE' ? 0.82 : spec.ink === 'HEAVY' ? 1.3 : 1);
-  const hand = Hand.create(g, R.fork('hand'), { wob: wob, weightScale: inkScale });
+  // v2 prints as a risograph: the drawing is made in ink on a white buffer, then
+  // separated into the two drums and overprinted on the grid stock (lib/riso.js)
+  const riso = spec.paper === 'RISO' && global.Riso && global.createGraphics && spec.inks;
+  let T = g;
+  if (riso) {
+    T = global.createGraphics(g.width, g.height);
+    // supersample the plates 2x on a 1x display so hairlines survive the screen
+    const gpd = g.pixelDensity ? g.pixelDensity() : 1;
+    T.pixelDensity(gpd >= 2 ? gpd : gpd * 2);
+    T.background(255);
+  }
+  const hand = Hand.create(T, R.fork('hand'), { wob: wob, weightScale: inkScale });
   const L = Sheet.layout({ schedule: spec.schedule });
-  const U = g.width / SW;
+  const U = T.width / SW;
 
-  // paper
-  const tex = Paper.texture(g.width, g.height, spec.paper, state.seed);
-  g.blendMode(g.BLEND);
-  g.noTint();
-  g.image(tex, 0, 0, g.width, g.height);
+  if (!riso) {
+    const tex = Paper.texture(g.width, g.height, spec.paper, state.seed);
+    g.blendMode(g.BLEND);
+    g.noTint();
+    g.image(tex, 0, 0, g.width, g.height);
+  }
 
-  g.push();
-  g.scale(U);
-  Paper.grid(hand, SW, SH, spec.grid === 'SMALL' ? 12.5 : 20);
-  Paper.marginalia(hand, R.fork('margin'), SW, SH, L.schedule ? [L.title, L.footer, L.schedule] : [L.title, L.footer], spec.paper === 'ROUGH' ? 1.4 : 1);
+  T.push();
+  T.scale(U);
+  if (!riso) Paper.grid(hand, SW, SH, spec.grid === 'SMALL' ? 12.5 : 20);
+  Paper.marginalia(hand, R.fork('margin'), SW, SH, L.schedule ? [L.title, L.footer, L.schedule] : [L.title, L.footer], riso ? 0.6 : spec.paper === 'ROUGH' ? 1.4 : 1);
 
   const floorInfo = PAINTERS[spec.sheet](hand, state);
 
   // chrome, with the floor scale keyed to the building's ground line
   Sheet.draw(hand, state.meta, floorInfo, { schedule: spec.schedule });
   if (spec.schedule && Strata.drawSchedule) Strata.drawSchedule(hand, state, L.schedule);
-  g.pop();
+  if (riso) {
+    // the printer's slug beside the colour bar
+    const bz = global.Riso.bar();
+    hand.text('RISOGRAPH  ' + spec.inks.name + '  TWO DRUMS  SCREEN 15 / 75 DEG', 75, bz.y0 + 4, 8, { color: [48, 54, 64], alpha: 215 });
+  }
+  T.pop();
+
+  if (riso) {
+    global.Riso.print(g, T, { seed: state.seed, inks: spec.inks, outW: Math.round(g.width * (g.pixelDensity ? g.pixelDensity() : 1)) });
+    T.remove();
+    return;
+  }
 
   // pencil tooth over everything: the paper's own texture multiplied back in
+  const tex2 = Paper.texture(g.width, g.height, spec.paper, state.seed);
   g.blendMode(g.MULTIPLY);
   g.tint(255, spec.paper === 'ROUGH' ? 50 : 70);
-  g.image(tex, 0, 0, g.width, g.height);
+  g.image(tex2, 0, 0, g.width, g.height);
   g.noTint();
   g.blendMode(g.BLEND);
 }

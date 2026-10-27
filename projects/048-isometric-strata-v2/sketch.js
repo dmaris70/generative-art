@@ -30,6 +30,7 @@ function setup() {
     title: 'Isometric Strata v2',
     params: {
       sheet: { value: 0, min: 0, max: 5, step: 1, label: 'sheet (0 auto, 1 site, 2 plans, 3 sections, 4 elevations, 5 axon)' },
+      inks: { value: 0, min: 0, max: 6, step: 1, label: 'ink pair (0 auto, 1 blue+fl.orange, 2 fed.blue+fl.pink, 3 teal+sunflower, 4 black+red, 5 indigo+orange, 6 steel+yellow)' },
       mode: { value: 0, min: 0, max: 12, step: 1, label: 'style (0 auto, 1 mex, 2 decon, 3 geo, 4 brut, 5 corb, 6 stijl, 7 metab, 8 pall, 9 archi, 10 mies, 11 cyc, 12 rossi)' },
       floors: { value: 0, min: 0, max: 10, step: 1, label: 'floors (0 auto)' },
       detail: { value: 0, min: 0, max: 3, step: 1, label: 'detail (0 auto)' },
@@ -72,7 +73,7 @@ function fitCanvas() {
 function opts() {
   return {
     seed: G.seed,
-    sheet: G.param('sheet'), mode: G.param('mode'), floors: G.param('floors'), detail: G.param('detail'),
+    sheet: G.param('sheet'), inks: G.param('inks'), mode: G.param('mode'), floors: G.param('floors'), detail: G.param('detail'),
     density: G.param('density'), bldgs: G.param('bldgs'), wobble: G.param('wobble'), ink: G.param('ink'),
     schedule: G.param('schedule'),
   };
