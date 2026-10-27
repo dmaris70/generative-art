@@ -6,7 +6,7 @@
  *
  * build() turns a seed and a few overrides into a specification, a Scene of
  * 3-D primitives (one of twelve styles on one of six sites), the legend
- * tallied from what was placed, and the fits for the five sheets of the drawing
+ * tallied from what was placed, and the fits for the six sheets of the drawing
  * set (site plan, plans, sections, elevations, axonometric). paint() draws the
  * sheet the state names, scaled to the renderer's width. The sketch and
  * the portfolio board are both thin clients of these two calls.
@@ -59,11 +59,11 @@
 
   const STYLE_KEYS = ['mexican', 'decon', 'geodesic', 'brutalist', 'corbusier', 'destijl', 'metabolism', 'palladio', 'archigram', 'mies', 'cycladic', 'rossi'];
 
-  // The drawing set: one seed is a numbered set of five sheets. A-05 is the
+  // The drawing set: one seed is a numbered set of six sheets. A-05 is the
   // axonometric v1.0 drew; the other four are the orthographic sheets a working
   // set carries, all cut and projected from the same scene at one scale.
-  const SHEETS = ['SITE PLAN', 'PLANS', 'SECTIONS', 'ELEVATIONS', 'AXONOMETRIC'];
-  const SHEET_SCALE = ['1:500', '1:200', '1:200', '1:200', null];
+  const SHEETS = ['SITE PLAN', 'PLANS', 'SECTIONS', 'ELEVATIONS', 'AXONOMETRIC', 'DIAGRAMS'];
+  const SHEET_SCALE = ['1:500', '1:200', '1:200', '1:200', null, 'NTS'];
 
   function build(opts) {
   opts = opts || {};
@@ -83,8 +83,8 @@
   // which sheet of the set: 1..5 picks, 0 lets the seed choose (the axonometric
   // most often); the v1.0 `view` option still works: 1 axon, 2 plans
   const ps = opts.sheet | 0, pv = opts.view | 0;
-  const drawn = R.weighted([[4, 5], [0, 1], [1, 2], [2, 2], [3, 2]]);
-  const sheetIdx = ps >= 1 && ps <= 5 ? ps - 1 : pv === 1 ? 4 : pv === 2 ? 1 : drawn;
+  const drawn = R.weighted([[4, 5], [0, 1], [1, 2], [2, 2], [3, 2], [5, 2]]);
+  const sheetIdx = ps >= 1 && ps <= SHEETS.length ? ps - 1 : pv === 1 ? 4 : pv === 2 ? 1 : drawn;
   const view = SHEETS[sheetIdx];
 
   const schedule = opts.schedule === undefined ? true : !!opts.schedule;
@@ -164,7 +164,7 @@
   const meta = {
     title: spec.title,
     subtitle: spec.substyle + ' / ' + (R.chance(0.5) ? spec.type : floors + 'F'),
-    dwg: spec.dwg, sheet: 'A-0' + (sheetIdx + 1) + ' / 05', view: view,
+    dwg: spec.dwg, sheet: 'A-0' + (sheetIdx + 1) + ' / 0' + SHEETS.length, view: view,
     detail: spec.detail, density: spec.density, site: spec.site,
     palette: palette.colors.slice(0, 5),
     header: style.header, kv: kv, legend: legend,
@@ -278,7 +278,12 @@
   for (let k = 0; k <= floors; k++) levels.push({ n: k, z: datumZ + k * spec.floorH, name: k === 0 ? 'GROUND' : k === floors ? 'ROOF' : 'L' + (k + 1) });
   const set = { plans: plans, sections: sections, elevations: elevations, site: site, levels: levels, datum: datumZ, height: datumZ + floors * spec.floorH };
   M.q = Model.derive(M, scene, { buildingSolids: buildingSolids, plot: plot, floors: floors, floorH: spec.floorH, datum: datumZ });
-  return { seed: seed, spec: spec, scene: scene, meta: meta, fit: fit, ortho: ortho, set: set, model: M, tenets: extra.tenets || null, stats: { buildingSolids: buildingSolids, buildingItems: buildingItems, siteItems: scene.items.length - buildingItems, union: union } };
+  // the dogmas only the model can check join the style's own tenets, and the tally follows
+  const modelTenets = global.Dogmas ? global.Dogmas.for(key, M.q, M) : [];
+  const tenets = extra.tenets ? extra.tenets.concat(modelTenets) : modelTenets.length ? modelTenets : null;
+  const tk = meta.kv.find((e) => e[0] === 'TENETS');
+  if (tk && tenets) tk[1] = tenets.filter((x) => x.ok).length + '/' + tenets.length;
+  return { seed: seed, spec: spec, scene: scene, meta: meta, fit: fit, ortho: ortho, set: set, model: M, tenets: tenets, stats: { buildingSolids: buildingSolids, buildingItems: buildingItems, siteItems: scene.items.length - buildingItems, union: union } };
 }
 
   // ---- the orthographic sheets ----
@@ -516,7 +521,10 @@
     return { yBase: g0[1], step: spec.floorH * fit.s, n: spec.floors };
   }
 
-  const PAINTERS = [paintSite, paintPlans, paintSections, paintElevations, paintAxon];
+  // A-06: the diagrams, from the model
+  function paintDiagrams(hand, state) { return global.Diagrams.paint(hand, state); }
+
+  const PAINTERS = [paintSite, paintPlans, paintSections, paintElevations, paintAxon, paintDiagrams];
 
 // Paint a built sheet into any p5 renderer (the window in global mode, or a
 // p5.Graphics) — the sheet scales to the renderer's width.

@@ -138,3 +138,35 @@ The pencil papers remain reachable by name. Checks: 600-paint sweep, zero failur
 errors (about 58 s against 36 s before, the cost of the print); 12-style board and six-pair board
 read as one family. Known limit: warm-less palettes put their colour only in the accent shading,
 so a few seeds read near one-ink.
+
+**2026-10-27 — Phase B: diagrams, circulation, model dogmas.** Three additions that use the
+model rather than the drawing.
+
+1. *Sheet A-06 DIAGRAMS* (`lib/diagrams.js`; the set is now six sheets, key 6, board of six). Six
+   panels, each read from `state.model`: D1 structure at the ground cut (columns in the accent ink,
+   walls and shells in the key ink, cores crossed, masses hatched, the grid); D2 solid and void
+   (figure-ground, with enclosed voids tinted and open voids hatched); D3 circulation; D4 the
+   levels exploded in axonometric, every body split across the levels it spans; D5 floor area by
+   programme group; D6 floor area by level beside the measured proportions. Plans fit the built
+   extent, not the plot.
+2. *Circulation and vocabulary* (`lib/model.js`). Verticals are clusters of core and stair
+   solids plus cores and stairs a style only declared as spaces; entry steps (low stair clusters)
+   mark the way in, else the south edge of the plot. On each level the spaces present at
+   mid-height, with courts and loggias at that level and the verticals serving it, are nodes, and
+   the route is their minimum spanning tree (edge length the centre-to-centre distance; a gap over
+   3 m is drawn dashed). Depth is the longest hop count from the entry. This is a diagram of
+   access, not a layout of doors, and the sheet says so. Every room name belongs to a group
+   (living, sleeping, work, service, sacred, open, circulation) through `Model.groupOf`. Derived
+   quantities gain `groups`, `circ` and `bayCV` (the spread of column spacing).
+3. *Model dogmas* (`lib/dogmas.js`). Two or three per style, tested over the measured model and
+   appended to the style's own tenets (so the tally on a sheet is now 7/8, not 5/5), each with a
+   stated test that the metadata carries. First drafts that every seed passed were replaced or
+   tightened, since a dogma that always holds measures nothing. Pass rates over 40 seeds per
+   style now run between about 10 and 90 per cent. Examples: Palladio's room ratios against the
+   Quattro Libri set, Mies's universal space (few rooms, one dominant), Corbusier's true grid and
+   free ground, Metabolism's twin cores and thirty replaceable capsules.
+
+Checks: 864 paints (12 styles, 12 seeds, six sheets), zero failures, zero page errors; four-style
+montage of A-06 read for overprint, clipping and caption fit. Known limits: styles that draw their
+stairs as glyphs rather than solids (Mexican modern) report no verticals; dogma thresholds are
+set from a 40-seed survey and will want revisiting when rarity is loaded.

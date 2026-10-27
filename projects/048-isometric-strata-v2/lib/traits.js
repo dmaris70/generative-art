@@ -56,6 +56,8 @@
       solid_over_envelope: r3(q.density), slenderness: r3(q.slenderness), ground_open: r3(q.groundOpen),
       structure: q.structure, columns: q.columns, bay_m: r1(q.bay), wall_length_m: Math.round(q.wallLen),
       floor_area_m2: Math.round(q.gfa), rooms: q.rooms, programme: q.programme, open_space_m2: Math.round(q.open),
+      programme_groups_m2: Object.fromEntries(Object.entries(q.groups || {}).map(([k, v]) => [k, Math.round(v)])),
+      circulation: q.circ ? { verticals: q.circ.verticals.length, route_m: Math.round(q.circ.routeLen), depth: q.circ.depth, nodes: q.circ.nodes, entry: q.circ.entrySteps ? 'steps' : 'plot edge' } : null,
       level_area_m2: q.levelArea.map((a) => Math.round(a)), bands: global.Model.bands(q),
     };
   }
@@ -145,7 +147,7 @@
         },
         legend: Object.assign({}, state.scene.counts),
         model: modelProps(state),
-        tenets: state.tenets ? state.tenets.map((t) => ({ name: t.name, ok: t.ok })) : null,
+        tenets: state.tenets ? state.tenets.map((t) => (t.why ? { name: t.name, ok: t.ok, test: t.why } : { name: t.name, ok: t.ok })) : null,
       },
     };
   }

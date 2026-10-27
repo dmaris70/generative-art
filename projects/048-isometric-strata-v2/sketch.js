@@ -1,7 +1,7 @@
 // Isometric Strata — generative architectural drawing sheets.
 //
-// Every seed is a complete working drawing set of five sheets — site plan,
-// plans, sections, elevations, axonometric — each with a title block, a north
+// Every seed is a complete working drawing set of six sheets — site plan,
+// plans, sections, elevations, axonometric, diagrams — each with a title block, a north
 // arrow, the palette's swatches, the drawing of a building on its site with
 // the floor levels scaled up the margin where they apply, and a
 // footer with a legend whose counts are tallied from the geometry actually
@@ -18,7 +18,7 @@
 // (render.js) onto textured paper (paper.js) inside the chrome (sheet.js).
 // The engine is lib/strata.js; this file only wires it to the harness.
 //
-// Keys: R randomize · S save PNG · 1–5 pick the sheet of the set · 0 let the seed pick.
+// Keys: R randomize · S save PNG · 1–6 pick the sheet of the set · 0 let the seed pick.
 
 let G;
 let state = null;
@@ -29,7 +29,7 @@ function setup() {
   G = GenArt.create({
     title: 'Isometric Strata v2',
     params: {
-      sheet: { value: 0, min: 0, max: 5, step: 1, label: 'sheet (0 auto, 1 site, 2 plans, 3 sections, 4 elevations, 5 axon)' },
+      sheet: { value: 0, min: 0, max: 6, step: 1, label: 'sheet (0 auto, 1 site, 2 plans, 3 sections, 4 elevations, 5 axon, 6 diagrams)' },
       inks: { value: 0, min: 0, max: 6, step: 1, label: 'ink pair (0 auto, 1 blue+fl.orange, 2 fed.blue+fl.pink, 3 teal+sunflower, 4 black+red, 5 indigo+orange, 6 steel+yellow)' },
       mode: { value: 0, min: 0, max: 12, step: 1, label: 'style (0 auto, 1 mex, 2 decon, 3 geo, 4 brut, 5 corb, 6 stijl, 7 metab, 8 pall, 9 archi, 10 mies, 11 cyc, 12 rossi)' },
       floors: { value: 0, min: 0, max: 10, step: 1, label: 'floors (0 auto)' },
@@ -104,7 +104,7 @@ function keyPressed() {
   if (key === 'r' || key === 'R') G.randomize();
   if (key === 's' || key === 'S') saveCanvas('isometric-strata-' + G.seed, 'png');
   if (key === 'm' || key === 'M') copyMetadata();
-  if (key >= '0' && key <= '5' && G.setParams) G.setParams({ sheet: Number(key) });
+  if (key >= '0' && key <= '6' && G.setParams) G.setParams({ sheet: Number(key) });
 }
 
 function windowResized() {
