@@ -1,13 +1,14 @@
 /*
  * strata.js — the Isometric Strata engine facade.
  *
- *   const state = Strata.build({ seed, mode, view, floors, detail, density, bldgs, site, paper });
+ *   const state = Strata.build({ seed, mode, sheet, floors, detail, density, bldgs, site, paper });
  *   Strata.paint(g, state, { wobble, ink });   // g: the window (p5 global mode) or a p5.Graphics
  *
  * build() turns a seed and a few overrides into a specification, a Scene of
  * 3-D primitives (one of twelve styles on one of six sites), the legend
- * tallied from what was placed, and the fits for both sheet types. paint()
- * draws that state as a sheet scaled to the renderer's width. The sketch and
+ * tallied from what was placed, and the fits for the five sheets of the drawing
+ * set (site plan, plans, sections, elevations, axonometric). paint() draws the
+ * sheet the state names, scaled to the renderer's width. The sketch and
  * the portfolio board are both thin clients of these two calls.
  */
 (function (global) {
@@ -58,6 +59,12 @@
 
   const STYLE_KEYS = ['mexican', 'decon', 'geodesic', 'brutalist', 'corbusier', 'destijl', 'metabolism', 'palladio', 'archigram', 'mies', 'cycladic', 'rossi'];
 
+  // The drawing set: one seed is a numbered set of five sheets. A-05 is the
+  // axonometric v1.0 drew; the other four are the orthographic sheets a working
+  // set carries, all cut and projected from the same scene at one scale.
+  const SHEETS = ['SITE PLAN', 'PLANS', 'SECTIONS', 'ELEVATIONS', 'AXONOMETRIC'];
+  const SHEET_SCALE = ['1:500', '1:200', '1:200', '1:200', null];
+
   function build(opts) {
   opts = opts || {};
   const seed = (opts.seed === undefined ? 1 : opts.seed) >>> 0;
@@ -73,13 +80,17 @@
   const paletteName = R.pick(style.palettes);
   const palette = PALETTES[paletteName];
 
-  const pv = opts.view | 0;
-  const view = pv === 1 ? 'AXONOMETRIC' : pv === 2 ? 'PLAN + SECTION' : R.chance(0.3) ? 'PLAN + SECTION' : 'AXONOMETRIC';
+  // which sheet of the set: 1..5 picks, 0 lets the seed choose (the axonometric
+  // most often); the v1.0 `view` option still works: 1 axon, 2 plans
+  const ps = opts.sheet | 0, pv = opts.view | 0;
+  const drawn = R.weighted([[4, 5], [0, 1], [1, 2], [2, 2], [3, 2]]);
+  const sheetIdx = ps >= 1 && ps <= 5 ? ps - 1 : pv === 1 ? 4 : pv === 2 ? 1 : drawn;
+  const view = SHEETS[sheetIdx];
 
   const schedule = opts.schedule === undefined ? true : !!opts.schedule;
 
   const spec = {
-    view: view,
+    view: view, sheet: sheetIdx, sheets: SHEETS,
     schedule: schedule,
     style: style, key: key,
     title: R.pick(style.titles),
@@ -145,20 +156,24 @@
     ['PAPER', spec.paper], (extra.kv && extra.kv[0]) || ['STRUCT', 'MODERATE'],
     ['BLDGS', bldgs], ['MODE', style.key],
   ];
+  const axonScale = R.pick(['1:100', '1:200', '1:100', '1:250']);
   const meta = {
     title: spec.title,
     subtitle: spec.substyle + ' / ' + (R.chance(0.5) ? spec.type : floors + 'F'),
-    dwg: spec.dwg, sheet: '1/1', view: view,
+    dwg: spec.dwg, sheet: 'A-0' + (sheetIdx + 1) + ' / 05', view: view,
     detail: spec.detail, density: spec.density, site: spec.site,
     palette: palette.colors.slice(0, 5),
     header: style.header, kv: kv, legend: legend,
-    project: spec.project, type: spec.type, scale: R.pick(['1:100', '1:200', '1:100', '1:250']),
+    project: spec.project, type: spec.type, scale: SHEET_SCALE[sheetIdx] || axonScale,
   };
   spec.plot = plot;
 
-  // fit: the building sets the scale (about half the frame wide), the site
-  // runs on past it and is clipped by the frame, as on a real sheet
+  // ---- fits ----
   const L = Sheet.layout({ schedule: schedule });
+  const F = L.frame;
+
+  // A-05: the building sets the scale (about half the frame wide), the site
+  // runs on past it and is clipped by the frame, as on a real sheet
   const bh = floors * spec.floorH * 1.15;
   const corners = [
     [union.x, union.y, 0], [union.x + union.w, union.y, 0], [union.x, union.y + union.d, 0], [union.x + union.w, union.y + union.d, 0],
@@ -166,15 +181,11 @@
   ].map(ISO.proj);
   const bx0 = Math.min(...corners.map((c) => c[0])), bx1 = Math.max(...corners.map((c) => c[0]));
   const by0 = Math.min(...corners.map((c) => c[1])), by1 = Math.max(...corners.map((c) => c[1]));
-  const s = Math.min((L.frame.w * 0.56) / (bx1 - bx0), (L.frame.h * 0.66) / (by1 - by0));
-  const fcx = L.frame.x + L.frame.w / 2, fcy = L.frame.y + L.frame.h * 0.52;
+  const s = Math.min((F.w * 0.56) / (bx1 - bx0), (F.h * 0.66) / (by1 - by0));
+  const fcx = F.x + F.w / 2, fcy = F.y + F.h * 0.52;
   const fit = { s: s, ox: fcx - ((bx0 + bx1) / 2) * s, oy: fcy - ((by0 + by1) / 2) * s };
 
-  // the orthographic sheet: plan above, section below, one scale for both
-  // the plan is cut a little above the building's own ground floor — a style
-  // on a podium or a plinth reports that datum
-  const cutZ = (extra.datum || 0) + Math.min(1.6, spec.floorH * 0.4 + 0.3);
-  const cutY = union.y + union.d / 2;
+  // the scene's extent, for the orthographic sheets
   let ex0 = Infinity, ey0 = Infinity, ex1 = -Infinity, ey1 = -Infinity, ez1 = 0;
   for (const it of scene.items) {
     const pts = it.pts || (it.anchor ? [it.anchor] : []);
@@ -184,71 +195,208 @@
       if (q[2] > ez1) ez1 = q[2];
     }
   }
-  // the site runs far past the building; frame the plan on the plot plus a margin
+  // the plans, sections and elevations frame the plot plus a margin; the site
+  // plan frames everything the site generator placed
   const m = Math.max(union.w, union.d) * 0.3 + 4;
   const px0 = Math.max(ex0, union.x - m), px1 = Math.min(ex1, union.x + union.w + m);
   const py0 = Math.max(ey0, union.y - m), py1 = Math.min(ey1, union.y + union.d + m);
+  // cuts: the ground-floor plan a little above the building's own ground floor
+  // (a style on a podium reports that datum); the upper plan at a typical floor;
+  // the sections through the plot's centre lines
+  const datum = extra.datum || 0;
+  const lift = Math.min(1.6, spec.floorH * 0.4 + 0.3);
+  const cutZ = datum + lift;
+  const upper = floors > 1 ? Math.max(2, Math.ceil(floors / 2)) : null;
+  const cutZ2 = upper ? datum + (upper - 1) * spec.floorH + lift : null;
+  const cutY = union.y + union.d / 2, cutX = union.x + union.w / 2;
   const gapY = 40, labelH = 26, pad = 30;
-  const planH = (L.frame.h - gapY) * 0.56, secH = L.frame.h - gapY - planH;
-  const so = Math.min((L.frame.w - 2 * pad) / (px1 - px0), (planH - 2 * pad - labelH) / (py1 - py0), (secH - 2 * pad - labelH) / (ez1 + 2));
-  const ortho = {
-    s: so, cutZ: cutZ, cutY: cutY,
-    plan: { x: L.frame.x, y: L.frame.y, w: L.frame.w, h: planH, ox: L.frame.x + L.frame.w / 2 - ((px0 + px1) / 2) * so, oy: L.frame.y + labelH + (planH - labelH) / 2 - ((py0 + py1) / 2) * so },
-    sec: { x: L.frame.x, y: L.frame.y + planH + gapY, w: L.frame.w, h: secH },
-    ext: { x0: px0, x1: px1, y0: py0, y1: py1, z1: ez1 },
+  const cx = (px0 + px1) / 2, cy = (py0 + py1) / 2;
+
+  // A-02 plans: two bands, ground floor above, the upper floor (or the roof) below
+  const bandH = (F.h - gapY) / 2;
+  const sp = Math.min((F.w - 2 * pad) / (px1 - px0), (bandH - 2 * pad - labelH) / (py1 - py0));
+  const bandAt = (i) => ({ x: F.x, y: F.y + i * (bandH + gapY), w: F.w, h: bandH });
+  const planBand = (i) => { const b = bandAt(i); b.ox = b.x + b.w / 2 - cx * sp; b.oy = b.y + labelH + (b.h - labelH) / 2 - cy * sp; return b; };
+  const plans = { s: sp, cuts: [{ z: cutZ, label: 'PLAN  LEVEL 1  +' + cutZ.toFixed(2), band: planBand(0) }, upper
+    ? { z: cutZ2, label: 'PLAN  LEVEL ' + upper + '  +' + cutZ2.toFixed(2), band: planBand(1) }
+    : { z: Infinity, label: 'ROOF PLAN', band: planBand(1) }] };
+
+  // the sections and elevations frame the plot plus a few metres of context and
+  // the building's own height (a tall neighbour may run past the band and clip)
+  const em = 4, span = Math.max(union.w, union.d) + 2 * em;
+  const hgt = Math.max(floors * spec.floorH * 1.25, Math.min(ez1, floors * spec.floorH * 2)) + 2;
+
+  // A-03 sections: A-A along x looking at +y, B-B along y looking at +x
+  const ss = Math.min((F.w - 2 * pad) / span, (bandH - 2 * pad - labelH) / hgt);
+  const secBand = (i, c0) => { const b = bandAt(i); b.ox = b.x + b.w / 2 - c0 * ss; b.ground = b.y + labelH + (b.h - labelH) / 2 + (hgt / 2) * ss - ss; return b; };
+  const sections = { s: ss, cuts: [
+    { label: 'SECTION  A-A', axis: 1, max: cutY, sx: (p) => p[0], depth: (c) => c[1], band: secBand(0, cx), x0: px0, x1: px1 },
+    { label: 'SECTION  B-B', axis: 0, max: cutX, sx: (p) => p[1], depth: (c) => c[0], band: secBand(1, cy), x0: py0, x1: py1 },
+  ] };
+
+  // A-04 elevations: four cells, one scale, each centred on the plot
+  const gapX = 40, cellW = (F.w - gapX) / 2, cellH = (F.h - gapY) / 2;
+  const se = Math.min((cellW - 2 * pad) / span, (cellH - 2 * pad - labelH) / hgt);
+  const cellAt = (i, c0) => {
+    const b = { x: F.x + (i % 2) * (cellW + gapX), y: F.y + Math.floor(i / 2) * (cellH + gapY), w: cellW, h: cellH };
+    b.ox = b.x + b.w / 2 - c0 * se; b.ground = b.y + labelH + (b.h - labelH) / 2 + (hgt / 2) * se - se; return b;
   };
-  ortho.sec.ox = ortho.plan.ox;
-  ortho.sec.ground = ortho.sec.y + labelH + (secH - labelH) / 2 + ((ez1 + 2) / 2) * so - so;
-  return { seed: seed, spec: spec, scene: scene, meta: meta, fit: fit, ortho: ortho, tenets: extra.tenets || null, stats: { buildingItems: buildingItems, siteItems: scene.items.length - buildingItems, union: union } };
+  // facing +y from the south: right is +x and the far things have the larger y
+  const elevations = { s: se, cells: [
+    { label: 'SOUTH ELEVATION', sx: (p) => p[0], depth: (c) => -c[1], cell: cellAt(0, cx), x0: px0, x1: px1 },
+    { label: 'NORTH ELEVATION', sx: (p) => -p[0], depth: (c) => c[1], cell: cellAt(1, -cx), x0: -px1, x1: -px0 },
+    { label: 'EAST ELEVATION', sx: (p) => p[1], depth: (c) => c[0], cell: cellAt(2, cy), x0: py0, x1: py1 },
+    { label: 'WEST ELEVATION', sx: (p) => -p[1], depth: (c) => -c[0], cell: cellAt(3, -cy), x0: -py1, x1: -py0 },
+  ] };
+
+  // A-01 site plan: the block around the plot, from above, no cut — the plot
+  // plus one and a quarter of its own size each way, or the site if smaller
+  const sm = Math.max(union.w, union.d) * 1.25;
+  const sx0 = Math.max(ex0, union.x - sm), sx1 = Math.min(ex1, union.x + union.w + sm);
+  const sy0 = Math.max(ey0, union.y - sm), sy1 = Math.min(ey1, union.y + union.d + sm);
+  const sst = Math.min((F.w - 2 * pad) / (sx1 - sx0), (F.h - 2 * pad - labelH) / (sy1 - sy0));
+  const site = { s: sst, ox: F.x + F.w / 2 - ((sx0 + sx1) / 2) * sst, oy: F.y + labelH + (F.h - labelH) / 2 - ((sy0 + sy1) / 2) * sst };
+
+  // the v1.0 ortho record, kept for the token layer (the plan cut it reports)
+  const ortho = { s: sp, cutZ: cutZ, cutZ2: cutZ2, cutY: cutY, cutX: cutX, ext: { x0: px0, x1: px1, y0: py0, y1: py1, z1: ez1, sx0: sx0, sx1: sx1, sy0: sy0, sy1: sy1 } };
+  const set = { plans: plans, sections: sections, elevations: elevations, site: site };
+  return { seed: seed, spec: spec, scene: scene, meta: meta, fit: fit, ortho: ortho, set: set, tenets: extra.tenets || null, stats: { buildingItems: buildingItems, siteItems: scene.items.length - buildingItems, union: union } };
 }
 
-  // Plan above, section below: the same scene cut by two half-spaces. The plan
-// is cut just above the ground floor and looks down; the section is cut at
-// the plot's centre line and looks at the far half. Cut edges are drawn heavy.
-function paintPlanSection(hand, state) {
-  const O = state.ortho, scene = state.scene, spec = state.spec, s = O.s;
+  // ---- the orthographic sheets ----
   const LBL = { color: [48, 54, 64], alpha: 215 };
-  const rule = { color: [58, 64, 74], alpha: 160, weight: 0.9, wob: 0.4 };
+  const RULE = { color: [58, 64, 74], alpha: 160, weight: 0.9, wob: 0.4 };
 
-  // ---- plan ----
-  const Pp = (p) => [O.plan.ox + p[0] * s, O.plan.oy + p[1] * s];
-  hand.clipPath([[O.plan.x, O.plan.y], [O.plan.x + O.plan.w, O.plan.y], [O.plan.x + O.plan.w, O.plan.y + O.plan.h], [O.plan.x, O.plan.y + O.plan.h]]);
-  Hand.renderView(scene, hand, Pp, { axis: 2, max: O.cutZ, view: 'plan', depth: (c) => c[2] });
-  // the section line A-A across the plan
-  const a0 = Pp([O.ext.x0 - 2, O.cutY, 0]), a1 = Pp([O.ext.x1 + 2, O.cutY, 0]);
-  hand.line([a0, a1], { alpha: 200, weight: 1.1, wob: 0.3, dash: [16, 6] });
-  for (const e of [a0, a1]) {
-    hand.line([[e[0], e[1]], [e[0], e[1] + 14]], { alpha: 200, weight: 1.3, wob: 0.3 });
-    hand.line([[e[0] - 5, e[1] + 9], [e[0], e[1] + 14], [e[0] + 5, e[1] + 9]], { alpha: 200, weight: 1.3, wob: 0.3 });
-    hand.text('A', e[0], e[1] - 16, 11, LBL, { align: 'center' });
+  function clipRect(hand, r) {
+    hand.clipPath([[r.x, r.y], [r.x + r.w, r.y], [r.x + r.w, r.y + r.h], [r.x, r.y + r.h]]);
   }
-  hand.unclip();
-  hand.text('PLAN  +' + O.cutZ.toFixed(2), O.plan.x + 14, O.plan.y + 10, 11, LBL);
-  hand.text('N', O.plan.x + O.plan.w - 40, O.plan.y + 10, 11, LBL);
-  hand.line([[O.plan.x + O.plan.w - 34, O.plan.y + 30], [O.plan.x + O.plan.w - 34, O.plan.y + 12]], rule);
-  hand.line([[O.plan.x + O.plan.w - 38, O.plan.y + 17], [O.plan.x + O.plan.w - 34, O.plan.y + 12], [O.plan.x + O.plan.w - 30, O.plan.y + 17]], rule);
 
-  // ---- section ----
-  hand.line([[O.sec.x, O.sec.y - 20], [O.sec.x + O.sec.w, O.sec.y - 20]], rule);
-  const Ps = (p) => [O.sec.ox + p[0] * s, O.sec.ground - p[2] * s];
-  hand.clipPath([[O.sec.x, O.sec.y], [O.sec.x + O.sec.w, O.sec.y], [O.sec.x + O.sec.w, O.sec.y + O.sec.h], [O.sec.x, O.sec.y + O.sec.h]]);
-  Hand.renderView(scene, hand, Ps, { axis: 1, max: O.cutY, view: 'section', depth: (c) => c[1] });
-  // the ground line, heavy, and the hatched earth below it
-  const g0 = Ps([O.ext.x0 - 2, 0, 0]), g1 = Ps([O.ext.x1 + 2, 0, 0]);
-  hand.line([g0, g1], { alpha: 235, weight: 2.4, wob: 0.3 });
-  hand.poly([[g0[0], g0[1]], [g1[0], g1[1]], [g1[0], g1[1] + 26], [g0[0], g0[1] + 26]], { color: [70, 76, 88], alpha: 110, mode: 'hatch', spacing: 4, angle: Math.PI / 4 }, null);
-  hand.unclip();
-  hand.text('SECTION  A-A', O.sec.x + 14, O.sec.y + 10, 11, LBL);
-  hand.text('+0.00', g1[0] - hand.textWidth('+0.00', 9) - 6, g1[1] - 12, 9, LBL);
+  // a section mark: the cut line across the plan, dashed, a tick and a letter at each end
+  function sectionMark(hand, a0, a1, letter, side) {
+    const dx = a1[0] - a0[0], dy = a1[1] - a0[1], l = Math.hypot(dx, dy) || 1;
+    const nx = (-dy / l) * side, ny = (dx / l) * side;
+    hand.line([a0, a1], { alpha: 200, weight: 1.1, wob: 0.3, dash: [16, 6] });
+    for (const e of [a0, a1]) {
+      hand.line([[e[0], e[1]], [e[0] + nx * 14, e[1] + ny * 14]], { alpha: 200, weight: 1.3, wob: 0.3 });
+      hand.line([[e[0] + nx * 9 - ny * 5, e[1] + ny * 9 + nx * 5], [e[0] + nx * 14, e[1] + ny * 14], [e[0] + nx * 9 + ny * 5, e[1] + ny * 9 - nx * 5]], { alpha: 200, weight: 1.3, wob: 0.3 });
+      hand.text(letter, e[0] - nx * 16, e[1] - ny * 16 - 5, 11, LBL, { align: 'center' });
+    }
+  }
 
-  return { yBase: O.sec.ground, step: spec.floorH * s, n: spec.floors };
-}
+  function planMarks(hand, P, O) {
+    sectionMark(hand, P([O.ext.x0 - 2, O.cutY, 0]), P([O.ext.x1 + 2, O.cutY, 0]), 'A', 1);
+    sectionMark(hand, P([O.cutX, O.ext.y0 - 2, 0]), P([O.cutX, O.ext.y1 + 2, 0]), 'B', -1);
+  }
+
+  function northMark(hand, x, y) {
+    hand.text('N', x, y, 11, LBL);
+    hand.line([[x + 6, y + 20], [x + 6, y + 2]], RULE);
+    hand.line([[x + 2, y + 7], [x + 6, y + 2], [x + 10, y + 7]], RULE);
+  }
+
+  function groundLine(hand, Ps, x0, x1) {
+    const g0 = Ps([x0 - 2, 0]), g1 = Ps([x1 + 2, 0]);
+    hand.line([g0, g1], { alpha: 235, weight: 2.4, wob: 0.3 });
+    hand.poly([[g0[0], g0[1]], [g1[0], g1[1]], [g1[0], g1[1] + 26], [g0[0], g0[1] + 26]], { color: [70, 76, 88], alpha: 110, mode: 'hatch', spacing: 4, angle: Math.PI / 4 }, null);
+    return g1;
+  }
+
+  // A-01: everything the site generator placed, seen from above
+  function paintSite(hand, state) {
+    const S = state.set.site, O = state.ortho, F = Sheet.layout({ schedule: state.spec.schedule }).frame;
+    const P = (p) => [S.ox + p[0] * S.s, S.oy + p[1] * S.s];
+    clipRect(hand, F);
+    Hand.renderView(state.scene, hand, P, { axis: 2, max: Infinity, view: 'plan', depth: (c) => c[2] });
+    // the plot's boundary, dashed, and the section marks
+    const u = state.stats.union;
+    hand.line([P([u.x, u.y]), P([u.x + u.w, u.y]), P([u.x + u.w, u.y + u.d]), P([u.x, u.y + u.d]), P([u.x, u.y])], { alpha: 150, weight: 0.9, wob: 0.4, dash: [10, 6] });
+    planMarks(hand, P, O);
+    hand.unclip();
+    hand.text('SITE PLAN', F.x + 14, F.y + 10, 11, LBL);
+    northMark(hand, F.x + F.w - 40, F.y + 10);
+    return null;
+  }
+
+  // A-02: the ground floor and a typical upper floor (or the roof), one above the other
+  function paintPlans(hand, state) {
+    const Pl = state.set.plans, O = state.ortho, scene = state.scene;
+    for (const c of Pl.cuts) {
+      const b = c.band;
+      const P = (p) => [b.ox + p[0] * Pl.s, b.oy + p[1] * Pl.s];
+      clipRect(hand, b);
+      Hand.renderView(scene, hand, P, { axis: 2, max: c.z, view: 'plan', depth: (q) => q[2] });
+      planMarks(hand, P, O);
+      hand.unclip();
+      hand.text(c.label, b.x + 14, b.y + 10, 11, LBL);
+      northMark(hand, b.x + b.w - 40, b.y + 10);
+    }
+    const b1 = Pl.cuts[1].band;
+    hand.line([[b1.x, b1.y - 20], [b1.x + b1.w, b1.y - 20]], RULE);
+    return null;
+  }
+
+  // A-03: two sections at right angles, each looking at the far half of the scene
+  function paintSections(hand, state) {
+    const Se = state.set.sections, scene = state.scene;
+    let first = null;
+    for (const c of Se.cuts) {
+      const b = c.band;
+      const P = (p) => [b.ox + c.sx(p) * Se.s, b.ground - p[2] * Se.s];
+      clipRect(hand, b);
+      Hand.renderView(scene, hand, P, { axis: c.axis, max: c.max, view: 'section', depth: c.depth });
+      const g1 = groundLine(hand, (q) => [b.ox + q[0] * Se.s, b.ground - q[1] * Se.s], c.x0, c.x1);
+      hand.unclip();
+      hand.text(c.label, b.x + 14, b.y + 10, 11, LBL);
+      // the datum label sits at the ground line's end, kept inside the band
+      hand.text('+0.00', Math.min(g1[0], b.x + b.w) - hand.textWidth('+0.00', 9) - 6, g1[1] - 12, 9, LBL);
+      if (!first) first = { yBase: b.ground, step: state.spec.floorH * Se.s, n: state.spec.floors };
+    }
+    const b1 = Se.cuts[1].band;
+    hand.line([[b1.x, b1.y - 20], [b1.x + b1.w, b1.y - 20]], RULE);
+    return first;
+  }
+
+  // A-04: four elevations, nothing cut, the far things drawn first
+  function paintElevations(hand, state) {
+    const El = state.set.elevations, scene = state.scene;
+    let first = null;
+    for (const c of El.cells) {
+      const b = c.cell;
+      const P = (p) => [b.ox + c.sx(p) * El.s, b.ground - p[2] * El.s];
+      clipRect(hand, b);
+      Hand.renderView(scene, hand, P, { axis: 2, max: Infinity, view: 'section', depth: c.depth });
+      groundLine(hand, (q) => [b.ox + q[0] * El.s, b.ground - q[1] * El.s], c.x0, c.x1);
+      hand.unclip();
+      hand.text(c.label, b.x + 14, b.y + 10, 11, LBL);
+      if (!first) first = { yBase: b.ground, step: state.spec.floorH * El.s, n: state.spec.floors };
+    }
+    const c1 = El.cells[1].cell, c2 = El.cells[2].cell;
+    hand.line([[c1.x - 20, c1.y], [c1.x - 20, c1.y + c1.h * 2 + 40]], RULE);
+    hand.line([[c2.x, c2.y - 20], [c2.x + c2.w * 2 + 40, c2.y - 20]], RULE);
+    return first;
+  }
+
+  // A-05: the axonometric, clipped to its frame
+  function paintAxon(hand, state) {
+    const spec = state.spec, fit = state.fit, F = Sheet.layout({ schedule: spec.schedule }).frame;
+    const P = (p) => {
+      const q = ISO.proj(p);
+      return [fit.ox + q[0] * fit.s, fit.oy + q[1] * fit.s];
+    };
+    clipRect(hand, F);
+    Hand.render(state.scene, hand, P);
+    hand.unclip();
+    const g0 = P([spec.plot.x + spec.plot.w / 2, spec.plot.y + spec.plot.d / 2, 0]);
+    return { yBase: g0[1], step: spec.floorH * fit.s, n: spec.floors };
+  }
+
+  const PAINTERS = [paintSite, paintPlans, paintSections, paintElevations, paintAxon];
 
 // Paint a built sheet into any p5 renderer (the window in global mode, or a
 // p5.Graphics) — the sheet scales to the renderer's width.
 function paint(g, state, opts) {
   opts = opts || {};
-  const spec = state.spec, scene = state.scene, fit = state.fit;
+  const spec = state.spec;
   const R = ISO.rng(state.seed ^ 0x5a5a);
   const wob = opts.wobble === undefined ? 1 : opts.wobble;
   const inkScale = (opts.ink === undefined ? 1 : opts.ink) * (spec.ink === 'FINE' ? 0.82 : spec.ink === 'HEAVY' ? 1.3 : 1);
@@ -267,21 +415,7 @@ function paint(g, state, opts) {
   Paper.grid(hand, SW, SH, spec.grid === 'SMALL' ? 12.5 : 20);
   Paper.marginalia(hand, R.fork('margin'), SW, SH, L.schedule ? [L.title, L.footer, L.schedule] : [L.title, L.footer], spec.paper === 'ROUGH' ? 1.4 : 1);
 
-  let floorInfo;
-  if (spec.view === 'AXONOMETRIC') {
-    // the drawing, clipped to its frame
-    const P = (p) => {
-      const q = ISO.proj(p);
-      return [fit.ox + q[0] * fit.s, fit.oy + q[1] * fit.s];
-    };
-    hand.clipPath([[L.frame.x, L.frame.y], [L.frame.x + L.frame.w, L.frame.y], [L.frame.x + L.frame.w, L.frame.y + L.frame.h], [L.frame.x, L.frame.y + L.frame.h]]);
-    Hand.render(scene, hand, P);
-    hand.unclip();
-    const g0 = P([spec.plot.x + spec.plot.w / 2, spec.plot.y + spec.plot.d / 2, 0]);
-    floorInfo = { yBase: g0[1], step: spec.floorH * fit.s, n: spec.floors };
-  } else {
-    floorInfo = paintPlanSection(hand, state);
-  }
+  const floorInfo = PAINTERS[spec.sheet](hand, state);
 
   // chrome, with the floor scale keyed to the building's ground line
   Sheet.draw(hand, state.meta, floorInfo, { schedule: spec.schedule });
@@ -296,5 +430,5 @@ function paint(g, state, opts) {
   g.blendMode(g.BLEND);
 }
 
-  global.Strata = Object.assign(global.Strata || {}, { SW: SW, SH: SH, PALETTES: PALETTES, STYLE_KEYS: STYLE_KEYS, build: build, paint: paint });
+  global.Strata = Object.assign(global.Strata || {}, { SW: SW, SH: SH, PALETTES: PALETTES, STYLE_KEYS: STYLE_KEYS, SHEETS: SHEETS, build: build, paint: paint });
 })(window);

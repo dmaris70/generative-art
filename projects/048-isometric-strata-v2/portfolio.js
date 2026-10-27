@@ -8,13 +8,14 @@
 // the style, the seed and the tenets score. Rendering is progressive — one
 // sheet per frame — so the page stays responsive.
 //
-// URL: ?seed=1234&set=styles|sites|papers|seeds&style=1..12
+// URL: ?seed=1234&set=sheets|styles|sites|papers|seeds&style=1..12
 // Keys: R reseed · S save PNG.
 
 const SETS = {
+  sheets: { cols: 3, count: 5, label: 'ONE SEED, THE DRAWING SET A-01 TO A-05' },
   styles: { cols: 4, count: 12, label: 'ONE SHEET PER STYLE' },
   sites: { cols: 3, count: 6, label: 'ONE STYLE, SIX SITES' },
-  papers: { cols: 3, count: 6, label: 'ONE STYLE, THREE PAPERS, TWO VIEWS' },
+  papers: { cols: 3, count: 6, label: 'ONE STYLE, THREE PAPERS, AXON AND SECTIONS' },
   seeds: { cols: 4, count: 12, label: 'ONE STYLE, TWELVE SEEDS' },
   edition: { cols: 4, count: 12, label: 'THE CURATED EDITION, TWELVE PER PAGE' },
 };
@@ -74,14 +75,15 @@ function plan() {
     const entries = E ? Object.entries(E.seeds).map(([sd, n]) => [Number(sd), n]).sort((a, b) => a[1] - b[1]) : [];
     const pages = Math.max(1, Math.ceil(entries.length / set.count));
     const page = Math.min(pages, ctrl.page);
-    for (const [sd] of entries.slice((page - 1) * set.count, page * set.count)) out.push({ seed: sd, mode: 0, view: 0 });
+    for (const [sd] of entries.slice((page - 1) * set.count, page * set.count)) out.push({ seed: sd, mode: 0, sheet: 0 });
     return { seed: seed, set: set, styleN: styleN, specs: out, page: page, pages: pages, editionSize: entries.length };
   }
   for (let i = 0; i < set.count; i++) {
-    if (ctrl.set === 'styles') out.push({ seed: seed, mode: i + 1, view: 1 });
-    else if (ctrl.set === 'sites') out.push({ seed: seed, mode: styleN, view: 1, site: Site.TYPES[i] });
-    else if (ctrl.set === 'papers') out.push({ seed: seed, mode: styleN, view: i < 3 ? 1 : 2, paper: ['VINTAGE', 'STANDARD', 'ROUGH'][i % 3] });
-    else out.push({ seed: (seed + i * 7919) >>> 0, mode: styleN, view: 0 });
+    if (ctrl.set === 'sheets') out.push({ seed: seed, mode: ctrl.style, sheet: i + 1 });
+    else if (ctrl.set === 'styles') out.push({ seed: seed, mode: i + 1, sheet: 5 });
+    else if (ctrl.set === 'sites') out.push({ seed: seed, mode: styleN, sheet: 5, site: Site.TYPES[i] });
+    else if (ctrl.set === 'papers') out.push({ seed: seed, mode: styleN, sheet: i < 3 ? 5 : 3, paper: ['VINTAGE', 'STANDARD', 'ROUGH'][i % 3] });
+    else out.push({ seed: (seed + i * 7919) >>> 0, mode: styleN, sheet: 0 });
   }
   return { seed: seed, set: set, styleN: styleN, specs: out };
 }
@@ -175,7 +177,7 @@ function paintBoard() {
     H.rect(t.x, t.y, TILE.w, TILE.h, { color: [58, 64, 74], alpha: 200, weight: 1.0, wob: 0.3 });
     // the caption
     const ed = t.state && Strata.edition ? Strata.edition(t.state) : null;
-    const n = ed ? ed.number + '/' + ed.size : ('0' + (t.i + 1)).slice(-2);
+    const n = ed ? ed.number + '/' + ed.size : ctrl.set === 'sheets' ? 'A-0' + (t.i + 1) : ('0' + (t.i + 1)).slice(-2);
     if (t.state) {
       const sp = t.state.spec;
       const ten = t.state.tenets ? 'TENETS ' + t.state.tenets.filter((q) => q.ok).length + '/' + t.state.tenets.length : 'SEED ' + t.state.seed;

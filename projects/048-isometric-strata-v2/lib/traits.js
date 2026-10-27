@@ -99,7 +99,7 @@
     return {
       name: 'Isometric Strata II ' + (ed ? ed.number + '/' + ed.size : '#' + state.seed),
       description: sp.title + ' — a ' + sp.style.key.toLowerCase() + ' ' + sp.type.toLowerCase() + ' on a ' + sp.site.toLowerCase() +
-        ' site, drawn as ' + (sp.view === 'AXONOMETRIC' ? 'an axonometric' : 'a plan and section') + ' on ' + sp.paper.toLowerCase() +
+        ' site, sheet A-0' + (sp.sheet + 1) + ' of its drawing set (' + sp.view.toLowerCase() + ') on ' + sp.paper.toLowerCase() +
         ' paper. Every count in its legend is tallied from the geometry actually drawn' + (state.tenets ? '; its ' + state.tenets.length + ' tenets are checked over the drawn scene (' + r.traits.find((t) => t.trait_type === 'Tenets').value + ').' : '.'),
       external_url: 'https://dmaris70.github.io/generative-art/projects/048-isometric-strata-v2/?seed=' + state.seed,
       attributes: r.traits.map((t) => ({ trait_type: t.trait_type, value: t.value, rarity: t.frequency, tier: t.tier })),
@@ -112,7 +112,7 @@
         variables: {
           floors: sp.floors, floorHeight: Math.round(sp.floorH * 100) / 100, buildings: sp.bldgs, shape: sp.shape,
           detail: sp.detailN, plot: { w: Math.round(sp.plot.w * 10) / 10, d: Math.round(sp.plot.d * 10) / 10 },
-          palette: sp.palette.colors.map(hex), cut: sp.view === 'AXONOMETRIC' ? null : Math.round(state.ortho.cutZ * 100) / 100,
+          palette: sp.palette.colors.map(hex), cut: sp.sheet === 1 || sp.sheet === 2 ? Math.round(state.ortho.cutZ * 100) / 100 : null,
         },
         legend: Object.assign({}, state.scene.counts),
         tenets: state.tenets ? state.tenets.map((t) => ({ name: t.name, ok: t.ok })) : null,
@@ -188,7 +188,7 @@
     row('PLOT', sp.plot.w.toFixed(1) + ' X ' + sp.plot.d.toFixed(1) + ' M');
     row('BUILDINGS / SHAPE', sp.bldgs + ' / ' + sp.shape);
     row('DETAIL / DENSITY', sp.detailN + ' / ' + sp.density);
-    if (sp.view !== 'AXONOMETRIC') row('PLAN CUT', '+' + state.ortho.cutZ.toFixed(2) + ' M');
+    if (sp.sheet === 1 || sp.sheet === 2) row('PLAN CUT', '+' + state.ortho.cutZ.toFixed(2) + ' M');
     row('SCALE', state.meta.scale);
     row('PALETTE', sp.paletteName);
     const cols = sp.palette.colors.slice(0, 5);

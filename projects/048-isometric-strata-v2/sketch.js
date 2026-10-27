@@ -1,8 +1,9 @@
 // Isometric Strata — generative architectural drawing sheets.
 //
-// Every seed is a complete working drawing: a title block, a north arrow, the
-// palette's swatches, a framed axonometric (or a plan and section) of a
-// building on its site with the floor levels scaled up the margin, and a
+// Every seed is a complete working drawing set of five sheets — site plan,
+// plans, sections, elevations, axonometric — each with a title block, a north
+// arrow, the palette's swatches, the drawing of a building on its site with
+// the floor levels scaled up the margin where they apply, and a
 // footer with a legend whose counts are tallied from the geometry actually
 // drawn, a scale bar, and the sheet's specification. The building is one of
 // twelve styles — the Mexican-modern patio mat, the deconstructivist tower,
@@ -17,7 +18,7 @@
 // (render.js) onto textured paper (paper.js) inside the chrome (sheet.js).
 // The engine is lib/strata.js; this file only wires it to the harness.
 //
-// Keys: R randomize · S save PNG.
+// Keys: R randomize · S save PNG · 1–5 pick the sheet of the set · 0 let the seed pick.
 
 let G;
 let state = null;
@@ -28,7 +29,7 @@ function setup() {
   G = GenArt.create({
     title: 'Isometric Strata v2',
     params: {
-      view: { value: 0, min: 0, max: 2, step: 1, label: 'view (0 auto, 1 axon, 2 plan+section)' },
+      sheet: { value: 0, min: 0, max: 5, step: 1, label: 'sheet (0 auto, 1 site, 2 plans, 3 sections, 4 elevations, 5 axon)' },
       mode: { value: 0, min: 0, max: 12, step: 1, label: 'style (0 auto, 1 mex, 2 decon, 3 geo, 4 brut, 5 corb, 6 stijl, 7 metab, 8 pall, 9 archi, 10 mies, 11 cyc, 12 rossi)' },
       floors: { value: 0, min: 0, max: 10, step: 1, label: 'floors (0 auto)' },
       detail: { value: 0, min: 0, max: 3, step: 1, label: 'detail (0 auto)' },
@@ -47,6 +48,13 @@ function setup() {
       if (G.param('mode') | 0) u.searchParams.set('style', String(G.param('mode') | 0));
       window.open(u.toString(), '_blank');
     } }, 'portfolio').name('⊞ Portfolio board');
+    G.gui.add({ set: function () {
+      const u = new URL('portfolio.html', window.location.href);
+      u.searchParams.set('seed', String(G.seed));
+      u.searchParams.set('set', 'sheets');
+      if (G.param('mode') | 0) u.searchParams.set('style', String(G.param('mode') | 0));
+      window.open(u.toString(), '_blank');
+    } }, 'set').name('⊞ Drawing set A-01…05');
     G.gui.add({ meta: copyMetadata }, 'meta').name('Copy metadata JSON (M)');
   }
   reset();
@@ -64,7 +72,7 @@ function fitCanvas() {
 function opts() {
   return {
     seed: G.seed,
-    view: G.param('view'), mode: G.param('mode'), floors: G.param('floors'), detail: G.param('detail'),
+    sheet: G.param('sheet'), mode: G.param('mode'), floors: G.param('floors'), detail: G.param('detail'),
     density: G.param('density'), bldgs: G.param('bldgs'), wobble: G.param('wobble'), ink: G.param('ink'),
     schedule: G.param('schedule'),
   };
@@ -95,6 +103,7 @@ function keyPressed() {
   if (key === 'r' || key === 'R') G.randomize();
   if (key === 's' || key === 'S') saveCanvas('isometric-strata-' + G.seed, 'png');
   if (key === 'm' || key === 'M') copyMetadata();
+  if (key >= '0' && key <= '5' && G.setParams) G.setParams({ sheet: Number(key) });
 }
 
 function windowResized() {

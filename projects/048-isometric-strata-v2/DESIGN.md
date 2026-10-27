@@ -58,8 +58,30 @@ cut plans; landscape with ground contours.
 interiors seen through cutaways; a second building type per style (civic versus domestic);
 terrain with retaining walls; water with reflections drawn as hatching.
 
-## 4. First steps
+## 4. Steps taken
 
-The first step is chosen with the principal, from §3, and recorded here with the date.
 A step is done when it renders in the sheet client and the board, its tenets (if a dogma) are
 reported, and the headless smoke test passes.
+
+**2026-10-27 — the drawing set.** One seed is now a numbered set of five sheets, chosen first
+because it changes what a collector receives and forces the orthographic sheet types to exist:
+
+| Sheet | Content | Fit |
+|---|---|---|
+| A-01 SITE PLAN | the block around the plot from above, no cut; plot boundary dashed; section marks A-A and B-B; nominal 1:500 | plot plus 1.25 × its size each way, or the site if smaller |
+| A-02 PLANS | the ground floor cut a little above the building's own datum, and a typical upper floor (or the roof plan for a single storey), one above the other; section marks on both | plot plus a 30 % margin, one scale for both bands |
+| A-03 SECTIONS | A-A through the plot's centre along x looking at +y, B-B along y looking at +x; cut edges heavy; ground line with hatched earth; datum label | plot plus 4 m each side; the building's height, a tall neighbour may clip |
+| A-04 ELEVATIONS | south, north, east, west, in four cells, nothing cut, the far things drawn first; ground lines | as the sections, per cell |
+| A-05 AXONOMETRIC | the v1.0 sheet | as v1.0 |
+
+`Strata.build({ sheet })` takes 1–5 (0 lets the seed choose, the axonometric most often; the
+v1.0 `view` option still maps: 1 axon, 2 plans). The title block prints `SHEET A-0k / 05`,
+the scale bar the sheet's nominal scale, and the floor scale in the margin keys to the first
+section or elevation. The orthographic projections are the same half-space clip v1.0 used
+for its plan-and-section sheet (`Hand.renderView`), with the projection and the depth key
+chosen per view: an elevation from the south projects x and draws the larger y first; from
+the north it mirrors x and draws the smaller y first; east and west likewise on y. Keys 1–5
+pick the sheet in the client; the board's `sheets` set lays the five out for one seed.
+Verified on seeds 940 (Mexican modern, plaza), 7 (Metabolism tower, city) and 12 (Cycladic,
+hillside): no console errors, the tower's twelve floors align with the margin scale, the
+hillside's contours read in the site plan and the terrain steps in section B-B.
