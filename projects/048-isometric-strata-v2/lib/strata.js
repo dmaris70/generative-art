@@ -5,7 +5,7 @@
  *   Strata.paint(g, state, { wobble, ink });   // g: the window (p5 global mode) or a p5.Graphics
  *
  * build() turns a seed and a few overrides into a specification, a Scene of
- * 3-D primitives (one of twenty-one styles on one of six sites), the legend
+ * 3-D primitives (one of thirty-three styles on one of six sites), the legend
  * tallied from what was placed, and the fits for the six sheets of the drawing
  * set (site plan, plans, sections, elevations, axonometric). paint() draws the
  * sheet the state names, scaled to the renderer's width. The sketch and
@@ -81,10 +81,42 @@
   BRION: { colors: [[168, 166, 160], [206, 198, 180], [196, 70, 52], [48, 50, 54], [110, 140, 150]], water: [110, 140, 150] },
   VERONA: { colors: [[176, 170, 160], [214, 196, 168], [60, 120, 150], [52, 52, 56], [110, 140, 150]], water: [110, 140, 150] },
   VENICE: { colors: [[160, 160, 156], [220, 208, 184], [210, 150, 50], [44, 46, 50], [110, 140, 150]], water: [110, 140, 150] },
+  WHITE: { colors: [[240, 240, 236], [150, 154, 160], [220, 90, 60], [120, 124, 130], [140, 160, 176]], water: [140, 160, 176] },
+  GRIDDER: { colors: [[232, 234, 232], [110, 116, 124], [210, 80, 56], [140, 144, 150], [140, 160, 176]], water: [140, 160, 176] },
+  BLACKBOARD: { colors: [[214, 216, 214], [70, 74, 80], [200, 70, 50], [100, 104, 110], [140, 160, 176]], water: [140, 160, 176] },
+  LATTICE: { colors: [[70, 78, 92], [214, 210, 198], [226, 120, 70], [90, 130, 170], [140, 160, 176]], water: [140, 160, 176] },
+  SKYFRAME: { colors: [[56, 64, 80], [220, 216, 204], [236, 190, 60], [200, 90, 80], [140, 160, 176]], water: [140, 160, 176] },
+  PRIMARY: { colors: [[60, 66, 78], [224, 220, 210], [214, 54, 50], [40, 90, 170], [140, 160, 176]], water: [140, 160, 176] },
+  BABYLON: { colors: [[222, 200, 90], [90, 94, 104], [190, 90, 70], [236, 232, 220], [140, 160, 176]], water: [140, 160, 176] },
+  YELLOW: { colors: [[238, 208, 70], [84, 88, 98], [200, 100, 60], [244, 240, 226], [140, 160, 176]], water: [140, 160, 176] },
+  NOMAD: { colors: [[200, 150, 90], [90, 92, 100], [210, 80, 60], [232, 224, 200], [140, 160, 176]], water: [140, 160, 176] },
+  SILT: { colors: [[188, 160, 124], [206, 130, 90], [112, 140, 90], [92, 76, 64], [140, 160, 170]], water: [140, 160, 170] },
+  ADOBE: { colors: [[206, 150, 110], [226, 180, 140], [120, 146, 96], [100, 80, 66], [140, 160, 170]], water: [140, 160, 170] },
+  MESA: { colors: [[196, 124, 88], [220, 170, 130], [104, 134, 88], [84, 66, 56], [140, 160, 170]], water: [140, 160, 170] },
+  FUTURA: { colors: [[226, 222, 212], [150, 176, 196], [210, 70, 50], [60, 64, 72], [140, 160, 176]], water: [140, 160, 176] },
+  CEMENTO: { colors: [[190, 188, 180], [130, 156, 176], [200, 90, 60], [70, 72, 78], [140, 160, 176]], water: [140, 160, 176] },
+  VELOCITA: { colors: [[232, 226, 210], [110, 150, 180], [230, 110, 40], [50, 54, 62], [140, 160, 176]], water: [140, 160, 176] },
+  MEMBRANE: { colors: [[238, 234, 222], [70, 74, 84], [150, 154, 160], [220, 90, 60], [130, 160, 176]], water: [130, 160, 176] },
+  NETWORK: { colors: [[226, 222, 206], [60, 64, 72], [120, 124, 132], [220, 100, 60], [130, 160, 176]], water: [130, 160, 176] },
+  CANVAS: { colors: [[232, 220, 192], [84, 80, 74], [140, 130, 110], [200, 90, 60], [130, 160, 176]], water: [130, 160, 176] },
+  SCAFFOLD: { colors: [[70, 76, 88], [214, 210, 198], [236, 186, 60], [200, 80, 70], [140, 160, 176]], water: [140, 160, 176] },
+  GANTRY: { colors: [[60, 66, 76], [220, 216, 204], [90, 140, 190], [236, 150, 50], [140, 160, 176]], water: [140, 160, 176] },
+  ETCHING: { colors: [[200, 190, 170], [150, 142, 126], [96, 100, 84], [70, 64, 56], [150, 160, 166]], water: [150, 160, 166] },
+  CHARCOAL: { colors: [[84, 86, 92], [124, 126, 130], [34, 36, 40], [60, 62, 68], [120, 130, 140]], water: [120, 130, 140] },
+  SMOKE: { colors: [[110, 108, 104], [150, 146, 140], [48, 46, 44], [80, 78, 74], [130, 136, 140]], water: [130, 136, 140] },
+  NIGHT: { colors: [[70, 78, 96], [110, 120, 140], [30, 34, 46], [52, 58, 74], [120, 134, 156]], water: [120, 134, 156] },
+  INFLATABLE: { colors: [[236, 150, 70], [244, 232, 200], [90, 160, 200], [90, 94, 104], [130, 160, 176]], water: [130, 160, 176] },
+  POPPLE: { colors: [[226, 110, 160], [250, 236, 210], [70, 170, 190], [90, 94, 104], [130, 160, 176]], water: [130, 160, 176] },
+  TRANSLUCENT: { colors: [[200, 220, 226], [236, 240, 238], [240, 190, 90], [90, 94, 104], [130, 160, 176]], water: [130, 160, 176] },
+  SOLAR: { colors: [[230, 224, 206], [220, 160, 70], [110, 160, 110], [150, 190, 210], [110, 150, 176]], water: [110, 150, 176] },
+  HORIZON: { colors: [[226, 228, 222], [90, 150, 190], [100, 150, 100], [190, 196, 206], [110, 150, 176]], water: [110, 150, 176] },
+  VERDANT: { colors: [[222, 226, 210], [190, 150, 90], [96, 150, 96], [170, 200, 196], [110, 150, 176]], water: [110, 150, 176] },
+  STEELWORK: { colors: [[86, 92, 104], [150, 156, 166], [226, 120, 70], [60, 64, 72], [130, 150, 170]], water: [130, 150, 170] },
+  RIVET: { colors: [[100, 96, 92], [160, 150, 138], [214, 110, 60], [64, 60, 56], [130, 150, 170]], water: [130, 150, 170] },
   RUSTED: { colors: [[176, 84, 48], [140, 66, 40], [210, 161, 58], [92, 96, 100], [200, 140, 100]] },
 };
 
-  const STYLE_KEYS = ['mexican', 'decon', 'geodesic', 'brutalist', 'corbusier', 'destijl', 'metabolism', 'palladio', 'archigram', 'mies', 'cycladic', 'rossi', 'kahn', 'loos', 'terragni', 'aalto', 'wright', 'bawa', 'ando', 'constructivist', 'scarpa'];
+  const STYLE_KEYS = ['mexican', 'decon', 'geodesic', 'brutalist', 'corbusier', 'destijl', 'metabolism', 'palladio', 'archigram', 'mies', 'cycladic', 'rossi', 'kahn', 'loos', 'terragni', 'aalto', 'wright', 'bawa', 'ando', 'constructivist', 'scarpa', 'superstudio', 'friedman', 'constant', 'soleri', 'santelia', 'otto', 'price', 'boullee', 'ferriss', 'antfarm', 'fresco', 'shukhov'];
 
   // The drawing set: one seed is a numbered set of six sheets. A-05 is the
   // axonometric v1.0 drew; the other four are the orthographic sheets a working

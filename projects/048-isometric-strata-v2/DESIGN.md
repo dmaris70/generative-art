@@ -201,3 +201,36 @@ all 21 styles; section, diagram and plan sheets read for Loos, Kahn and Construc
 Known limits: styles built from curved prisms (Aalto's fan and serpentine, the Constructivist
 sphere) show as outline in sections and plans, not poché, because the orthographic renderer cuts
 only axis-aligned solids; Wright's overlapping hipped roofs read dense in the axonometric.
+
+**2026-10-27 — twelve visionaries and futurists (33 grammars in all).** Proposed to the
+principal and built the same day: architects whose best-known work is a proposal, not a
+building, and one futurist who was not an architect. They fall in three groups.
+
+*Megastructure and utopia:* **Superstudio** (the Continuous Monument: one white block ruled on a
+single grid); **Yona Friedman** (the Ville Spatiale: a space frame on pilotis with free infill);
+**Constant** (New Babylon: raised sector decks joined by flights); **Paolo Soleri** (the arcology:
+a terraced apse facing the sun); **Cedric Price** (the Fun Palace: a frame, a crane, movable
+modules). *Futurists and the city of tomorrow:* **Antonio Sant'Elia** (the Città Nuova: stepped
+towers, external lifts, bridges); **Hugh Ferriss** (the setback metropolis in charcoal);
+**Jacque Fresco** (the Venus Project: a circular city of concentric rings round a dome).
+*Structure and spatial vision:* **Frei Otto** (tensile roofs on masts); **Ant Farm** and
+Haus-Rucker-Co (pneumatic domes and tubes); **Étienne-Louis Boullée** (a monumental pure form on
+a circular base); **Vladimir Shukhov** (the hyperboloid lattice tower).
+
+Each is one file in `lib/styles/` with a palette set, titles, sub-styles, five tenets over the
+drawn scene, model declarations and two model dogmas in `lib/dogmas.js`. `lib/kit.js` gained a
+tube along x or y, an annular sector, and a vertically scaled sphere. Where a style is mostly
+lines or surfaces (Shukhov's lattice, Otto's membrane, Ant Farm's skins, Friedman's frame) the
+model records its solids and its declared volumes, so the structure and solid/void diagrams show
+only the footings, masts and plates; the sheet says what it measured and no more.
+
+Tuning: the first 40-seed survey found tenets that every seed passed, tenets that no seed passed
+because a tier or a tent was built below its own size limit, and an Ant Farm chain that clamped
+into the plot and failed to connect; those were fixed or replaced, and a second pass moved the
+rest. Pass rates now run from about 25 to 100 per cent, with three exceptions that hold by
+construction in some seeds (Staggered Levels was replaced by a measured test).
+Checks: 1188 paints (33 styles, 6 seeds, six sheets), zero failures, zero page errors; four-style
+montages of each batch; elevation, plan and diagram sheets read for Otto, Friedman and Shukhov.
+Known limits: the diagram sheet is sparse for line-built styles; Soleri's apse and Fresco's
+ring segments are annular prisms, drawn as outline in sections; Ant Farm's skins read pale in the
+riso print because their fills sit in the light mid-tones.

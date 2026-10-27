@@ -13,7 +13,7 @@
 
 const SETS = {
   sheets: { cols: 3, count: 6, label: 'ONE SEED, THE DRAWING SET A-01 TO A-06' },
-  styles: { cols: 7, count: 21, label: 'ONE SHEET PER STYLE' },
+  styles: { cols: 9, count: 33, label: 'ONE SHEET PER STYLE' },
   sites: { cols: 3, count: 6, label: 'ONE STYLE, SIX SITES' },
   papers: { cols: 3, count: 6, label: 'ONE STYLE, SIX INK PAIRS' },
   seeds: { cols: 4, count: 12, label: 'ONE STYLE, TWELVE SEEDS' },
@@ -30,7 +30,7 @@ function readURL() {
   return {
     seed: seed && /^\d+$/.test(seed) ? Number(seed) >>> 0 : (Math.random() * 4294967296) >>> 0,
     set: SETS[u.searchParams.get('set')] ? u.searchParams.get('set') : 'styles',
-    style: Math.max(0, Math.min(21, Number(u.searchParams.get('style')) || 0)),
+    style: Math.max(0, Math.min(33, Number(u.searchParams.get('style')) || 0)),
     page: Math.max(1, Number(u.searchParams.get('page')) || 1),
     gui: u.searchParams.get('gui') !== '0',
   };
@@ -45,7 +45,7 @@ function setup() {
     gui = new lil.GUI({ title: 'Portfolio' });
     gui.add(ctrl, 'seed').name('seed').onFinishChange(rebuild);
     gui.add(ctrl, 'set', Object.keys(SETS)).name('set').onChange(rebuild);
-    gui.add(ctrl, 'style', 0, 21, 1).name('style (0 = from seed)').onChange(rebuild);
+    gui.add(ctrl, 'style', 0, 33, 1).name('style (0 = from seed)').onChange(rebuild);
     gui.add(ctrl, 'page', 1, 40, 1).name('edition page').onChange(rebuild);
     gui.add(ctrl, 'reseed').name('🎲 reseed (R)');
     gui.add(ctrl, 'save').name('Save PNG (S)');
