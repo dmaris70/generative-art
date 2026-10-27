@@ -70,5 +70,37 @@
     "fingerprintedTree": "719dbbea267a6eca781ed8fe2f57b9e978a32751",
     "url": "https://github.com/dmaris70/generative-art/releases/tag/v1.0",
     "publishedAt": "2026-09-13T19:35:39Z"
+  },
+  "reproduction": {
+    "checkedAt": "2026-10-27",
+    "authoritative": "the offline archive (see archive): its manifest hashes define the edition",
+    "generatorOfRecord": {
+      "tag": "v1.0",
+      "commit": "68afafbb00fad4b267e15537fc27eaf981916d2b"
+    },
+    "toolchainOfRecord": {
+      "commit": "d45ee08",
+      "note": "last commit on main where the freeze verifies and every tool (sampler, selector, audit, freeze, reserve, export, publish) exists; the export tool was added after the tag"
+    },
+    "renderEnvironmentOfRecord": {
+      "playwright": "1.56.1",
+      "chromium": "build 1194",
+      "node": "22.22.2"
+    },
+    "findings": [
+      {
+        "id": "drift-1",
+        "what": "render environment drift",
+        "detail": "rendered under Playwright 1.63.0 / Chromium build 1243, token 1 gives different PNG bytes (canonical and companion) from the archived edition; the generator tree is identical, so the difference is Chromium rasterisation",
+        "consequence": "regeneration that must match the manifest hashes has to pin Playwright 1.56.1; any other build yields a valid but differently-hashed rendering"
+      },
+      {
+        "id": "drift-2",
+        "what": "freeze does not verify on main",
+        "detail": "assets/genart.js, one of the 26 fingerprinted files, was changed by PR #18 for another project; the export tool therefore refuses to run from main",
+        "evidence": "token 1 rendered at main (gate bypassed) and at d45ee08 are byte-identical, so the change did not alter drawings",
+        "consequence": "the fingerprint describes the tree at the tag, not main; regenerate from a checkout of d45ee08. The freeze is not re-done: the fingerprint is printed on every archived sheet and carried in every metadata file"
+      }
+    ]
   }
 }
