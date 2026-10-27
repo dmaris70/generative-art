@@ -337,6 +337,13 @@ on every archived sheet and carried in every metadata file, so it stays what it 
 authoritative edition is the offline archive and its manifest; `edition/decisions.json` records
 all of this under `reproduction`.
 
+**Mint and launch** (`edition/decisions.json`, `mint`): all 256 tokens are pre-minted to the
+artist wallet with Manifold's Batch Token Creator from the bound metadata, the 24 reserves are
+held, and the 232 offered sheets are listed at one flat price in the 0.05–0.10 ETH band, so
+buyers choose their sheet. The launch date is not a calendar date but a rule: the Arweave bind
+complete plus fourteen days of public preview, behind seven readiness gates listed in the record.
+No decision remains open.
+
 **Content storage** is Arweave (`edition/decisions.json` records why). Once the PNGs are
 uploaded, `tools/strata-publish.mjs uris.json` binds the metadata to them: it rewrites `image`
 and `properties.companion.image` to the `ar://` URIs, records the storage with the SHA-256 of
