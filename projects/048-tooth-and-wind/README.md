@@ -1,12 +1,13 @@
 # 048 — Tooth and Wind
 
-An animated charcoal drawing of a reedbed that never finishes. Stalks are drawn up from the
+An animated charcoal drawing of a reedbed that never finishes, also playable in graphite,
+silverpoint, ink and pastel. Stalks are drawn up from the
 ground and lean in a moving wind; grey plumes are scumbled with the side of the stick, rubbed
 smooth with a finger, lit from inside with an eraser and edged in black; dabs are thrown down
 the wind. When the sheet fills, an eraser takes a region back, and the drawing grows again
 over what is left of it.
 
-![seed 7, bone ground, ~90 s in: two erasures, plumes, stalks, flicks](preview.png)
+![seed 7, charcoal on the light ground, ~90 s in: erasures, plumes, stalks, flicks](preview.png)
 
 **Mechanism (one sentence):** a simulated sheet — a paper height map plus charcoal and chalk
 fields — is worked one footprint at a time by four tools (stick, chalk, finger, eraser) whose
@@ -76,16 +77,55 @@ Hands are spawned around 2–5 **stands** — drifting centres with their own fa
 mix of grammars, each living 10–35 s before being replaced — on a slow sinusoidal breath, so
 activity rises and falls.
 
+## The materials
+
+The same hands, wind and grammars run in five media. Each medium reads the hands through its
+own tools, makes its own paper, renders its own pigment, and answers a full sheet in its own
+way. That last point is the main difference between them: what each material allows you to
+take back.
+
+![the five media and the paper's memory, seed 7](media.png)
+
+| Medium | Paper | How the hands are read | When the sheet is full |
+|---|---|---|---|
+| **Charcoal** | mould-made sheet: fibre, grain, laid lines | as described above | an eraser sweeps the darkest region; the burnished tooth keeps a ghost |
+| **Graphite on gesso** | gesso: two brushed coats crossing, little tooth | thinner strokes; smudges ~35% more; erases almost clean (burnish ≈ ⅓ of charcoal's); white lights become eraser lights | the same eraser sweep, leaving fainter ghosts. The graphite shines: a slow raking light crosses the sheet, and only the graphite answers it (on the dark ground it is seen by its shine alone) |
+| **Silverpoint** | bone-dust ground, fine and even; light, rose or blue-grey | no finger, no eraser: silver cannot be smudged or removed. A side-of-stick mass becomes 2–6 parallel hatched lines; white chalk becomes white heightening | the sheet is **finished**: drawing stops, every line goes on tarnishing (each pixel keeps the time its silver was laid, and moves from cool grey to brown over ~40 s × *tarnish speed*), then a new sheet begins |
+| **Ink on wet paper** | mulberry sheet with long fibres | lines become brush strokes that run dry along their length; masses become washes; the finger becomes clear water; the eraser becomes a blot; chalk becomes white gouache | ink cannot be taken back, so a thin **white veil** is brushed over the darkest region and drawn over |
+| **Pastel on sanded paper** | grit: sharp, dense tooth | opaque colour from a seven-stick palette chosen by role (masses take the middle sticks, stalks and dabs the dark ones, lights the palest); the finger drags colour | the tooth **fills** (each deposit uses up capacity) until the paper takes no more; then **fixative**: it gives back 60% of the tooth and darkens what it fixes by ~7%, and the next layer goes on top |
+
+**Ink: the wet sheet.** Two more fields, water and suspended ink, are stepped every frame on
+32 px tiles that are wet (half of them per frame, in a checkerboard). Ink spreads between wet
+neighbours; water runs to the drier neighbour and carries ink with it, so ink gathers at a
+drying edge; a flooded cell bleeds into dry paper along the fibres; wind dries the sheet, and
+as water leaves, the ink it carried fixes to the paper.
+
+**The paper's memory** (*view*). Every medium also records what was taken away: erasures
+weighted by the pigment they lifted, blots, white veils, fixative. This view shows only that
+record, light on dark. Silverpoint has nothing to show, because nothing can be taken away.
+
+Grounds are *light · toned · dark* for every medium, and each medium reads them its own way:
+
+| | light | toned | dark |
+|---|---|---|---|
+| charcoal | bone | grey, with white chalk | night (inverted) |
+| graphite | white gesso | grey gesso | black gesso |
+| silverpoint | bone | rose | blue-grey |
+| ink | washi | toned washi | night (inverted) |
+| pastel | late summer on buff | dusk on warm grey | frost on slate |
+
 ## Controls
 
 | | |
 |---|---|
+| medium · view · silverpoint tarnish speed | the material |
 | gestures a second · pace · weight of the plumes | the hands |
 | wind · gustiness | the weather |
 | tooth · smudge · eraser · fill before erasing · ground · caption | the sheet |
 
-Only the seed (and a window resize) rebuilds the sheet; every other setting changes the
-weather over the drawing already there.
+Only the seed, the medium and a window resize rebuild the sheet (for pastel the ground too,
+since it carries the palette). Every other setting changes the weather over the drawing
+already there.
 
 Keys: **R** new seed · **S** save PNG · **G** gust · **E** erase · **Space** pause.
 Drag to smudge and blow; double-click to throw a splatter. `?gui=0` (contact-sheet tile)
