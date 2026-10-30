@@ -25,6 +25,12 @@
  * property of the ink's own cells, so it is stable in time and is combed with the ink. The fixed
  * screens on the glass stay exact. hand = 0 is the machine and reproduces the unpainted screens.
  *
+ * And a wire field, from a line etching: long taut lines across a band of the plate, dense short
+ * vertical strokes hanging from them (thickest across the upper middle, a few spikes rising from
+ * the top wires), bare wires crossing at shallow angles below, and a speckle of plate tone between.
+ * It is ground, so the gestures bend the wires and drag the strokes; it is line, so it joins the
+ * plotter layer.
+ *
  * sketch.js runs the same arithmetic in a fragment shader; this file generates the score,
  * the blue-noise screen and a CPU render used for previews and for checking the shader.
  */
@@ -34,9 +40,9 @@
   // --- constants shared with the shader (keep in step with sketch.js) ---
   const PLATE_W = 1.0, PLATE_H = 1.25;     // plate units, 4 : 5, origin at the centre
   const OP = { DROP: 1, COMB: 2, WAVE: 3, SWIRL: 4 };
-  const PAT = { FLAT: 0, STRIPES: 1, BANDS: 2, LATTICE: 3, NOISE: 4, RINGS: 5, SPHERE: 6 };
+  const PAT = { FLAT: 0, STRIPES: 1, BANDS: 2, LATTICE: 3, NOISE: 4, RINGS: 5, SPHERE: 6, WIRES: 7 };
   const SCR = { BAYER: 0, BLUE: 1, DOTS: 2, LINES: 3, SOTO: 4, SPIRAL: 5 };
-  const MAX_OPS = 160, MAX_MATS = 16, MAX_WINS = 6;
+  const MAX_OPS = 160, MAX_MATS = 16, MAX_WINS = 8, MAX_WIRES = 32, WIRE_SLOT = 0.0032;
 
   function mulberry32(a) {
     return function () {
@@ -220,6 +226,17 @@
       if (mellanMat >= 0 && o.a[2] >= 0.05 && u < 0.4) o.mat = mellanMat;
       else if (sotoMat >= 0 && u > 0.93) o.mat = sotoMat;
     }
+    // The wire field: one wide band window, from the same side stream (appended draws only).
+    const pWires = opts.wires == null ? 0.6 : opts.wires;
+    let wiresMat = -1;
+    if (R2() < pWires && mats.length < MAX_MATS) {
+      const hx = 0.36 + 0.12 * R2(), hy = 0.13 + 0.11 * R2();
+      const cx = (R2() - 0.5) * (0.5 - hx) * 2 * 0.5, cy = (R2() - 0.5) * 0.7;
+      mats.push({ pattern: PAT.WIRES, tone: 0.8 + 0.1 * R2(), freq: 14 + Math.floor(R2() * 17), angle: 0,
+        screen: SCR.BLUE, sfreq: 0, sangle: 0, param: 0.55 + 0.35 * R2(), wcx: cx, wcy: cy, why: hy });
+      wiresMat = mats.length - 1;
+      wins.splice(Math.floor(R2() * (wins.length + 1)), 0, { cx, cy, hx, hy, angle: 0, mat: wiresMat });
+    }
     // The hand: painted carried screens. No draws from the score's streams — a hash per ink sets how
     // heavy each hand is, so the gestures and inks of a seed do not move when the hand changes.
     const hand = opts.hand == null ? 0.6 : opts.hand;
@@ -235,7 +252,7 @@
     for (const o of ops) end = Math.max(end, o.t0 + o.dur);
     const settle = end + 2.5;
     return {
-      seed: seed >>> 0, bath, sessionSeed: sessionSeed(seed, bath), movement, sotoMat, mellanMat,
+      seed: seed >>> 0, bath, sessionSeed: sessionSeed(seed, bath), movement, sotoMat, mellanMat, wiresMat,
       mats, bg, wins, ops, settle, hold: 6, length: settle + 6,
       lagrange, density, hand,
     };
@@ -355,7 +372,45 @@
   const fract = (v) => v - Math.floor(v);
 
   // Tone of a material at its own coordinates (0 = ink, 1 = paper).
-  function tone(M, x, y, rad) {
+  // The wire field's parts, all from hashes of the ink's salt: wire j, and the stroke in slot s.
+  function wireOf(M, j) {
+    const base = (M.salt ^ Math.imul(j + 1, 0x632be5ab)) >>> 0;
+    const h = (n) => hash32(base ^ Math.imul(n, 0x9e3779b9)) / 4294967296;
+    const rho = h(1), bare = rho > 0.74;                          // 0 = top of the band, 1 = bottom
+    return {
+      rho, bare, y0: M.wcy - M.why * 1.02 + rho * 2.04 * M.why,
+      slope: (h(2) - 0.5) * (bare ? 0.26 : 0.06),
+      env: bare ? 0 : Math.exp(-Math.pow((rho - 0.36) / 0.24, 2)),
+      off: h(3) * WIRE_SLOT, salt: hash32(M.salt ^ Math.imul(j + 1, 0x1b873593)),
+    };
+  }
+  function strokeOf(M, W, s) {
+    const hh = hash32(W.salt ^ Math.imul(s + 65536, 0x85ebca6b));
+    const u = (n) => hash32(hh ^ Math.imul(n, 0x9e3779b9)) / 4294967296;
+    const cluster = 0.35 + 1.3 * vnoise(s * 0.045, 0.5, W.salt);    // the strokes come in bursts
+    if (u(1) >= M.param * W.env * cluster) return null;
+    const down = 0.004 + 0.055 * Math.pow(u(2), 3);
+    const up = W.rho < 0.16 && u(3) < 0.35 ? 0.006 + 0.045 * u(4) * u(4) : 0.0015 + 0.004 * u(4);
+    return { xs: (s + 0.5) * WIRE_SLOT - W.off + (u(5) - 0.5) * 0.4 * WIRE_SLOT, up, down };
+  }
+  function wiresInk(M, x, y, k) {
+    const wt = Math.max(0.0011, 0.55 * k), sw = Math.max(0.0008, 0.42 * k);
+    const K = Math.min(MAX_WIRES, M.freq);
+    for (let j = 0; j < K; j++) {
+      const W = wireOf(M, j);
+      const dy = y - (W.y0 + W.slope * (x - M.wcx));
+      if (Math.abs(dy) < wt) return true;
+      if (W.bare || dy < -0.06 || dy > 0.065) continue;
+      const s0 = Math.floor((x + W.off) / WIRE_SLOT);
+      for (let s = s0 - 1; s <= s0 + 1; s++) {
+        const st = strokeOf(M, W, s);
+        if (st && Math.abs(x - st.xs) < sw && dy > -st.up && dy < st.down) return true;
+      }
+    }
+    return false;
+  }
+
+  function tone(M, x, y, rad, k) {
     const c = Math.cos(M.angle), s = Math.sin(M.angle);
     const u = x * c + y * s, v = -x * s + y * c;
     switch (M.pattern) {
@@ -380,6 +435,7 @@
         if (M.param > 0) { const k = fract(nv * M.param); if (k < 0.1) return 0; if (k < 0.16) return 1; }
         return g;
       }
+      case PAT.WIRES: return wiresInk(M, x, y, k || 0) ? 0 : M.tone;
       case PAT.SPHERE: {
         const r = Math.max(rad || 0.05, 1e-4), nx = x / r, ny = y / r;
         const nz = Math.sqrt(Math.max(0, 1 - nx * nx - ny * ny));
@@ -453,7 +509,7 @@
   }
   function shade(M, ix, iy, q, k, C) {
     if (M.screen === SCR.SOTO) return sotoBit(M, ix, q.x, q.y, k, C);
-    const g = tone(M, q.x, q.y, q.rad);
+    const g = tone(M, q.x, q.y, q.rad, k);
     if (M.hand > 0 && (M.screen === SCR.DOTS || M.screen === SCR.LINES)
       && 1 / (M.sfreq * Math.max(k, 1e-9)) >= C.resolve) {
       return (M.screen === SCR.DOTS ? handDotsInk(M, q.x, q.y, g) : handLinesInk(M, q.x, q.y, g)) ? 0 : 1;
@@ -549,15 +605,56 @@
     return [x, y];
   }
 
-  // Every Mellan drop's spiral, pushed forward to time t, clipped where later ink covers it or
-  // the plate ends. One pen: width is made of up to five strands laid side by side, each drawn
-  // only where the engraving is dark enough to need it (Mellan's swelling line, for a plotter).
+  // March a curve's parameter from a0 to a1; where the gestures have stretched it, bisect until
+  // segments are short, and lift the pen where they stay long (the line was torn by a later
+  // gesture) or where the curve is hidden. inked(a): the curve is drawn here; pt(a): its place on
+  // the plate at time t, or null where later ink covers it.
+  function trace(a0, a1, next, inked, pt, lines) {
+    let cur = null;
+    const flush = () => { if (cur && cur.length > 1) lines.push(cur); cur = null; };
+    const extend = (b0, P0, b1, P1, depth) => {
+      if (Math.hypot(P1[0] - P0[0], P1[1] - P0[1]) <= 0.0025) { cur.push(P1); return true; }
+      if (depth >= 12) return false;
+      const bm = 0.5 * (b0 + b1);
+      if (!inked(bm)) return false;
+      const Pm = pt(bm);
+      if (!Pm) return false;
+      if (!extend(b0, P0, bm, Pm, depth + 1)) { flush(); cur = [Pm]; }
+      if (!extend(bm, Pm, b1, P1, depth + 1)) { flush(); cur = [P1]; }
+      return true;
+    };
+    let a = a0, prevA = a0, prev = null;
+    for (;;) {
+      const P = inked(a) ? pt(a) : null;
+      if (P) {
+        if (!cur) cur = [P];
+        else if (!extend(prevA, prev, a, P, 0)) { flush(); cur = [P]; }
+        prev = P; prevA = a;
+      } else { flush(); prev = null; }
+      if (a >= a1) break;
+      a = Math.min(a1, next(a));
+    }
+    flush();
+  }
+
+  // The plotter layer: Mellan's spirals and the wire field, pushed forward to time t through the
+  // exact forward maps, clipped where later ink covers them or the plate ends. One pen. Mellan's
+  // swelling line is up to five strands side by side, each drawn only where the engraving is dark
+  // enough to need it; the wire field is its wires and its strokes.
   function plotter(S, t, opts) {
     opts = opts || {};
     const mmW = opts.width || 160, mmH = mmW * PLATE_H / PLATE_W, margin = opts.margin || 20, pen = opts.pen || 0.25;
     const X = (x) => margin + (x / PLATE_W + 0.5) * mmW, Y = (y) => margin + (y / PLATE_H + 0.5) * mmH;
+    const onPlate = (P) => Math.abs(P[0]) <= PLATE_W / 2 && Math.abs(P[1]) <= PLATE_H / 2;
     const groups = [];
-    let total = 0;
+    let total = 0, drops = 0, wires = 0, strokes = 0;
+    const emit = (id, label, lines) => {
+      if (!lines.length) return;
+      total += lines.length;
+      groups.push(`<g id="${id}" inkscape:groupmode="layer" inkscape:label="${label}">` +
+        lines.map((L) => '<polyline points="' + L.map((P) => X(P[0]).toFixed(3) + ',' + Y(P[1]).toFixed(3)).join(' ') + '"/>').join('') + '</g>');
+    };
+
     S.ops.forEach((o, k) => {
       if (o.type !== OP.DROP || t < o.t0 || o.mat !== S.mellanMat || S.mellanMat < 0) return;
       const M = S.mats[o.mat], f = M.sfreq, rad = o.a[2], sNow = progress(o, t);
@@ -565,63 +662,64 @@
       const root = Math.sqrt(sNow);
       const strands = [[0, 0.04], [-0.11, 0.32], [0.11, 0.32], [-0.22, 0.62], [0.22, 0.62]];
       const lines = [];
-      const place = (lx, ly) => pushForward(S, t, k, o.a[0] + lx * root, o.a[1] + ly * root);
-      const visible = (P) => {
-        if (Math.abs(P[0]) > PLATE_W / 2 || Math.abs(P[1]) > PLATE_H / 2) return false;
-        return pullBack(S, t, P[0], P[1]).op === k;
-      };
-      const thMax = 6.283185307 * f * rad;
       const at = (th, off) => {
         const r = th / (6.283185307 * f) + off / f;
         return { r, lx: r * Math.cos(th), ly: r * Math.sin(th) };
       };
       for (const [off, need] of strands) {
-        const inked = (th) => { const q = at(th, off); return q.r > 0 && q.r < rad && 1 - tone(M, q.lx, q.ly, rad) > need; };
-        const pt = (th) => { const q = at(th, off); const P = place(q.lx, q.ly); return visible(P) ? P : null; };
-        let cur = null;
-        const flush = () => { if (cur && cur.length > 1) lines.push(cur); cur = null; };
-        // march the spiral; where the combing has stretched it, bisect until segments are short,
-        // and lift the pen where they stay long (the line was torn by a later gesture)
-        const extend = (th0, P0, th1, P1, depth) => {
-          if (Math.hypot(P1[0] - P0[0], P1[1] - P0[1]) <= 0.0025) { cur.push(P1); return true; }
-          if (depth >= 12) return false;
-          const tm = 0.5 * (th0 + th1);
-          if (!inked(tm)) return false;
-          const Pm = pt(tm);
-          if (!Pm) return false;
-          if (!extend(th0, P0, tm, Pm, depth + 1)) { flush(); cur = [Pm]; }
-          if (!extend(tm, Pm, th1, P1, depth + 1)) { flush(); cur = [P1]; }
-          return true;
-        };
-        let th = 0, prevTh = 0, prev = null;
-        while (th <= thMax) {
-          const P = inked(th) ? pt(th) : null;
-          if (P) {
-            if (!cur) cur = [P];
-            else if (!extend(prevTh, prev, th, P, 0)) { flush(); cur = [P]; }
-            prev = P; prevTh = th;
-          } else { flush(); prev = null; }
-          th += 0.0012 / Math.max(Math.abs(at(th, off).r), 0.002);
-        }
-        flush();
+        trace(0, 6.283185307 * f * rad,
+          (th) => th + 0.0012 / Math.max(Math.abs(at(th, off).r), 0.002),
+          (th) => { const q = at(th, off); return q.r > 0 && q.r < rad && 1 - tone(M, q.lx, q.ly, rad) > need; },
+          (th) => {
+            const q = at(th, off);
+            const P = pushForward(S, t, k, o.a[0] + q.lx * root, o.a[1] + q.ly * root);
+            return onPlate(P) && pullBack(S, t, P[0], P[1]).op === k ? P : null;
+          }, lines);
       }
-      if (lines.length) {
-        total += lines.length;
-        groups.push(`<g id="mellan-${k}" inkscape:groupmode="layer" inkscape:label="drop ${k}">` +
-          lines.map((L) => '<polyline points="' + L.map((P) => X(P[0]).toFixed(3) + ',' + Y(P[1]).toFixed(3)).join(' ') + '"/>').join('') + '</g>');
-      }
+      if (lines.length) drops++;
+      emit(`mellan-${k}`, `mellan drop ${k}`, lines);
     });
+
+    if (S.wiresMat >= 0) {
+      const M = S.mats[S.wiresMat], w = S.wins.find((v) => v.mat === S.wiresMat);
+      // a ground point is drawn where, pushed forward and pulled back, it is still this ground
+      const ground = (gx, gy) => {
+        const P = pushForward(S, t, -1, gx, gy);
+        if (!onPlate(P)) return null;
+        const b = pullBack(S, t, P[0], P[1]);
+        return b.op === -1 && b.mat === S.wiresMat && Math.abs(b.x - gx) + Math.abs(b.y - gy) < 1e-6 ? P : null;
+      };
+      const x0 = w.cx - w.hx, x1 = w.cx + w.hx;
+      const wl = [], sl = [];
+      for (let j = 0; j < Math.min(MAX_WIRES, M.freq); j++) {
+        const W = wireOf(M, j), yAt = (x) => W.y0 + W.slope * (x - M.wcx);
+        trace(x0, x1, (x) => x + 0.0015, () => true, (x) => ground(x, yAt(x)), wl);
+        wires++;
+        if (W.bare) continue;
+        for (let s = Math.floor((x0 + W.off) / WIRE_SLOT); s <= Math.floor((x1 + W.off) / WIRE_SLOT); s++) {
+          const st = strokeOf(M, W, s);
+          if (!st || st.xs < x0 || st.xs > x1) continue;
+          const yw = yAt(st.xs);
+          const before = sl.length;
+          trace(-st.up, st.down, (d) => d + 0.0015, () => true, (d) => ground(st.xs, yw + d), sl);
+          if (sl.length > before) strokes++;
+        }
+      }
+      emit('wires', 'wire field: wires', wl);
+      emit('strokes', 'wire field: strokes', sl);
+    }
+
     const W = mmW + 2 * margin, H = mmH + 2 * margin;
     const svg = `<?xml version="1.0" encoding="UTF-8"?>
 <svg xmlns="http://www.w3.org/2000/svg" xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape" width="${W}mm" height="${H}mm" viewBox="0 0 ${W} ${H}">
-<desc>Two Observers — the Mellan layer. seed ${S.seed}, bath ${S.bath + 1}, t ${t.toFixed(2)} s. One pen, ${pen} mm.</desc>
+<desc>Two Observers — the plotter layer (Mellan, wire field). seed ${S.seed}, bath ${S.bath + 1}, t ${t.toFixed(2)} s. One pen, ${pen} mm.</desc>
 <g fill="none" stroke="#000" stroke-width="${pen}" stroke-linecap="round" stroke-linejoin="round">
 <g id="frame" inkscape:groupmode="layer" inkscape:label="frame"><rect x="${margin - 6}" y="${margin - 6}" width="${mmW + 12}" height="${mmH + 12}"/></g>
 ${groups.join('\n')}
 </g>
 </svg>
 `;
-    return { svg, polylines: total, drops: groups.length };
+    return { svg, polylines: total, drops, wires, strokes, layers: groups.length };
   }
 
   // Ops and materials packed for the shader.
@@ -632,7 +730,7 @@ ${groups.join('\n')}
     });
     const mats = new Float32Array(MAX_MATS * 12);
     S.mats.forEach((M, i) => {
-      mats.set([M.pattern, M.tone, M.freq, M.angle, M.screen, M.sfreq, M.sangle, M.param, M.hand || 0, 0, 0, 0], i * 12);
+      mats.set([M.pattern, M.tone, M.freq, M.angle, M.screen, M.sfreq, M.sangle, M.param, M.hand || 0, M.wcx || 0, M.wcy || 0, M.why || 0], i * 12);
     });
     const salts = new Uint32Array(MAX_MATS);
     S.mats.forEach((M, i) => { salts[i] = M.salt >>> 0; });
@@ -648,7 +746,7 @@ ${groups.join('\n')}
     return {
       piece: 'Two Observers', seed: S.seed, bath: S.bath, sessionSeed: S.sessionSeed,
       movement: S.movement, settle: r4(S.settle), length: r4(S.length),
-      lagrange: S.lagrange, density: S.density, hand: S.hand,
+      lagrange: S.lagrange, density: S.density, hand: S.hand, wires: S.wiresMat >= 0,
       ground: { bg: S.bg, windows: S.wins.map((w) => ({ cx: r4(w.cx), cy: r4(w.cy), hx: r4(w.hx), hy: r4(w.hy), angle: r4(w.angle), mat: w.mat })) },
       materials: S.mats.map((M) => ({
         pattern: Object.keys(PAT).find((k) => PAT[k] === M.pattern), tone: r4(M.tone), freq: r4(M.freq), angle: r4(M.angle),
@@ -661,7 +759,7 @@ ${groups.join('\n')}
   }
 
   const api = {
-    PLATE_W, PLATE_H, OP, PAT, SCR, MAX_OPS, MAX_MATS, MAX_WINS,
+    PLATE_W, PLATE_H, OP, PAT, SCR, MAX_OPS, MAX_MATS, MAX_WINS, MAX_WIRES, WIRE_SLOT,
     score, blueNoise, bayer8, pullBack, pushForward, tone, threshold, shade, render, plotter, pack, describe, plateXY, progress, hash32, sessionSeed,
   };
   global.Marble = api;

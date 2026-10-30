@@ -5,6 +5,7 @@
 // behind ink that carries its own lines; the pointer moves the panel) and Mellan (one spiral line
 // per drop, width as tone; V exports it for a pen plotter). The screens carried by the ink are
 // painted by hand, after Polke: dots wander, swell, go missing or blot; lines waver and break.
+// A wire field from a line etching is part of the ground: taut lines, hanging strokes, plate tone.
 // Keys: Space pause · ←/→ scrub (Shift ×5) · N/B next/previous bath · O score overlay
 // · P print (PNG) · V plotter layer (SVG) · J score (JSON) · S sheet PNG · R new seed.
 
@@ -41,6 +42,7 @@
       mellan: { value: 0.8, min: 0, max: 1, step: 0.05, label: 'mellan chance' },
       panel: { value: 4, min: 3, max: 10, step: 1, label: 'soto panel (cells)' },
       hand: { value: 0.6, min: 0, max: 1, step: 0.05, label: 'hand (polke)' },
+      wires: { value: 0.6, min: 0, max: 1, step: 0.05, label: 'wire field chance' },
     },
     onReset: function () { if (!S) return; newScore(); doLayout(); },
   });
@@ -78,7 +80,10 @@
     for (int i = 0; i < 3; i++){ int bx = (x >> i) & 1, by = (y >> i) & 1; v |= (((bx ^ by) << 1) | by) << (2 * (2 - i)); }
     return (float(v) + 0.5) / 64.0;
   }
-  float tone(int m, vec2 q, float rad){
+  uint cellH(int cx, int cy, uint salt);
+  float u01(uint h, uint n);
+  bool wiresInk(int m, vec2 q, float k);
+  float tone(int m, vec2 q, float rad, float k){
     vec4 A = uMat[3 * m];
     int pat = int(A.x); float c = cos(A.w), s = sin(A.w);
     float u = q.x * c + q.y * s, v = -q.x * s + q.y * c;
@@ -100,6 +105,7 @@
       return g;
     }
     if (pat == 5){ float w = fract(length(q) * A.z); return w < 0.18 ? 0.0 : (w < 0.3 ? 1.0 : A.y); }
+    if (pat == 7) return wiresInk(m, q, k) ? 0.0 : A.y;
     if (pat == 6){
       vec2 n = q / max(rad > 0.0 ? rad : 0.05, 1e-4);
       float nz = sqrt(max(0.0, 1.0 - dot(n, n)));
@@ -136,6 +142,39 @@
   // Polke's hand: per-cell values of an ink's painted screen
   uint cellH(int cx, int cy, uint salt){ return h32((uint(cx + 4096) * 0x8da6b343u) ^ (uint(cy + 4096) * 0xd8163841u) ^ salt); }
   float u01(uint h, uint n){ return float(h32(h ^ (n * 0x9e3779b9u))) / 4294967296.0; }
+  // The wire field (pattern 7): wire j and the stroke in slot s, from hashes of the ink's salt.
+  bool wiresInk(int m, vec2 q, float k){
+    vec4 A = uMat[3 * m], C = uMat[3 * m + 2]; uint salt = uSalt[m];
+    float wt = max(0.0011, 0.55 * k), sw = max(0.0008, 0.42 * k), param = uMat[3 * m + 1].w;
+    int K = min(${M.MAX_WIRES}, int(A.z));
+    for (int j = 0; j < ${M.MAX_WIRES}; j++){
+      if (j >= K) break;
+      uint base = salt ^ (uint(j + 1) * 0x632be5abu);
+      float rho = u01(base, 1u);
+      bool bare = rho > 0.74;
+      float y0 = C.z - C.w * 1.02 + rho * 2.04 * C.w;
+      float slope = (u01(base, 2u) - 0.5) * (bare ? 0.26 : 0.06);
+      float off = u01(base, 3u) * ${M.WIRE_SLOT};
+      float dy = q.y - (y0 + slope * (q.x - C.y));
+      if (abs(dy) < wt) return true;
+      if (bare || dy < -0.06 || dy > 0.065) continue;
+      float env = exp(-pow((rho - 0.36) / 0.24, 2.0));
+      uint wsalt = h32(salt ^ (uint(j + 1) * 0x1b873593u));
+      int s0 = int(floor((q.x + off) / ${M.WIRE_SLOT}));
+      for (int ds = -1; ds <= 1; ds++){
+        int s = s0 + ds;
+        uint hh = h32(wsalt ^ (uint(s + 65536) * 0x85ebca6bu));
+        float cluster = 0.35 + 1.3 * vnoise(vec2(float(s) * 0.045, 0.5), wsalt);
+        if (u01(hh, 1u) >= param * env * cluster) continue;
+        float down = 0.004 + 0.055 * pow(u01(hh, 2u), 3.0);
+        float u4 = u01(hh, 4u);
+        float up = (rho < 0.16 && u01(hh, 3u) < 0.35) ? 0.006 + 0.045 * u4 * u4 : 0.0015 + 0.004 * u4;
+        float xs = (float(s) + 0.5) * ${M.WIRE_SLOT} - off + (u01(hh, 5u) - 0.5) * 0.4 * ${M.WIRE_SLOT};
+        if (abs(q.x - xs) < sw && dy > -up && dy < down) return true;
+      }
+    }
+    return false;
+  }
   bool handDots(int m, vec2 q, float g){
     vec4 B = uMat[3 * m + 1]; float H = uMat[3 * m + 2].x; uint salt = uSalt[m];
     float c = cos(B.z), s = sin(B.z);
@@ -237,7 +276,7 @@
     int scr = int(B.x); float hnd = uMat[3 * mat + 2].x;
     if (scr == 4) paper = sotoBit(mat, ix, q, k) > 0.5;
     else {
-      float g = tone(mat, q, hitR);
+      float g = tone(mat, q, hitR, k);
       if (hnd > 0.0 && (scr == 2 || scr == 3) && 1.0 / (B.y * max(k, 1e-9)) >= uResolve)
         paper = !(scr == 2 ? handDots(mat, q, g) : handLines(mat, q, g));
       else paper = g > threshold(mat, ix, iy, q, k);
@@ -320,7 +359,7 @@
 
   // ------------------------------------------------------------------ score & layout
   function newScore() {
-    S = M.score(G.seed, bath, { lagrange: G.param('lagrange'), density: G.param('density'), soto: G.param('soto'), mellan: G.param('mellan'), hand: G.param('hand') });
+    S = M.score(G.seed, bath, { lagrange: G.param('lagrange'), density: G.param('density'), soto: G.param('soto'), mellan: G.param('mellan'), hand: G.param('hand'), wires: G.param('wires') });
     upload();
     syncURL();
   }
@@ -383,7 +422,7 @@
   function captionFor(time) {
     const c = counts(time);
     const printing = t >= S.settle;
-    const extra = (S.sotoMat >= 0 ? '  ·  soto' + (Math.abs(parallax) > 0.05 ? ' ' + (parallax > 0 ? '+' : '') + parallax.toFixed(1) : '') : '') + (S.mellanMat >= 0 ? '  ·  mellan' : '') + (S.hand > 0 ? '  ·  hand ' + S.hand.toFixed(2).replace(/0$/, '') : '');
+    const extra = (S.sotoMat >= 0 ? '  ·  soto' + (Math.abs(parallax) > 0.05 ? ' ' + (parallax > 0 ? '+' : '') + parallax.toFixed(1) : '') : '') + (S.mellanMat >= 0 ? '  ·  mellan' : '') + (S.wiresMat >= 0 ? '  ·  wires' : '') + (S.hand > 0 ? '  ·  hand ' + S.hand.toFixed(2).replace(/0$/, '') : '');
     const left = `TWO OBSERVERS  —  seed ${G.seed}  ·  bath ${bath + 1}${extra}`;
     const right = printing
       ? `PRINT  ·  ${S.ops.length} gestures  ·  ${c.eul} eulerian / ${c.lag} lagrangian inks`
@@ -481,10 +520,10 @@
   function savePlotter() {
     const time = frameTime();
     const r = M.plotter(S, time, {});
-    if (!r.drops) { console.info('two-observers: no Mellan drop on the plate at this moment'); return; }
+    if (!r.layers) { console.info('two-observers: nothing for the plotter at this moment'); return; }
     const a = document.createElement('a');
     a.href = URL.createObjectURL(new Blob([r.svg], { type: 'image/svg+xml' }));
-    a.download = `two-observers-${G.seed}-bath${bath + 1}-t${time.toFixed(1)}.mellan.svg`; a.click();
+    a.download = `two-observers-${G.seed}-bath${bath + 1}-t${time.toFixed(1)}.plotter.svg`; a.click();
   }
   function saveScore() {
     const blob = new Blob([JSON.stringify(M.describe(S), null, 1)], { type: 'application/json' });
