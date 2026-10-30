@@ -12,8 +12,9 @@ the combing makes the moiré swim and the viewer's position moves the panel; and
 single spiral line, whose width is the tone, engraving drops as lit spheres that the comb then
 drags — and that leave the screen as a pen-plotter drawing. And the screens the ink carries are
 painted by **hand**, after Polke's raster paintings, while the screens on the glass stay machined.
+A **wire field** from a line etching lies in the ground: taut lines, hanging strokes, plate tone.
 
-![seed 9, bath 1, the print: hand-painted dots down the left, Mellan spheres, 52 gestures, hand 0.6](preview.png)
+![seed 4, bath 1, at 6 s: the wire field across the middle, hand-painted dots above and below, before the combs](preview.png)
 
 **Mechanism (one sentence):** every gesture is an exact, invertible map of the plane, so the bath
 at time *t* is found by pulling each pixel back through the gestures that have started, newest
@@ -124,13 +125,38 @@ only: the fixed observer is a machine, the ink's screen was painted.
   render is identical, bit for bit, to the version before the hand (338,400 cells, 0 different).
 - Soto's lines and Mellan's spiral stay exact: an optical construction and an engraver's burin.
 
+## The wire field
+
+From a line etching shared as a reference (artist not identified here): long, taut, nearly level
+lines across a band of the plate, dense short vertical strokes hanging from them — thickest across
+the upper middle, with spikes rising from the top lines — and below, a few bare lines crossing at
+shallow angles, on a grey wiped plate. In a bath (with probability *wire field chance*, 0.6):
+
+- **A ground window**, 0.72 – 0.96 of the plate wide and 0.26 – 0.48 high, slipped among the
+  other windows. Being ground, it is bent, dragged and torn by every gesture like the rest.
+- **Wires:** 14 – 30, each a hashed height in the band and a slope within ±0.03; those in the
+  bottom quarter of the band are bare and slope up to ±0.13, so they cross.
+- **Strokes:** a slot every 0.0032 plate units along each wire; a slot holds a stroke with
+  probability *density × envelope × burst*, where the envelope peaks a third of the way down the
+  band and the burst is value noise along the wire, so strokes come in clusters. Length downward
+  0.004 – 0.059 (mostly short; cubed), upward short, except the top wires, which throw spikes of up
+  to 0.051. Wire and stroke widths never fall below about half a pixel, so they survive any grid.
+- **Plate tone:** between the lines the ink is a pale grey (0.8 – 0.9) read through the fixed
+  blue-noise screen — a speckle like ink left on a wiped plate.
+- **On the plotter layer:** wires and strokes are pushed forward through every gesture and
+  clipped where later ink or another window covers them (a point is kept when, pulled back, it
+  lands on the same ground point). Combed, the wires become the chevrons and feathers of the bath.
+- Drawn from the same side stream as Soto and Mellan, appended after them: with *wire field
+  chance* at 0 and *hand* at 0 the render is identical, bit for bit, to the version before both
+  (338,400 cells, 0 different).
+
 ## Prints and scores
 
 - **P** — the print: the screen's own bits enlarged by a whole factor to about 4,000 px tall, on
   the paper with its rule and caption. No resampling, no new pixels: the print is what the
   observer saw.
-- **V** — the plotter layer as SVG (above). It holds the Mellan lines and the frame only, not the
-  bitmap.
+- **V** — the plotter layer as SVG: Mellan's spirals, the wire field's wires and strokes, and
+  the frame, one Inkscape layer each — not the bitmap.
 - **J** — the score as JSON: seed, bath, session seed, movement, ground windows, every ink with its
   observer and screen, every gesture with its times and parameters.
 - **S** — the whole sheet as shown.
@@ -141,7 +167,8 @@ Space pause / play · ← → scrub one second (Shift: five) · N / B next / pre
 drawn over the plate (gestures in progress, in red) · P print · V plotter SVG · J score · S sheet ·
 R new seed · pointer across the window: Soto's panel. Panel: *cell* (css px per dither cell, 2 by
 default — about the foundation's grain), *speed*, *lagrangian share*, *gesture density*,
-*resolvable period*, *soto chance*, *mellan chance*, *soto panel*, *hand*. URL:
+*resolvable period*, *soto chance*, *mellan chance*, *soto panel*, *hand*, *wire field chance*.
+URL:
 `?seed=…&bath=…&t=…&pause=1&par=…` reproduces a moment, `par` being the panel's shift in cells;
 the panel writes its own parameters to the link.
 
@@ -162,8 +189,13 @@ the panel writes its own parameters to the link.
   float64) or whose derivative crosses a material edge. Frame time there: 200 – 220 ms.
 - Forward against inverse: 2,000 random points pushed forward from a random gesture to the end of
   seed 7's score and pulled back return to within 1.4 × 10⁻¹⁴ plate units.
-- Plotter layer at the print, seeds 7, 9, 404, 1234: 9 – 13 drops, 189 – 279 polylines,
-  43 – 83 thousand points, longest segment 0.40 mm, 0.6 – 1.2 MB, 140 – 200 ms in Node.
+- Plotter layer at the print, seeds 7, 9, 404, 1234 (Mellan only): 9 – 13 drops, 189 – 279
+  polylines, 43 – 83 thousand points, longest segment 0.40 mm, 0.6 – 1.2 MB, 140 – 200 ms in
+  Node. With the wire field, seeds 3, 4, 5: 18 – 24 wires and 607 – 1,163 strokes drawn,
+  792 – 1,475 polylines, 0.8 – 2.5 MB.
+- Wire field, GPU against CPU: 99.99 % (seed 3, t 0), 99.86 % (seed 4, t 0), 99.05 % (seed 4,
+  the print), 99.52 % (seed 5, t 20, panel shifted 1.2) of cells. It appears in 548 of 900 baths
+  at the default chance.
 - Pointer parallax: moving to the left edge shifts the panel by −1.46 cells within 1.5 s, and the
   moiré bands move with it; V downloads from the page.
 - Page life cycle: score overlay, print download (3780 × 4830), score download, auto-advance to
@@ -192,5 +224,7 @@ the panel writes its own parameters to the link.
 - The panel follows the pointer only; device tilt is not read.
 - The hand's per-cell values are hashed in 32-bit integers on both sides, but the GPU turns them
   into floats with 24 bits, so a dot whose value sits on a cut-off (left out, blot) can differ.
-- The plotter layer is Mellan's spirals and the frame; the rest of the plate is bitmap only.
+- The plotter layer is Mellan's spirals, the wire field and the frame; the rest of the plate is
+  bitmap only. A heavily combed wire field makes a dense file (up to 2.5 MB measured).
+- The wire field is an interpretation of one reference image, not a reconstruction of its making.
 - The contact-sheet button opens one WebGL context per tile; browsers cap live contexts, untested.
