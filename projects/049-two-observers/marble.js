@@ -19,6 +19,12 @@
  * swim and the viewer's position shifts the panel. Mellan (the Sudarium, 1649): one spiral line
  * per drop whose width carries the tone, combed with the ink and exportable for a pen plotter.
  *
+ * And a hand, after Polke's raster paintings: the screens carried by the ink are painted, not
+ * machined. Each dot wanders, swells or shrinks, goes out of round; now and then one is missing or
+ * runs into its neighbours as a blot; ruled lines waver, thicken and break. The irregularity is a
+ * property of the ink's own cells, so it is stable in time and is combed with the ink. The fixed
+ * screens on the glass stay exact. hand = 0 is the machine and reproduces the unpainted screens.
+ *
  * sketch.js runs the same arithmetic in a fragment shader; this file generates the score,
  * the blue-noise screen and a CPU render used for previews and for checking the shader.
  */
@@ -214,13 +220,24 @@
       if (mellanMat >= 0 && o.a[2] >= 0.05 && u < 0.4) o.mat = mellanMat;
       else if (sotoMat >= 0 && u > 0.93) o.mat = sotoMat;
     }
+    // The hand: painted carried screens. No draws from the score's streams — a hash per ink sets how
+    // heavy each hand is, so the gestures and inks of a seed do not move when the hand changes.
+    const hand = opts.hand == null ? 0.6 : opts.hand;
+    const ss = sessionSeed(seed, bath);
+    mats.forEach((Mt, i) => {
+      Mt.hand = 0; Mt.salt = hash32(ss ^ Math.imul(i + 1, 0x85ebca6b));
+      if (hand > 0 && (Mt.screen === SCR.DOTS || Mt.screen === SCR.LINES)) {
+        Mt.hand = hand * (0.6 + 0.4 * (hash32(Mt.salt ^ 0x51ed) / 4294967296));
+        if (Mt.screen === SCR.DOTS) Mt.sfreq *= 1 - 0.45 * Mt.hand;   // Polke's enlarged raster
+      }
+    });
     let end = 0;
     for (const o of ops) end = Math.max(end, o.t0 + o.dur);
     const settle = end + 2.5;
     return {
       seed: seed >>> 0, bath, sessionSeed: sessionSeed(seed, bath), movement, sotoMat, mellanMat,
       mats, bg, wins, ops, settle, hold: 6, length: settle + 6,
-      lagrange, density,
+      lagrange, density, hand,
     };
   }
 
@@ -391,9 +408,56 @@
     }
     return panelInk || lineInk ? 0 : 1;
   }
+  // Four independent unit values from one cell of an ink's screen.
+  function cellHash(cx, cy, salt) {
+    const h = hash32(Math.imul((cx + 4096) >>> 0, 0x8da6b343) ^ Math.imul((cy + 4096) >>> 0, 0xd8163841) ^ salt);
+    const u = (n) => hash32(h ^ Math.imul(n, 0x9e3779b9)) / 4294967296;
+    return [u(1), u(2), u(3), u(4), u(5), u(6)];
+  }
+  // Polke's dots: each of the nine nearest painted dots may reach this pixel.
+  function handDotsInk(M, x, y, g) {
+    const H = M.hand, c = Math.cos(M.sangle), s = Math.sin(M.sangle);
+    const u = (x * c + y * s) * M.sfreq, v = (-x * s + y * c) * M.sfreq;
+    const bx = Math.floor(u), by = Math.floor(v);
+    for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) {
+      const cx = bx + dx, cy = by + dy;
+      const h = cellHash(cx, cy, M.salt);
+      if (h[3] > 1 - 0.05 * H) continue;                                  // a dot left out
+      let size = 1 + 0.6 * H * (h[2] - 0.5);
+      if (h[3] < 0.015 * H) size *= 1.9;                                   // a blot
+      const r2 = (1 - g) / Math.PI * size * size;
+      if (r2 <= 0) continue;
+      let ex = u - (cx + 0.5 + 0.32 * H * (h[0] - 0.5));
+      let ey = v - (cy + 0.5 + 0.32 * H * (h[1] - 0.5));
+      const e = 0.45 * H * (h[4] - 0.5);                                  // out of round
+      ex *= 1 + e; ey *= 1 - e;
+      const wob = 1 + 0.14 * H * Math.sin(3 * Math.atan2(ey, ex) + 6.283185307 * h[5]);
+      if ((ex * ex + ey * ey) * wob * wob < r2) return true;
+    }
+    return false;
+  }
+  // Lines ruled by hand: each wavers along its length, varies in width, and breaks.
+  function handLinesInk(M, x, y, g) {
+    const H = M.hand, c = Math.cos(M.sangle), s = Math.sin(M.sangle);
+    const u = (x * c + y * s) * M.sfreq, v = (-x * s + y * c) * M.sfreq;
+    const b = Math.floor(v);
+    for (let dl = -1; dl <= 1; dl++) {
+      const L = b + dl;
+      const sl = (M.salt ^ Math.imul(L + 4096, 0x27d4eb2d)) >>> 0;
+      const wob = 0.42 * H * (vnoise(u * 0.18, 0.5, sl) - 0.5);
+      const width = 1 + 0.7 * H * (vnoise(u * 0.5, 7.5, sl) - 0.5);
+      if (vnoise(u * 0.09, 13.5, sl) < 0.22 * H) continue;                // the brush lifted
+      if (Math.abs(v - (L + 0.5 + wob)) < 0.5 * (1 - g) * width) return true;
+    }
+    return false;
+  }
   function shade(M, ix, iy, q, k, C) {
     if (M.screen === SCR.SOTO) return sotoBit(M, ix, q.x, q.y, k, C);
     const g = tone(M, q.x, q.y, q.rad);
+    if (M.hand > 0 && (M.screen === SCR.DOTS || M.screen === SCR.LINES)
+      && 1 / (M.sfreq * Math.max(k, 1e-9)) >= C.resolve) {
+      return (M.screen === SCR.DOTS ? handDotsInk(M, q.x, q.y, g) : handLinesInk(M, q.x, q.y, g)) ? 0 : 1;
+    }
     return g > threshold(M, ix, iy, q.x, q.y, k, C.resolve, C.blue) ? 1 : 0;
   }
 
@@ -566,13 +630,15 @@ ${groups.join('\n')}
     S.ops.forEach((o, i) => {
       ops.set([o.type, o.t0, o.dur, o.mat, o.a[0], o.a[1], o.a[2], o.a[3], o.b[0], o.b[1], o.b[2], o.b[3]], i * 12);
     });
-    const mats = new Float32Array(MAX_MATS * 8);
+    const mats = new Float32Array(MAX_MATS * 12);
     S.mats.forEach((M, i) => {
-      mats.set([M.pattern, M.tone, M.freq, M.angle, M.screen, M.sfreq, M.sangle, M.param], i * 8);
+      mats.set([M.pattern, M.tone, M.freq, M.angle, M.screen, M.sfreq, M.sangle, M.param, M.hand || 0, 0, 0, 0], i * 12);
     });
+    const salts = new Uint32Array(MAX_MATS);
+    S.mats.forEach((M, i) => { salts[i] = M.salt >>> 0; });
     const wins = new Float32Array(MAX_WINS * 8);
     S.wins.forEach((w, i) => { wins.set([w.cx, w.cy, w.hx, w.hy, w.angle, w.mat, 0, 0], i * 8); });
-    return { ops, nOps: S.ops.length, mats, wins, nWins: S.wins.length, bg: S.bg };
+    return { ops, nOps: S.ops.length, mats, salts, wins, nWins: S.wins.length, bg: S.bg };
   }
 
   // The score as a plain, auditable record.
@@ -582,12 +648,13 @@ ${groups.join('\n')}
     return {
       piece: 'Two Observers', seed: S.seed, bath: S.bath, sessionSeed: S.sessionSeed,
       movement: S.movement, settle: r4(S.settle), length: r4(S.length),
-      lagrange: S.lagrange, density: S.density,
+      lagrange: S.lagrange, density: S.density, hand: S.hand,
       ground: { bg: S.bg, windows: S.wins.map((w) => ({ cx: r4(w.cx), cy: r4(w.cy), hx: r4(w.hx), hy: r4(w.hy), angle: r4(w.angle), mat: w.mat })) },
       materials: S.mats.map((M) => ({
         pattern: Object.keys(PAT).find((k) => PAT[k] === M.pattern), tone: r4(M.tone), freq: r4(M.freq), angle: r4(M.angle),
         observer: M.screen === SCR.SOTO ? 'soto (fixed panel + carried lines)' : M.screen === SCR.SPIRAL ? 'mellan (carried spiral)' : M.screen >= SCR.DOTS ? 'lagrangian' : 'eulerian',
         screen: Object.keys(SCR).find((k) => SCR[k] === M.screen), screenFreq: r4(M.sfreq), screenAngle: r4(M.sangle),
+        hand: r4(M.hand || 0),
       })),
       ops: S.ops.map((o) => ({ op: names[o.type], t0: r4(o.t0), dur: r4(o.dur), mat: o.type === OP.DROP ? o.mat : undefined, a: o.a.map(r4), b: o.b.map(r4) })),
     };
