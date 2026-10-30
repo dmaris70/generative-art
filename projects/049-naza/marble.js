@@ -1,5 +1,10 @@
 /*
- * marble.js — the bath, the score and the two observers, without a GPU.
+ * marble.js — NAZA: the bath, the score and the two observers, without a GPU.
+ *
+ * NAZA is titled by the artist after a documentary about collateral deaths. It takes Guernica's
+ * proportion (776.6 × 349.3 cm) and its grisaille, and the structure of its ground — wings, a
+ * pyramid of light, a lamp, newsprint, shards — never its figures. The marbling below is the
+ * engine: what was laid down is cut by salvos of drops, torn by combs, and printed.
  *
  * A session ("bath") is a score: a ground collage floated at t = 0, then a timed list of
  * marbling operations — ink drops, comb strokes, waves, swirls. Every operation is an exact,
@@ -38,11 +43,12 @@
   'use strict';
 
   // --- constants shared with the shader (keep in step with sketch.js) ---
-  const PLATE_W = 1.0, PLATE_H = 1.25;     // plate units, 4 : 5, origin at the centre
+  // Guernica's proportion: 776.6 × 349.3 cm. Plate units, height 1, origin at the centre, y down.
+  const PLATE_W = 776.6 / 349.3, PLATE_H = 1.0;
   const OP = { DROP: 1, COMB: 2, WAVE: 3, SWIRL: 4 };
-  const PAT = { FLAT: 0, STRIPES: 1, BANDS: 2, LATTICE: 3, NOISE: 4, RINGS: 5, SPHERE: 6, WIRES: 7 };
+  const PAT = { FLAT: 0, STRIPES: 1, BANDS: 2, LATTICE: 3, NOISE: 4, RINGS: 5, SPHERE: 6, WIRES: 7, STAR: 8 };
   const SCR = { BAYER: 0, BLUE: 1, DOTS: 2, LINES: 3, SOTO: 4, SPIRAL: 5 };
-  const MAX_OPS = 160, MAX_MATS = 16, MAX_WINS = 8, MAX_WIRES = 32, WIRE_SLOT = 0.0032;
+  const MAX_OPS = 160, MAX_MATS = 16, MAX_WINS = 12, MAX_WIRES = 32, WIRE_SLOT = 0.0032;
 
   function mulberry32(a) {
     return function () {
@@ -71,6 +77,8 @@
     const rnd = (a, b) => a + (b - a) * R();
     const pick = (arr) => arr[Math.floor(R() * arr.length)];
     const chance = (p) => R() < p;
+    const XW = PLATE_W / 2, YH = PLATE_H / 2;
+    const fx = (f) => f * XW, fy = (f) => f * YH;          // fractions of the half-plate, y down
 
     // Materials: m0 = [pattern, tone, freq, angle], m1 = [screen, screenFreq, screenAngle, param]
     const mats = [];
@@ -82,64 +90,89 @@
       return [chance(0.6) ? SCR.BAYER : SCR.BLUE, 0, 0];
     }
     function mat(pattern, tone, freq, angle, param) {
-      const hard = pattern === PAT.STRIPES;
+      const hard = pattern === PAT.STRIPES || pattern === PAT.STAR;
       const s = screenFor(tone, hard);
       mats.push({ pattern, tone, freq, angle, screen: s[0], sfreq: s[1], sangle: s[2], param: param || 0 });
       return mats.length - 1;
     }
-
-    // Ground: a collage floated before the first gesture — a field and a few rigid windows.
-    const diag = pick([Math.PI / 4, -Math.PI / 4, Math.PI / 3, -Math.PI / 5]);
-    const bg = chance(0.6)
-      ? mat(PAT.BANDS, rnd(0.42, 0.6), rnd(4, 7), diag, rnd(0.2, 0.7))
-      : mat(PAT.NOISE, 0.5, rnd(2.5, 4.5), 0, 0);
-    const winMats = [
-      mat(PAT.STRIPES, 1, rnd(7, 12), pick([0, Math.PI / 2, Math.PI / 4]), 0.5),
-      mat(PAT.LATTICE, rnd(0.3, 0.45), rnd(5, 8), Math.PI / 4, 0),
-      mat(PAT.NOISE, 0.5, rnd(3, 6), 0, chance(0.6) ? rnd(5, 9) : 0),
-      mat(PAT.BANDS, rnd(0.3, 0.55), rnd(6, 10), diag + Math.PI / 2, rnd(0, 0.5)),
-    ];
-    const wins = [];
-    const nWin = 3 + Math.floor(R() * 3);
-    for (let i = 0; i < nWin; i++) {
-      const diamond = chance(0.45);
-      const hx = rnd(0.16, 0.36), hy = diamond ? hx : rnd(0.16, 0.4);
-      wins.push({
-        cx: rnd(-0.32, 0.32), cy: rnd(-0.42, 0.42), hx, hy,
-        angle: diamond ? Math.PI / 4 : pick([0, 0, rnd(-0.5, 0.5)]),
-        mat: winMats[i % winMats.length],
-      });
+    function fixed(pattern, tone, screen, extra) {           // a material on a fixed screen, no draws
+      mats.push(Object.assign({ pattern, tone, freq: 0, angle: 0, screen, sfreq: 0, sangle: 0, param: 0 }, extra || {}));
+      return mats.length - 1;
     }
 
-    // Inks for drops: black, white and greys, each with its observer, plus ringed and striped inks.
+    // Ground: Guernica's structure, not its figures — a 2.22 : 1 plate in grisaille, a dark field
+    // with two wings, a pyramid of light rising to the centre, a beam from the upper right, a band
+    // of newsprint across the body of the light, a jagged lamp at the top, shards rising from the
+    // floor and one fallen diagonal. Windows are convex quads (a triangle repeats a corner).
+    const wins = [];
+    const quad = (pts, m) => { wins.push({ pts, mat: m }); };
+    const tri = (a, b, c, m) => quad([a, b, c, c], m);
+    const diag = pick([Math.PI / 4, -Math.PI / 4, Math.PI / 3, -Math.PI / 5]);
+    const bg = fixed(PAT.FLAT, rnd(0.06, 0.16), SCR.BLUE);                      // the night
+    const white = fixed(PAT.FLAT, 1, SCR.BAYER), black = fixed(PAT.FLAT, 0, SCR.BAYER);
+    const lx = rnd(-0.62, -0.44), rx = rnd(0.44, 0.62);
+    const left = mat(chance(0.5) ? PAT.NOISE : PAT.BANDS, rnd(0.22, 0.38), rnd(3, 6), Math.PI / 2, chance(0.6) ? rnd(5, 9) : 0.3);
+    quad([[fx(-1.05), fy(-1.05)], [fx(lx + rnd(-0.04, 0.08)), fy(-1.05)], [fx(lx + rnd(-0.1, 0.04)), fy(1.05)], [fx(-1.05), fy(1.05)]], left);
+    let right = mat(PAT.STRIPES, 1, rnd(9, 14), 0, rnd(0.35, 0.55));             // the house: vertical stripes
+    const rightWin = wins.length;
+    quad([[fx(rx + rnd(-0.08, 0.04)), fy(-1.05)], [fx(1.05), fy(-1.05)], [fx(1.05), fy(1.05)], [fx(rx + rnd(-0.03, 0.1)), fy(1.05)]], right);
+    const apex = [fx(rnd(-0.12, 0.08)), fy(rnd(-0.98, -0.86))];
+    tri(apex, [fx(rnd(0.36, 0.55)), fy(rnd(0.78, 0.96))], [fx(rnd(-0.62, -0.44)), fy(rnd(0.78, 0.96))],
+      fixed(PAT.FLAT, rnd(0.84, 0.93), SCR.BAYER));                             // the pyramid of light
+    const pWires = opts.wires == null ? 0.9 : opts.wires;
+    let wiresMat = -1, wiresBox = null;
+    if (chance(pWires)) {                                                        // newsprint across the body
+      const x0 = fx(rnd(-0.42, -0.28)), x1 = fx(rnd(0.14, 0.32)), y0 = fy(rnd(-0.22, -0.06)), y1 = fy(rnd(0.3, 0.5));
+      const sk = fx(rnd(-0.05, 0.05));
+      wiresMat = fixed(PAT.WIRES, rnd(0.8, 0.9), SCR.BLUE, {
+        freq: 16 + Math.floor(R() * 15), param: rnd(0.6, 0.9), wcx: (x0 + x1) / 2, wcy: (y0 + y1) / 2, why: (y1 - y0) / 2 });
+      quad([[x0 + sk, y0], [x1 + sk, y0], [x1 - sk, y1], [x0 - sk, y1]], wiresMat);
+      wiresBox = [Math.min(x0, x0 - sk, x0 + sk), Math.max(x1, x1 - sk, x1 + sk), y0, y1];
+    }
+    tri([fx(rnd(0.56, 0.74)), fy(-1.05)], [fx(rnd(0.78, 0.96)), fy(-1.05)], [fx(rnd(0.12, 0.3)), fy(rnd(-0.25, 0.05))],
+      white);                                                                   // the beam
+    const shardMats = [white, mat(PAT.FLAT, rnd(0.45, 0.62), 0, 0)];
+    const nShards = 3 + Math.floor(R() * 3);
+    for (let i = 0; i < nShards; i++) {                                          // shards rising from the floor
+      const bx = fx(rnd(-0.95, 0.95)), w = fx(rnd(0.012, 0.035)), lean = fx(rnd(-0.12, 0.12));
+      tri([bx - w, fy(1.05)], [bx + w, fy(1.05)], [bx + lean, fy(rnd(-0.55, 0.25))], pick(shardMats));
+    }
+    {                                                                            // the fallen diagonal
+      const a = [fx(rnd(-0.98, -0.7)), fy(rnd(0.45, 0.85))], b = [fx(rnd(-0.1, 0.3)), fy(rnd(0.55, 0.95))];
+      const th = fy(rnd(0.012, 0.022)), nx = -(b[1] - a[1]), ny = b[0] - a[0], L = Math.hypot(nx, ny);
+      const ox = nx / L * th, oy = ny / L * th;
+      quad([[a[0] - ox, a[1] - oy], [b[0] - ox, b[1] - oy], [b[0] + ox, b[1] + oy], [a[0] + ox, a[1] + oy]], black);
+    }
+    {                                                                            // the lamp: a jagged eye
+      const cx = apex[0] + fx(rnd(-0.06, 0.06)), cy = fy(rnd(-0.72, -0.58)), r0 = fy(rnd(0.13, 0.18));
+      const eye = fixed(PAT.STAR, 1, SCR.BAYER, { freq: 13 + Math.floor(R() * 6), angle: rnd(0, 6.283), wcx: cx, wcy: cy, why: r0 });
+      quad([[cx - r0 * 1.45, cy], [cx, cy - r0 * 0.95], [cx + r0 * 1.45, cy], [cx, cy + r0 * 0.95]], eye);   // an almond
+    }
+
+    // Inks for drops: black most of all, white, greys, ringed and striped.
     const inks = [
-      mat(PAT.FLAT, 0, 0, 0), mat(PAT.FLAT, 1, 0, 0),
+      black, black, white,
       mat(PAT.FLAT, rnd(0.25, 0.4), 0, 0), mat(PAT.FLAT, rnd(0.55, 0.75), 0, 0),
       mat(PAT.RINGS, rnd(0.35, 0.6), rnd(28, 46), 0, 0),
       mat(PAT.STRIPES, 1, rnd(16, 30), rnd(0, Math.PI), 0.5),
     ];
 
-    // Soto and Mellan, drawn from their own stream so the rest of a seed's score is unchanged.
+    // Soto and Mellan, from their own stream. Soto's panel is the house: the right wing's stripes.
     const R2 = mulberry32(sessionSeed(seed, bath) ^ 0x50703e11);
     const pSoto = opts.soto == null ? 0.7 : opts.soto, pMellan = opts.mellan == null ? 0.8 : opts.mellan;
     let sotoMat = -1, mellanMat = -1;
     if (R2() < pSoto) {
-      // ink that carries near-vertical lines at nearly the panel's pitch: the beat is the moire
       mats.push({ pattern: PAT.FLAT, tone: 0.35 + 0.3 * R2(), freq: 0, angle: 0, screen: SCR.SOTO,
         sfreq: (R2() < 0.5 ? 0.93 : 1.03) + 0.04 * R2(), sangle: (R2() - 0.5) * 0.12, param: 0 });
       sotoMat = mats.length - 1;
-      // a modest panel, slipped in among the other windows rather than laid over all of them
-      const hx = 0.12 + 0.1 * R2(), hy = 0.18 + 0.14 * R2();
-      const at = Math.floor(R2() * (wins.length + 1));
-      wins.splice(at, 0, { cx: (R2() - 0.5) * 0.55, cy: (R2() - 0.5) * 0.7, hx, hy, angle: 0, mat: sotoMat });
+      wins[rightWin].mat = sotoMat;
     }
     if (R2() < pMellan) {
-      // a sphere lit from above left, engraved as one spiral (angle = light direction, y down)
       mats.push({ pattern: PAT.SPHERE, tone: 0, freq: 0, angle: -2.36 + (R2() - 0.5) * 0.9, screen: SCR.SPIRAL,
         sfreq: 70 + 30 * R2(), sangle: 0, param: 0 });
       mellanMat = mats.length - 1;
     }
-    while (mats.length > MAX_MATS) mats.pop();
+    if (mats.length > MAX_MATS) throw new Error('NAZA: ' + mats.length + ' materials, the shader holds ' + MAX_MATS);
 
     // Timeline: movements in a seeded order. Each op: {type, t0, dur, mat, a:[4], b:[4]}.
     const ops = [];
@@ -149,24 +182,38 @@
     const n = (k) => Math.max(1, Math.round(k * density));
 
     function stones() {
-      const k = n(rnd(2, 5));
+      const k = n(rnd(2, 4));
       for (let s = 0; s < k; s++) {
-        const cx = rnd(-0.38, 0.38), cy = rnd(-0.5, 0.5);
+        const cx = fx(rnd(-0.85, 0.85)), cy = fy(rnd(-0.8, 0.8));
         const rings = n(rnd(4, 9));
         const seq = [inkPick(), inkPick(), inkPick()];
         for (let i = 0; i < rings; i++) {
-          push({ type: OP.DROP, t0: t, dur: rnd(0.5, 1.1), mat: seq[i % seq.length], a: [cx, cy, rnd(0.035, 0.075), 0], b: [0, 0, 0, 0] });
+          push({ type: OP.DROP, t0: t, dur: rnd(0.5, 1.1), mat: seq[i % seq.length], a: [cx, cy, rnd(0.03, 0.065), 0], b: [0, 0, 0, 0] });
           t += rnd(0.18, 0.4);
         }
         t += rnd(0.3, 0.9);
       }
     }
     function scatter() {
-      const k = n(rnd(6, 16));
+      const k = n(rnd(8, 18));
       for (let i = 0; i < k; i++) {
-        push({ type: OP.DROP, t0: t, dur: rnd(0.5, 1.2), mat: inkPick(), a: [rnd(-0.45, 0.45), rnd(-0.58, 0.58), rnd(0.02, 0.09), 0], b: [0, 0, 0, 0] });
+        push({ type: OP.DROP, t0: t, dur: rnd(0.5, 1.2), mat: inkPick(), a: [fx(rnd(-0.93, 0.93)), fy(rnd(-0.9, 0.9)), rnd(0.02, 0.08), 0], b: [0, 0, 0, 0] });
         t += rnd(0.12, 0.35);
       }
+    }
+    // a salvo: a line of quick dark drops cut across the bath, one after another
+    function salvo() {
+      const k = n(rnd(6, 13));
+      const ang = rnd(-0.4, 0.4) + (chance(0.5) ? 0 : Math.PI);
+      const len = fx(rnd(0.9, 1.6)), cx = fx(rnd(-0.4, 0.4)), cy = fy(rnd(-0.6, 0.6));
+      const dx = Math.cos(ang), dy = Math.sin(ang);
+      for (let i = 0; i < k; i++) {
+        const u = (i / Math.max(1, k - 1) - 0.5) * len;
+        push({ type: OP.DROP, t0: t, dur: rnd(0.22, 0.45), mat: chance(0.75) ? black : inks[3],
+          a: [cx + dx * u + fy(rnd(-0.03, 0.03)), cy + dy * u + fy(rnd(-0.05, 0.05)), rnd(0.022, 0.06), 0], b: [0, 0, 0, 0] });
+        t += rnd(0.09, 0.2);
+      }
+      t += rnd(0.4, 0.9);
     }
     function comb(fine) {
       // gel-git: strokes back and forth across the bath
@@ -178,10 +225,10 @@
       let off = rnd(-0.5, 0.5) * spacing;
       for (let i = 0; i < strokes; i++) {
         const z = (i % 2 ? -1 : 1) * (fine ? rnd(0.015, 0.035) : rnd(0.07, 0.2));
-        push({ type: OP.COMB, t0: t, dur: rnd(1.6, 3.2), mat: 0,
+        push({ type: OP.COMB, t0: t, dur: rnd(1.2, 2.6), mat: 0,
           a: [-my * off, mx * off, mx, my], b: [z, fine ? rnd(0.008, 0.016) : rnd(0.02, 0.05), tines, spacing] });
         off += spacing * rnd(0.3, 0.6);
-        t += rnd(1.1, 2.4);
+        t += rnd(0.9, 2.0);
       }
     }
     function wave() {
@@ -194,25 +241,24 @@
       const k = n(rnd(1, 3));
       for (let i = 0; i < k; i++) {
         push({ type: OP.SWIRL, t0: t, dur: rnd(2.5, 5), mat: 0,
-          a: [rnd(-0.3, 0.3), rnd(-0.4, 0.4), rnd(0.05, 0.3), (chance(0.5) ? -1 : 1) * rnd(0.1, 0.35)], b: [rnd(0.03, 0.08), 0, 0, 0] });
+          a: [fx(rnd(-0.6, 0.6)), fy(rnd(-0.6, 0.6)), rnd(0.05, 0.3), (chance(0.5) ? -1 : 1) * rnd(0.1, 0.35)], b: [rnd(0.03, 0.08), 0, 0, 0] });
         t += rnd(1.2, 2.6);
       }
     }
 
-    // Every movement ends on drops: the last gesture lays clean ink on the worked field,
-    // as a marbler does before the paper goes down.
+    // Salvos cut the ground; combs tear it; every movement still ends on drops.
     const grammar = [
-      ['stones', 'comb', 'wave', 'scatter', 'swirl', 'stones'],
-      ['scatter', 'comb', 'stones', 'swirl', 'scatter'],
-      ['wave', 'stones', 'comb', 'fine', 'stones'],
-      ['stones', 'swirl', 'comb', 'scatter'],
-      ['comb', 'stones', 'wave', 'swirl', 'stones'],
-      ['stones', 'fine', 'swirl', 'scatter', 'stones'],
+      ['salvo', 'comb', 'stones', 'salvo', 'swirl', 'scatter'],
+      ['stones', 'salvo', 'comb', 'fine', 'stones'],
+      ['salvo', 'wave', 'salvo', 'comb', 'scatter'],
+      ['comb', 'salvo', 'stones', 'swirl', 'salvo', 'stones'],
+      ['salvo', 'stones', 'fine', 'swirl', 'scatter'],
     ];
     const movement = pick(grammar);
     for (const m of movement) {
       if (m === 'stones') stones();
       else if (m === 'scatter') scatter();
+      else if (m === 'salvo') salvo();
       else if (m === 'comb') comb(false);
       else if (m === 'fine') comb(true);
       else if (m === 'wave') wave();
@@ -226,19 +272,7 @@
       if (mellanMat >= 0 && o.a[2] >= 0.05 && u < 0.4) o.mat = mellanMat;
       else if (sotoMat >= 0 && u > 0.93) o.mat = sotoMat;
     }
-    // The wire field: one wide band window, from the same side stream (appended draws only).
-    const pWires = opts.wires == null ? 0.6 : opts.wires;
-    let wiresMat = -1;
-    if (R2() < pWires && mats.length < MAX_MATS) {
-      const hx = 0.36 + 0.12 * R2(), hy = 0.13 + 0.11 * R2();
-      const cx = (R2() - 0.5) * (0.5 - hx) * 2 * 0.5, cy = (R2() - 0.5) * 0.7;
-      mats.push({ pattern: PAT.WIRES, tone: 0.8 + 0.1 * R2(), freq: 14 + Math.floor(R2() * 17), angle: 0,
-        screen: SCR.BLUE, sfreq: 0, sangle: 0, param: 0.55 + 0.35 * R2(), wcx: cx, wcy: cy, why: hy });
-      wiresMat = mats.length - 1;
-      wins.splice(Math.floor(R2() * (wins.length + 1)), 0, { cx, cy, hx, hy, angle: 0, mat: wiresMat });
-    }
-    // The hand: painted carried screens. No draws from the score's streams — a hash per ink sets how
-    // heavy each hand is, so the gestures and inks of a seed do not move when the hand changes.
+    // The hand: painted carried screens, from a hash per ink (no draws from the score's streams).
     const hand = opts.hand == null ? 0.6 : opts.hand;
     const ss = sessionSeed(seed, bath);
     mats.forEach((Mt, i) => {
@@ -252,7 +286,7 @@
     for (const o of ops) end = Math.max(end, o.t0 + o.dur);
     const settle = end + 2.5;
     return {
-      seed: seed >>> 0, bath, sessionSeed: sessionSeed(seed, bath), movement, sotoMat, mellanMat, wiresMat,
+      seed: seed >>> 0, bath, sessionSeed: ss, movement, sotoMat, mellanMat, wiresMat, wiresBox,
       mats, bg, wins, ops, settle, hold: 6, length: settle + 6,
       lagrange, density, hand,
     };
@@ -349,13 +383,20 @@
     }
     // the ground: windows, top-most last
     let m = S.bg;
-    for (let i = 0; i < S.wins.length; i++) {
-      const w = S.wins[i];
-      const c = Math.cos(-w.angle), sn = Math.sin(-w.angle);
-      const ux = (x - w.cx) * c - (y - w.cy) * sn, uy = (x - w.cx) * sn + (y - w.cy) * c;
-      if (Math.abs(ux) < w.hx && Math.abs(uy) < w.hy) m = w.mat;
-    }
+    for (let i = 0; i < S.wins.length; i++) if (inQuad(S.wins[i].pts, x, y)) m = S.wins[i].mat;
     return { mat: m, x, y, rad: 0, op: -1 };
+  }
+
+  // Convex quad, either winding; a repeated corner makes a triangle.
+  function inQuad(P, x, y) {
+    let pos = true, neg = true;
+    for (let i = 0; i < 4; i++) {
+      const a = P[i], b = P[(i + 1) & 3];
+      const c = (b[0] - a[0]) * (y - a[1]) - (b[1] - a[1]) * (x - a[0]);
+      if (c < 0) pos = false;
+      if (c > 0) neg = false;
+    }
+    return pos || neg;
   }
 
   function vnoise(x, y, salt) {
@@ -436,6 +477,12 @@
         return g;
       }
       case PAT.WIRES: return wiresInk(M, x, y, k || 0) ? 0 : M.tone;
+      case PAT.STAR: {                                           // the lamp: a jagged eye
+        const dx = x - M.wcx, dy = y - M.wcy, r = Math.hypot(dx, dy), r0 = M.why;
+        if (r < 0.2 * r0) return 0;
+        const v = (Math.atan2(dy, dx) + M.angle) / 6.283185307 * M.freq, saw = v - Math.floor(v);
+        return r < r0 * (0.62 + 0.38 * (1 - 2 * Math.abs(saw - 0.5))) ? 1 : 0;
+      }
       case PAT.SPHERE: {
         const r = Math.max(rad || 0.05, 1e-4), nx = x / r, ny = y / r;
         const nz = Math.sqrt(Math.max(0, 1 - nx * nx - ny * ny));
@@ -643,7 +690,7 @@
   // enough to need it; the wire field is its wires and its strokes.
   function plotter(S, t, opts) {
     opts = opts || {};
-    const mmW = opts.width || 160, mmH = mmW * PLATE_H / PLATE_W, margin = opts.margin || 20, pen = opts.pen || 0.25;
+    const mmW = opts.width || 380, mmH = mmW * PLATE_H / PLATE_W, margin = opts.margin || 20, pen = opts.pen || 0.25;
     const X = (x) => margin + (x / PLATE_W + 0.5) * mmW, Y = (y) => margin + (y / PLATE_H + 0.5) * mmH;
     const onPlate = (P) => Math.abs(P[0]) <= PLATE_W / 2 && Math.abs(P[1]) <= PLATE_H / 2;
     const groups = [];
@@ -681,7 +728,7 @@
     });
 
     if (S.wiresMat >= 0) {
-      const M = S.mats[S.wiresMat], w = S.wins.find((v) => v.mat === S.wiresMat);
+      const M = S.mats[S.wiresMat];
       // a ground point is drawn where, pushed forward and pulled back, it is still this ground
       const ground = (gx, gy) => {
         const P = pushForward(S, t, -1, gx, gy);
@@ -689,7 +736,7 @@
         const b = pullBack(S, t, P[0], P[1]);
         return b.op === -1 && b.mat === S.wiresMat && Math.abs(b.x - gx) + Math.abs(b.y - gy) < 1e-6 ? P : null;
       };
-      const x0 = w.cx - w.hx, x1 = w.cx + w.hx;
+      const x0 = S.wiresBox[0], x1 = S.wiresBox[1];
       const wl = [], sl = [];
       for (let j = 0; j < Math.min(MAX_WIRES, M.freq); j++) {
         const W = wireOf(M, j), yAt = (x) => W.y0 + W.slope * (x - M.wcx);
@@ -712,7 +759,7 @@
     const W = mmW + 2 * margin, H = mmH + 2 * margin;
     const svg = `<?xml version="1.0" encoding="UTF-8"?>
 <svg xmlns="http://www.w3.org/2000/svg" xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape" width="${W}mm" height="${H}mm" viewBox="0 0 ${W} ${H}">
-<desc>Two Observers — the plotter layer (Mellan, wire field). seed ${S.seed}, bath ${S.bath + 1}, t ${t.toFixed(2)} s. One pen, ${pen} mm.</desc>
+<desc>NAZA — the plotter layer (Mellan, wire field). seed ${S.seed}, bath ${S.bath + 1}, t ${t.toFixed(2)} s. One pen, ${pen} mm.</desc>
 <g fill="none" stroke="#000" stroke-width="${pen}" stroke-linecap="round" stroke-linejoin="round">
 <g id="frame" inkscape:groupmode="layer" inkscape:label="frame"><rect x="${margin - 6}" y="${margin - 6}" width="${mmW + 12}" height="${mmH + 12}"/></g>
 ${groups.join('\n')}
@@ -734,9 +781,9 @@ ${groups.join('\n')}
     });
     const salts = new Uint32Array(MAX_MATS);
     S.mats.forEach((M, i) => { salts[i] = M.salt >>> 0; });
-    const wins = new Float32Array(MAX_WINS * 8);
-    S.wins.forEach((w, i) => { wins.set([w.cx, w.cy, w.hx, w.hy, w.angle, w.mat, 0, 0], i * 8); });
-    return { ops, nOps: S.ops.length, mats, salts, wins, nWins: S.wins.length, bg: S.bg };
+    const wins = new Float32Array(MAX_WINS * 8), winMats = new Int32Array(MAX_WINS);
+    S.wins.forEach((w, i) => { wins.set([].concat(...w.pts), i * 8); winMats[i] = w.mat; });
+    return { ops, nOps: S.ops.length, mats, salts, wins, winMats, nWins: S.wins.length, bg: S.bg };
   }
 
   // The score as a plain, auditable record.
@@ -744,10 +791,10 @@ ${groups.join('\n')}
     const names = { 1: 'drop', 2: 'comb', 3: 'wave', 4: 'swirl' };
     const r4 = (v) => Math.round(v * 1e4) / 1e4;
     return {
-      piece: 'Two Observers', seed: S.seed, bath: S.bath, sessionSeed: S.sessionSeed,
+      piece: 'NAZA', seed: S.seed, bath: S.bath, sessionSeed: S.sessionSeed,
       movement: S.movement, settle: r4(S.settle), length: r4(S.length),
       lagrange: S.lagrange, density: S.density, hand: S.hand, wires: S.wiresMat >= 0,
-      ground: { bg: S.bg, windows: S.wins.map((w) => ({ cx: r4(w.cx), cy: r4(w.cy), hx: r4(w.hx), hy: r4(w.hy), angle: r4(w.angle), mat: w.mat })) },
+      ground: { bg: S.bg, windows: S.wins.map((w) => ({ quad: w.pts.map((p) => p.map(r4)), mat: w.mat })) },
       materials: S.mats.map((M) => ({
         pattern: Object.keys(PAT).find((k) => PAT[k] === M.pattern), tone: r4(M.tone), freq: r4(M.freq), angle: r4(M.angle),
         observer: M.screen === SCR.SOTO ? 'soto (fixed panel + carried lines)' : M.screen === SCR.SPIRAL ? 'mellan (carried spiral)' : M.screen >= SCR.DOTS ? 'lagrangian' : 'eulerian',

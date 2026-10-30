@@ -1,11 +1,14 @@
-// Two Observers — a marbling bath in one bit, seen by two observers.
+// NAZA — titled by the artist after a documentary about collateral deaths. Guernica's proportion
+// (776.6 × 349.3 cm) and grisaille, and the structure of its ground — wings, a pyramid of light, a
+// lamp, newsprint, shards — never its figures; then salvos of drops cut it and combs tear it.
+// The engine is a marbling bath in one bit, seen by two observers.
 // The score (marble.js) is a seeded list of exact marbling maps. Each frame pulls every pixel
 // back through the maps that have started, on the GPU, and asks the material's observer whether
 // the pixel is ink or paper. Two observers come from physical work: Soto (a fixed striped panel
 // behind ink that carries its own lines; the pointer moves the panel) and Mellan (one spiral line
 // per drop, width as tone; V exports it for a pen plotter). The screens carried by the ink are
 // painted by hand, after Polke: dots wander, swell, go missing or blot; lines waver and break.
-// A wire field from a line etching is part of the ground: taut lines, hanging strokes, plate tone.
+// A wire field from a line etching is the newsprint: taut lines, hanging strokes, plate tone.
 // Keys: Space pause · ←/→ scrub (Shift ×5) · N/B next/previous bath · O score overlay
 // · P print (PNG) · V plotter layer (SVG) · J score (JSON) · S sheet PNG · R new seed.
 
@@ -31,7 +34,7 @@
   let wipe = null;               // { from: canvas, start } — the last print sliding away
 
   const G = GenArt.create({
-    title: 'Two Observers',
+    title: 'NAZA',
     params: {
       cell: { value: 2, min: 1, max: 4, step: 1, label: 'cell (px)' },
       speed: { value: 1, min: 0.25, max: 4, step: 0.25, label: 'speed' },
@@ -42,11 +45,11 @@
       mellan: { value: 0.8, min: 0, max: 1, step: 0.05, label: 'mellan chance' },
       panel: { value: 4, min: 3, max: 10, step: 1, label: 'soto panel (cells)' },
       hand: { value: 0.6, min: 0, max: 1, step: 0.05, label: 'hand (polke)' },
-      wires: { value: 0.6, min: 0, max: 1, step: 0.05, label: 'wire field chance' },
+      wires: { value: 0.9, min: 0, max: 1, step: 0.05, label: 'newsprint chance' },
     },
     onReset: function () { if (!S) return; newScore(); doLayout(); },
   });
-  window.saveCanvas = function (name) { download(view, (name || 'two-observers') + '.png'); };
+  window.saveCanvas = function (name) { download(view, (name || 'naza') + '.png'); };
 
   // ------------------------------------------------------------------ GPU
   const VS = `#version 300 es
@@ -61,6 +64,7 @@
   uniform vec4 uMat[${M.MAX_MATS * 3}];
   uniform uint uSalt[${M.MAX_MATS}];
   uniform vec4 uWin[${M.MAX_WINS * 2}];
+  uniform int uWinMat[${M.MAX_WINS}];
   uniform vec3 uPaper, uInk;
   out vec4 outColor;
 
@@ -106,6 +110,13 @@
     }
     if (pat == 5){ float w = fract(length(q) * A.z); return w < 0.18 ? 0.0 : (w < 0.3 ? 1.0 : A.y); }
     if (pat == 7) return wiresInk(m, q, k) ? 0.0 : A.y;
+    if (pat == 8){                                         // the lamp: a jagged eye
+      vec4 C = uMat[3 * m + 2];
+      vec2 d = q - C.yz; float r = length(d), r0 = C.w;
+      if (r < 0.2 * r0) return 0.0;
+      float saw = fract((atan(d.y, d.x) + A.w) / 6.283185307 * A.z);
+      return r < r0 * (0.62 + 0.38 * (1.0 - 2.0 * abs(saw - 0.5))) ? 1.0 : 0.0;
+    }
     if (pat == 6){
       vec2 n = q / max(rad > 0.0 ? rad : 0.05, 1e-4);
       float nz = sqrt(max(0.0, 1.0 - dot(n, n)));
@@ -264,9 +275,15 @@
       for (int i = 0; i < ${M.MAX_WINS}; i++){
         if (i >= uNWin) continue;
         vec4 w0 = uWin[2 * i], w1 = uWin[2 * i + 1];
-        float c = cos(-w1.x), sn = sin(-w1.x);
-        vec2 d = q - w0.xy; vec2 u = vec2(d.x * c - d.y * sn, d.x * sn + d.y * c);
-        if (abs(u.x) < w0.z && abs(u.y) < w0.w) mat = int(w1.y);
+        vec2 P[4]; P[0] = w0.xy; P[1] = w0.zw; P[2] = w1.xy; P[3] = w1.zw;
+        bool pos = true, neg = true;                       // convex quad, either winding
+        for (int e = 0; e < 4; e++){
+          vec2 a = P[e], b = P[(e + 1) & 3];
+          float cr = (b.x - a.x) * (q.y - a.y) - (b.y - a.y) * (q.x - a.x);
+          if (cr < 0.0) pos = false;
+          if (cr > 0.0) neg = false;
+        }
+        if (pos || neg) mat = uWinMat[i];
       }
     }
     // material units per pixel, measured in uniform control flow
@@ -298,14 +315,14 @@
       gl.attachShader(prog, compile(gl.FRAGMENT_SHADER, FS));
       gl.linkProgram(prog);
       if (!gl.getProgramParameter(prog, gl.LINK_STATUS)) throw new Error(gl.getProgramInfoLog(prog));
-    } catch (e) { console.error('two-observers: shader failed, using the CPU path', e); return false; }
+    } catch (e) { console.error('naza: shader failed, using the CPU path', e); return false; }
     gl.useProgram(prog);
     const buf = gl.createBuffer();
     gl.bindBuffer(gl.ARRAY_BUFFER, buf);
     gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 3, -1, -1, 3]), gl.STATIC_DRAW);
     const loc = gl.getAttribLocation(prog, 'p');
     gl.enableVertexAttribArray(loc); gl.vertexAttribPointer(loc, 2, gl.FLOAT, false, 0, 0);
-    for (const n of ['uOps', 'uBlue', 'uNOps', 'uNWin', 'uBg', 'uT', 'uResolve', 'uPanel', 'uParallax', 'uGrid', 'uMat', 'uSalt', 'uWin', 'uPaper', 'uInk']) U[n] = gl.getUniformLocation(prog, n);
+    for (const n of ['uOps', 'uBlue', 'uNOps', 'uNWin', 'uBg', 'uT', 'uResolve', 'uPanel', 'uParallax', 'uGrid', 'uMat', 'uSalt', 'uWin', 'uWinMat', 'uPaper', 'uInk']) U[n] = gl.getUniformLocation(prog, n);
     texOps = gl.createTexture(); texBlue = gl.createTexture();
     gl.activeTexture(gl.TEXTURE1); gl.bindTexture(gl.TEXTURE_2D, texBlue);
     setNearest();
@@ -326,7 +343,7 @@
     gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D, texOps);
     setNearest();
     gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA32F, 3, M.MAX_OPS, 0, gl.RGBA, gl.FLOAT, P.ops);
-    gl.uniform4fv(U.uMat, P.mats); gl.uniform4fv(U.uWin, P.wins); gl.uniform1uiv(U.uSalt, P.salts);
+    gl.uniform4fv(U.uMat, P.mats); gl.uniform4fv(U.uWin, P.wins); gl.uniform1iv(U.uWinMat, P.winMats); gl.uniform1uiv(U.uSalt, P.salts);
     gl.uniform1i(U.uNOps, P.nOps); gl.uniform1i(U.uNWin, P.nWins); gl.uniform1i(U.uBg, P.bg);
   }
   const useGPU = initGL();
@@ -378,8 +395,8 @@
     gw = Math.max(2, Math.round(gh * M.PLATE_W / M.PLATE_H));
     glc.width = gw; glc.height = gh;
     const pw = gw * cell, phh = gh * cell;
-    const m = Math.round(phh * 0.05);
-    const sw = pw + 2 * m, sh = phh + 2 * m + Math.round(phh * 0.05);
+    const m = Math.round(phh * 0.07);
+    const sw = pw + 2 * m, sh = phh + 2 * m + Math.round(phh * 0.07);
     layout = { dpr, pw, ph: phh, m, sw, sh, sx: Math.round((view.width - sw) / 2), sy: Math.round((view.height - sh) / 2) };
     dirty = true;
   }
@@ -399,12 +416,12 @@
         c.drawImage(wipe.from, 0, 0, wipe.from.width, wipe.from.height, px, py, L.pw, L.ph); c.restore(); }
       else wipe = null;
     }
-    const rule = Math.max(1, Math.round(L.ph / 900));
+    const rule = Math.max(1, Math.round(L.ph / 500));
     const inset = Math.round(L.m * 0.45);
     c.strokeStyle = INK_CSS; c.lineWidth = rule;
     c.strokeRect(px - inset + rule / 2, py - inset + rule / 2, L.pw + 2 * inset - rule, L.ph + 2 * inset - rule);
     if (annot) annot(c, px, py, L);
-    const fs = Math.max(9, Math.round(L.ph * 0.0145));
+    const fs = Math.max(9, Math.round(L.ph * 0.026));
     c.fillStyle = INK_CSS; c.font = `${fs}px ui-monospace, Menlo, Consolas, monospace`;
     c.textBaseline = 'alphabetic';
     const by = py + L.ph + inset + Math.round(fs * 1.9);
@@ -422,8 +439,8 @@
   function captionFor(time) {
     const c = counts(time);
     const printing = t >= S.settle;
-    const extra = (S.sotoMat >= 0 ? '  ·  soto' + (Math.abs(parallax) > 0.05 ? ' ' + (parallax > 0 ? '+' : '') + parallax.toFixed(1) : '') : '') + (S.mellanMat >= 0 ? '  ·  mellan' : '') + (S.wiresMat >= 0 ? '  ·  wires' : '') + (S.hand > 0 ? '  ·  hand ' + S.hand.toFixed(2).replace(/0$/, '') : '');
-    const left = `TWO OBSERVERS  —  seed ${G.seed}  ·  bath ${bath + 1}${extra}`;
+    const extra = (S.sotoMat >= 0 ? '  ·  soto' + (Math.abs(parallax) > 0.05 ? ' ' + (parallax > 0 ? '+' : '') + parallax.toFixed(1) : '') : '') + (S.mellanMat >= 0 ? '  ·  mellan' : '') + (S.wiresMat >= 0 ? '  ·  newsprint' : '') + (S.hand > 0 ? '  ·  hand ' + S.hand.toFixed(2).replace(/0$/, '') : '');
+    const left = `NAZA  —  seed ${G.seed}  ·  bath ${bath + 1}${extra}`;
     const right = printing
       ? `PRINT  ·  ${S.ops.length} gestures  ·  ${c.eul} eulerian / ${c.lag} lagrangian inks`
       : `t ${time.toFixed(1)} s  ·  gesture ${c.started}/${S.ops.length}  ·  ${c.eul} E / ${c.lag} L`;
@@ -507,28 +524,28 @@
   // A print is the screen's bits enlarged by a whole factor — no resampling, no new pixels.
   function savePrint() {
     renderPlate(frameTime());
-    const k = Math.max(1, Math.round(4000 / gh));
-    const ph = gh * k, pw = gw * k, m = Math.round(ph * 0.05);
+    const k = Math.max(1, Math.round(6000 / gw));          // about 6,000 px wide, whole cells
+    const ph = gh * k, pw = gw * k, m = Math.round(ph * 0.07);
     const c = document.createElement('canvas');
-    c.width = pw + 2 * m; c.height = ph + 2 * m + Math.round(ph * 0.05);
+    c.width = pw + 2 * m; c.height = ph + 2 * m + Math.round(ph * 0.07);
     const L = { pw, ph, m, sw: c.width, sh: c.height, sx: 0, sy: 0 };
     const keep = wipe; wipe = null;
     drawSheet(c.getContext('2d'), L, plateCanvas(), captionFor(frameTime()), null);
     wipe = keep;
-    download(c, `two-observers-${G.seed}-bath${bath + 1}-t${frameTime().toFixed(1)}.png`);
+    download(c, `naza-${G.seed}-bath${bath + 1}-t${frameTime().toFixed(1)}.png`);
   }
   function savePlotter() {
     const time = frameTime();
     const r = M.plotter(S, time, {});
-    if (!r.layers) { console.info('two-observers: nothing for the plotter at this moment'); return; }
+    if (!r.layers) { console.info('naza: nothing for the plotter at this moment'); return; }
     const a = document.createElement('a');
     a.href = URL.createObjectURL(new Blob([r.svg], { type: 'image/svg+xml' }));
-    a.download = `two-observers-${G.seed}-bath${bath + 1}-t${time.toFixed(1)}.plotter.svg`; a.click();
+    a.download = `naza-${G.seed}-bath${bath + 1}-t${time.toFixed(1)}.plotter.svg`; a.click();
   }
   function saveScore() {
     const blob = new Blob([JSON.stringify(M.describe(S), null, 1)], { type: 'application/json' });
     const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
-    a.download = `two-observers-${G.seed}-bath${bath + 1}.score.json`; a.click();
+    a.download = `naza-${G.seed}-bath${bath + 1}.score.json`; a.click();
   }
 
   window.addEventListener('keydown', (e) => {
@@ -545,7 +562,7 @@
     else if (k === 'p' || k === 'P') savePrint();
     else if (k === 'j' || k === 'J') saveScore();
     else if (k === 'v' || k === 'V') savePlotter();
-    else if (k === 's' || k === 'S') download(view, `two-observers-${G.seed}-sheet.png`);
+    else if (k === 's' || k === 'S') download(view, `naza-${G.seed}-sheet.png`);
     else if (k === 'r' || k === 'R') { bath = 0; t = 0; G.randomize(); }
   });
   window.addEventListener('resize', () => { doLayout(); });
