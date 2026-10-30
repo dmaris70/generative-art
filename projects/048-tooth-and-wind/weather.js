@@ -971,6 +971,7 @@
       tick, reset, render,
       setOptions(n) { o = Object.assign(o, n); },
       toSheet(cx, cy) { const b = canvas.getBoundingClientRect(); return [((cx - b.left) / b.width) * W, ((cy - b.top) / b.height) * H]; },
+      fromUnit(nx, ny) { return [nx * W, ny * H]; },
       drag, touch,
       gust() { gust(); },
       sweep() { lastSweep = t; sweep(rr(0.25, 0.75) * W, rr(0.25, 0.75) * H); },

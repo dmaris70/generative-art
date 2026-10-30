@@ -18,6 +18,8 @@
       color: #8a8984; font: 11px ui-monospace, SFMono-Regular, Menlo, monospace; letter-spacing: .02em;
       mix-blend-mode: difference;
     }
+    body.present .lil-gui, body.present a.back, body.present #cap { display: none !important; }
+    body.present canvas#view { cursor: none; }
     .lil-gui.root { --width: 330px; --name-width: 58%; max-height: 100vh; overflow-y: auto; }
   </style>
   <script src="https://cdn.jsdelivr.net/npm/lil-gui@0.19/dist/lil-gui.umd.min.js"></script>
@@ -27,7 +29,7 @@
   <a class="back" href="../../">← gallery</a>
   <canvas id="view"></canvas>
   <div id="cap"></div>
-  <script src="weather.js?v=1"></script>
-  <script src="sketch.js?v=1"></script>
+  <script src="weather.js?v=2"></script>
+  <script src="sketch.js?v=2"></script>
 </body>
 </html>
