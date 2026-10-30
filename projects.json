@@ -3,6 +3,21 @@
   "author": "dmaris70",
   "projects": [
     {
+      "slug": "049-naza",
+      "title": "NAZA",
+      "year": 2026,
+      "tools": ["webgl2", "canvas", "lil-gui"],
+      "description": "Titled by the artist after a documentary about collateral deaths. Guernica's proportion (776.6 × 349.3 cm) and grisaille, and the structure of its ground — dark wings, a pyramid of light, a jagged lamp, a band of newsprint, shards and a fallen diagonal — never its figures. Then salvos of dark drops cut across it and combs tear it, exactly: every gesture is an invertible marbling map computed per pixel on the GPU, so any moment renders directly. Two observers read the ink in one bit — a machined screen on the glass, or a hand-painted one carried by the ink — with Soto's moiré panel and Mellan's spiral among them. Each bath ends in a print, a score and a plotter drawing.",
+      "thumb": "preview.png"
+    },
+    {
+      "slug": "048-isometric-strata-v2",
+      "title": "Isometric Strata v2",
+      "year": 2026,
+      "tools": ["p5.js", "lil-gui"],
+      "description": "The second line of the drawing-sheet engine, opened 2026-10-27 from the frozen v1.0 and carried forward under a development version and vendored harness so the first series stays untouched. Thirty-three grammars now, from Palladio to Shukhov and Superstudio, six drawing sheets per seed (site plan, plans, sections, elevations, axonometric, diagrams) drawn from a measured volumetric model and printed as an architectural risograph. It lands here until it is frozen as its own generator."
+    },
+    {
       "slug": "047-edition-of-390",
       "title": "Edition of 390",
       "year": 2026,

@@ -1,0 +1,236 @@
+# Isometric Strata v2 — the second line of the engine
+
+Opened 2026-10-27 from the frozen v1.0 (`projects/011-isometric-strata`, tag `v1.0`).
+This folder is where the engine moves again. The first series does not: v1.0's 26 fingerprinted
+files, its rarity table, its edition of 256 and its archived assets stay exactly as recorded, and
+every token's `external_url` keeps pointing at the v1.0 page. Nothing here may edit `011-`.
+
+## 1. What carries over
+
+Everything, as a copy: the core (`core.js`), footprints (`plan.js`), the hand (`render.js`),
+paper, sheet chrome, the six sites, the twelve styles with their eight dogmas-as-predicates,
+the facade (`strata.js`), the token layer (`traits.js`), the sheet client and the portfolio
+board. Two things change on day one:
+
+- **Version and series.** `Strata.VERSION` is `2.0-dev` and the series reads `ISOMETRIC STRATA II`
+  until this line is named. No rarity table, no edition, no freeze are loaded: every sheet
+  prints `GENERATOR V2.0-DEV`, traits show as `UNRANKED`, metadata names tokens by seed.
+- **A vendored harness.** `vendor/genart.js` and `vendor/strokefont.js` are copies of the shared
+  `assets/` files. v1.0's fingerprint included the shared files, and a later piece's edit to one
+  of them broke the freeze check on `main` without touching a drawing. v2's freeze set will be
+  self-contained: nothing outside this folder can change what it draws.
+
+## 2. Rules of the line
+
+1. `011-isometric-strata` is read-only. A v2 idea that would improve v1.0 is still a v2 idea.
+2. Every change to a drawing-path file is a change to the future v2 fingerprint; the freeze
+   comes last, after selection, as in v1.0 (`DESIGN.md` §11 there).
+3. The tools in `tools/strata-*.mjs` are bound to `011-`. They are generalised with a project
+   argument when v2 needs them (sampler, selector, audit, freeze, export, publish), not before.
+4. Dogmas stay predicates: a new style ships with five tenets checked over the drawn scene.
+
+## 3. Candidate scope
+
+Listed, not chosen. Each is a bounded study with a visible result on the sheet.
+
+**New dogmas** (one file each in `lib/styles/`, five tenets each). All nine below are built, see
+the 2026-10-27 entry on the nine styles in section 4:
+Kahn (served and servant spaces, the plan reads as rooms around hollow piers); Loos (Raumplan:
+split levels, the section is the drawing); Terragni (rationalist frame, the half-open grid);
+Aalto (fan plans, one free curve against orthogonal wings); Wright Prairie (long low roofs, the
+hearth as anchor, bands of windows); Bawa (tropical modernism: courtyards, verandas, deep eaves);
+Ando (concrete planes and one slot of light); Constructivism (Leonidov and Melnikov: a sphere, a
+mast, a cylinder clashing); Scarpa (the joint drawn at the larger scale).
+
+**New sheet types** (alongside axonometric and plan-and-section):
+the elevation sheet (four elevations on one sheet, shadows cast); the exploded axonometric (the
+building lifted in layers, dashed leaders); the worm's-eye axonometric after Choisy (plan and
+underside of the structure in one view); the site plan at a smaller scale (block, trees, roads,
+north arrow, the building a roof); the detail sheet (one wall section at 1:20 with notes); the
+drawing set (one seed, several sheets, numbered A-01, A-02 ... as a working set).
+
+**Rendering studies:**
+diazo and blueprint papers (white line on blue, brown line); coloured pencil and marker fills
+with bleed; line-weight hierarchy by depth and by cut; a second lettering hand; title-block
+variants by period; the scale figure and the parked car as scale cues; interior furniture in
+cut plans; landscape with ground contours.
+
+**Scene studies:**
+interiors seen through cutaways; a second building type per style (civic versus domestic);
+terrain with retaining walls; water with reflections drawn as hatching.
+
+## 4. Steps taken
+
+A step is done when it renders in the sheet client and the board, its tenets (if a dogma) are
+reported, and the headless smoke test passes.
+
+**2026-10-27 — the drawing set.** One seed is now a numbered set of five sheets, chosen first
+because it changes what a collector receives and forces the orthographic sheet types to exist:
+
+| Sheet | Content | Fit |
+|---|---|---|
+| A-01 SITE PLAN | the block around the plot from above, no cut; plot boundary dashed; section marks A-A and B-B; nominal 1:500 | plot plus 1.25 × its size each way, or the site if smaller |
+| A-02 PLANS | the ground floor cut a little above the building's own datum, and a typical upper floor (or the roof plan for a single storey), one above the other; section marks on both | plot plus a 30 % margin, one scale for both bands |
+| A-03 SECTIONS | A-A through the plot's centre along x looking at +y, B-B along y looking at +x; cut edges heavy; ground line with hatched earth; datum label | plot plus 4 m each side; the building's height, a tall neighbour may clip |
+| A-04 ELEVATIONS | south, north, east, west, in four cells, nothing cut, the far things drawn first; ground lines | as the sections, per cell |
+| A-05 AXONOMETRIC | the v1.0 sheet | as v1.0 |
+
+`Strata.build({ sheet })` takes 1–5 (0 lets the seed choose, the axonometric most often; the
+v1.0 `view` option still maps: 1 axon, 2 plans). The title block prints `SHEET A-0k / 05`,
+the scale bar the sheet's nominal scale, and the floor scale in the margin keys to the first
+section or elevation. The orthographic projections are the same half-space clip v1.0 used
+for its plan-and-section sheet (`Hand.renderView`), with the projection and the depth key
+chosen per view: an elevation from the south projects x and draws the larger y first; from
+the north it mirrors x and draws the smaller y first; east and west likewise on y. Keys 1–5
+pick the sheet in the client; the board's `sheets` set lays the five out for one seed.
+Verified on seeds 940 (Mexican modern, plaza), 7 (Metabolism tower, city) and 12 (Cycladic,
+hillside): no console errors, the tower's twelve floors align with the margin scale, the
+hillside's contours read in the site plan and the terrain steps in section B-B.
+
+**2026-10-27 — the volumetric model (solids, structure, spaces, quantities).** The drawing set
+was first drawn by re-projecting the axonometric's faces, which cannot show a true cut. The
+engine now holds a model beneath the drawings, in three layers:
+
+1. *Solids.* `Scene.box` records every box as a solid (`scene.solids`); the orthographic
+   renderer (`lib/ortho.js`) draws plans, sections and elevations from those solids with true
+   faces, poché where the cut passes through mass (thin members hatch instead), structural-grid
+   bubbles, overall and level dimensions, and level marks.
+2. *Declarations.* Each style declares through `ctx.M` (`lib/model.js`): a structural grid,
+   spaces (name, kind, footprint, level, height) and structural prisms. The recorder has its own
+   rng so declaring never moves a style's random stream.
+3. *Derivation.* `Model.derive` classifies solids (core, stair, base, column, wall, slab,
+   mass, ornament) and measures: footprint, plan fill, envelope and solid/envelope ratio,
+   slenderness, open ground, column count and bay, wall length, floor area, programme, open
+   space. Structure is decided from the measured shares: FRAME, CORE, MASS, WALL or HYBRID.
+
+Honesty rule: every figure in the schedule's QUANTITIES block and in `properties.model` is
+measured from the drawn model, never asserted. Plans label each room with its name and area,
+sections label the spaces the cut passes through, and the schedule gains five architectural
+traits (structure, massing, proportion, ground, plan), unranked while v2 carries no rarity.
+
+Checks: 600-paint sweep (seed × style × sheet) with zero failures and zero page errors; the
+quantity survey separates the twelve styles as expected (Mies, Corbusier, Brutalist, Decon,
+Geodesic read FRAME; Metabolism CORE; Cycladic and Rossi MASS; De Stijl WALL; Mexican and
+Palladio split WALL/MASS; Archigram FRAME/MASS). Room labels place small spaces first and step
+larger ones to a free corner rather than overprint. Known limit: a label can still touch a core
+outline on very small plans.
+
+**2026-10-27 — architectural risograph (paper and print).** v2 prints as a risograph on grey
+grid stock instead of pencil on vintage paper. The stock follows the supplied reference: pale
+grey, a ruling every 10 sheet units with a heavier line every 50, and a registration cross every
+150 across and down, each on a heavy line. `lib/riso.js` holds the stock, the inks and the print.
+
+Process, per sheet: the drawing is made as before in dark and warm colours on a white buffer
+(supersampled 2x on 1x displays so hairlines survive), then separated into two drums.
+- *Key drum* (cool ink: blue, federal blue, teal, indigo, black, steel): linework, text, chrome,
+  hatching, dark and cool tones.
+- *Accent drum* (warm ink: fluorescent orange or pink, sunflower, bright red, orange, yellow):
+  warm hues, plus wide areas of mid-tone shading and fill. Wide means it survives a morphological
+  opening, so strokes and text stay in the key ink and fills do not fringe the linework.
+- Each drum is screened at its own angle (15 and 75 degrees), the accent drum is misregistered a
+  few pixels in a seeded direction, and the two multiply onto the stock with density wander,
+  edge roughness and speckle dropout.
+- A colour bar of tint steps and the overprint, and a printer's slug naming the inks, print in the
+  bottom margin.
+
+Ink pair is a trait (`Inks`), chosen from six pairs by a hash of the seed alone so it moves no
+other draw; `p_inks` in the client and the board's `papers` set (now six ink pairs) override it.
+The pencil papers remain reachable by name. Checks: 600-paint sweep, zero failures and zero page
+errors (about 58 s against 36 s before, the cost of the print); 12-style board and six-pair board
+read as one family. Known limit: warm-less palettes put their colour only in the accent shading,
+so a few seeds read near one-ink.
+
+**2026-10-27 — Phase B: diagrams, circulation, model dogmas.** Three additions that use the
+model rather than the drawing.
+
+1. *Sheet A-06 DIAGRAMS* (`lib/diagrams.js`; the set is now six sheets, key 6, board of six). Six
+   panels, each read from `state.model`: D1 structure at the ground cut (columns in the accent ink,
+   walls and shells in the key ink, cores crossed, masses hatched, the grid); D2 solid and void
+   (figure-ground, with enclosed voids tinted and open voids hatched); D3 circulation; D4 the
+   levels exploded in axonometric, every body split across the levels it spans; D5 floor area by
+   programme group; D6 floor area by level beside the measured proportions. Plans fit the built
+   extent, not the plot.
+2. *Circulation and vocabulary* (`lib/model.js`). Verticals are clusters of core and stair
+   solids plus cores and stairs a style only declared as spaces; entry steps (low stair clusters)
+   mark the way in, else the south edge of the plot. On each level the spaces present at
+   mid-height, with courts and loggias at that level and the verticals serving it, are nodes, and
+   the route is their minimum spanning tree (edge length the centre-to-centre distance; a gap over
+   3 m is drawn dashed). Depth is the longest hop count from the entry. This is a diagram of
+   access, not a layout of doors, and the sheet says so. Every room name belongs to a group
+   (living, sleeping, work, service, sacred, open, circulation) through `Model.groupOf`. Derived
+   quantities gain `groups`, `circ` and `bayCV` (the spread of column spacing).
+3. *Model dogmas* (`lib/dogmas.js`). Two or three per style, tested over the measured model and
+   appended to the style's own tenets (so the tally on a sheet is now 7/8, not 5/5), each with a
+   stated test that the metadata carries. First drafts that every seed passed were replaced or
+   tightened, since a dogma that always holds measures nothing. Pass rates over 40 seeds per
+   style now run between about 10 and 90 per cent. Examples: Palladio's room ratios against the
+   Quattro Libri set, Mies's universal space (few rooms, one dominant), Corbusier's true grid and
+   free ground, Metabolism's twin cores and thirty replaceable capsules.
+
+Checks: 864 paints (12 styles, 12 seeds, six sheets), zero failures, zero page errors; four-style
+montage of A-06 read for overprint, clipping and caption fit. Known limits: styles that draw their
+stairs as glyphs rather than solids (Mexican modern) report no verticals; dogma thresholds are
+set from a 40-seed survey and will want revisiting when rarity is loaded.
+
+**2026-10-27 — nine new grammars (21 in all).** The ten architects listed in section 3 as new
+dogmas are built as nine styles, Leonidov and Melnikov sharing one. Each is one file in
+`lib/styles/` with a sheet palette, titles, sub-styles, five tenets over the drawn scene, model
+declarations through `ctx.M`, and two further dogmas in `lib/dogmas.js` that test the measured
+model. A small shared kit (`lib/kit.js`) holds the drawing helpers they use: a hipped roof, a
+cylinder, a faceted sphere, a flight of steps, and apertures cut in a wall face.
+
+| Style | Source | Grammar | Tenets over the scene |
+|---|---|---|---|
+| KAHN | served and servant | a grid of single-volume rooms between hollow brick piers; one geometric opening in each wall; a roof light per room | served and servant; hollow servants; one room one light; geometric apertures; clear span |
+| LOOS | Raumplan | a plain white cube; inside, four zones stacked with rooms of different heights so no two floors line up | plain outside; raumplan; ceilings vary; outside is a cube; stair lands between |
+| TERRAGNI | Casa del Fascio | a block half as high as it is wide; a six-bay frame; a glazed court; one open frame face, one panelled | half a cube; central court; frame expressed; one bay; solid and void |
+| AALTO | free curve | brick wings at right angles against one fan or serpentine; funnel roof lights; copper roofs | one free curve; two orthogonal wings; daylight from above; stepped down; brick base |
+| WRIGHT | prairie house | a hearth and a pinwheel of wings under low hipped roofs with deep eaves; window bands; garden walls | hearth at the centre; deep eaves; horizontal emphasis; band on every wing; wings radiate |
+| BAWA | tropical modernism | three or four pavilions round a water court; verandas; deep tile roofs; covered corners | courtyard central; deep eaves; veranda on every pavilion; water in the court; covered route |
+| ANDO | concrete and light | a concrete box on a 2.4 m module with tie holes, a free plane, a basin, steps, and one slot of light | one slot of light; concrete only; on the 2.4 m module; plane and volume; water and step |
+| CONSTRUCTIVIST | Leonidov, Melnikov | a sphere on a drum, a guyed mast, a bar on two piers, cantilevered boxes, a diagonal ramp | three primitives; clash; cantilever; under tension; diagonal |
+| SCARPA | the joint | stepped concrete walls floating on shadow gaps, a tile ribbon, a stone-edged water channel, two interlocking circles | shadow gap; stepped reveal; water channel; three materials meet; interlocked circles |
+
+Every tenet can fail on some seeds by construction, since a tenet every seed passes measures
+nothing: the first survey of 40 seeds per style put the tenet pass rates between about 28 and
+100 per cent, and the model dogmas between about 25 and 60. Constructivist's clash test was
+loosened from three overlaps to two after it passed only 28 per cent. The programme vocabulary
+gained a civic group (assembly, lecture, council, atrium) and the room names these styles use.
+Checks: 1008 paints (21 styles, 8 seeds, six sheets), zero failures, zero page errors; board of
+all 21 styles; section, diagram and plan sheets read for Loos, Kahn and Constructivist.
+Known limits: styles built from curved prisms (Aalto's fan and serpentine, the Constructivist
+sphere) show as outline in sections and plans, not poché, because the orthographic renderer cuts
+only axis-aligned solids; Wright's overlapping hipped roofs read dense in the axonometric.
+
+**2026-10-27 — twelve visionaries and futurists (33 grammars in all).** Proposed to the
+principal and built the same day: architects whose best-known work is a proposal, not a
+building, and one futurist who was not an architect. They fall in three groups.
+
+*Megastructure and utopia:* **Superstudio** (the Continuous Monument: one white block ruled on a
+single grid); **Yona Friedman** (the Ville Spatiale: a space frame on pilotis with free infill);
+**Constant** (New Babylon: raised sector decks joined by flights); **Paolo Soleri** (the arcology:
+a terraced apse facing the sun); **Cedric Price** (the Fun Palace: a frame, a crane, movable
+modules). *Futurists and the city of tomorrow:* **Antonio Sant'Elia** (the Città Nuova: stepped
+towers, external lifts, bridges); **Hugh Ferriss** (the setback metropolis in charcoal);
+**Jacque Fresco** (the Venus Project: a circular city of concentric rings round a dome).
+*Structure and spatial vision:* **Frei Otto** (tensile roofs on masts); **Ant Farm** and
+Haus-Rucker-Co (pneumatic domes and tubes); **Étienne-Louis Boullée** (a monumental pure form on
+a circular base); **Vladimir Shukhov** (the hyperboloid lattice tower).
+
+Each is one file in `lib/styles/` with a palette set, titles, sub-styles, five tenets over the
+drawn scene, model declarations and two model dogmas in `lib/dogmas.js`. `lib/kit.js` gained a
+tube along x or y, an annular sector, and a vertically scaled sphere. Where a style is mostly
+lines or surfaces (Shukhov's lattice, Otto's membrane, Ant Farm's skins, Friedman's frame) the
+model records its solids and its declared volumes, so the structure and solid/void diagrams show
+only the footings, masts and plates; the sheet says what it measured and no more.
+
+Tuning: the first 40-seed survey found tenets that every seed passed, tenets that no seed passed
+because a tier or a tent was built below its own size limit, and an Ant Farm chain that clamped
+into the plot and failed to connect; those were fixed or replaced, and a second pass moved the
+rest. Pass rates now run from about 25 to 100 per cent, with three exceptions that hold by
+construction in some seeds (Staggered Levels was replaced by a measured test).
+Checks: 1188 paints (33 styles, 6 seeds, six sheets), zero failures, zero page errors; four-style
+montages of each batch; elevation, plan and diagram sheets read for Otto, Friedman and Shukhov.
+Known limits: the diagram sheet is sparse for line-built styles; Soleri's apse and Fresco's
+ring segments are annular prisms, drawn as outline in sections; Ant Farm's skins read pale in the
+riso print because their fills sit in the light mid-tones.

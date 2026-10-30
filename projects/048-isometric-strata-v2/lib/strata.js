@@ -1,0 +1,651 @@
+/*
+ * strata.js — the Isometric Strata engine facade.
+ *
+ *   const state = Strata.build({ seed, mode, sheet, floors, detail, density, bldgs, site, paper });
+ *   Strata.paint(g, state, { wobble, ink });   // g: the window (p5 global mode) or a p5.Graphics
+ *
+ * build() turns a seed and a few overrides into a specification, a Scene of
+ * 3-D primitives (one of thirty-three styles on one of six sites), the legend
+ * tallied from what was placed, and the fits for the six sheets of the drawing
+ * set (site plan, plans, sections, elevations, axonometric). paint() draws the
+ * sheet the state names, scaled to the renderer's width. The sketch and
+ * the portfolio board are both thin clients of these two calls.
+ */
+(function (global) {
+  'use strict';
+
+  const SW = 1500, SH = 2000; // sheet units (portrait)
+
+  const PALETTES = {
+  TLALPAN: { colors: [[218, 164, 62], [226, 196, 92], [222, 112, 74], [232, 168, 154], [110, 124, 140]], water: [108, 128, 150] },
+  ROSA: { colors: [[232, 130, 120], [222, 112, 74], [218, 164, 62], [120, 132, 146], [236, 210, 150]], water: [120, 140, 160] },
+  CAL: { colors: [[236, 224, 196], [218, 164, 62], [140, 148, 156], [222, 112, 74], [176, 182, 190]], water: [120, 140, 160] },
+  AZUL: { colors: [[96, 120, 156], [218, 164, 62], [236, 224, 196], [222, 112, 74], [150, 170, 196]], water: [96, 124, 160] },
+  MONOCHROME: { colors: [[90, 95, 102], [120, 126, 134], [156, 160, 166], [72, 76, 82]] },
+  GRAPHITE: { colors: [[74, 78, 86], [110, 114, 122], [150, 154, 160], [60, 62, 68]] },
+  CARBON: { colors: [[52, 56, 62], [96, 100, 106], [140, 144, 150], [180, 182, 186]] },
+  SEPIA: { colors: [[104, 84, 64], [150, 124, 92], [190, 170, 136], [80, 66, 50]] },
+  DEWLINE: { colors: [[104, 118, 132], [140, 156, 172], [186, 196, 206], [150, 166, 180]], accent: [230, 112, 46] },
+  ARCTIC: { colors: [[120, 136, 152], [170, 184, 196], [204, 212, 220], [130, 150, 170]], accent: [210, 70, 50] },
+  SIGNAL: { colors: [[96, 104, 112], [150, 156, 164], [200, 204, 210], [120, 128, 136]], accent: [232, 132, 30] },
+  PURIST: { colors: [[238, 234, 224], [214, 208, 192], [124, 152, 176], [214, 160, 60], [60, 62, 66]], water: [110, 136, 160] },
+  SAVOYE: { colors: [[240, 237, 228], [222, 216, 200], [130, 156, 178], [90, 116, 92], [220, 150, 140]], water: [110, 136, 160] },
+  POLYCHROMIE: { colors: [[236, 232, 222], [206, 198, 180], [140, 164, 186], [196, 96, 64], [86, 132, 170]], water: [110, 136, 160] },
+  RIETVELD: { colors: [[240, 238, 232], [200, 40, 40], [40, 70, 160], [236, 196, 30], [40, 42, 46], [150, 152, 156]], water: [110, 136, 160] },
+  MONDRIAN: { colors: [[244, 242, 238], [214, 34, 32], [24, 60, 140], [246, 208, 42], [30, 30, 34], [200, 200, 198]], water: [110, 136, 160] },
+  DOESBURG: { colors: [[236, 234, 228], [190, 60, 50], [60, 90, 150], [220, 180, 60], [50, 52, 56], [128, 132, 138]], water: [110, 136, 160] },
+  NAKAGIN: { colors: [[150, 148, 142], [234, 232, 226], [226, 108, 40], [58, 60, 64], [120, 140, 160]], water: [110, 136, 160] },
+  EXPO70: { colors: [[196, 196, 192], [240, 240, 236], [206, 36, 40], [40, 40, 44], [60, 100, 170]], water: [110, 136, 160] },
+  KIKUTAKE: { colors: [[140, 142, 140], [228, 226, 218], [60, 140, 150], [70, 72, 74], [214, 160, 60]], water: [110, 136, 160] },
+  INTONACO: { colors: [[236, 226, 206], [190, 110, 80], [200, 196, 186], [120, 100, 80], [130, 150, 170]], water: [110, 136, 160] },
+  PIETRA: { colors: [[224, 220, 210], [150, 120, 100], [184, 180, 170], [90, 88, 84], [140, 160, 176]], water: [110, 136, 160] },
+  VENETO: { colors: [[240, 232, 214], [180, 90, 70], [206, 200, 184], [110, 90, 70], [110, 140, 160]], water: [110, 136, 160] },
+  ZOOM: { colors: [[240, 240, 236], [246, 200, 20], [220, 40, 140], [30, 180, 210], [40, 40, 44]], water: [110, 136, 160] },
+  POP: { colors: [[242, 240, 232], [236, 120, 30], [40, 100, 190], [210, 40, 50], [40, 40, 44]], water: [110, 136, 160] },
+  HIGHTECH: { colors: [[214, 216, 218], [206, 36, 40], [40, 90, 170], [236, 196, 30], [50, 52, 56]], water: [110, 136, 160] },
+  TRAVERTINE: { colors: [[226, 216, 196], [70, 56, 40], [168, 190, 186], [40, 44, 50], [104, 128, 140]], water: [104, 128, 140] },
+  ONYX: { colors: [[220, 214, 200], [40, 42, 46], [176, 196, 200], [96, 70, 50], [96, 120, 136]], water: [96, 120, 136] },
+  STEEL: { colors: [[206, 206, 200], [36, 38, 42], [160, 186, 196], [60, 62, 66], [110, 134, 150]], water: [110, 134, 150] },
+  ASVESTI: { colors: [[246, 243, 234], [40, 90, 170], [160, 156, 146], [130, 96, 60], [90, 130, 160]], water: [90, 130, 160] },
+  SANTORINI: { colors: [[248, 246, 240], [36, 78, 160], [92, 90, 88], [150, 100, 70], [70, 120, 160]], water: [70, 120, 160] },
+  FOLEGANDROS: { colors: [[244, 240, 228], [60, 110, 170], [172, 164, 150], [120, 90, 60], [100, 140, 166]], water: [100, 140, 166] },
+  GALLARATESE: { colors: [[236, 230, 218], [178, 52, 42], [214, 168, 72], [128, 130, 134], [40, 110, 100]], water: [100, 130, 150] },
+  CATALDO: { colors: [[228, 220, 206], [190, 60, 48], [200, 150, 70], [110, 112, 116], [60, 96, 120]], water: [100, 130, 150] },
+  TEATRO: { colors: [[240, 236, 226], [160, 50, 44], [220, 180, 80], [140, 142, 146], [30, 100, 110]], water: [100, 130, 150] },
+  EARTH: { colors: [[192, 96, 58], [75, 125, 138], [210, 161, 58], [111, 154, 90], [156, 107, 74]] },
+  CONCRETE: { colors: [[120, 118, 112], [156, 152, 144], [192, 96, 58], [98, 110, 118], [180, 176, 166]] },
+  BRICK: { colors: [[170, 92, 70], [206, 198, 184], [120, 126, 130], [92, 60, 48], [150, 170, 180]], water: [120, 150, 166] },
+  KIMBELL: { colors: [[214, 196, 160], [150, 148, 142], [176, 196, 206], [96, 88, 76], [140, 166, 180]], water: [130, 160, 176] },
+  DHAKA: { colors: [[188, 182, 170], [160, 86, 64], [238, 232, 222], [112, 108, 100], [120, 150, 160]], water: [120, 150, 160] },
+  MULLER: { colors: [[240, 236, 226], [96, 120, 98], [190, 184, 172], [70, 62, 54], [130, 150, 160]], water: [130, 150, 160] },
+  STEINER: { colors: [[236, 228, 214], [140, 110, 80], [200, 194, 184], [56, 54, 52], [130, 150, 160]], water: [130, 150, 160] },
+  MOLLER: { colors: [[244, 240, 230], [170, 120, 86], [176, 172, 164], [60, 58, 56], [130, 150, 160]], water: [130, 150, 160] },
+  COMO: { colors: [[232, 228, 216], [128, 132, 138], [150, 196, 206], [196, 188, 172], [120, 150, 166]], water: [120, 150, 166] },
+  NOVOCOMUM: { colors: [[226, 218, 200], [150, 98, 76], [160, 190, 196], [180, 176, 166], [120, 150, 166]], water: [120, 150, 166] },
+  MARBLE: { colors: [[238, 236, 230], [104, 110, 118], [170, 200, 210], [204, 200, 190], [120, 150, 166]], water: [120, 150, 166] },
+  SAYNATSALO: { colors: [[168, 92, 72], [236, 230, 216], [110, 140, 128], [186, 150, 104], [140, 160, 176]], water: [130, 156, 176] },
+  VIIPURI: { colors: [[196, 120, 90], [240, 236, 226], [96, 128, 116], [170, 136, 96], [140, 160, 176]], water: [130, 156, 176] },
+  FINLANDIA: { colors: [[206, 202, 194], [244, 242, 236], [70, 110, 100], [150, 120, 90], [140, 164, 180]], water: [130, 156, 176] },
+  PRAIRIE: { colors: [[196, 152, 112], [120, 64, 44], [216, 190, 150], [140, 160, 140], [96, 70, 50]], water: [120, 150, 150] },
+  ROBIE: { colors: [[188, 108, 76], [96, 80, 60], [224, 204, 170], [150, 170, 150], [100, 76, 56]], water: [120, 150, 150] },
+  TALIESIN: { colors: [[206, 190, 160], [100, 76, 60], [190, 170, 140], [130, 160, 140], [90, 70, 54]], water: [120, 150, 150] },
+  KANDY: { colors: [[196, 118, 84], [236, 226, 206], [120, 96, 70], [96, 140, 110], [110, 150, 160]], water: [110, 150, 160] },
+  LUNUGANGA: { colors: [[176, 98, 70], [230, 218, 196], [108, 86, 62], [84, 128, 98], [110, 150, 160]], water: [110, 150, 160] },
+  CEYLON: { colors: [[186, 130, 92], [240, 232, 214], [132, 104, 76], [110, 150, 112], [110, 150, 160]], water: [110, 150, 160] },
+  SMOOTH: { colors: [[176, 174, 170], [150, 148, 146], [246, 244, 238], [110, 112, 114], [110, 140, 152]], water: [110, 140, 152] },
+  SHUTTER: { colors: [[164, 160, 152], [138, 134, 128], [246, 242, 232], [100, 98, 94], [110, 140, 152]], water: [110, 140, 152] },
+  SLIT: { colors: [[132, 132, 134], [108, 108, 112], [248, 246, 238], [70, 72, 76], [110, 140, 152]], water: [110, 140, 152] },
+  ROSTA: { colors: [[236, 230, 218], [196, 48, 40], [40, 42, 46], [150, 152, 156], [120, 140, 156]], water: [120, 140, 156] },
+  VKHUTEMAS: { colors: [[230, 226, 214], [210, 60, 48], [60, 60, 64], [176, 170, 150], [120, 140, 156]], water: [120, 140, 156] },
+  SUPREM: { colors: [[238, 234, 224], [220, 170, 40], [34, 34, 38], [160, 158, 150], [120, 140, 156]], water: [120, 140, 156] },
+  BRION: { colors: [[168, 166, 160], [206, 198, 180], [196, 70, 52], [48, 50, 54], [110, 140, 150]], water: [110, 140, 150] },
+  VERONA: { colors: [[176, 170, 160], [214, 196, 168], [60, 120, 150], [52, 52, 56], [110, 140, 150]], water: [110, 140, 150] },
+  VENICE: { colors: [[160, 160, 156], [220, 208, 184], [210, 150, 50], [44, 46, 50], [110, 140, 150]], water: [110, 140, 150] },
+  WHITE: { colors: [[240, 240, 236], [150, 154, 160], [220, 90, 60], [120, 124, 130], [140, 160, 176]], water: [140, 160, 176] },
+  GRIDDER: { colors: [[232, 234, 232], [110, 116, 124], [210, 80, 56], [140, 144, 150], [140, 160, 176]], water: [140, 160, 176] },
+  BLACKBOARD: { colors: [[214, 216, 214], [70, 74, 80], [200, 70, 50], [100, 104, 110], [140, 160, 176]], water: [140, 160, 176] },
+  LATTICE: { colors: [[70, 78, 92], [214, 210, 198], [226, 120, 70], [90, 130, 170], [140, 160, 176]], water: [140, 160, 176] },
+  SKYFRAME: { colors: [[56, 64, 80], [220, 216, 204], [236, 190, 60], [200, 90, 80], [140, 160, 176]], water: [140, 160, 176] },
+  PRIMARY: { colors: [[60, 66, 78], [224, 220, 210], [214, 54, 50], [40, 90, 170], [140, 160, 176]], water: [140, 160, 176] },
+  BABYLON: { colors: [[222, 200, 90], [90, 94, 104], [190, 90, 70], [236, 232, 220], [140, 160, 176]], water: [140, 160, 176] },
+  YELLOW: { colors: [[238, 208, 70], [84, 88, 98], [200, 100, 60], [244, 240, 226], [140, 160, 176]], water: [140, 160, 176] },
+  NOMAD: { colors: [[200, 150, 90], [90, 92, 100], [210, 80, 60], [232, 224, 200], [140, 160, 176]], water: [140, 160, 176] },
+  SILT: { colors: [[188, 160, 124], [206, 130, 90], [112, 140, 90], [92, 76, 64], [140, 160, 170]], water: [140, 160, 170] },
+  ADOBE: { colors: [[206, 150, 110], [226, 180, 140], [120, 146, 96], [100, 80, 66], [140, 160, 170]], water: [140, 160, 170] },
+  MESA: { colors: [[196, 124, 88], [220, 170, 130], [104, 134, 88], [84, 66, 56], [140, 160, 170]], water: [140, 160, 170] },
+  FUTURA: { colors: [[226, 222, 212], [150, 176, 196], [210, 70, 50], [60, 64, 72], [140, 160, 176]], water: [140, 160, 176] },
+  CEMENTO: { colors: [[190, 188, 180], [130, 156, 176], [200, 90, 60], [70, 72, 78], [140, 160, 176]], water: [140, 160, 176] },
+  VELOCITA: { colors: [[232, 226, 210], [110, 150, 180], [230, 110, 40], [50, 54, 62], [140, 160, 176]], water: [140, 160, 176] },
+  MEMBRANE: { colors: [[238, 234, 222], [70, 74, 84], [150, 154, 160], [220, 90, 60], [130, 160, 176]], water: [130, 160, 176] },
+  NETWORK: { colors: [[226, 222, 206], [60, 64, 72], [120, 124, 132], [220, 100, 60], [130, 160, 176]], water: [130, 160, 176] },
+  CANVAS: { colors: [[232, 220, 192], [84, 80, 74], [140, 130, 110], [200, 90, 60], [130, 160, 176]], water: [130, 160, 176] },
+  SCAFFOLD: { colors: [[70, 76, 88], [214, 210, 198], [236, 186, 60], [200, 80, 70], [140, 160, 176]], water: [140, 160, 176] },
+  GANTRY: { colors: [[60, 66, 76], [220, 216, 204], [90, 140, 190], [236, 150, 50], [140, 160, 176]], water: [140, 160, 176] },
+  ETCHING: { colors: [[200, 190, 170], [150, 142, 126], [96, 100, 84], [70, 64, 56], [150, 160, 166]], water: [150, 160, 166] },
+  CHARCOAL: { colors: [[84, 86, 92], [124, 126, 130], [34, 36, 40], [60, 62, 68], [120, 130, 140]], water: [120, 130, 140] },
+  SMOKE: { colors: [[110, 108, 104], [150, 146, 140], [48, 46, 44], [80, 78, 74], [130, 136, 140]], water: [130, 136, 140] },
+  NIGHT: { colors: [[70, 78, 96], [110, 120, 140], [30, 34, 46], [52, 58, 74], [120, 134, 156]], water: [120, 134, 156] },
+  INFLATABLE: { colors: [[236, 150, 70], [244, 232, 200], [90, 160, 200], [90, 94, 104], [130, 160, 176]], water: [130, 160, 176] },
+  POPPLE: { colors: [[226, 110, 160], [250, 236, 210], [70, 170, 190], [90, 94, 104], [130, 160, 176]], water: [130, 160, 176] },
+  TRANSLUCENT: { colors: [[200, 220, 226], [236, 240, 238], [240, 190, 90], [90, 94, 104], [130, 160, 176]], water: [130, 160, 176] },
+  SOLAR: { colors: [[230, 224, 206], [220, 160, 70], [110, 160, 110], [150, 190, 210], [110, 150, 176]], water: [110, 150, 176] },
+  HORIZON: { colors: [[226, 228, 222], [90, 150, 190], [100, 150, 100], [190, 196, 206], [110, 150, 176]], water: [110, 150, 176] },
+  VERDANT: { colors: [[222, 226, 210], [190, 150, 90], [96, 150, 96], [170, 200, 196], [110, 150, 176]], water: [110, 150, 176] },
+  STEELWORK: { colors: [[86, 92, 104], [150, 156, 166], [226, 120, 70], [60, 64, 72], [130, 150, 170]], water: [130, 150, 170] },
+  RIVET: { colors: [[100, 96, 92], [160, 150, 138], [214, 110, 60], [64, 60, 56], [130, 150, 170]], water: [130, 150, 170] },
+  RUSTED: { colors: [[176, 84, 48], [140, 66, 40], [210, 161, 58], [92, 96, 100], [200, 140, 100]] },
+};
+
+  const STYLE_KEYS = ['mexican', 'decon', 'geodesic', 'brutalist', 'corbusier', 'destijl', 'metabolism', 'palladio', 'archigram', 'mies', 'cycladic', 'rossi', 'kahn', 'loos', 'terragni', 'aalto', 'wright', 'bawa', 'ando', 'constructivist', 'scarpa', 'superstudio', 'friedman', 'constant', 'soleri', 'santelia', 'otto', 'price', 'boullee', 'ferriss', 'antfarm', 'fresco', 'shukhov'];
+
+  // The drawing set: one seed is a numbered set of six sheets. A-05 is the
+  // axonometric v1.0 drew; the other four are the orthographic sheets a working
+  // set carries, all cut and projected from the same scene at one scale.
+  const SHEETS = ['SITE PLAN', 'PLANS', 'SECTIONS', 'ELEVATIONS', 'AXONOMETRIC', 'DIAGRAMS'];
+  const SHEET_SCALE = ['1:500', '1:200', '1:200', '1:200', null, 'NTS'];
+
+  function build(opts) {
+  opts = opts || {};
+  const seed = (opts.seed === undefined ? 1 : opts.seed) >>> 0;
+  const R = ISO.rng(seed);
+  const pm = opts.mode | 0;
+  const key = pm >= 1 && pm <= STYLE_KEYS.length ? STYLE_KEYS[pm - 1] : R.pick(STYLE_KEYS);
+  const style = ISO.styles[key];
+
+  const detailN = opts.detail | 0 || R.weighted([[1, 3], [2, 3], [3, 2]]);
+  const densityN = opts.density | 0 || R.weighted([[1, 3], [2, 4], [3, 2]]);
+  const floors = opts.floors | 0 || R.int(style.floors[0], style.floors[1]);
+  const bldgs = opts.bldgs | 0 || (R.chance(0.42) ? 2 : 1);
+  const paletteName = R.pick(style.palettes);
+  const palette = PALETTES[paletteName];
+
+  // which sheet of the set: 1..5 picks, 0 lets the seed choose (the axonometric
+  // most often); the v1.0 `view` option still works: 1 axon, 2 plans
+  const ps = opts.sheet | 0, pv = opts.view | 0;
+  const drawn = R.weighted([[4, 5], [0, 1], [1, 2], [2, 2], [3, 2], [5, 2]]);
+  const sheetIdx = ps >= 1 && ps <= SHEETS.length ? ps - 1 : pv === 1 ? 4 : pv === 2 ? 1 : drawn;
+  const view = SHEETS[sheetIdx];
+
+  const schedule = opts.schedule === undefined ? true : !!opts.schedule;
+
+  const spec = {
+    view: view, sheet: sheetIdx, sheets: SHEETS,
+    schedule: schedule,
+    style: style, key: key,
+    title: R.pick(style.titles),
+    substyle: R.pick(style.substyles),
+    type: R.pick(style.types),
+    shape: R.pick(style.shapes),
+    site: opts.site || R.weighted(style.sites),
+    detail: ['', 'MINIMAL', 'DETAILED', 'TECHNICAL'][detailN],
+    detailN: detailN,
+    density: ['', 'FEW', 'MODERATE', 'DENSE'][densityN],
+    // v2 prints as a risograph. The legacy draw is kept so every later draw from R
+    // lands where it did before; the three pencil papers stay reachable by name.
+    paper: opts.paper || (R.weighted([['STANDARD', 3], ['VINTAGE', 3], ['ROUGH', 2]]), 'RISO'),
+    inks: global.Riso ? global.Riso.pair(seed, opts.inks) : null,
+    grid: R.weighted([['LARGE', 3], ['SMALL', 2]]),
+    ink: R.weighted([['FINE', 2], ['MEDIUM', 4], ['HEAVY', 1]]),
+    floors: floors,
+    floorH: R.range(3.2, 3.9),
+    bldgs: bldgs,
+    paletteName: paletteName,
+    palette: palette,
+    dwg: 'IS-' + ('000000' + (ISO.hash32(String(seed)) >>> 8).toString(16)).slice(-6).toUpperCase(),
+    project: '#' + (1000 + (seed % 9000)),
+  };
+
+  const scene = new ISO.Scene();
+  const M = Model.create(seed);
+  const size = style.size(R, false);
+  const plot = Object.assign({ x: -size.w / 2, y: -size.d / 2 }, size);
+  const ctx = {
+    rng: R.fork('style'), scene: scene, plot: plot, floors: floors, floorH: spec.floorH,
+    palette: palette, detail: detailN, shape: spec.shape, annex: false, substyle: spec.substyle, type: spec.type, M: M,
+  };
+  const extra = style.build(ctx) || {};
+
+  let union = { x: plot.x, y: plot.y, w: plot.w, d: plot.d };
+  if (bldgs === 2) {
+    const s2 = style.size(R, true);
+    const onX = R.chance(0.5);
+    const gap = R.range(3, 6);
+    const p2 = Object.assign({
+      x: onX ? plot.x + plot.w + gap : plot.x + R.range(0, Math.max(0, plot.w - s2.w)),
+      y: onX ? plot.y + R.range(0, Math.max(0, plot.d - s2.d)) : plot.y + plot.d + gap,
+    }, s2);
+    const ctx2 = Object.assign({}, ctx, {
+      rng: R.fork('annex'), plot: p2, annex: true,
+      floors: Math.max(2, Math.round(floors * R.range(0.45, 0.7))), shape: 'RECTANGLE',
+    });
+    style.build(ctx2);
+    const x0 = Math.min(union.x, p2.x), y0 = Math.min(union.y, p2.y);
+    const x1 = Math.max(union.x + union.w, p2.x + p2.w), y1 = Math.max(union.y + union.d, p2.y + p2.d);
+    union = { x: x0, y: y0, w: x1 - x0, d: y1 - y0 };
+  }
+
+  const buildingItems = scene.items.length, buildingSolids = scene.solids.length;
+  Site.build({
+    rng: R.fork('site'), scene: scene, plot: union, site: spec.site, density: spec.density,
+    detail: detailN, floorH: spec.floorH, buildingH: floors * spec.floorH, water: palette.water, palette: palette,
+  });
+
+  // legend from the tallies the generators kept
+  const legend = style.legend.map((l) => ({ name: l[0], sym: l[1], count: scene.counts[l[0]] || 0 }));
+  const kv = [
+    ['STYLE', spec.substyle], ['FLOORS', floors],
+    ['SHAPE', spec.shape], ['GRID', spec.grid],
+    ['PALETTE', paletteName], ['INK', spec.ink],
+    ['PAPER', spec.paper], (extra.kv && extra.kv[0]) || ['STRUCT', 'MODERATE'],
+    ['BLDGS', bldgs], ['MODE', style.key],
+  ];
+  const axonScale = R.pick(['1:100', '1:200', '1:100', '1:250']);
+  const meta = {
+    title: spec.title,
+    subtitle: spec.substyle + ' / ' + (R.chance(0.5) ? spec.type : floors + 'F'),
+    dwg: spec.dwg, sheet: 'A-0' + (sheetIdx + 1) + ' / 0' + SHEETS.length, view: view,
+    detail: spec.detail, density: spec.density, site: spec.site,
+    palette: palette.colors.slice(0, 5),
+    header: style.header, kv: kv, legend: legend,
+    project: spec.project, type: spec.type, scale: SHEET_SCALE[sheetIdx] || axonScale,
+  };
+  spec.plot = plot;
+
+  // ---- fits ----
+  const L = Sheet.layout({ schedule: schedule });
+  const F = L.frame;
+
+  // A-05: the building sets the scale (about half the frame wide), the site
+  // runs on past it and is clipped by the frame, as on a real sheet
+  const bh = floors * spec.floorH * 1.15;
+  const corners = [
+    [union.x, union.y, 0], [union.x + union.w, union.y, 0], [union.x, union.y + union.d, 0], [union.x + union.w, union.y + union.d, 0],
+    [union.x, union.y, bh], [union.x + union.w, union.y, bh], [union.x, union.y + union.d, bh], [union.x + union.w, union.y + union.d, bh],
+  ].map(ISO.proj);
+  const bx0 = Math.min(...corners.map((c) => c[0])), bx1 = Math.max(...corners.map((c) => c[0]));
+  const by0 = Math.min(...corners.map((c) => c[1])), by1 = Math.max(...corners.map((c) => c[1]));
+  const s = Math.min((F.w * 0.56) / (bx1 - bx0), (F.h * 0.66) / (by1 - by0));
+  const fcx = F.x + F.w / 2, fcy = F.y + F.h * 0.52;
+  const fit = { s: s, ox: fcx - ((bx0 + bx1) / 2) * s, oy: fcy - ((by0 + by1) / 2) * s };
+
+  // the scene's extent, for the orthographic sheets
+  let ex0 = Infinity, ey0 = Infinity, ex1 = -Infinity, ey1 = -Infinity, ez1 = 0;
+  for (const it of scene.items) {
+    const pts = it.pts || (it.anchor ? [it.anchor] : []);
+    for (const q of pts) {
+      if (q[0] < ex0) ex0 = q[0]; if (q[0] > ex1) ex1 = q[0];
+      if (q[1] < ey0) ey0 = q[1]; if (q[1] > ey1) ey1 = q[1];
+      if (q[2] > ez1) ez1 = q[2];
+    }
+  }
+  // the plans, sections and elevations frame the plot plus a margin; the site
+  // plan frames everything the site generator placed
+  const m = Math.max(union.w, union.d) * 0.3 + 4;
+  const px0 = Math.max(ex0, union.x - m), px1 = Math.min(ex1, union.x + union.w + m);
+  const py0 = Math.max(ey0, union.y - m), py1 = Math.min(ey1, union.y + union.d + m);
+  // cuts: the ground-floor plan a little above the building's own ground floor
+  // (a style on a podium reports that datum); the upper plan at a typical floor;
+  // the sections through the plot's centre lines
+  const datum = extra.datum || 0;
+  const lift = Math.min(1.6, spec.floorH * 0.4 + 0.3);
+  const cutZ = datum + lift;
+  const upper = floors > 1 ? Math.max(2, Math.ceil(floors / 2)) : null;
+  const cutZ2 = upper ? datum + (upper - 1) * spec.floorH + lift : null;
+  const cutY = union.y + union.d / 2, cutX = union.x + union.w / 2;
+  const gapY = 40, labelH = 26, pad = 30;
+  const cx = (px0 + px1) / 2, cy = (py0 + py1) / 2;
+
+  // A-02 plans: two bands, ground floor above, the upper floor (or the roof) below
+  const bandH = (F.h - gapY) / 2;
+  const sp = Math.min((F.w - 2 * pad) / (px1 - px0), (bandH - 2 * pad - labelH) / (py1 - py0));
+  const bandAt = (i) => ({ x: F.x, y: F.y + i * (bandH + gapY), w: F.w, h: bandH });
+  const planBand = (i) => { const b = bandAt(i); b.ox = b.x + b.w / 2 - cx * sp; b.oy = b.y + labelH + (b.h - labelH) / 2 - cy * sp; return b; };
+  const plans = { s: sp, cuts: [{ z: cutZ, label: 'PLAN  LEVEL 1  +' + cutZ.toFixed(2), band: planBand(0) }, upper
+    ? { z: cutZ2, label: 'PLAN  LEVEL ' + upper + '  +' + cutZ2.toFixed(2), band: planBand(1) }
+    : { z: Infinity, label: 'ROOF PLAN', band: planBand(1) }] };
+
+  // the sections and elevations frame the plot plus a few metres of context and
+  // the building's own height (a tall neighbour may run past the band and clip)
+  const em = 4, span = Math.max(union.w, union.d) + 2 * em;
+  const hgt = Math.max(floors * spec.floorH * 1.25, Math.min(ez1, floors * spec.floorH * 2)) + 2;
+
+  // A-03 sections: A-A along x looking at +y, B-B along y looking at +x
+  const ss = Math.min((F.w - 2 * pad) / span, (bandH - 2 * pad - labelH) / hgt);
+  const secBand = (i, c0) => { const b = bandAt(i); b.ox = b.x + b.w / 2 - c0 * ss; b.ground = b.y + labelH + (b.h - labelH) / 2 + (hgt / 2) * ss - ss; return b; };
+  // A-A looks toward -y (north) with +x on the right; B-B looks toward -x (west) with -y on the right
+  const sections = { s: ss, cuts: [
+    { label: 'SECTION  A-A', dir: 'y', cut: cutY, sx: (p) => p[0], band: secBand(0, cx), x0: px0, x1: px1, u0: union.x, u1: union.x + union.w },
+    { label: 'SECTION  B-B', dir: 'x', cut: cutX, sx: (p) => -p[1], band: secBand(1, -cy), x0: -py1, x1: -py0, u0: -(union.y + union.d), u1: -union.y },
+  ] };
+
+  // A-04 elevations: four views at one scale, each centred on the plot. A low wide
+  // building is drawn in four full-width bands; a tall one in a two-by-two grid
+  const gapX = 40;
+  const cellW22 = (F.w - gapX) / 2, cellH22 = (F.h - gapY) / 2, cellH41 = (F.h - 3 * gapY) / 4;
+  const s22 = Math.min((cellW22 - 2 * pad) / span, (cellH22 - 2 * pad - labelH) / hgt);
+  const s41 = Math.min((F.w - 2 * pad) / span, (cellH41 - 2 * pad - labelH) / hgt);
+  const stacked = s41 > s22 * 1.15;
+  const se = stacked ? s41 : s22;
+  const cellAt = (i, c0) => {
+    const b = stacked
+      ? { x: F.x, y: F.y + i * (cellH41 + gapY), w: F.w, h: cellH41 }
+      : { x: F.x + (i % 2) * (cellW22 + gapX), y: F.y + Math.floor(i / 2) * (cellH22 + gapY), w: cellW22, h: cellH22 };
+    b.ox = b.x + b.w / 2 - c0 * se; b.ground = b.y + labelH + (b.h - labelH) / 2 + (hgt / 2) * se - se; return b;
+  };
+  // each from its own side: south stands at +y (right is +x), north at -y (right -x),
+  // east at +x (right -y), west at -x (right +y)
+  const ux0 = union.x, ux1 = union.x + union.w, uy0 = union.y, uy1 = union.y + union.d;
+  const elevations = { s: se, stacked: stacked, cells: [
+    { label: 'SOUTH ELEVATION', side: 'S', sx: Ortho.SIDES.S.sx, cell: cellAt(0, cx), x0: px0, x1: px1, u0: ux0, u1: ux1 },
+    { label: 'NORTH ELEVATION', side: 'N', sx: Ortho.SIDES.N.sx, cell: cellAt(1, -cx), x0: -px1, x1: -px0, u0: -ux1, u1: -ux0 },
+    { label: 'EAST ELEVATION', side: 'E', sx: Ortho.SIDES.E.sx, cell: cellAt(2, -cy), x0: -py1, x1: -py0, u0: -uy1, u1: -uy0 },
+    { label: 'WEST ELEVATION', side: 'W', sx: Ortho.SIDES.W.sx, cell: cellAt(3, cy), x0: py0, x1: py1, u0: uy0, u1: uy1 },
+  ] };
+
+  // A-01 site plan: the block around the plot, from above, no cut — the plot
+  // plus one and a quarter of its own size each way, or the site if smaller
+  const sm = Math.max(union.w, union.d) * 1.25;
+  const sx0 = Math.max(ex0, union.x - sm), sx1 = Math.min(ex1, union.x + union.w + sm);
+  const sy0 = Math.max(ey0, union.y - sm), sy1 = Math.min(ey1, union.y + union.d + sm);
+  const sst = Math.min((F.w - 2 * pad) / (sx1 - sx0), (F.h - 2 * pad - labelH) / (sy1 - sy0));
+  const site = { s: sst, ox: F.x + F.w / 2 - ((sx0 + sx1) / 2) * sst, oy: F.y + labelH + (F.h - labelH) / 2 - ((sy0 + sy1) / 2) * sst };
+
+  // the v1.0 ortho record, kept for the token layer (the plan cut it reports)
+  const ortho = { s: sp, cutZ: cutZ, cutZ2: cutZ2, cutY: cutY, cutX: cutX, ext: { x0: px0, x1: px1, y0: py0, y1: py1, z1: ez1, sx0: sx0, sx1: sx1, sy0: sy0, sy1: sy1 } };
+  const datumZ = extra.datum || 0;
+  const levels = [];
+  for (let k = 0; k <= floors; k++) levels.push({ n: k, z: datumZ + k * spec.floorH, name: k === 0 ? 'GROUND' : k === floors ? 'ROOF' : 'L' + (k + 1) });
+  const set = { plans: plans, sections: sections, elevations: elevations, site: site, levels: levels, datum: datumZ, height: datumZ + floors * spec.floorH };
+  M.q = Model.derive(M, scene, { buildingSolids: buildingSolids, plot: plot, floors: floors, floorH: spec.floorH, datum: datumZ });
+  // the dogmas only the model can check join the style's own tenets, and the tally follows
+  const modelTenets = global.Dogmas ? global.Dogmas.for(key, M.q, M) : [];
+  const tenets = extra.tenets ? extra.tenets.concat(modelTenets) : modelTenets.length ? modelTenets : null;
+  const tk = meta.kv.find((e) => e[0] === 'TENETS');
+  if (tk && tenets) tk[1] = tenets.filter((x) => x.ok).length + '/' + tenets.length;
+  return { seed: seed, spec: spec, scene: scene, meta: meta, fit: fit, ortho: ortho, set: set, model: M, tenets: tenets, stats: { buildingSolids: buildingSolids, buildingItems: buildingItems, siteItems: scene.items.length - buildingItems, union: union } };
+}
+
+  // ---- the orthographic sheets ----
+  const LBL = { color: [48, 54, 64], alpha: 215 };
+  const RULE = { color: [58, 64, 74], alpha: 160, weight: 0.9, wob: 0.4 };
+
+  function clipRect(hand, r) {
+    hand.clipPath([[r.x, r.y], [r.x + r.w, r.y], [r.x + r.w, r.y + r.h], [r.x, r.y + r.h]]);
+  }
+
+  // a section mark: the cut line across the plan, dashed, a tick and a letter at each end
+  function sectionMark(hand, a0, a1, letter, side) {
+    const dx = a1[0] - a0[0], dy = a1[1] - a0[1], l = Math.hypot(dx, dy) || 1;
+    const nx = (-dy / l) * side, ny = (dx / l) * side;
+    hand.line([a0, a1], { alpha: 200, weight: 1.1, wob: 0.3, dash: [16, 6] });
+    for (const e of [a0, a1]) {
+      hand.line([[e[0], e[1]], [e[0] + nx * 14, e[1] + ny * 14]], { alpha: 200, weight: 1.3, wob: 0.3 });
+      hand.line([[e[0] + nx * 9 - ny * 5, e[1] + ny * 9 + nx * 5], [e[0] + nx * 14, e[1] + ny * 14], [e[0] + nx * 9 + ny * 5, e[1] + ny * 9 - nx * 5]], { alpha: 200, weight: 1.3, wob: 0.3 });
+      hand.text(letter, e[0] - nx * 16, e[1] - ny * 16 - 5, 11, LBL, { align: 'center' });
+    }
+  }
+
+  function planMarks(hand, P, O) {
+    sectionMark(hand, P([O.ext.x0 - 2, O.cutY, 0]), P([O.ext.x1 + 2, O.cutY, 0]), 'A', -1);
+    sectionMark(hand, P([O.cutX, O.ext.y0 - 2, 0]), P([O.cutX, O.ext.y1 + 2, 0]), 'B', 1);
+  }
+
+  function northMark(hand, x, y) {
+    hand.text('N', x, y, 11, LBL);
+    hand.line([[x + 6, y + 20], [x + 6, y + 2]], RULE);
+    hand.line([[x + 2, y + 7], [x + 6, y + 2], [x + 10, y + 7]], RULE);
+  }
+
+  function groundLine(hand, Ps, x0, x1) {
+    const g0 = Ps([x0 - 2, 0]), g1 = Ps([x1 + 2, 0]);
+    hand.line([g0, g1], { alpha: 235, weight: 2.4, wob: 0.3 });
+    hand.poly([[g0[0], g0[1]], [g1[0], g1[1]], [g1[0], g1[1] + 26], [g0[0], g0[1] + 26]], { color: [70, 76, 88], alpha: 110, mode: 'hatch', spacing: 4, angle: Math.PI / 4 }, null);
+    return g1;
+  }
+
+  // ---- room labels: a name and an area where the cut passes through a space ----
+  const LBL2 = { color: [48, 54, 64], alpha: 195 }, LBL3 = { color: [70, 76, 88], alpha: 170 };
+  // label geometry: a name over an area, sized to the space; returns the rect it needs
+  function labelSpec(hand, sp, avail) {
+    const nm = sp.name;
+    let sz = 7.5;
+    while (sz > 5.5 && hand.textWidth(nm, sz) > avail * 0.94) sz -= 0.5;
+    const area = (sp.area >= 9.5 ? Math.round(sp.area) : sp.area.toFixed(1)) + ' M2';
+    const named = hand.textWidth(nm, sz) <= avail * 0.94;
+    if (!named && avail <= 24) return null;
+    const w = named ? Math.max(hand.textWidth(nm, sz), hand.textWidth(area, sz - 0.5)) : hand.textWidth(area, 5.5);
+    return { nm: nm, area: area, sz: sz, named: named, w: w, h: named ? sz * 2 + 4 : 9 };
+  }
+  function labelDraw(hand, L, x, y) {
+    if (L.named) {
+      hand.text(L.nm, x - hand.textWidth(L.nm, L.sz) / 2, y - L.sz - 1, L.sz, LBL2);
+      hand.text(L.area, x - hand.textWidth(L.area, L.sz - 0.5) / 2, y + 2, L.sz - 0.5, LBL3);
+    } else hand.text(L.area, x - hand.textWidth(L.area, 5.5) / 2, y - 3, 5.5, LBL3);
+  }
+  // small spaces claim their centre first; larger ones step to a free corner of
+  // their own footprint, or go unlabelled rather than print over another label
+  function planLabels(hand, state, P, cutZ, s) {
+    if (!isFinite(cutZ)) return;
+    const FH = state.spec.floorH;
+    const list = [];
+    for (const sp of state.model.spaces) {
+      if (sp.kind === 'unit') continue;
+      const enclosed = sp.kind === 'room' || sp.kind === 'service' || sp.kind === 'circulation';
+      const on = enclosed ? sp.z <= cutZ && cutZ < sp.z + sp.h : sp.z <= cutZ && cutZ - sp.z < FH * 1.1;
+      if (!on || (sp.kind === 'service' && sp.area < 6) || (sp.kind === 'terrace' && sp.area > 60)) continue;
+      list.push(sp);
+    }
+    list.sort((a, b) => a.area - b.area);
+    const placed = [];
+    const free = (r) => placed.every((q) => r.x1 < q.x0 || r.x0 > q.x1 || r.y1 < q.y0 || r.y0 > q.y1);
+    for (const sp of list) {
+      const bb = sp.bb, p0 = P([bb.x0, bb.y0, 0]), p1 = P([bb.x1, bb.y1, 0]);
+      const X0 = Math.min(p0[0], p1[0]), X1 = Math.max(p0[0], p1[0]), Y0 = Math.min(p0[1], p1[1]), Y1 = Math.max(p0[1], p1[1]);
+      const L = labelSpec(hand, sp, Math.min(X1 - X0, Math.sqrt(sp.area) * 1.6 * s));
+      if (!L) continue;
+      const hw = L.w / 2 + 1, m = 4;
+      const cands = [[(X0 + X1) / 2, (Y0 + Y1) / 2],
+        [X0 + m + hw, Y0 + m + L.h / 2 + 3], [X1 - m - hw, Y0 + m + L.h / 2 + 3],
+        [X0 + m + hw, Y1 - m - L.h / 2 + 3], [X1 - m - hw, Y1 - m - L.h / 2 + 3]];
+      for (const c of cands) {
+        const r = { x0: c[0] - hw, x1: c[0] + hw, y0: c[1] - L.h + 1, y1: c[1] + 6 };
+        if (r.x0 < X0 || r.x1 > X1 || r.y0 < Y0 || r.y1 > Y1) continue;
+        if (!free(r)) continue;
+        placed.push(r);
+        labelDraw(hand, L, c[0], c[1]);
+        break;
+      }
+    }
+  }
+  function sectionLabels(hand, state, b, s, c) {
+    for (const sp of state.model.spaces) {
+      if (sp.kind === 'unit' || sp.kind === 'terrace' || sp.kind === 'water' || sp.h <= 0) continue;
+      const bb = sp.bb, lo = c.dir === 'y' ? bb.y0 : bb.x0, hi = c.dir === 'y' ? bb.y1 : bb.x1;
+      if (!(lo < c.cut && c.cut < hi)) continue;
+      const sx = c.dir === 'y' ? (bb.x0 + bb.x1) / 2 : -(bb.y0 + bb.y1) / 2;
+      const wpx = (c.dir === 'y' ? bb.x1 - bb.x0 : bb.y1 - bb.y0) * s, hpx = sp.h * s;
+      if (hpx < 13 || wpx < 30) continue;
+      const x = b.ox + sx * s, y = b.ground - (sp.z + sp.h / 2) * s;
+      const nm = sp.name, sz = Math.min(7, hpx * 0.4);
+      if (hand.textWidth(nm, sz) <= wpx * 0.92) hand.text(nm, x - hand.textWidth(nm, sz) / 2, y - sz / 2, sz, LBL3);
+    }
+  }
+
+  const fmt = (v) => v.toFixed(2);
+  // overall dimensions of the plot on a plan, the structural grid with its bubbles
+  function planFurniture(hand, state, P, S) {
+    const u = state.stats.union, g = state.model.grids[0];
+    const ext = { x0: u.x - 22 / S, x1: u.x + u.w + 22 / S, y0: u.y - 22 / S, y1: u.y + u.d + 22 / S };
+    if (g && g.xs.length > 1 && g.ys.length > 1) {
+      // bubbles on the grid lines that fall inside the plot's extent
+      Ortho.gridLines(hand, g, P, ext, Ortho.labels(g.xs.length, true), Ortho.labels(g.ys.length, false));
+    }
+    Ortho.dim(hand, P([u.x, u.y, 0]), P([u.x + u.w, u.y, 0]), -62, fmt(u.w), 9);
+    Ortho.dim(hand, P([u.x, u.y, 0]), P([u.x, u.y + u.d, 0]), 62, fmt(u.d), 9);
+  }
+  // level markers down the right of a section or an elevation
+  function levelMarks(hand, state, b, s) {
+    const L = state.set.levels, x1 = b.x + b.w - 14, x0 = x1 - 80;
+    for (const l of L) {
+      if (l.n === 0) continue;
+      const y = b.ground - l.z * s;
+      if (y < b.y + 24) continue;
+      Ortho.level(hand, x0, x1, y, '+' + fmt(l.z), 'right');
+    }
+  }
+  // the overall height beside the building
+  function heightDim(hand, state, b, s, u0) {
+    const H = state.set.height, x = b.ox + u0 * s;
+    Ortho.dim(hand, [x, b.ground], [x, b.ground - H * s], -34, fmt(H), 9);
+  }
+
+  // A-01: everything the site generator placed, seen from above
+  function paintSite(hand, state) {
+    const S = state.set.site, O = state.ortho, F = Sheet.layout({ schedule: state.spec.schedule }).frame;
+    const P = (p) => [S.ox + p[0] * S.s, S.oy + p[1] * S.s];
+    clipRect(hand, F);
+    Ortho.plan(state.scene, hand, P, Infinity);
+    // the plot's boundary, dashed, and the section marks
+    const u = state.stats.union;
+    hand.line([P([u.x, u.y]), P([u.x + u.w, u.y]), P([u.x + u.w, u.y + u.d]), P([u.x, u.y + u.d]), P([u.x, u.y])], { alpha: 150, weight: 0.9, wob: 0.4, dash: [10, 6] });
+    planMarks(hand, P, O);
+    planFurniture(hand, state, P, S.s);
+    hand.unclip();
+    hand.text('SITE PLAN', F.x + 14, F.y + 10, 11, LBL);
+    northMark(hand, F.x + F.w - 40, F.y + 10);
+    return null;
+  }
+
+  // A-02: the ground floor and a typical upper floor (or the roof), one above the other
+  function paintPlans(hand, state) {
+    const Pl = state.set.plans, O = state.ortho, scene = state.scene;
+    for (const c of Pl.cuts) {
+      const b = c.band;
+      const P = (p) => [b.ox + p[0] * Pl.s, b.oy + p[1] * Pl.s];
+      clipRect(hand, b);
+      Ortho.plan(scene, hand, P, c.z);
+      planLabels(hand, state, P, c.z, Pl.s);
+      planMarks(hand, P, O);
+      planFurniture(hand, state, P, Pl.s);
+      hand.unclip();
+      hand.text(c.label, b.x + 14, b.y + 10, 11, LBL);
+      northMark(hand, b.x + b.w - 40, b.y + 10);
+    }
+    const b1 = Pl.cuts[1].band;
+    hand.line([[b1.x, b1.y - 20], [b1.x + b1.w, b1.y - 20]], RULE);
+    return null;
+  }
+
+  // A-03: two sections at right angles, each looking at the far half of the scene
+  function paintSections(hand, state) {
+    const Se = state.set.sections, scene = state.scene;
+    let first = null;
+    for (const c of Se.cuts) {
+      const b = c.band;
+      const P = (p) => [b.ox + c.sx(p) * Se.s, b.ground - p[2] * Se.s];
+      clipRect(hand, b);
+      Ortho.section(scene, hand, P, c.dir, c.cut);
+      sectionLabels(hand, state, b, Se.s, c);
+      const g1 = groundLine(hand, (q) => [b.ox + q[0] * Se.s, b.ground - q[1] * Se.s], c.x0, c.x1);
+      heightDim(hand, state, b, Se.s, c.u0);
+      levelMarks(hand, state, b, Se.s);
+      hand.unclip();
+      hand.text(c.label, b.x + 14, b.y + 10, 11, LBL);
+      // the datum label sits at the ground line's end, kept inside the band
+      hand.text('+0.00', Math.min(g1[0], b.x + b.w) - hand.textWidth('+0.00', 9) - 6, g1[1] - 12, 9, LBL);
+      if (!first) first = { yBase: b.ground, step: state.spec.floorH * Se.s, n: state.spec.floors };
+    }
+    const b1 = Se.cuts[1].band;
+    hand.line([[b1.x, b1.y - 20], [b1.x + b1.w, b1.y - 20]], RULE);
+    return first;
+  }
+
+  // A-04: four elevations, nothing cut, the far things drawn first
+  function paintElevations(hand, state) {
+    const El = state.set.elevations, scene = state.scene;
+    let first = null;
+    for (const c of El.cells) {
+      const b = c.cell;
+      const P = (p) => [b.ox + c.sx(p) * El.s, b.ground - p[2] * El.s];
+      clipRect(hand, b);
+      Ortho.elevation(scene, hand, P, c.side);
+      groundLine(hand, (q) => [b.ox + q[0] * El.s, b.ground - q[1] * El.s], c.x0, c.x1);
+      heightDim(hand, state, b, El.s, c.u0);
+      levelMarks(hand, state, b, El.s);
+      hand.unclip();
+      hand.text(c.label, b.x + 14, b.y + 10, 11, LBL);
+      if (!first) first = { yBase: b.ground, step: state.spec.floorH * El.s, n: state.spec.floors };
+    }
+    if (El.stacked) {
+      for (let i = 1; i < 4; i++) { const c = El.cells[i].cell; hand.line([[c.x, c.y - 20], [c.x + c.w, c.y - 20]], RULE); }
+    } else {
+      const c1 = El.cells[1].cell, c2 = El.cells[2].cell;
+      hand.line([[c1.x - 20, c1.y], [c1.x - 20, c1.y + c1.h * 2 + 40]], RULE);
+      hand.line([[c2.x, c2.y - 20], [c2.x + c2.w * 2 + 40, c2.y - 20]], RULE);
+    }
+    return first;
+  }
+
+  // A-05: the axonometric, clipped to its frame
+  function paintAxon(hand, state) {
+    const spec = state.spec, fit = state.fit, F = Sheet.layout({ schedule: spec.schedule }).frame;
+    const P = (p) => {
+      const q = ISO.proj(p);
+      return [fit.ox + q[0] * fit.s, fit.oy + q[1] * fit.s];
+    };
+    clipRect(hand, F);
+    Hand.render(state.scene, hand, P);
+    hand.unclip();
+    const g0 = P([spec.plot.x + spec.plot.w / 2, spec.plot.y + spec.plot.d / 2, 0]);
+    return { yBase: g0[1], step: spec.floorH * fit.s, n: spec.floors };
+  }
+
+  // A-06: the diagrams, from the model
+  function paintDiagrams(hand, state) { return global.Diagrams.paint(hand, state); }
+
+  const PAINTERS = [paintSite, paintPlans, paintSections, paintElevations, paintAxon, paintDiagrams];
+
+// Paint a built sheet into any p5 renderer (the window in global mode, or a
+// p5.Graphics) — the sheet scales to the renderer's width.
+function paint(g, state, opts) {
+  opts = opts || {};
+  const spec = state.spec;
+  const R = ISO.rng(state.seed ^ 0x5a5a);
+  const wob = opts.wobble === undefined ? 1 : opts.wobble;
+  const inkScale = (opts.ink === undefined ? 1 : opts.ink) * (spec.ink === 'FINE' ? 0.82 : spec.ink === 'HEAVY' ? 1.3 : 1);
+  // v2 prints as a risograph: the drawing is made in ink on a white buffer, then
+  // separated into the two drums and overprinted on the grid stock (lib/riso.js)
+  const riso = spec.paper === 'RISO' && global.Riso && global.createGraphics && spec.inks;
+  let T = g;
+  if (riso) {
+    T = global.createGraphics(g.width, g.height);
+    // supersample the plates 2x on a 1x display so hairlines survive the screen
+    const gpd = g.pixelDensity ? g.pixelDensity() : 1;
+    T.pixelDensity(gpd >= 2 ? gpd : gpd * 2);
+    T.background(255);
+  }
+  const hand = Hand.create(T, R.fork('hand'), { wob: wob, weightScale: inkScale });
+  const L = Sheet.layout({ schedule: spec.schedule });
+  const U = T.width / SW;
+
+  if (!riso) {
+    const tex = Paper.texture(g.width, g.height, spec.paper, state.seed);
+    g.blendMode(g.BLEND);
+    g.noTint();
+    g.image(tex, 0, 0, g.width, g.height);
+  }
+
+  T.push();
+  T.scale(U);
+  if (!riso) Paper.grid(hand, SW, SH, spec.grid === 'SMALL' ? 12.5 : 20);
+  Paper.marginalia(hand, R.fork('margin'), SW, SH, L.schedule ? [L.title, L.footer, L.schedule] : [L.title, L.footer], riso ? 0.6 : spec.paper === 'ROUGH' ? 1.4 : 1);
+
+  const floorInfo = PAINTERS[spec.sheet](hand, state);
+
+  // chrome, with the floor scale keyed to the building's ground line
+  Sheet.draw(hand, state.meta, floorInfo, { schedule: spec.schedule });
+  if (spec.schedule && Strata.drawSchedule) Strata.drawSchedule(hand, state, L.schedule);
+  if (riso) {
+    // the printer's slug beside the colour bar
+    const bz = global.Riso.bar();
+    hand.text('RISOGRAPH  ' + spec.inks.name + '  TWO DRUMS  SCREEN 15 / 75 DEG', 75, bz.y0 + 4, 8, { color: [48, 54, 64], alpha: 215 });
+  }
+  T.pop();
+
+  if (riso) {
+    global.Riso.print(g, T, { seed: state.seed, inks: spec.inks, outW: Math.round(g.width * (g.pixelDensity ? g.pixelDensity() : 1)) });
+    T.remove();
+    return;
+  }
+
+  // pencil tooth over everything: the paper's own texture multiplied back in
+  const tex2 = Paper.texture(g.width, g.height, spec.paper, state.seed);
+  g.blendMode(g.MULTIPLY);
+  g.tint(255, spec.paper === 'ROUGH' ? 50 : 70);
+  g.image(tex2, 0, 0, g.width, g.height);
+  g.noTint();
+  g.blendMode(g.BLEND);
+}
+
+  global.Strata = Object.assign(global.Strata || {}, { SW: SW, SH: SH, PALETTES: PALETTES, STYLE_KEYS: STYLE_KEYS, SHEETS: SHEETS, build: build, paint: paint });
+})(window);
