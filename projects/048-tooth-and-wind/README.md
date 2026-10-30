@@ -127,9 +127,26 @@ Only the seed, the medium and a window resize rebuild the sheet (for pastel the 
 since it carries the palette). Every other setting changes the weather over the drawing
 already there.
 
-Keys: **R** new seed · **S** save PNG · **G** gust · **E** erase · **Space** pause.
+Keys: **R** new seed · **S** save PNG · **G** gust · **E** erase · **Space** pause · **C** cast.
 Drag to smudge and blow; double-click to throw a splatter. `?gui=0` (contact-sheet tile)
 develops 1,800 frames (30 s) off-screen and holds still.
+
+## Casting to a TV
+
+**▭ Cast to a screen (C)** in the panel (Chrome and Edge, desktop and Android) uses the
+Presentation API. With a Chromecast, Chrome renders the receiver page, which is this page with
+`?present=1`, in a tab of its own off-screen and streams it to the TV. No Cast app has to be
+registered, and the drawing runs at the computer's speed, not the dongle's.
+
+- The receiver shows only the piece: no panel, caption, back link or cursor.
+- It starts the same seed and settings on a fresh sheet, at the TV's proportions, so its
+  composition differs from the laptop's.
+- From then on the casting page is its remote. Setting changes, new seeds, G, E, Space, drags
+  and double-clicks are sent as messages and replayed on the TV.
+- Press C again to stop. If no screen is found, the caption says so.
+- In browsers without the Presentation API, use the browser's own tab casting (in Chrome:
+  ⋮ → Cast… → Cast tab). Opening `?present=1` directly gives the clean view by itself, for a
+  projector.
 
 Determinism: same seed and settings → same sequence, frame for frame, until the viewer
 touches it.
