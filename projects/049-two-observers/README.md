@@ -6,9 +6,13 @@ concentric stones, combs dragged back and forth, waves, swirls — until the pap
 print is taken. Every ink is seen by one of two observers. The **Eulerian** observer looks through
 a fixed screen on the glass. The **Lagrangian** observer's screen is printed on the ink itself, so
 its dots and lines are combed, stretched and folded with the material. Where the ink is squeezed
-finer than the eye can resolve, the fixed observer takes over.
+finer than the eye can resolve, the fixed observer takes over. Two more observers come from
+physical work: **Soto**'s fixed striped panel, seen through ink that carries its own lines, so
+the combing makes the moiré swim and the viewer's position moves the panel; and **Mellan**'s
+single spiral line, whose width is the tone, engraving drops as lit spheres that the comb then
+drags — and that leave the screen as a pen-plotter drawing.
 
-![seed 9, bath 1, the print: 52 gestures, 6 eulerian and 5 lagrangian inks](preview.png)
+![seed 1234, bath 1, the print: a Soto panel at the top, three Mellan spheres, 47 gestures](preview.png)
 
 **Mechanism (one sentence):** every gesture is an exact, invertible map of the plane, so the bath
 at time *t* is found by pulling each pixel back through the gestures that have started, newest
@@ -74,11 +78,37 @@ Kept: the collage of procedural fields in rigid windows, folding motion, contour
 - **Tone:** a pixel is paper when the ink's tone exceeds its observer's threshold; stripes and
   edges are already 0 or 1 and pass through any screen unchanged.
 
+## Soto and Mellan
+
+- **Soto** (*Vibrations*, rods before striped panels, from the late 1950s). A fixed vertical panel
+  on the glass — period *soto panel* cells (4), half ink — behind ink that carries its own
+  near-vertical lines at 0.93 – 0.97 or 1.03 – 1.07 of the panel's pitch and up to ±3.4° off it. A pixel is ink
+  if the panel or the ink's line covers it, as opaque things superimpose. The two pitches beat:
+  wide moiré bands that bend and travel as the comb shears the ink's lines. The pointer is a third
+  observer — moving across the window slides the panel through one full period, and the bands run.
+  A bath has a Soto panel window (and, rarely, Soto drops) with probability *soto chance* (0.7).
+- **Mellan** (*The Sudarium of Saint Veronica*, 1649, a face engraved as one spiral line). Larger
+  drops (radius ≥ 0.05) become spheres lit from the upper left, drawn by a single Archimedean
+  spiral about the drop's centre at 70 – 100 turns per plate unit, its width the darkness. The
+  spiral lives in the ink's frame, so combs and swirls carry it. Present with probability
+  *mellan chance* (0.8); about 40 % of the larger drops take it.
+- **The plotter layer (V).** Every visible Mellan spiral pushed *forward* through the gestures
+  after its drop (the exact forward maps, the inverse of the shader's pull-back), clipped where
+  later ink covers it — tested by pulling each point back and checking it lands in its own drop —
+  and at the plate edge. One pen: the swelling line is up to five strands side by side, each laid
+  only where the engraving is dark enough to need it. Where the combing has stretched the spiral,
+  the line is bisected until segments are under 0.4 mm, and the pen lifts where it stays torn.
+  SVG in millimetres (160 × 200 plate), one Inkscape layer per drop plus the frame.
+- Both draw from their own random stream, so adding them changed no other gesture of a seed's
+  score; it does change which ink some drops carry.
+
 ## Prints and scores
 
 - **P** — the print: the screen's own bits enlarged by a whole factor to about 4,000 px tall, on
   the paper with its rule and caption. No resampling, no new pixels: the print is what the
   observer saw.
+- **V** — the plotter layer as SVG (above). It holds the Mellan lines and the frame only, not the
+  bitmap.
 - **J** — the score as JSON: seed, bath, session seed, movement, ground windows, every ink with its
   observer and screen, every gesture with its times and parameters.
 - **S** — the whole sheet as shown.
@@ -86,24 +116,33 @@ Kept: the collage of procedural fields in rigid windows, folding motion, contour
 ## Controls
 
 Space pause / play · ← → scrub one second (Shift: five) · N / B next / previous bath · O the score
-drawn over the plate (gestures in progress, in red) · P print · J score · S sheet · R new seed.
-Panel: *cell* (css px per dither cell, 2 by default — about the foundation's grain), *speed*,
-*lagrangian share*, *gesture density*, *resolvable period*. URL: `?seed=…&bath=…&t=…&pause=1`
-reproduces a moment; the panel writes its own parameters to the link.
+drawn over the plate (gestures in progress, in red) · P print · V plotter SVG · J score · S sheet ·
+R new seed · pointer across the window: Soto's panel. Panel: *cell* (css px per dither cell, 2 by
+default — about the foundation's grain), *speed*, *lagrangian share*, *gesture density*,
+*resolvable period*, *soto chance*, *mellan chance*, *soto panel*. URL:
+`?seed=…&bath=…&t=…&pause=1&par=…` reproduces a moment, `par` being the panel's shift in cells;
+the panel writes its own parameters to the link.
 
 ## Files
 
-- `marble.js` — score generator, blue-noise screen, the pull-back and both observers on the CPU,
-  packing for the shader, the JSON record. Runs in Node.
+- `marble.js` — score generator, blue-noise screen, the pull-back and every observer on the CPU,
+  the forward maps and the plotter layer, packing for the shader, the JSON record. Runs in Node.
 - `sketch.js` — the WebGL2 fragment shader (the same arithmetic per pixel), the sheet, the bath
   life cycle, exports. Without WebGL2 it falls back to the CPU path.
 
 ## Verification
 
-- GPU against CPU, headless Chromium (SwiftShader), grid 336 × 420: the shader's bits agree with
-  `marble.js` on 98.53 % (seed 7, t 20), 99.66 % (seed 21, t 30) and 99.22 % (seed 404, the
-  print) of cells. The remainder are pixels whose tone sits on a threshold (float32 against
+- GPU against CPU, headless Chromium (SwiftShader), grid 336 × 420, with Soto and Mellan: the
+  shader's bits agree with `marble.js` on 99.66 % (seed 7, t 12), 99.74 % (seed 21, t 17.1),
+  99.72 % (the same with the panel shifted 1.5 cells), 99.21 % (seed 9, the print) and 99.34 %
+  (seed 404, the print, panel shifted 2.2) of cells. The remainder are pixels whose tone sits on a threshold (float32 against
   float64) or whose derivative crosses a material edge. Frame time there: 200 – 220 ms.
+- Forward against inverse: 2,000 random points pushed forward from a random gesture to the end of
+  seed 7's score and pulled back return to within 1.4 × 10⁻¹⁴ plate units.
+- Plotter layer at the print, seeds 7, 9, 404, 1234: 9 – 13 drops, 189 – 279 polylines,
+  43 – 83 thousand points, longest segment 0.40 mm, 0.6 – 1.2 MB, 140 – 200 ms in Node.
+- Pointer parallax: moving to the left edge shifts the panel by −1.46 cells within 1.5 s, and the
+  moiré bands move with it; V downloads from the page.
 - Page life cycle: score overlay, print download (3780 × 4830), score download, auto-advance to
   the next bath with the peel, 0 page errors.
 - Composition was tuned on CPU renders of six seeds: the first scores ended on a fine comb and
@@ -124,4 +163,9 @@ reproduces a moment; the panel writes its own parameters to the link.
 - The caption is antialiased text; the plate alone is strictly two colours.
 - At *gesture density* 1.5 some scores reach the 160-gesture cap; gestures past it are dropped,
   closing drops included.
+- Soto's panel is measured in cells, so its pitch — and the ink lines tuned to it — follows the
+  window: the moiré's scale is the same on every screen, but the ink lines' plate frequency is not,
+  and a print records the screen it was taken from.
+- The panel follows the pointer only; device tilt is not read.
+- The plotter layer is Mellan's spirals and the frame; the rest of the plate is bitmap only.
 - The contact-sheet button opens one WebGL context per tile; browsers cap live contexts, untested.
