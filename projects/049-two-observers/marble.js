@@ -14,6 +14,11 @@
  * stretched with the ink. Where the ink is squeezed finer than the eye can resolve, the fixed
  * observer takes over.
  *
+ * Two observers borrowed from physical work. Soto (the Vibrations): a fixed striped panel on the
+ * glass seen through ink that carries its own near-parallel lines, so combing makes the moire
+ * swim and the viewer's position shifts the panel. Mellan (the Sudarium, 1649): one spiral line
+ * per drop whose width carries the tone, combed with the ink and exportable for a pen plotter.
+ *
  * sketch.js runs the same arithmetic in a fragment shader; this file generates the score,
  * the blue-noise screen and a CPU render used for previews and for checking the shader.
  */
@@ -23,8 +28,8 @@
   // --- constants shared with the shader (keep in step with sketch.js) ---
   const PLATE_W = 1.0, PLATE_H = 1.25;     // plate units, 4 : 5, origin at the centre
   const OP = { DROP: 1, COMB: 2, WAVE: 3, SWIRL: 4 };
-  const PAT = { FLAT: 0, STRIPES: 1, BANDS: 2, LATTICE: 3, NOISE: 4, RINGS: 5 };
-  const SCR = { BAYER: 0, BLUE: 1, DOTS: 2, LINES: 3 };
+  const PAT = { FLAT: 0, STRIPES: 1, BANDS: 2, LATTICE: 3, NOISE: 4, RINGS: 5, SPHERE: 6 };
+  const SCR = { BAYER: 0, BLUE: 1, DOTS: 2, LINES: 3, SOTO: 4, SPIRAL: 5 };
   const MAX_OPS = 160, MAX_MATS = 16, MAX_WINS = 6;
 
   function mulberry32(a) {
@@ -101,6 +106,27 @@
       mat(PAT.RINGS, rnd(0.35, 0.6), rnd(28, 46), 0, 0),
       mat(PAT.STRIPES, 1, rnd(16, 30), rnd(0, Math.PI), 0.5),
     ];
+
+    // Soto and Mellan, drawn from their own stream so the rest of a seed's score is unchanged.
+    const R2 = mulberry32(sessionSeed(seed, bath) ^ 0x50703e11);
+    const pSoto = opts.soto == null ? 0.7 : opts.soto, pMellan = opts.mellan == null ? 0.8 : opts.mellan;
+    let sotoMat = -1, mellanMat = -1;
+    if (R2() < pSoto) {
+      // ink that carries near-vertical lines at nearly the panel's pitch: the beat is the moire
+      mats.push({ pattern: PAT.FLAT, tone: 0.35 + 0.3 * R2(), freq: 0, angle: 0, screen: SCR.SOTO,
+        sfreq: (R2() < 0.5 ? 0.93 : 1.03) + 0.04 * R2(), sangle: (R2() - 0.5) * 0.12, param: 0 });
+      sotoMat = mats.length - 1;
+      // a modest panel, slipped in among the other windows rather than laid over all of them
+      const hx = 0.12 + 0.1 * R2(), hy = 0.18 + 0.14 * R2();
+      const at = Math.floor(R2() * (wins.length + 1));
+      wins.splice(at, 0, { cx: (R2() - 0.5) * 0.55, cy: (R2() - 0.5) * 0.7, hx, hy, angle: 0, mat: sotoMat });
+    }
+    if (R2() < pMellan) {
+      // a sphere lit from above left, engraved as one spiral (angle = light direction, y down)
+      mats.push({ pattern: PAT.SPHERE, tone: 0, freq: 0, angle: -2.36 + (R2() - 0.5) * 0.9, screen: SCR.SPIRAL,
+        sfreq: 70 + 30 * R2(), sangle: 0, param: 0 });
+      mellanMat = mats.length - 1;
+    }
     while (mats.length > MAX_MATS) mats.pop();
 
     // Timeline: movements in a seeded order. Each op: {type, t0, dur, mat, a:[4], b:[4]}.
@@ -181,11 +207,18 @@
       else if (m === 'swirl') swirl();
       t += rnd(0.6, 1.6);
     }
+    // Some of the larger drops become Mellan spheres or Soto glass.
+    for (const o of ops) {
+      if (o.type !== OP.DROP) continue;
+      const u = R2();
+      if (mellanMat >= 0 && o.a[2] >= 0.05 && u < 0.4) o.mat = mellanMat;
+      else if (sotoMat >= 0 && u > 0.93) o.mat = sotoMat;
+    }
     let end = 0;
     for (const o of ops) end = Math.max(end, o.t0 + o.dur);
     const settle = end + 2.5;
     return {
-      seed: seed >>> 0, bath, sessionSeed: sessionSeed(seed, bath), movement,
+      seed: seed >>> 0, bath, sessionSeed: sessionSeed(seed, bath), movement, sotoMat, mellanMat,
       mats, bg, wins, ops, settle, hold: 6, length: settle + 6,
       lagrange, density,
     };
@@ -255,7 +288,7 @@
       if (o.type === OP.DROP) {
         const vx = x - a[0], vy = y - a[1];
         const L2 = vx * vx + vy * vy, rr2 = a[2] * a[2] * s;
-        if (L2 < rr2) { const k2 = 1 / Math.sqrt(Math.max(s, 1e-4)); return { mat: o.mat, x: vx * k2, y: vy * k2 }; }
+        if (L2 < rr2) { const k2 = 1 / Math.sqrt(Math.max(s, 1e-4)); return { mat: o.mat, x: vx * k2, y: vy * k2, rad: a[2], op: k }; }
         const f = Math.sqrt(1 - rr2 / L2);
         x = a[0] + vx * f; y = a[1] + vy * f;
       } else if (o.type === OP.COMB) {
@@ -288,7 +321,7 @@
       const ux = (x - w.cx) * c - (y - w.cy) * sn, uy = (x - w.cx) * sn + (y - w.cy) * c;
       if (Math.abs(ux) < w.hx && Math.abs(uy) < w.hy) m = w.mat;
     }
-    return { mat: m, x, y };
+    return { mat: m, x, y, rad: 0, op: -1 };
   }
 
   function vnoise(x, y, salt) {
@@ -305,7 +338,7 @@
   const fract = (v) => v - Math.floor(v);
 
   // Tone of a material at its own coordinates (0 = ink, 1 = paper).
-  function tone(M, x, y) {
+  function tone(M, x, y, rad) {
     const c = Math.cos(M.angle), s = Math.sin(M.angle);
     const u = x * c + y * s, v = -x * s + y * c;
     switch (M.pattern) {
@@ -330,6 +363,12 @@
         if (M.param > 0) { const k = fract(nv * M.param); if (k < 0.1) return 0; if (k < 0.16) return 1; }
         return g;
       }
+      case PAT.SPHERE: {
+        const r = Math.max(rad || 0.05, 1e-4), nx = x / r, ny = y / r;
+        const nz = Math.sqrt(Math.max(0, 1 - nx * nx - ny * ny));
+        const lx = Math.cos(M.angle) * 0.62, ly = Math.sin(M.angle) * 0.62, lz = 0.78;
+        return Math.min(1, 0.04 + 0.96 * Math.max(0, nx * lx + ny * ly + nz * lz));
+      }
       case PAT.RINGS: {
         const w = fract(Math.sqrt(x * x + y * y) * M.freq);
         return w < 0.18 ? 0 : w < 0.3 ? 1 : M.tone;
@@ -340,7 +379,33 @@
 
   // Threshold of the observer that sees material M at pixel (ix, iy), local coords (x, y),
   // with k = material units per pixel and resolve = minimum resolvable screen period (px).
+  // Soto: fixed vertical panel (period P cells, shifted by the viewer) OR the ink's own lines.
+  function sotoBit(M, ix, x, y, k, C) {
+    const P = C.panel, par = C.parallax || 0;
+    const panelInk = (((ix + par) / P) % 1 + 1) % 1 < 0.5;
+    const fL = M.sfreq * C.gw / (P * PLATE_W);
+    let lineInk = false;
+    if (1 / (fL * Math.max(k, 1e-9)) >= C.resolve) {
+      const u = (x * Math.cos(M.sangle) + y * Math.sin(M.sangle)) * fL;
+      lineInk = u - Math.floor(u) < 0.3 + 0.35 * (1 - M.tone);
+    }
+    return panelInk || lineInk ? 0 : 1;
+  }
+  function shade(M, ix, iy, q, k, C) {
+    if (M.screen === SCR.SOTO) return sotoBit(M, ix, q.x, q.y, k, C);
+    const g = tone(M, q.x, q.y, q.rad);
+    return g > threshold(M, ix, iy, q.x, q.y, k, C.resolve, C.blue) ? 1 : 0;
+  }
+
   function threshold(M, ix, iy, x, y, k, resolve, blue) {
+    if (M.screen === SCR.SPIRAL) {
+      // Mellan: one Archimedean spiral about the drop's centre, pitch 1 / sfreq
+      if (1 / (M.sfreq * Math.max(k, 1e-9)) >= resolve) {
+        const u = Math.sqrt(x * x + y * y) * M.sfreq - Math.atan2(y, x) / 6.283185307;
+        return 0.5 - 0.5 * Math.cos(6.283185307 * u);
+      }
+      return blue[(iy & 63) * 64 + (ix & 63)];
+    }
     if (M.screen === SCR.DOTS || M.screen === SCR.LINES) {
       const period = 1 / (M.sfreq * Math.max(k, 1e-9));
       if (period >= resolve) {
@@ -365,6 +430,7 @@
     opts = opts || {};
     const resolve = opts.resolve || 2.5;
     const blue = blueNoise();
+    const C = { resolve, blue, gw, panel: opts.panel || 4, parallax: opts.parallax || 0 };
     const bits = new Uint8Array(gw * gh);
     const P = new Array(gw * gh);
     for (let iy = 0; iy < gh; iy++) for (let ix = 0; ix < gw; ix++) {
@@ -377,11 +443,121 @@
       const a = P[y0 * gw + x0], bx = P[y0 * gw + Math.min(gw - 1, x0 + 1)], by = P[Math.min(gh - 1, y0 + 1) * gw + x0];
       const kx = Math.hypot(bx.x - a.x, bx.y - a.y), ky = Math.hypot(by.x - a.x, by.y - a.y);
       const k = Math.max(kx, ky);
-      const g = tone(M, q.x, q.y);
-      const T = threshold(M, ix, iy, q.x, q.y, k, resolve, blue);
-      bits[iy * gw + ix] = g > T ? 1 : 0;
+      bits[iy * gw + ix] = shade(M, ix, iy, q, k, C);
     }
     return bits;
+  }
+
+  // ------------------------------------------------------------------ the plotter layer (Mellan)
+  // Push a point forward through every started op after op k (the pull-back, run the other way).
+  function pushForward(S, t, k, x, y) {
+    for (let j = k + 1; j < S.ops.length; j++) {
+      const o = S.ops[j];
+      if (t < o.t0) continue;
+      const s = progress(o, t), a = o.a, b = o.b;
+      if (o.type === OP.DROP) {
+        let vx = x - a[0], vy = y - a[1];
+        let L2 = vx * vx + vy * vy;
+        if (L2 < 1e-14) { vx = 1e-7; vy = 0; L2 = 1e-14; }
+        const f = Math.sqrt(1 + a[2] * a[2] * s / L2);
+        x = a[0] + vx * f; y = a[1] + vy * f;
+      } else if (o.type === OP.COMB) {
+        const mx = a[2], my = a[3], nx = -my, ny = mx;
+        const d = (x - a[0]) * nx + (y - a[1]) * ny;
+        const tines = b[2], sp = b[3], half = (tines - 1) / 2;
+        const i = Math.min(tines - 1, Math.max(0, Math.round(d / sp + half)));
+        const dn = Math.abs(d - (i - half) * sp);
+        const disp = b[0] * s * b[1] / (dn + b[1]);
+        x += disp * mx; y += disp * my;
+      } else if (o.type === OP.WAVE) {
+        const mx = a[0], my = a[1], nx = -my, ny = mx;
+        const u = (x - b[1]) * mx + (y - b[2]) * my;
+        const w = a[2] * s * Math.sin(a[3] * u + b[0]);
+        x += w * nx; y += w * ny;
+      } else if (o.type === OP.SWIRL) {
+        const vx = x - a[0], vy = y - a[1];
+        const r = Math.sqrt(vx * vx + vy * vy);
+        const th = (a[3] * s * b[0] / (Math.abs(r - a[2]) + b[0])) / Math.max(r, 1e-4);
+        const c = Math.cos(th), sn = Math.sin(th);
+        x = a[0] + vx * c - vy * sn; y = a[1] + vx * sn + vy * c;
+      }
+    }
+    return [x, y];
+  }
+
+  // Every Mellan drop's spiral, pushed forward to time t, clipped where later ink covers it or
+  // the plate ends. One pen: width is made of up to five strands laid side by side, each drawn
+  // only where the engraving is dark enough to need it (Mellan's swelling line, for a plotter).
+  function plotter(S, t, opts) {
+    opts = opts || {};
+    const mmW = opts.width || 160, mmH = mmW * PLATE_H / PLATE_W, margin = opts.margin || 20, pen = opts.pen || 0.25;
+    const X = (x) => margin + (x / PLATE_W + 0.5) * mmW, Y = (y) => margin + (y / PLATE_H + 0.5) * mmH;
+    const groups = [];
+    let total = 0;
+    S.ops.forEach((o, k) => {
+      if (o.type !== OP.DROP || t < o.t0 || o.mat !== S.mellanMat || S.mellanMat < 0) return;
+      const M = S.mats[o.mat], f = M.sfreq, rad = o.a[2], sNow = progress(o, t);
+      if (sNow <= 0) return;
+      const root = Math.sqrt(sNow);
+      const strands = [[0, 0.04], [-0.11, 0.32], [0.11, 0.32], [-0.22, 0.62], [0.22, 0.62]];
+      const lines = [];
+      const place = (lx, ly) => pushForward(S, t, k, o.a[0] + lx * root, o.a[1] + ly * root);
+      const visible = (P) => {
+        if (Math.abs(P[0]) > PLATE_W / 2 || Math.abs(P[1]) > PLATE_H / 2) return false;
+        return pullBack(S, t, P[0], P[1]).op === k;
+      };
+      const thMax = 6.283185307 * f * rad;
+      const at = (th, off) => {
+        const r = th / (6.283185307 * f) + off / f;
+        return { r, lx: r * Math.cos(th), ly: r * Math.sin(th) };
+      };
+      for (const [off, need] of strands) {
+        const inked = (th) => { const q = at(th, off); return q.r > 0 && q.r < rad && 1 - tone(M, q.lx, q.ly, rad) > need; };
+        const pt = (th) => { const q = at(th, off); const P = place(q.lx, q.ly); return visible(P) ? P : null; };
+        let cur = null;
+        const flush = () => { if (cur && cur.length > 1) lines.push(cur); cur = null; };
+        // march the spiral; where the combing has stretched it, bisect until segments are short,
+        // and lift the pen where they stay long (the line was torn by a later gesture)
+        const extend = (th0, P0, th1, P1, depth) => {
+          if (Math.hypot(P1[0] - P0[0], P1[1] - P0[1]) <= 0.0025) { cur.push(P1); return true; }
+          if (depth >= 12) return false;
+          const tm = 0.5 * (th0 + th1);
+          if (!inked(tm)) return false;
+          const Pm = pt(tm);
+          if (!Pm) return false;
+          if (!extend(th0, P0, tm, Pm, depth + 1)) { flush(); cur = [Pm]; }
+          if (!extend(tm, Pm, th1, P1, depth + 1)) { flush(); cur = [P1]; }
+          return true;
+        };
+        let th = 0, prevTh = 0, prev = null;
+        while (th <= thMax) {
+          const P = inked(th) ? pt(th) : null;
+          if (P) {
+            if (!cur) cur = [P];
+            else if (!extend(prevTh, prev, th, P, 0)) { flush(); cur = [P]; }
+            prev = P; prevTh = th;
+          } else { flush(); prev = null; }
+          th += 0.0012 / Math.max(Math.abs(at(th, off).r), 0.002);
+        }
+        flush();
+      }
+      if (lines.length) {
+        total += lines.length;
+        groups.push(`<g id="mellan-${k}" inkscape:groupmode="layer" inkscape:label="drop ${k}">` +
+          lines.map((L) => '<polyline points="' + L.map((P) => X(P[0]).toFixed(3) + ',' + Y(P[1]).toFixed(3)).join(' ') + '"/>').join('') + '</g>');
+      }
+    });
+    const W = mmW + 2 * margin, H = mmH + 2 * margin;
+    const svg = `<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape" width="${W}mm" height="${H}mm" viewBox="0 0 ${W} ${H}">
+<desc>Two Observers — the Mellan layer. seed ${S.seed}, bath ${S.bath + 1}, t ${t.toFixed(2)} s. One pen, ${pen} mm.</desc>
+<g fill="none" stroke="#000" stroke-width="${pen}" stroke-linecap="round" stroke-linejoin="round">
+<g id="frame" inkscape:groupmode="layer" inkscape:label="frame"><rect x="${margin - 6}" y="${margin - 6}" width="${mmW + 12}" height="${mmH + 12}"/></g>
+${groups.join('\n')}
+</g>
+</svg>
+`;
+    return { svg, polylines: total, drops: groups.length };
   }
 
   // Ops and materials packed for the shader.
@@ -410,7 +586,7 @@
       ground: { bg: S.bg, windows: S.wins.map((w) => ({ cx: r4(w.cx), cy: r4(w.cy), hx: r4(w.hx), hy: r4(w.hy), angle: r4(w.angle), mat: w.mat })) },
       materials: S.mats.map((M) => ({
         pattern: Object.keys(PAT).find((k) => PAT[k] === M.pattern), tone: r4(M.tone), freq: r4(M.freq), angle: r4(M.angle),
-        observer: M.screen >= SCR.DOTS ? 'lagrangian' : 'eulerian',
+        observer: M.screen === SCR.SOTO ? 'soto (fixed panel + carried lines)' : M.screen === SCR.SPIRAL ? 'mellan (carried spiral)' : M.screen >= SCR.DOTS ? 'lagrangian' : 'eulerian',
         screen: Object.keys(SCR).find((k) => SCR[k] === M.screen), screenFreq: r4(M.sfreq), screenAngle: r4(M.sangle),
       })),
       ops: S.ops.map((o) => ({ op: names[o.type], t0: r4(o.t0), dur: r4(o.dur), mat: o.type === OP.DROP ? o.mat : undefined, a: o.a.map(r4), b: o.b.map(r4) })),
@@ -419,7 +595,7 @@
 
   const api = {
     PLATE_W, PLATE_H, OP, PAT, SCR, MAX_OPS, MAX_MATS, MAX_WINS,
-    score, blueNoise, bayer8, pullBack, tone, threshold, render, pack, describe, plateXY, progress, hash32, sessionSeed,
+    score, blueNoise, bayer8, pullBack, pushForward, tone, threshold, shade, render, plotter, pack, describe, plateXY, progress, hash32, sessionSeed,
   };
   global.Marble = api;
   if (typeof module !== 'undefined' && module.exports) module.exports = api;

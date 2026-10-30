@@ -1,8 +1,11 @@
 // Two Observers — a marbling bath in one bit, seen by two observers.
 // The score (marble.js) is a seeded list of exact marbling maps. Each frame pulls every pixel
 // back through the maps that have started, on the GPU, and asks the material's observer whether
-// the pixel is ink or paper. Keys: Space pause · ←/→ scrub (Shift ×5) · N/B next/previous bath
-// · O score overlay · P print (PNG) · J score (JSON) · S sheet PNG · R new seed.
+// the pixel is ink or paper. Two observers come from physical work: Soto (a fixed striped panel
+// behind ink that carries its own lines; the pointer moves the panel) and Mellan (one spiral line
+// per drop, width as tone; V exports it for a pen plotter).
+// Keys: Space pause · ←/→ scrub (Shift ×5) · N/B next/previous bath · O score overlay
+// · P print (PNG) · V plotter layer (SVG) · J score (JSON) · S sheet PNG · R new seed.
 
 (function () {
   'use strict';
@@ -20,6 +23,7 @@
   let t = Math.max(0, parseFloat(url.searchParams.get('t') || '0') || 0);
   let paused = url.searchParams.get('pause') === '1';
   let overlay = url.searchParams.get('overlay') === '1';
+  let parallax = parseFloat(url.searchParams.get('par') || '0') || 0, parallaxTarget = parallax;
   let S = null, gw = 0, gh = 0, cell = 2, layout = null;
   let dirty = true, last = performance.now();
   let wipe = null;               // { from: canvas, start } — the last print sliding away
@@ -32,6 +36,9 @@
       lagrange: { value: 0.5, min: 0, max: 1, step: 0.05, label: 'lagrangian share' },
       density: { value: 1, min: 0.5, max: 1.5, step: 0.1, label: 'gesture density' },
       resolve: { value: 2.5, min: 1, max: 6, step: 0.25, label: 'resolvable period (px)' },
+      soto: { value: 0.7, min: 0, max: 1, step: 0.05, label: 'soto chance' },
+      mellan: { value: 0.8, min: 0, max: 1, step: 0.05, label: 'mellan chance' },
+      panel: { value: 4, min: 3, max: 10, step: 1, label: 'soto panel (cells)' },
     },
     onReset: function () { if (!S) return; newScore(); doLayout(); },
   });
@@ -45,7 +52,7 @@
   #define MAX_OPS ${M.MAX_OPS}
   uniform sampler2D uOps, uBlue;
   uniform int uNOps, uNWin, uBg;
-  uniform float uT, uResolve;
+  uniform float uT, uResolve, uPanel, uParallax;
   uniform vec2 uGrid;
   uniform vec4 uMat[${M.MAX_MATS * 2}];
   uniform vec4 uWin[${M.MAX_WINS * 2}];
@@ -68,7 +75,7 @@
     for (int i = 0; i < 3; i++){ int bx = (x >> i) & 1, by = (y >> i) & 1; v |= (((bx ^ by) << 1) | by) << (2 * (2 - i)); }
     return (float(v) + 0.5) / 64.0;
   }
-  float tone(int m, vec2 q){
+  float tone(int m, vec2 q, float rad){
     vec4 A = uMat[2 * m];
     int pat = int(A.x); float c = cos(A.w), s = sin(A.w);
     float u = q.x * c + q.y * s, v = -q.x * s + q.y * c;
@@ -90,12 +97,25 @@
       return g;
     }
     if (pat == 5){ float w = fract(length(q) * A.z); return w < 0.18 ? 0.0 : (w < 0.3 ? 1.0 : A.y); }
+    if (pat == 6){
+      vec2 n = q / max(rad > 0.0 ? rad : 0.05, 1e-4);
+      float nz = sqrt(max(0.0, 1.0 - dot(n, n)));
+      float lit = dot(vec3(n, nz), vec3(cos(A.w) * 0.62, sin(A.w) * 0.62, 0.78));
+      return min(1.0, 0.04 + 0.96 * max(0.0, lit));
+    }
     return 0.5;
   }
   float blueAt(int x, int y){ return texelFetch(uBlue, ivec2(x & 63, y & 63), 0).r; }
   float threshold(int m, int x, int y, vec2 q, float k){
     vec4 B = uMat[2 * m + 1];
     int scr = int(B.x);
+    if (scr == 5){
+      if (1.0 / (B.y * max(k, 1e-9)) >= uResolve){
+        float u = length(q) * B.y - atan(q.y, q.x) / 6.283185307;
+        return 0.5 - 0.5 * cos(6.283185307 * u);
+      }
+      return blueAt(x, y);
+    }
     if (scr >= 2){
       float period = 1.0 / (B.y * max(k, 1e-9));
       if (period >= uResolve){
@@ -110,10 +130,23 @@
     return bayer8(x & 7, y & 7);
   }
 
+  // Soto: the fixed panel (period uPanel cells, moved by the viewer) or the ink's own lines.
+  float sotoBit(int m, int ix, vec2 q, float k){
+    vec4 A = uMat[2 * m], B = uMat[2 * m + 1];
+    bool panelInk = fract((float(ix) + uParallax) / uPanel) < 0.5;
+    float fL = B.y * uGrid.x / (uPanel * ${M.PLATE_W.toFixed(4)});
+    bool lineInk = false;
+    if (1.0 / (fL * max(k, 1e-9)) >= uResolve){
+      float u = (q.x * cos(B.z) + q.y * sin(B.z)) * fL;
+      lineInk = fract(u) < 0.3 + 0.35 * (1.0 - A.y);
+    }
+    return (panelInk || lineInk) ? 0.0 : 1.0;
+  }
+
   void main(){
     int ix = int(gl_FragCoord.x), iy = int(uGrid.y) - 1 - int(gl_FragCoord.y);
     vec2 p = vec2(((float(ix) + 0.5) / uGrid.x - 0.5) * ${M.PLATE_W.toFixed(4)}, ((float(iy) + 0.5) / uGrid.y - 0.5) * ${M.PLATE_H.toFixed(4)});
-    int mat = -1; vec2 q = p;
+    int mat = -1; vec2 q = p; float hitR = 0.0;
     for (int k = MAX_OPS - 1; k >= 0; --k){
       if (k >= uNOps || mat >= 0) continue;
       vec4 v0 = texelFetch(uOps, ivec2(0, k), 0);
@@ -123,7 +156,7 @@
       int type = int(v0.x);
       if (type == 1){
         vec2 v = q - a.xy; float L2 = dot(v, v), rr2 = a.z * a.z * s;
-        if (L2 < rr2){ mat = int(v0.w); q = v / sqrt(max(s, 1e-4)); }
+        if (L2 < rr2){ mat = int(v0.w); q = v / sqrt(max(s, 1e-4)); hitR = a.z; }
         else q = a.xy + v * sqrt(1.0 - rr2 / L2);
       } else if (type == 2){
         vec2 M = a.zw, N = vec2(-M.y, M.x);
@@ -154,9 +187,10 @@
     }
     // material units per pixel, measured in uniform control flow
     float k = max(length(dFdx(q)), length(dFdy(q)));
-    float g = tone(mat, q);
-    float T = threshold(mat, ix, iy, q, k);
-    outColor = vec4(g > T ? uPaper : uInk, 1.0);
+    bool paper;
+    if (int(uMat[2 * mat + 1].x) == 4) paper = sotoBit(mat, ix, q, k) > 0.5;
+    else paper = tone(mat, q, hitR) > threshold(mat, ix, iy, q, k);
+    outColor = vec4(paper ? uPaper : uInk, 1.0);
   }`;
 
   let prog = null, U = {}, texOps = null, texBlue = null;
@@ -180,7 +214,7 @@
     gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 3, -1, -1, 3]), gl.STATIC_DRAW);
     const loc = gl.getAttribLocation(prog, 'p');
     gl.enableVertexAttribArray(loc); gl.vertexAttribPointer(loc, 2, gl.FLOAT, false, 0, 0);
-    for (const n of ['uOps', 'uBlue', 'uNOps', 'uNWin', 'uBg', 'uT', 'uResolve', 'uGrid', 'uMat', 'uWin', 'uPaper', 'uInk']) U[n] = gl.getUniformLocation(prog, n);
+    for (const n of ['uOps', 'uBlue', 'uNOps', 'uNWin', 'uBg', 'uT', 'uResolve', 'uPanel', 'uParallax', 'uGrid', 'uMat', 'uWin', 'uPaper', 'uInk']) U[n] = gl.getUniformLocation(prog, n);
     texOps = gl.createTexture(); texBlue = gl.createTexture();
     gl.activeTexture(gl.TEXTURE1); gl.bindTexture(gl.TEXTURE_2D, texBlue);
     setNearest();
@@ -211,7 +245,7 @@
   function renderCPU(time) {
     cpuCanvas.width = gw; cpuCanvas.height = gh;
     const c2 = cpuCanvas.getContext('2d');
-    const bits = M.render(S, time, gw, gh, { resolve: G.param('resolve') });
+    const bits = M.render(S, time, gw, gh, { resolve: G.param('resolve'), panel: G.param('panel'), parallax: parallax });
     const img = c2.createImageData(gw, gh);
     for (let i = 0; i < bits.length; i++) {
       const col = bits[i] ? PAPER : INK;
@@ -226,13 +260,15 @@
     gl.viewport(0, 0, gw, gh);
     gl.uniform1f(U.uT, time);
     gl.uniform1f(U.uResolve, G.param('resolve'));
+    gl.uniform1f(U.uPanel, G.param('panel'));
+    gl.uniform1f(U.uParallax, parallax);
     gl.uniform2f(U.uGrid, gw, gh);
     gl.drawArrays(gl.TRIANGLES, 0, 3);
   }
 
   // ------------------------------------------------------------------ score & layout
   function newScore() {
-    S = M.score(G.seed, bath, { lagrange: G.param('lagrange'), density: G.param('density') });
+    S = M.score(G.seed, bath, { lagrange: G.param('lagrange'), density: G.param('density'), soto: G.param('soto'), mellan: G.param('mellan') });
     upload();
     syncURL();
   }
@@ -282,18 +318,21 @@
     c.textBaseline = 'alphabetic';
     const by = py + L.ph + inset + Math.round(fs * 1.9);
     c.textAlign = 'left'; c.fillText(caption[0], px - inset, by);
-    c.textAlign = 'right'; c.fillText(caption[1], px + L.pw + inset, by);
+    const room = L.pw + 2 * inset - c.measureText(caption[0]).width - fs * 2;
+    const by2 = c.measureText(caption[1]).width > room ? by + Math.round(fs * 1.5) : by;   // wrap when they would touch
+    c.textAlign = 'right'; c.fillText(caption[1], px + L.pw + inset, by2);
   }
 
   function counts(time) {
     let started = 0; for (const o of S.ops) if (time >= o.t0) started++;
-    let lag = 0, eul = 0; for (const m of S.mats) { if (m.screen >= M.SCR.DOTS) lag++; else eul++; }
+    let lag = 0, eul = 0; for (const m of S.mats) { if (m.screen >= M.SCR.DOTS && m.screen <= M.SCR.LINES) lag++; else if (m.screen <= M.SCR.BLUE) eul++; }
     return { started, lag, eul };
   }
   function captionFor(time) {
     const c = counts(time);
     const printing = t >= S.settle;
-    const left = `TWO OBSERVERS  —  seed ${G.seed}  ·  bath ${bath + 1}`;
+    const extra = (S.sotoMat >= 0 ? '  ·  soto' + (Math.abs(parallax) > 0.05 ? ' ' + (parallax > 0 ? '+' : '') + parallax.toFixed(1) : '') : '') + (S.mellanMat >= 0 ? '  ·  mellan' : '');
+    const left = `TWO OBSERVERS  —  seed ${G.seed}  ·  bath ${bath + 1}${extra}`;
     const right = printing
       ? `PRINT  ·  ${S.ops.length} gestures  ·  ${c.eul} eulerian / ${c.lag} lagrangian inks`
       : `t ${time.toFixed(1)} s  ·  gesture ${c.started}/${S.ops.length}  ·  ${c.eul} E / ${c.lag} L`;
@@ -345,11 +384,17 @@
     u.searchParams.set('bath', String(bath));
     if (paused) u.searchParams.set('t', t.toFixed(2)); else u.searchParams.delete('t');
     if (paused) u.searchParams.set('pause', '1'); else u.searchParams.delete('pause');
+    if (paused && Math.abs(parallax) > 0.05) u.searchParams.set('par', parallax.toFixed(2)); else u.searchParams.delete('par');
     try { history.replaceState(null, '', u.toString()); } catch (e) { /* sandboxed frames refuse */ }
   }
 
   function tick(now) {
     const dt = Math.min(0.1, (now - last) / 1000); last = now;
+    if (Math.abs(parallaxTarget - parallax) > 0.01) {          // the third observer moves
+      parallax += (parallaxTarget - parallax) * Math.min(1, dt * 6);
+      if (S.sotoMat >= 0) dirty = true;
+      if (Math.abs(parallaxTarget - parallax) <= 0.01 && paused) syncURL();
+    }
     if (!paused) {
       t += dt * G.param('speed');
       if (t >= S.length) nextBath(1);
@@ -381,6 +426,14 @@
     wipe = keep;
     download(c, `two-observers-${G.seed}-bath${bath + 1}-t${frameTime().toFixed(1)}.png`);
   }
+  function savePlotter() {
+    const time = frameTime();
+    const r = M.plotter(S, time, {});
+    if (!r.drops) { console.info('two-observers: no Mellan drop on the plate at this moment'); return; }
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(new Blob([r.svg], { type: 'image/svg+xml' }));
+    a.download = `two-observers-${G.seed}-bath${bath + 1}-t${time.toFixed(1)}.mellan.svg`; a.click();
+  }
   function saveScore() {
     const blob = new Blob([JSON.stringify(M.describe(S), null, 1)], { type: 'application/json' });
     const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
@@ -400,22 +453,29 @@
     else if (k === 'o' || k === 'O') { overlay = !overlay; dirty = true; }
     else if (k === 'p' || k === 'P') savePrint();
     else if (k === 'j' || k === 'J') saveScore();
+    else if (k === 'v' || k === 'V') savePlotter();
     else if (k === 's' || k === 'S') download(view, `two-observers-${G.seed}-sheet.png`);
     else if (k === 'r' || k === 'R') { bath = 0; t = 0; G.randomize(); }
   });
   window.addEventListener('resize', () => { doLayout(); });
+  // the viewer's position moves Soto's panel: one full panel period across the window
+  window.addEventListener('pointermove', (e) => {
+    if (e.target !== view) return;
+    parallaxTarget = (e.clientX / window.innerWidth - 0.5) * G.param('panel');
+  });
 
   if (G.gui) {
     const f = G.gui.addFolder('Bath');
     const act = {
       pause: () => { paused = !paused; syncURL(); },
-      next: () => nextBath(1), print: savePrint, score: saveScore,
+      next: () => nextBath(1), print: savePrint, score: saveScore, plotter: savePlotter,
       overlay: () => { overlay = !overlay; dirty = true; },
     };
     f.add(act, 'pause').name('pause / play (space)');
     f.add(act, 'next').name('next bath (N)');
     f.add(act, 'overlay').name('score overlay (O)');
     f.add(act, 'print').name('save print (P)');
+    f.add(act, 'plotter').name('plotter layer SVG (V)');
     f.add(act, 'score').name('save score (J)');
   }
 
@@ -423,6 +483,8 @@
   window.__twoObservers = {
     get score() { return S; }, get grid() { return [gw, gh]; }, gpu: useGPU,
     renderAt(time) { renderPlate(Math.min(time, S.settle)); return plateCanvas(); },
+    setParallax(p) { parallax = parallaxTarget = p; dirty = true; },
+    get parallax() { return parallax; },
   };
 
   newScore();
