@@ -345,7 +345,7 @@
     u.searchParams.set('bath', String(bath));
     if (paused) u.searchParams.set('t', t.toFixed(2)); else u.searchParams.delete('t');
     if (paused) u.searchParams.set('pause', '1'); else u.searchParams.delete('pause');
-    history.replaceState(null, '', u.toString());
+    try { history.replaceState(null, '', u.toString()); } catch (e) { /* sandboxed frames refuse */ }
   }
 
   function tick(now) {
