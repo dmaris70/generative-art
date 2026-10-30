@@ -3,6 +3,14 @@
   "author": "dmaris70",
   "projects": [
     {
+      "slug": "048-tooth-and-wind",
+      "title": "Tooth and Wind",
+      "year": 2026,
+      "tools": ["canvas"],
+      "description": "A charcoal reedbed that never finishes. A simulated sheet — paper tooth, charcoal, chalk — is worked one footprint at a time by a stick, a finger and an eraser, every gesture bent by a turning wind and crossed by gusts. Stalks lean, plumes are scumbled, smudged, lit and edged; when the sheet fills, an eraser takes a region back and the paper keeps the ghost. Drag to smudge it and blow.",
+      "thumb": "preview.png"
+    },
+    {
       "slug": "047-edition-of-390",
       "title": "Edition of 390",
       "year": 2026,

@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Tooth and Wind — Generative Art</title>
+  <style>
+    html, body { margin: 0; height: 100%; background: #0b0b0e; overflow: hidden; }
+    canvas#view { display: block; width: 100vw; height: 100vh; touch-action: none; cursor: crosshair; }
+    a.back {
+      position: fixed; top: 14px; left: 16px; z-index: 10;
+      color: #6b6a66; font: 13px ui-sans-serif, system-ui, sans-serif;
+      text-decoration: none; opacity: .7; mix-blend-mode: difference;
+    }
+    a.back:hover { opacity: 1; }
+    #cap {
+      position: fixed; left: 16px; bottom: 12px; z-index: 10; pointer-events: none;
+      color: #8a8984; font: 11px ui-monospace, SFMono-Regular, Menlo, monospace; letter-spacing: .02em;
+      mix-blend-mode: difference;
+    }
+    .lil-gui.root { --width: 330px; --name-width: 58%; max-height: 100vh; overflow-y: auto; }
+  </style>
+  <script src="https://cdn.jsdelivr.net/npm/lil-gui@0.19/dist/lil-gui.umd.min.js"></script>
+  <script src="../../assets/genart.js?v=3"></script>
+</head>
+<body>
+  <a class="back" href="../../">← gallery</a>
+  <canvas id="view"></canvas>
+  <div id="cap"></div>
+  <script src="weather.js?v=1"></script>
+  <script src="sketch.js?v=1"></script>
+</body>
+</html>
