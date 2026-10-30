@@ -3,6 +3,14 @@
   "author": "dmaris70",
   "projects": [
     {
+      "slug": "049-two-observers",
+      "title": "Two Observers",
+      "year": 2026,
+      "tools": ["webgl2", "canvas", "lil-gui"],
+      "description": "A marbling bath in one bit. A seeded collage of stripes, lattices and contour fields is floated, then worked by a score of exact, invertible marbling gestures — stones of concentric drops, combs, waves, swirls — and every pixel is pulled back through them on the GPU, so any moment can be rendered directly. Each ink is seen by one of two observers: a fixed screen on the glass, or a screen printed on the ink that is combed and folded with it, handing over to the fixed one where the ink is squeezed past seeing. Each bath ends in a print and a score. Started from a frame-by-frame reading of a loop by loackme.",
+      "thumb": "preview.png"
+    },
+    {
       "slug": "048-isometric-strata-v2",
       "title": "Isometric Strata v2",
       "year": 2026,
