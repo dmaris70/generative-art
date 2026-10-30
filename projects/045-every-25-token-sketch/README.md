@@ -140,27 +140,37 @@ in `found/`; the 132 masters are regenerated on demand.
 The second physical form: a thermal till printer in a steel housing that prints each dethroned
 champion as it happens — the field dithered to the paper's dots, the code as people read it and
 as the library writes it, the program number, the score, how long it held the lane, the time —
-and lets the paper run to the floor. The printer's clatter marks each takeover; a day is one
-roll. `receipt/receipt.js` runs the unchanged `babel.js` without a browser and speaks ESC/POS
+and cuts each ticket into a pocket under the slot, where it stands picture up for whoever is there to take. The printer's clatter marks
+each takeover; the only consumable is the roll. `receipt/receipt.js` runs the unchanged `babel.js` without a browser and speaks ESC/POS
 to a USB or network printer, locked to the room's clock with `--start 10:00` so that the
 screen beside it shows the same program; `--png` renders the same tickets as a simulator, and
 `--replay N` prints the found through program N at once. 58 mm paper gives a 48 mm image at six
-dots a pixel; 80 mm, 72 mm at nine. About 770 takeovers an exhibition day, 65 m of paper. The
-build sheet, bill of materials and the open choices are in `receipt/BUILD.md`.
+dots a pixel; 80 mm, 72 mm at nine. Under the screen's rule at the screen's pace that would be
+about 770 takeovers an exhibition day and 65 m of paper; the room runs a stricter rule, below.
+The build sheet, bill of materials and the open choices are in `receipt/BUILD.md`.
+
+The room's selector is stricter than the screen's: the champion's claim fades by 0.9999 a
+program instead of 0.9992, and a ticket is printed only for a champion that held the lane 200
+programs or more — the ones that lasted. Measured at one program a second: 33 takeovers and 16
+tickets on the first exhibition day, 1.5 m of paper, against 100 tickets and 9 m under the
+screen's rule; a roll lasts about two months. The screen on neort.io keeps its own rule.
 
 ![six simulated tickets, 58 mm paper](receipt/strip.png)
 
 ## The relief: a machine reading a library
 
 The third physical form, designed and simulated, not yet built: a black steel panel of
-2000 × 1500 mm and a bookcase. The panel carries the conveyor as five flip-dot fields of
-28 × 28 dots (the last five programs, thresholded, one a second), the slow lane as a 56 × 56
+2000 × 1500 mm. The panel carries the conveyor as five flip-dot fields of
+28 × 28 dots (the last five programs, thresholded, one a second), the slow lane as a 58 × 58
 field (the champion, dithered), 28 electromechanical digit wheels for the program number (the
 last 24 never turn), the stage-2 printer behind a slot with the paper falling to the floor,
-and a brass ruler of the library on a log scale with a pointer that advances by a hair a day.
-The bookcase has 25 shelves, labelled with each shelf's count, where the printed found are
-filed by length; shelves 7 to 25 stay empty and are labelled with the year they would begin
-to fill. The simulator (`relief/simulator.html`) runs the relief on a screen at one millimetre
+and a brass ruler of the library on a log scale whose pointer crosses a sixth of it on the
+first day and then slows to a hair.
+The printer cuts; the ticket stands in a steel pocket under the slot, picture up, and whoever is there takes it. The pocket holds one: a sensor sees it, and the next found prints when it is taken. The
+conveyor runs across the top, the slow lane sits at the bottom left with the counter and the
+slot beside it, the ruler runs along the foot, and in the dark field at the right the 25
+lengths of the library, their counts, and the day or year each begins to print are engraved in
+the face; six of those lines will ever be true for a visitor. The simulator (`relief/simulator.html`) runs the relief on a screen at one millimetre
 a unit; `relief/tile-test.png` is the test that fixed the tile resolution (thresholded tiles
 read from 28 dots, dithered ones only from 56); `relief/controller.js` drives the flip-dot
 modules over RS-485 and prints the counter and pointer targets; `relief/elevation.svg` is the
@@ -168,6 +178,25 @@ dimensioned drawing; `relief/DESIGN.md` has the bill of materials, the fabricati
 the wall label.
 
 ![the relief, simulated, after 3,000 programs](relief/simulator.png)
+
+`relief/model.html` is the relief in three dimensions: the panel at full size in a gallery
+room, every flip-dot a disc that turns, the counter's drums, the tickets standing in the pocket,
+the brass ruler, the engraved list — driven by the same enumeration at one program a
+second. Drag to turn, scroll to approach; views for the slow lane, the counter, the receipt and
+the list; one or eight programs a second. With the sound on, the machine is heard: each flip-dot a click,
+the slow lane's 3,364 dots a clatter with the panel ringing under it, the counter's wheels a
+soft tick, the printer a stepper's buzz and the paper's hiss for each ticket — all synthesised,
+nothing sampled. Each ticket leaves the slot as the till printer prints it — the field dithered
+to 384 dots, the seven lines in the printer's font — slides into the pocket picture last, is cut, and
+stands, so the tickets in the model are the tickets the room will hand out. At the
+right, engraved in the face, the library's twenty-five lengths and the day or year each begins
+to print.
+
+![the receipt and the pocket in the model](relief/model-receipt.png)
+
+![the list in the model](relief/model-plate.png)
+
+![the relief in three dimensions](relief/model.png)
 
 ## Controls
 
