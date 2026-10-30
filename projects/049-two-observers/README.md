@@ -10,9 +10,10 @@ finer than the eye can resolve, the fixed observer takes over. Two more observer
 physical work: **Soto**'s fixed striped panel, seen through ink that carries its own lines, so
 the combing makes the moiré swim and the viewer's position moves the panel; and **Mellan**'s
 single spiral line, whose width is the tone, engraving drops as lit spheres that the comb then
-drags — and that leave the screen as a pen-plotter drawing.
+drags — and that leave the screen as a pen-plotter drawing. And the screens the ink carries are
+painted by **hand**, after Polke's raster paintings, while the screens on the glass stay machined.
 
-![seed 1234, bath 1, the print: a Soto panel at the top, three Mellan spheres, 47 gestures](preview.png)
+![seed 9, bath 1, the print: hand-painted dots down the left, Mellan spheres, 52 gestures, hand 0.6](preview.png)
 
 **Mechanism (one sentence):** every gesture is an exact, invertible map of the plane, so the bath
 at time *t* is found by pulling each pixel back through the gestures that have started, newest
@@ -102,6 +103,27 @@ Kept: the collage of procedural fields in rigid windows, folding motion, contour
 - Both draw from their own random stream, so adding them changed no other gesture of a seed's
   score; it does change which ink some drops carry.
 
+## The hand (Polke)
+
+After Sigmar Polke's raster paintings (from 1963), where the halftone dots are painted one by one
+and the machine's regularity falls apart in the hand. Here the hand belongs to the carried screens
+only: the fixed observer is a machine, the ink's screen was painted.
+
+- **Dots.** Every cell of an ink's dot screen has six values hashed from the cell and the ink, so
+  a dot is the same dot from frame to frame and is combed with its ink. The dot wanders off centre
+  (±16 % of the pitch at full hand), grows or shrinks (±30 %), goes oval (±22 %) and lobed
+  (±14 %); one in twenty is left out, and one in about seventy swells to 1.9 × as a blot that runs
+  into its neighbours (each pixel tests the nine nearest dots, so a blot is not clipped to its
+  cell). Dot area follows tone; the raster's frequency drops by up to 45 % (its pitch grows up to
+  1.8 ×) so the hand can be seen.
+- **Lines.** Each ruled line wavers along its length (±21 % of the pitch), thickens and thins
+  (±35 %), and breaks where the brush lifted (value noise along the line under 0.22 × hand).
+- **Amount.** *hand* (0.6) scales all of it; each ink's own hand is 0.6 – 1.0 of that, from a
+  hash, so a bath has heavier and lighter hands. The hand draws nothing from the score's random
+  streams: changing it moves no gesture. At *hand* 0 the screens are the machine again — the
+  render is identical, bit for bit, to the version before the hand (338,400 cells, 0 different).
+- Soto's lines and Mellan's spiral stay exact: an optical construction and an engraver's burin.
+
 ## Prints and scores
 
 - **P** — the print: the screen's own bits enlarged by a whole factor to about 4,000 px tall, on
@@ -119,7 +141,7 @@ Space pause / play · ← → scrub one second (Shift: five) · N / B next / pre
 drawn over the plate (gestures in progress, in red) · P print · V plotter SVG · J score · S sheet ·
 R new seed · pointer across the window: Soto's panel. Panel: *cell* (css px per dither cell, 2 by
 default — about the foundation's grain), *speed*, *lagrangian share*, *gesture density*,
-*resolvable period*, *soto chance*, *mellan chance*, *soto panel*. URL:
+*resolvable period*, *soto chance*, *mellan chance*, *soto panel*, *hand*. URL:
 `?seed=…&bath=…&t=…&pause=1&par=…` reproduces a moment, `par` being the panel's shift in cells;
 the panel writes its own parameters to the link.
 
@@ -132,10 +154,11 @@ the panel writes its own parameters to the link.
 
 ## Verification
 
-- GPU against CPU, headless Chromium (SwiftShader), grid 336 × 420, with Soto and Mellan: the
-  shader's bits agree with `marble.js` on 99.66 % (seed 7, t 12), 99.74 % (seed 21, t 17.1),
-  99.72 % (the same with the panel shifted 1.5 cells), 99.21 % (seed 9, the print) and 99.34 %
-  (seed 404, the print, panel shifted 2.2) of cells. The remainder are pixels whose tone sits on a threshold (float32 against
+- GPU against CPU, headless Chromium (SwiftShader), grid 336 × 420, with Soto, Mellan and the
+  hand at 0.6: the shader's bits agree with `marble.js` on 99.16 % (seed 9, the print), 99.61 %
+  (seed 7, t 12), 99.79 % (seed 21, t 17.1, panel shifted 1.5 cells), 99.10 % (seed 404, the
+  print) and 99.59 % (seed 1234, t 25) of cells. Before the hand, the same check gave
+  99.21 – 99.74 %. The remainder are pixels whose tone sits on a threshold (float32 against
   float64) or whose derivative crosses a material edge. Frame time there: 200 – 220 ms.
 - Forward against inverse: 2,000 random points pushed forward from a random gesture to the end of
   seed 7's score and pulled back return to within 1.4 × 10⁻¹⁴ plate units.
@@ -167,5 +190,7 @@ the panel writes its own parameters to the link.
   window: the moiré's scale is the same on every screen, but the ink lines' plate frequency is not,
   and a print records the screen it was taken from.
 - The panel follows the pointer only; device tilt is not read.
+- The hand's per-cell values are hashed in 32-bit integers on both sides, but the GPU turns them
+  into floats with 24 bits, so a dot whose value sits on a cut-off (left out, blot) can differ.
 - The plotter layer is Mellan's spirals and the frame; the rest of the plate is bitmap only.
 - The contact-sheet button opens one WebGL context per tile; browsers cap live contexts, untested.

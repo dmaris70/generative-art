@@ -3,7 +3,8 @@
 // back through the maps that have started, on the GPU, and asks the material's observer whether
 // the pixel is ink or paper. Two observers come from physical work: Soto (a fixed striped panel
 // behind ink that carries its own lines; the pointer moves the panel) and Mellan (one spiral line
-// per drop, width as tone; V exports it for a pen plotter).
+// per drop, width as tone; V exports it for a pen plotter). The screens carried by the ink are
+// painted by hand, after Polke: dots wander, swell, go missing or blot; lines waver and break.
 // Keys: Space pause · ←/→ scrub (Shift ×5) · N/B next/previous bath · O score overlay
 // · P print (PNG) · V plotter layer (SVG) · J score (JSON) · S sheet PNG · R new seed.
 
@@ -39,6 +40,7 @@
       soto: { value: 0.7, min: 0, max: 1, step: 0.05, label: 'soto chance' },
       mellan: { value: 0.8, min: 0, max: 1, step: 0.05, label: 'mellan chance' },
       panel: { value: 4, min: 3, max: 10, step: 1, label: 'soto panel (cells)' },
+      hand: { value: 0.6, min: 0, max: 1, step: 0.05, label: 'hand (polke)' },
     },
     onReset: function () { if (!S) return; newScore(); doLayout(); },
   });
@@ -54,7 +56,8 @@
   uniform int uNOps, uNWin, uBg;
   uniform float uT, uResolve, uPanel, uParallax;
   uniform vec2 uGrid;
-  uniform vec4 uMat[${M.MAX_MATS * 2}];
+  uniform vec4 uMat[${M.MAX_MATS * 3}];
+  uniform uint uSalt[${M.MAX_MATS}];
   uniform vec4 uWin[${M.MAX_WINS * 2}];
   uniform vec3 uPaper, uInk;
   out vec4 outColor;
@@ -76,10 +79,10 @@
     return (float(v) + 0.5) / 64.0;
   }
   float tone(int m, vec2 q, float rad){
-    vec4 A = uMat[2 * m];
+    vec4 A = uMat[3 * m];
     int pat = int(A.x); float c = cos(A.w), s = sin(A.w);
     float u = q.x * c + q.y * s, v = -q.x * s + q.y * c;
-    float param = uMat[2 * m + 1].w;
+    float param = uMat[3 * m + 1].w;
     if (pat == 0) return A.y;
     if (pat == 1) return fract(u * A.z) < param ? 1.0 : 0.0;
     if (pat == 2){ float w = fract(u * A.z + param * sin(v * A.z * 0.9 + 1.7)); return w < 0.07 ? 1.0 : (w < 0.13 ? 0.0 : A.y); }
@@ -107,7 +110,7 @@
   }
   float blueAt(int x, int y){ return texelFetch(uBlue, ivec2(x & 63, y & 63), 0).r; }
   float threshold(int m, int x, int y, vec2 q, float k){
-    vec4 B = uMat[2 * m + 1];
+    vec4 B = uMat[3 * m + 1];
     int scr = int(B.x);
     if (scr == 5){
       if (1.0 / (B.y * max(k, 1e-9)) >= uResolve){
@@ -130,9 +133,51 @@
     return bayer8(x & 7, y & 7);
   }
 
+  // Polke's hand: per-cell values of an ink's painted screen
+  uint cellH(int cx, int cy, uint salt){ return h32((uint(cx + 4096) * 0x8da6b343u) ^ (uint(cy + 4096) * 0xd8163841u) ^ salt); }
+  float u01(uint h, uint n){ return float(h32(h ^ (n * 0x9e3779b9u))) / 4294967296.0; }
+  bool handDots(int m, vec2 q, float g){
+    vec4 B = uMat[3 * m + 1]; float H = uMat[3 * m + 2].x; uint salt = uSalt[m];
+    float c = cos(B.z), s = sin(B.z);
+    float u = (q.x * c + q.y * s) * B.y, v = (-q.x * s + q.y * c) * B.y;
+    int bx = int(floor(u)), by = int(floor(v));
+    for (int dy = -1; dy <= 1; dy++) for (int dx = -1; dx <= 1; dx++){
+      int cx = bx + dx, cy = by + dy;
+      uint h = cellH(cx, cy, salt);
+      float h0 = u01(h, 1u), h1 = u01(h, 2u), h2 = u01(h, 3u), h3 = u01(h, 4u), h4 = u01(h, 5u), h5 = u01(h, 6u);
+      if (h3 > 1.0 - 0.05 * H) continue;
+      float size = 1.0 + 0.6 * H * (h2 - 0.5);
+      if (h3 < 0.015 * H) size *= 1.9;
+      float r2 = (1.0 - g) / 3.141592654 * size * size;
+      if (r2 <= 0.0) continue;
+      float ex = u - (float(cx) + 0.5 + 0.32 * H * (h0 - 0.5));
+      float ey = v - (float(cy) + 0.5 + 0.32 * H * (h1 - 0.5));
+      float e = 0.45 * H * (h4 - 0.5);
+      ex *= 1.0 + e; ey *= 1.0 - e;
+      float wob = 1.0 + 0.14 * H * sin(3.0 * atan(ey, ex) + 6.283185307 * h5);
+      if ((ex * ex + ey * ey) * wob * wob < r2) return true;
+    }
+    return false;
+  }
+  bool handLines(int m, vec2 q, float g){
+    vec4 B = uMat[3 * m + 1]; float H = uMat[3 * m + 2].x; uint salt = uSalt[m];
+    float c = cos(B.z), s = sin(B.z);
+    float u = (q.x * c + q.y * s) * B.y, v = (-q.x * s + q.y * c) * B.y;
+    int b = int(floor(v));
+    for (int dl = -1; dl <= 1; dl++){
+      int L = b + dl;
+      uint sl = salt ^ (uint(L + 4096) * 0x27d4eb2du);
+      float wob = 0.42 * H * (vnoise(vec2(u * 0.18, 0.5), sl) - 0.5);
+      float width = 1.0 + 0.7 * H * (vnoise(vec2(u * 0.5, 7.5), sl) - 0.5);
+      if (vnoise(vec2(u * 0.09, 13.5), sl) < 0.22 * H) continue;
+      if (abs(v - (float(L) + 0.5 + wob)) < 0.5 * (1.0 - g) * width) return true;
+    }
+    return false;
+  }
+
   // Soto: the fixed panel (period uPanel cells, moved by the viewer) or the ink's own lines.
   float sotoBit(int m, int ix, vec2 q, float k){
-    vec4 A = uMat[2 * m], B = uMat[2 * m + 1];
+    vec4 A = uMat[3 * m], B = uMat[3 * m + 1];
     bool panelInk = fract((float(ix) + uParallax) / uPanel) < 0.5;
     float fL = B.y * uGrid.x / (uPanel * ${M.PLATE_W.toFixed(4)});
     bool lineInk = false;
@@ -188,8 +233,15 @@
     // material units per pixel, measured in uniform control flow
     float k = max(length(dFdx(q)), length(dFdy(q)));
     bool paper;
-    if (int(uMat[2 * mat + 1].x) == 4) paper = sotoBit(mat, ix, q, k) > 0.5;
-    else paper = tone(mat, q, hitR) > threshold(mat, ix, iy, q, k);
+    vec4 B = uMat[3 * mat + 1];
+    int scr = int(B.x); float hnd = uMat[3 * mat + 2].x;
+    if (scr == 4) paper = sotoBit(mat, ix, q, k) > 0.5;
+    else {
+      float g = tone(mat, q, hitR);
+      if (hnd > 0.0 && (scr == 2 || scr == 3) && 1.0 / (B.y * max(k, 1e-9)) >= uResolve)
+        paper = !(scr == 2 ? handDots(mat, q, g) : handLines(mat, q, g));
+      else paper = g > threshold(mat, ix, iy, q, k);
+    }
     outColor = vec4(paper ? uPaper : uInk, 1.0);
   }`;
 
@@ -214,7 +266,7 @@
     gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 3, -1, -1, 3]), gl.STATIC_DRAW);
     const loc = gl.getAttribLocation(prog, 'p');
     gl.enableVertexAttribArray(loc); gl.vertexAttribPointer(loc, 2, gl.FLOAT, false, 0, 0);
-    for (const n of ['uOps', 'uBlue', 'uNOps', 'uNWin', 'uBg', 'uT', 'uResolve', 'uPanel', 'uParallax', 'uGrid', 'uMat', 'uWin', 'uPaper', 'uInk']) U[n] = gl.getUniformLocation(prog, n);
+    for (const n of ['uOps', 'uBlue', 'uNOps', 'uNWin', 'uBg', 'uT', 'uResolve', 'uPanel', 'uParallax', 'uGrid', 'uMat', 'uSalt', 'uWin', 'uPaper', 'uInk']) U[n] = gl.getUniformLocation(prog, n);
     texOps = gl.createTexture(); texBlue = gl.createTexture();
     gl.activeTexture(gl.TEXTURE1); gl.bindTexture(gl.TEXTURE_2D, texBlue);
     setNearest();
@@ -235,7 +287,7 @@
     gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D, texOps);
     setNearest();
     gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA32F, 3, M.MAX_OPS, 0, gl.RGBA, gl.FLOAT, P.ops);
-    gl.uniform4fv(U.uMat, P.mats); gl.uniform4fv(U.uWin, P.wins);
+    gl.uniform4fv(U.uMat, P.mats); gl.uniform4fv(U.uWin, P.wins); gl.uniform1uiv(U.uSalt, P.salts);
     gl.uniform1i(U.uNOps, P.nOps); gl.uniform1i(U.uNWin, P.nWins); gl.uniform1i(U.uBg, P.bg);
   }
   const useGPU = initGL();
@@ -268,7 +320,7 @@
 
   // ------------------------------------------------------------------ score & layout
   function newScore() {
-    S = M.score(G.seed, bath, { lagrange: G.param('lagrange'), density: G.param('density'), soto: G.param('soto'), mellan: G.param('mellan') });
+    S = M.score(G.seed, bath, { lagrange: G.param('lagrange'), density: G.param('density'), soto: G.param('soto'), mellan: G.param('mellan'), hand: G.param('hand') });
     upload();
     syncURL();
   }
@@ -331,7 +383,7 @@
   function captionFor(time) {
     const c = counts(time);
     const printing = t >= S.settle;
-    const extra = (S.sotoMat >= 0 ? '  ·  soto' + (Math.abs(parallax) > 0.05 ? ' ' + (parallax > 0 ? '+' : '') + parallax.toFixed(1) : '') : '') + (S.mellanMat >= 0 ? '  ·  mellan' : '');
+    const extra = (S.sotoMat >= 0 ? '  ·  soto' + (Math.abs(parallax) > 0.05 ? ' ' + (parallax > 0 ? '+' : '') + parallax.toFixed(1) : '') : '') + (S.mellanMat >= 0 ? '  ·  mellan' : '') + (S.hand > 0 ? '  ·  hand ' + S.hand.toFixed(2).replace(/0$/, '') : '');
     const left = `TWO OBSERVERS  —  seed ${G.seed}  ·  bath ${bath + 1}${extra}`;
     const right = printing
       ? `PRINT  ·  ${S.ops.length} gestures  ·  ${c.eul} eulerian / ${c.lag} lagrangian inks`
