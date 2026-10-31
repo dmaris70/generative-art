@@ -3,6 +3,17 @@
   "author": "dmaris70",
   "projects": [
     {
+      "slug": "048-plotted-field",
+      "title": "Plotted Field",
+      "year": 2026,
+      "tools": [
+        "canvas",
+        "svg"
+      ],
+      "description": "A grass field drawn by a pen, one stroke per blade. A seed makes one field — ground, tufts, heights, every blade — and that field has 25 views, cameras from lying in the grass to standing on a roof; the seconds into the hour fix the wind. Hidden lines are removed front to back against each blade's real width, the distance thins into the paper rather than into grey, and the moon's light is where the pen lifts. A plotter-ready SVG with its caption in single-stroke letters.",
+      "thumb": "preview.png"
+    },
+    {
       "slug": "047-edition-of-390",
       "title": "Edition of 390",
       "year": 2026,
