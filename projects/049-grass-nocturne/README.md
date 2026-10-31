@@ -195,6 +195,46 @@ The engine picks it up without other changes. Until then the measurement says
 `CLIMATE MAP NOT YET ADDED`, and the meadow ignores climate. `?geo=0` ignores the ground
 altogether.
 
+## The sea
+
+Where the journey is over the sea, the meadow gives way to a moving sea surface, made the way
+the grass is made: thousands of thin strokes. Each stroke lies along a wave crest, rides the
+surface, lifts and curls a little at the crest, and catches the light along its length. The
+meadow fades out and the sea fades in from 20 km inland to 40 km offshore.
+
+**Where the conditions come from.** Every 15 minutes the piece asks Open-Meteo's marine service
+for the waves where the journey is: significant wave height, period and direction, and the swell's
+height, period and direction. Where there is no reading, it uses the sea a wind of that speed
+raises when fully developed (wave height ≈ 0.0214 × wind², period ≈ 0.73 × wind speed). The
+measurement says which.
+
+**The sea states** (the Douglas scale) and what they look like:
+
+| State | Waves | In the piece |
+|---|---|---|
+| 0 Calm, glassy | under 0.03 m | Barely moving; strokes long, aligned and still |
+| 1 Calm, rippled | to 0.1 m | Fine ripples only |
+| 2 Smooth | to 0.5 m | Low, regular wavelets |
+| 3 Slight | to 1.25 m | Waves; the first white crests |
+| 4 Moderate | to 2.5 m | Longer waves; many white crests |
+| 5 Rough | to 4 m | Swell and wind sea crossing; crests curl and whiten |
+| 6 Very rough | to 6 m | Heavy rolling surface; the camera rides higher |
+| 7 High | to 9 m | Streaks of foam along the wind |
+| 8–9 Very high, phenomenal | above 9 m | The whole surface moving; foam streaks everywhere |
+| Frozen | below −1.8 °C, above 50° latitude | Motion stops; no white crests |
+
+**How it is drawn.**
+- **Wave trains:** four of them (the wind sea, a shorter sea beside it, the swell from its own
+  direction, and a ripple), summed as moving sine waves.
+- **Periods are true,** so a 9-second sea has 9-second waves. Wavelengths are shortened to a
+  third so that waves fit the 46 m view.
+- **Height on screen:** grows with the square root of the real wave height, so a 14 m sea is
+  dramatic without swallowing the view.
+- **White crests:** appear from about 4 m/s of wind, on the steep tops.
+- **Foam streaks:** from about 14 m/s, some strokes turn to lie along the wind.
+- **The camera** rides above the highest crests.
+- **No reflection at sea:** the sea itself is the surface.
+
 ## Four registers, borrowed as techniques
 
 Four ways of making marks are layered over the meadow, and the weather where the journey is
@@ -203,7 +243,7 @@ reeds in water, and charcoal drawing. Only the techniques are taken; no composit
 
 | Register | What it does | Driven by |
 |---|---|---|
-| **Paper and ink** | The night becomes paper and the light becomes ink. Colour turns to its complement, as a dichroic film shows by transmitted light. The ink follows the frame's own brightness (its 90th percentile), so a dark, wet field still draws. | Daylight where the journey is (the sun from 4° below the horizon to 10° above). `?paper=0` never uses paper. |
+| **Paper and ink** | The night becomes paper and the light becomes ink, mostly where there is drawing: a blade or a crest brighter than what surrounds it. Areas that are merely bright, such as fog or haze, stay close to paper, as they do in daylight. Colour turns to its complement, as a dichroic film shows by transmitted light. | Daylight where the journey is (the sun from 4° below the horizon to 10° above). `?paper=0` never uses paper. |
 | **Wash** | Tone bleeds, pigment pools at the edge of a wash, and granulation runs through the paper. | Humidity, rain and fog |
 | **Charcoal** | Tone is dragged a short way along the wind's direction across the screen, and a dry brush skips over the paper's tooth. | Wind strength |
 | **Water** | Below a waterline the meadow is seen reflected in moving water. The ripples are a continuous field: fine and quick near the horizon, broad and slow near the eye, drifting with the wind. When it is wet, a few thin, broken threads of light hang from the line like ink lines in a wash. | **Only where the journey is over the sea:** none on land, whatever the weather. It comes in from 20 km inland and is full by 40 km offshore, where the waterline sits just below the horizon. Ripples follow the wind; threads appear only at sea with humidity, rain or fog. |
