@@ -15,7 +15,7 @@
   'use strict';
 
   const TAU = Math.PI * 2;
-  const SHEETS = { A4: [297, 210], A3: [420, 297], A2: [594, 420], A1: [841, 594] };
+  const SHEETS = { A4: [297, 210], A3: [420, 297], A2: [594, 420], A1: [841, 594], W16x9: [480, 270] };   // W16x9: a screen, not a paper
   const VIEWS = 25;
   const NEAR = 0.12;                 // m
   const CELL = 1;                    // m: blades are placed per world cell, so views agree
@@ -614,7 +614,42 @@
     return out.join('\n');
   }
 
-  const api = { build, buildMap, svg, caption, camera, createWorld, headLines, DEFAULTS, SHEETS, VIEWS, INKS };
+  // ───────────────────────── plotting order ─────────────────────────
+  // Greedy nearest neighbour over stroke ends (a stroke may be drawn backwards), with a bucket
+  // grid so it stays near-linear. It is the order a careful plotter would draw in; the wall
+  // draws in it too. Deterministic: ties break by index.
+  function orderStrokes(strokes, cell = 8) {
+    const n = strokes.length, used = new Uint8Array(n), grid = new Map(), out = [];
+    if (!n) return out;
+    const key = (x, y) => Math.floor(x / cell) + ':' + Math.floor(y / cell);
+    const put = (i, x, y) => { const k = key(x, y); let b = grid.get(k); if (!b) grid.set(k, (b = [])); b.push(i); };
+    strokes.forEach((s, i) => { put(i, s[0], s[1]); put(i, s[s.length - 2], s[s.length - 1]); });
+    let px = 0, py = 0, left = n;
+    while (left) {
+      let best = -1, bestD = Infinity, flip = false;
+      const cx = Math.floor(px / cell), cy = Math.floor(py / cell);
+      for (let ring = 0; best < 0 || ring * cell <= Math.sqrt(bestD) + cell; ring++) {
+        for (let gy = cy - ring; gy <= cy + ring; gy++) for (let gx = cx - ring; gx <= cx + ring; gx++) {
+          if (Math.max(Math.abs(gx - cx), Math.abs(gy - cy)) !== ring) continue;
+          const b = grid.get(gx + ':' + gy); if (!b) continue;
+          for (const i of b) {
+            if (used[i]) continue;
+            const s = strokes[i], d0 = (s[0] - px) ** 2 + (s[1] - py) ** 2, d1 = (s[s.length - 2] - px) ** 2 + (s[s.length - 1] - py) ** 2;
+            const d = Math.min(d0, d1);
+            if (d < bestD || (d === bestD && i < best)) { bestD = d; best = i; flip = d1 < d0; }
+          }
+        }
+        if (ring > 4096) break;
+      }
+      used[best] = 1; left--;
+      let s = strokes[best];
+      if (flip) { const r = []; for (let k = s.length - 2; k >= 0; k -= 2) r.push(s[k], s[k + 1]); s = r; }
+      out.push(s); px = s[s.length - 2]; py = s[s.length - 1];
+    }
+    return out;
+  }
+
+  const api = { build, buildMap, svg, orderStrokes, caption, camera, createWorld, headLines, DEFAULTS, SHEETS, VIEWS, INKS };
   global.PlottedField = api;
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
 })(typeof window !== 'undefined' ? window : globalThis);

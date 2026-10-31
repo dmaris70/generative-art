@@ -121,6 +121,40 @@ SHA-1). Changing `instant` changes the file.
   the work of cutting pen travel. *I have not run vpype on these files, because it is not
   installed in this environment.*
 
+## The wall (`wall.html`): a kinetic version for large screens
+
+Made for a 16:9 LED wall in a public office that runs for months. The screen shows the pen
+drawing a sheet in the order a plotter would draw it.
+
+- **One sheet per hour of local time:** views 1–25 of a field, then its map, then the next
+  field. That is a 26-hour cycle, so a view does not fall at the same hour on consecutive
+  days.
+- **Within the hour:** the pen draws for 50 minutes, the finished sheet rests, and it fades
+  out over the last 30 seconds. The wind on each sheet is frozen at the moment the pen lifts
+  (50 minutes into the hour), and the caption says so.
+- **Plotting order:** strokes are sorted by nearest neighbour over their end points (a stroke
+  can be drawn backwards), and the pen layers come in sequence with a pen change between
+  them. On field 7, view 12 this cuts pen-up travel from 605 m to 21 m, which also shortens
+  real plots. The function is `orderStrokes` in `field.js`.
+- **Pace:** real plotter timings (25 mm/s drawing, 75 mm/s travel, 0.15 s per lift, 20 s per
+  pen change) are scaled so each sheet fills its 50 minutes. Across field 7's 26 sheets this
+  ranges from 0.7× to 3.6× a real plotter's speed; a full field would take 40 hours to plot.
+  The status line on screen gives the multiple.
+- **Locked to the clock:** what is on screen is worked out from the time alone. A reload, a
+  power cut or a second screen all come back to the same stroke. The page reloads itself
+  once a night at 04:07, sheets are built in a Web Worker so drawing never stalls, and it
+  asks the browser to keep the screen awake.
+- **Comfort on LED:** warm-white and ochre ink on near-black (`?ink=paper` for the light
+  version). Brightness drops to 60% from 19:00 to 22:00 and to 35% from 22:00 to 07:00
+  (`?dim=19-22:0.6,22-7:0.35`).
+- **URL settings:** `?field=7` keeps one field (by default a new field every 26 h),
+  `?slot=60` (minutes per sheet), `?draw=50` (minutes drawing), `?hud=0` hides the status
+  line, `?reload=-1` turns off the nightly reload. For a rehearsal, `?at=2026-11-02T14:20&speed=60`
+  starts the clock at that time and runs it 60 times faster.
+- **Running it:** a full-screen browser in kiosk mode, set to start on boot, pointing at
+  `wall.html`. It needs no network once loaded. *Not done yet: a 72-hour unattended test on
+  the real screen hardware.*
+
 ## Known limits
 
 - The occlusion brush is square, not round. At a 0.2 mm grain this does not show in a plot.
@@ -137,3 +171,4 @@ SHA-1). Changing `instant` changes the file.
   millimetres.
 - `sketch.js`: the panel, the on-screen sheet and the PNG/SVG export.
 - `index.html`, `preview.png` (field 7, view 1), `map.png` (field 7, the map).
+- `wall.html`, `wall.js`, `wall-worker.js`: the kinetic version for screens.
