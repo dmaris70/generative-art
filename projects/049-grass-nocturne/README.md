@@ -6,7 +6,7 @@ centimetres a second. The light's bearing and height follow the real day: high a
 noon, low and raking at night. Gusts of wind cross the field. Every screen running the piece
 shows the same moment, and a restart comes back to it.
 
-![21:40, eye 0.42 m, light 13°](preview.png)
+![06:40: dawn mist and the tree line, eye 0.73 m, light 21°](preview.png)
 
 ## How it relates to Herzog's *Field* (2026)
 
@@ -39,6 +39,16 @@ genre, not a reproduction, and **no code was taken from *Field***.
 - **The wind:** its direction wanders through the day, and its strength gusts on 97 s and
   411 s cycles. Gust fronts travel downwind across the field with a flutter on top, and each
   blade also has its own lean.
+- **Gusts you can see:** a blade bending in the wind shows its paler side, so strong gusts
+  appear as bright waves rolling across the field.
+- **Cloud shadows:** soft dark shapes, roughly 30–60 m across, drift downwind at 1.8 m/s and
+  darken the grass and the ground. The cover changes over 90 minutes, from broken cloud to
+  mostly clear.
+- **Horizon and mist:** a hedgerow with trees stands on a ring 70 m from the field's centre.
+  The meadow fades out over the last 7 m of the drawn window instead of ending in a line, and
+  distance fades into a mist lit from the light's side rather than into black. The mist is
+  thickest around 06:30 and 19:00. A faint glow at the horizon keeps the tree line visible at
+  night.
 - **Shading:** a fraction of light that wraps round the blade, plus a sheen along the blade's
   length (strongest at the tip), a rim light, and darkening at the root. Distance fades to
   black, the image is tone-mapped to grayscale, and one step of noise is added to stop
@@ -50,6 +60,8 @@ genre, not a reproduction, and **no code was taken from *Field***.
   (`?dim=19-22:0.6,22-7:0.35`; `?dim=` turns it off).
 - **Settings:** `?blades=4…24` (blades per cell) and `?scale=0.5…2` (render resolution) adjust
   it to the GPU. `?hud=0` hides the status line, `?seed=N` gives a different meadow.
+- **Diagnostics:** `?show=clouds` and `?show=gusts` display the cloud shadows or the gust
+  waves on their own, for checking at installation.
 - **Rehearsal:** `?at=2026-11-02T21:40&speed=60` starts the clock at that time and runs it 60
   times faster. `?still=1` holds the clock and draws a single frame, for thumbnails.
 - **Running it:** a full-screen browser in kiosk mode, set to start on boot. It needs no
