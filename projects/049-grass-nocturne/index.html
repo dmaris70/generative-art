@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Grass Nocturne — Generative Art</title>
+  <style>
+    html, body { margin: 0; height: 100%; background: #000; overflow: hidden; }
+    #stage { position: fixed; inset: 0; transition: opacity 2s linear; }
+    canvas#gl { display: block; width: 100%; height: 100%; }
+    a.back {
+      position: fixed; top: 14px; left: 16px; z-index: 10; color: #d8b4fe;
+      font: 13px ui-sans-serif, system-ui, sans-serif; text-decoration: none; opacity: .5;
+    }
+    a.back:hover { opacity: 1; }
+    #hud {
+      position: fixed; right: 1.2vw; bottom: 1vh; color: #8d8a84; opacity: .55; pointer-events: none;
+      font: max(10px, 0.9vh)/1.3 ui-monospace, SFMono-Regular, Menlo, monospace; letter-spacing: .04em;
+    }
+  </style>
+</head>
+<body>
+  <a class="back" href="../../">← gallery</a>
+  <div id="stage"><canvas id="gl" aria-label="Grass Nocturne: a live meadow under a single low light"></canvas></div>
+  <div id="hud" role="status"></div>
+  <script src="nocturne.js?v=1"></script>
+</body>
+</html>
