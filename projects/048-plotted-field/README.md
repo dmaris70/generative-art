@@ -4,9 +4,14 @@ A grass field drawn by a pen plotter, one stroke per blade. One seed makes one f
 ground, the tufts, how tall the grass is and where each blade stands. That field has 25 views,
 each a camera placed somewhere in it, from lying in the grass to standing on a roof. An instant
 (the number of seconds into the hour) fixes the wind. Moonlight is shown where the pen lifts: a
-blade turned so that it would catch the light is left as a gap in its line.
+blade turned so that it would catch the light is left as a gap in its line. Some stalks carry
+seed heads, drawn with a second pen. A 26th sheet, the map, shows the field from above with
+all 25 cameras, and every view sheet carries a small copy of that map with its own camera
+marked.
 
 ![field 7, view 1 of 25, A3](preview.png)
+
+![field 7, the map of the 25 views, A3](map.png)
 
 **How it works, in one sentence:** blades and patches of ground are sorted from near to far;
 each blade's centreline is drawn only where nothing nearer has covered the paper; then the
@@ -51,15 +56,50 @@ this repository from scratch.
   millimetre of paper constant, and then falls further exponentially with `hazeLength`.
   Distance shows as fewer lines, not as grey. Skipped blades block nothing.
 
+## Seed heads (second pen)
+
+- **Which blades:** a share (`heads`, 0.08 by default) of the taller blades, weighted toward
+  height. The choice uses a hash of the cell and the blade's index, kept separate from the
+  cell's random sequence, so blade placement is the same as without heads and every view
+  agrees on which blades carry one.
+- **The stalk:** a blade that carries a head is 25–55% longer, bends half as much and is
+  thinner, so the head stands above the leaves.
+- **The head:** a spine 9–21 cm long that continues the stalk's tip, either upright or nodding
+  (40% nod), with 5–10 spikelets alternating along it. Hidden-line removal applies to the head
+  like any blade, and its spine blocks what is behind it.
+- **In the SVG:** layer `2 seed heads (pen 2: …)`. The second ink can be sepia (default),
+  green, grey or black. Its colour only matters on screen; at the plotter you swap the pen.
+
+## The map (sheet 26)
+
+- **The ground** as contour lines every 0.15 m, worked out from the same ground function as
+  the views (marching squares on a 0.3 m grid, segments joined into lines). The map covers
+  48 × 48 m around the field's centre.
+- **Tall grass** in the second pen: a three-stroke tuft wherever the meadow is taller than
+  0.55 m, sized by height and thinned by density. This is the same meadow function that sets
+  blade height in the views.
+- **The 25 views:** each camera is a circle that grows with eye height, a wedge as wide as the
+  lens (drawn out to where the view's centre line meets the ground, 5 m at most), and its
+  number.
+- **Legend:** a table of eye height, compass facing (north is up the sheet) and how far each
+  view looks down, plus a 5 m scale bar.
+- **The inset:** every view sheet has a 30 mm square in the caption band at A3, showing all 25
+  positions and this view's wedge.
+
 ## Measured (A3, default settings, all 25 views)
 
 | Field | Strokes (min / median / max) | Line drawn | Estimated plot time | Build time in the browser |
 |---|---|---|---|---|
-| 7 | 3,379 / 12,045 / 21,637 | 18 / 36 / 64 m | 40 / 115 / 202 min | 0.1–1.1 s |
-| 2026 | 2,972 / 16,689 / 33,421 | 19 / 52 / 94 m | 36 / 163 / 313 min | 0.4–1.6 s |
+| 7 | 4,347 / 12,306 / 24,965 | 20 / 40 / 74 m | 52 / 128 / 233 min | 0.1–1.0 s |
+| 2026 | 4,008 / 20,095 / 38,107 | 25 / 62 / 110 m | 49 / 195 / 357 min | 0.4–1.1 s |
 
-The plot-time estimate assumes the pen draws at 25 mm/s and spends 0.45 s per stroke on
-lifting, moving and lowering. It has not been checked against a real machine yet. Low views,
+These figures include seed heads, the caption and the inset map. Compared with the version
+without heads, the median sheet has 2% more strokes for field 7 and 20% more for field 2026,
+whose meadow is taller. The map sheet has 5,628 strokes (about 57 min) for field 7 and 4,001
+(about 43 min) for field 2026.
+
+The plot-time estimate assumes the pen draws at 25 mm/s, spends 0.45 s per stroke on
+lifting, moving and lowering, and takes 3 minutes per pen change. It has not been checked against a real machine yet. Low views,
 inside the grass, give the fewest strokes; views from about 2–5 m give the most.
 
 Same settings, same file: two builds of field 7, view 24 produce identical SVGs (same
@@ -69,11 +109,13 @@ SHA-1). Changing `instant` changes the file.
 
 - **URL:** `?seed=7&p_view=24&p_instant=1800`. Every setting in the panel has a `p_` name
   and is written into the URL as you change it.
-- **Keys:** `[` and `]` step through the views, `V` saves the SVG, `S` saves a PNG, `R` picks
-  a new field.
-- **SVG:** paper size in millimetres, with two Inkscape layers: `1 grass` and `2 caption`.
-  The caption uses the single-stroke font in `assets/strokefont.js`, so the plotter draws it
-  too.
+- **Keys:** `[` and `]` step through the views, `M` switches between the view and the map,
+  `V` saves the SVG, `S` saves a PNG, `R` picks a new field. For the map in the URL, use
+  `p_kind=1`.
+- **SVG:** paper size in millimetres, with one Inkscape layer per pass, in plotting order.
+  A view has `1 grass`, `2 seed heads (pen 2)` and `3 caption and map`. The map has
+  `1 contours`, `2 tall grass (pen 2)` and `3 views and legend`. All text uses the
+  single-stroke font in `assets/strokefont.js`, so the plotter draws it too.
 - **Plotting:** run `tools/plot.sh plotted-field-7-view-24.svg a3 23mm` (for A3, the margin
   is 5.5% of the sheet width). The `linemerge` and `linesort` steps in that script do most of
   the work of cutting pen travel. *I have not run vpype on these files, because it is not
@@ -91,6 +133,7 @@ SHA-1). Changing `instant` changes the file.
 ## Files
 
 - `field.js`: the engine. It is pure geometry with no drawing library, runs in a browser or
-  in Node, and builds strokes in millimetres and the SVG.
+  in Node, and builds the view sheets, the map sheet and the SVG, as pen layers of strokes in
+  millimetres.
 - `sketch.js`: the panel, the on-screen sheet and the PNG/SVG export.
-- `index.html`, `preview.png`.
+- `index.html`, `preview.png` (field 7, view 1), `map.png` (field 7, the map).

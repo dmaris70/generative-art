@@ -135,7 +135,7 @@
   const DEFAULTS = {
     seed: 1, view: 1, instant: 1200, wind: 0.6, windTurn: 0,
     sheet: 'A3', fov: 55, density: 220, far: 45, body: 1.6, cutoff: 1.4, light: 0.35, moon: 40, moonHeight: 25,
-    grain: 0.2, minRun: 0.35, ground: 1, haze: 6, hazeLength: 16,
+    grain: 0.2, minRun: 0.35, ground: 1, haze: 6, hazeLength: 16, heads: 0.08,
   };
 
   function build(options) {
@@ -168,7 +168,7 @@
 
     // ── plant: every world cell inside the view's wedge, out to `far`
     const far = o.far;
-    const blades = [];                 // [depth, x0,y0,z0, x1,y1,z1, x2,y2,z2, width]
+    const blades = [];                 // [depth, x0,y0,z0, x1,y1,z1, x2,y2,z2, width, head hash]
     const cells = [];                  // ground cells: [depth, ix, iz]
     const ix0 = Math.floor((E[0] - far) / CELL), ix1 = Math.floor((E[0] + far) / CELL);
     const iz0 = Math.floor((E[2] - far) / CELL), iz1 = Math.floor((E[2] + far) / CELL);
@@ -194,8 +194,14 @@
         const r1 = cr(), r2 = cr(), r3 = cr(), r4 = cr();     // drawn in a fixed order: views agree
         planted++;
         const m = world.meadow(x, z), tf = world.tuft(x, z);
-        const L = m.height * tf.stature * (0.7 + 0.6 * r1) * (0.55 + 0.45 * tf.core);
+        let L = m.height * tf.stature * (0.7 + 0.6 * r1) * (0.55 + 0.45 * tf.core);
         if (L < 0.04) continue;
+        // a seed head on some of the taller blades, decided by its own hash (the cell's sequence
+        // stays as it was). Its blade becomes a stalk: longer and straighter, carrying the head
+        // above the leaves.
+        const hh = ihash((hc ^ Math.imul(b + 1, 0x9e3779b9) ^ 0x2545f491) >>> 0);
+        const head = o.heads > 0 && u01(hh) < o.heads * smoothstep(0.2, 0.7, L) ? (hh | 1) >>> 0 : 0;
+        if (head) L *= 1.25 + 0.3 * u01(ihash(hh));
         // lean: away from the tuft's centre, plus a little of the blade's own, plus the wind
         let ax = x - tf.cx, az = z - tf.cz; const al = Math.hypot(ax, az) || 1;
         const own = r2 * TAU; ax = ax / al * 0.8 + Math.cos(own) * 0.5; az = az / al * 0.8 + Math.sin(own) * 0.5;
@@ -204,12 +210,12 @@
         let dx = ax * lean + w.x * w.amount * 1.1, dz = az * lean + w.z * w.amount * 1.1;
         const dl = Math.hypot(dx, dz) || 1, bend = clamp(dl, 0, 1.15);
         dx /= dl; dz /= dl;
-        const th = bend * 1.1, y = world.ground(x, z);
+        const th = bend * (head ? 0.6 : 1.1), y = world.ground(x, z);
         const tipX = x + dx * L * Math.sin(th), tipZ = z + dz * L * Math.sin(th), tipY = y + L * Math.cos(th) * (0.95 - 0.1 * r4);
         const cxp = x + dx * L * Math.sin(th) * 0.12, czp = z + dz * L * Math.sin(th) * 0.12, cyp = y + L * 0.62;
         const dep = (x - E[0]) * B.f[0] + (y - E[1]) * B.f[1] + (z - E[2]) * B.f[2];
         if (dep < NEAR) continue;
-        blades.push([dep, x, y, z, cxp, cyp, czp, tipX, tipY, tipZ, 0.004 + 0.004 * r4]);
+        blades.push([dep, x, y, z, cxp, cyp, czp, tipX, tipY, tipZ, head ? 0.003 : 0.004 + 0.004 * r4, head]);
       }
     }
     blades.sort((a, b) => a[0] - b[0]);
@@ -230,9 +236,56 @@
     ground.sort((a, b) => a[0] - b[0]);
 
     // ── draw, front to back
-    const strokes = [];
-    let gi = 0, drawn = 0, ink = 0, culled = 0;
-    const pts = new Float64Array(3 * 30), tan = new Float64Array(3 * 30);
+    const grass = [], heads = [];
+    let gi = 0, drawn = 0, ink = 0, headInk = 0, culled = 0, headsDrawn = 0;
+    const pts = new Float64Array(3 * 30), tan = new Float64Array(30), hp = new Float64Array(3 * 12);
+    const lightLimit = 1 - o.light;
+
+    // the visible runs of one projected polyline (xy at stride 3) become strokes in `out`
+    function trace(xy, count, lit, out) {
+      let run = null, len = 0;
+      const flush = () => {
+        if (run && run.length >= 4) {
+          let l = 0; for (let k = 2; k < run.length; k += 2) l += Math.hypot(run[k] - run[k - 2], run[k + 1] - run[k - 1]);
+          if (l >= o.minRun) { out.push(run.map((v, k) => v + (k % 2 ? frame.y : frame.x))); len += l; }
+        }
+        run = null;
+      };
+      for (let i = 0; i < count - 1; i++) {
+        const x0 = xy[i * 3], y0 = xy[i * 3 + 1], x1 = xy[i * 3 + 3], y1 = xy[i * 3 + 4];
+        const steps = Math.max(1, Math.ceil(Math.hypot(x1 - x0, y1 - y0) / (grain * 0.7)));
+        for (let k = (i === 0 ? 0 : 1); k <= steps; k++) {
+          const f = k / steps, x = x0 + (x1 - x0) * f, y = y0 + (y1 - y0) * f;
+          const shine = lit && o.light > 0 && lit[i] + (lit[i + 1] - lit[i]) * f > lightLimit;
+          const vis = !shine && x >= 0 && y >= 0 && x <= frame.w && y <= frame.h && mask.seen(x / grain, y / grain);
+          if (vis) {
+            if (!run) run = [x, y];
+            else if (k === steps) run.push(x, y);
+          } else if (run) { run.push(x, y); flush(); }
+        }
+      }
+      flush();
+      return len;
+    }
+    // a body of world width w (tapering by `taper` toward the end) into the occlusion bitmap
+    function stamp(xyz, count, w, taper) {
+      for (let i = 0; i < count - 1; i++) {
+        const x0 = xyz[i * 3] / grain, y0 = xyz[i * 3 + 1] / grain, x1 = xyz[i * 3 + 3] / grain, y1 = xyz[i * 3 + 4] / grain;
+        const t = (i + 0.5) / (count - 1), wpx = o.body * w * (1 - taper * t) * F / ((xyz[i * 3 + 2] + xyz[i * 3 + 5]) / 2) / grain;
+        if (wpx < 1 && rnd() > wpx) continue;
+        const steps = Math.max(1, Math.ceil(Math.hypot(x1 - x0, y1 - y0) / 0.7)), rad = Math.max(0.5, wpx / 2);
+        for (let k = 0; k <= steps; k++) mask.disc(x0 + (x1 - x0) * k / steps, y0 + (y1 - y0) * k / steps, rad);
+      }
+    }
+    // project a world polyline (flat x,y,z) into `buf`; false if any point is behind the eye
+    function projectLine(line, buf) {
+      for (let i = 0; i < line.length / 3; i++) {
+        if (!project(line[i * 3], line[i * 3 + 1], line[i * 3 + 2])) return false;
+        buf[i * 3] = P[0]; buf[i * 3 + 1] = P[1]; buf[i * 3 + 2] = P[2];
+      }
+      return true;
+    }
+
     for (const bl of blades) {
       while (o.ground && gi < ground.length && ground[gi][0] < bl[0]) {
         const q = ground[gi++][1];
@@ -243,9 +296,8 @@
       const ax = P[0], ay = P[1], zc = P[2];
       if (!project(bl[7], bl[8], bl[9])) continue;
       const size = Math.hypot(P[0] - ax, P[1] - ay);
-      // aerial recession, drawn: past `haze` metres the field thins out exponentially into the paper
-      // (haze/zc)² first holds the marks per square millimetre of paper constant with distance,
-      // then the exponential lets them go.
+      // aerial recession, drawn: (haze/zc)² first holds the marks per square millimetre of paper
+      // constant with distance, then the exponential lets them go
       const keep = smoothstep(o.cutoff * 0.5, o.cutoff * 1.5, size)
         * (zc > o.haze ? (o.haze / zc) ** 2 * Math.exp(-(zc - o.haze) / o.hazeLength) : 1);
       if (keep <= 0 || rnd() > keep) { culled++; continue; }
@@ -266,96 +318,303 @@
         // world tangent, for the light
         let tx = 2 * (s * (bl[4] - bl[1]) + t * (bl[7] - bl[4])), ty = 2 * (s * (bl[5] - bl[2]) + t * (bl[8] - bl[5])), tz = 2 * (s * (bl[6] - bl[3]) + t * (bl[9] - bl[6]));
         const tl = Math.hypot(tx, ty, tz) || 1; tx /= tl; ty /= tl; tz /= tl;
-        let vx = E[0] - x, vy = E[1] - y, vz = E[2] - z; const vl = Math.hypot(vx, vy, vz) || 1;
-        let hx = M[0] + vx / vl, hy = M[1] + vy / vl, hz = M[2] + vz / vl; const hl = Math.hypot(hx, hy, hz) || 1;
+        const vx = E[0] - x, vy = E[1] - y, vz = E[2] - z, vl = Math.hypot(vx, vy, vz) || 1;
+        const hx = M[0] + vx / vl, hy = M[1] + vy / vl, hz = M[2] + vz / vl, hl = Math.hypot(hx, hy, hz) || 1;
         const th = (tx * hx + ty * hy + tz * hz) / hl;
         tan[i] = Math.pow(Math.max(0, 1 - th * th), 24) * (0.35 + 0.65 * t);   // sheen, stronger toward the tip
       }
       if (!ok) continue;
 
-      // visible runs: inside the frame, not covered, not lit
-      const lightLimit = 1 - o.light;
-      let run = null;
-      const flush = () => {
-        if (run && run.length >= 4) {
-          let len = 0; for (let k = 2; k < run.length; k += 2) len += Math.hypot(run[k] - run[k - 2], run[k + 1] - run[k - 1]);
-          if (len >= o.minRun) { strokes.push(run.map((v, k) => v + (k % 2 ? frame.y : frame.x))); ink += len; }
-        }
-        run = null;
-      };
-      for (let i = 0; i < n; i++) {
-        const x0 = pts[i * 3], y0 = pts[i * 3 + 1], x1 = pts[i * 3 + 3], y1 = pts[i * 3 + 4];
-        const lit0 = tan[i], lit1 = tan[i + 1];
-        const steps = Math.max(1, Math.ceil(Math.hypot(x1 - x0, y1 - y0) / (grain * 0.7)));
-        for (let k = (i === 0 ? 0 : 1); k <= steps; k++) {
-          const f = k / steps, x = x0 + (x1 - x0) * f, y = y0 + (y1 - y0) * f;
-          const lit = o.light > 0 && lit0 + (lit1 - lit0) * f > lightLimit;
-          const vis = !lit && x >= 0 && y >= 0 && x <= frame.w && y <= frame.h && mask.seen(x / grain, y / grain);
-          if (vis) {
-            if (!run) run = [x, y];
-            else if (k === steps) run.push(x, y);
-          } else if (run) { run.push(x, y); flush(); }
+      // the seed head, if this blade carries one: traced before anything of this blade is stamped
+      const lines = bl[11] ? headLines(bl) : null, projected = [];
+      if (lines && size > 1.5) {
+        for (const line of lines) {
+          const buf = new Float64Array(line.length);
+          if (!projectLine(line, buf)) { projected.length = 0; break; }
+          projected.push(buf);
         }
       }
-      flush();
+      ink += trace(pts, n + 1, tan, grass);
+      if (projected.length) {
+        const before = heads.length;
+        for (const buf of projected) headInk += trace(buf, buf.length / 3, null, heads);
+        if (heads.length > before) headsDrawn++;
+      }
       drawn++;
 
-      // the body: real width, tapering to the tip, projected; thinner than a pixel → dithered
-      for (let i = 0; i < n; i++) {
-        const x0 = pts[i * 3] / grain, y0 = pts[i * 3 + 1] / grain, x1 = pts[i * 3 + 3] / grain, y1 = pts[i * 3 + 4] / grain;
-        const t = (i + 0.5) / n, wpx = o.body * bl[10] * (1 - 0.85 * t) * F / ((pts[i * 3 + 2] + pts[i * 3 + 5]) / 2) / grain;
-        if (wpx < 1 && rnd() > wpx) continue;
-        const steps = Math.max(1, Math.ceil(Math.hypot(x1 - x0, y1 - y0) / 0.7)), rad = Math.max(0.5, wpx / 2);
-        for (let k = 0; k <= steps; k++) mask.disc(x0 + (x1 - x0) * k / steps, y0 + (y1 - y0) * k / steps, rad);
-      }
+      // the bodies: real width, tapering to the tip, projected; thinner than a pixel → dithered
+      stamp(pts, n + 1, bl[10], 0.85);
+      if (projected.length) stamp(projected[0], projected[0].length / 3, 0.006, 0.6);
     }
 
-    const travel = strokes.length * 0.45;              // s per stroke: pen up, travel, pen down
-    return {
-      options: o, world, camera: cam, sheet: { w: SW, h: SH }, frame, strokes,
-      stats: {
-        planted, considered: blades.length, drawn, culled, strokes: strokes.length,
-        ink: ink / 1000,                                 // m
-        minutes: (ink / 25 + travel) / 60,               // at 25 mm/s drawing
-        ms: Date.now() - t0,
-      },
+    const result = { kind: 'view', options: o, world, camera: cam, sheet: { w: SW, h: SH }, frame };
+    result.stats = {
+      planted, considered: blades.length, drawn, culled, heads: headsDrawn,
+      strokes: grass.length + heads.length, ink: (ink + headInk) / 1000,
     };
+    const text = caption(result);
+    const inset = insetMap(result);
+    const words = captionStrokes(text, frame.x, frame.y + frame.h, SW);
+    result.layers = [
+      { id: 'grass', label: '1 grass', pen: 1, strokes: grass },
+      { id: 'heads', label: '2 seed heads', pen: 2, strokes: heads },
+      { id: 'caption', label: '3 caption and map', pen: 1, strokes: words.concat(inset) },
+    ];
+    finish(result, t0);
+    return result;
+  }
+
+  // ───────────────────────── seed heads ─────────────────────────
+  // A spine continuing the blade's tip, upright or nodding, with spikelets alternating along it.
+  // Everything is drawn from the head's own hash, so every view of the field shows the same head.
+  function headLines(bl) {
+    const r = mulberry32(bl[11]);
+    let tx = bl[7] - bl[4], ty = bl[8] - bl[5], tz = bl[9] - bl[6];
+    const tl = Math.hypot(tx, ty, tz) || 1; tx /= tl; ty /= tl; tz /= tl;
+    const len = 0.09 + 0.12 * r(), nod = r() < 0.4 ? 0.5 + 0.8 * r() : 0.12 * r();
+    let sx = tz, sz = -tx; const sl = Math.hypot(sx, sz);
+    if (sl < 1e-4) { sx = 1; sz = 0; } else { sx /= sl; sz /= sl; }
+    const N = 8, spine = new Float64Array((N + 1) * 3), at = (s) => [
+      bl[7] + tx * len * s, bl[8] + ty * len * s - nod * len * s * s, bl[9] + tz * len * s,
+    ];
+    for (let i = 0; i <= N; i++) spine.set(at(i / N), i * 3);
+    const lines = [spine], k = 5 + Math.floor(r() * 6);
+    for (let j = 0; j < k; j++) {
+      const s = 0.25 + 0.7 * j / Math.max(1, k - 1), q = at(s), q2 = at(Math.min(1, s + 0.05));
+      let dx = q2[0] - q[0], dy = q2[1] - q[1], dz = q2[2] - q[2]; const dl = Math.hypot(dx, dy, dz) || 1;
+      dx /= dl; dy /= dl; dz /= dl;
+      const side = j % 2 ? 1 : -1, l = len * (0.28 + 0.14 * r()) * (1 - 0.5 * s);
+      let ex = dx * 0.55 + sx * side * 0.75, ey = dy * 0.55 + 0.15, ez = dz * 0.55 + sz * side * 0.75;
+      const el = Math.hypot(ex, ey, ez) || 1; ex /= el; ey /= el; ez /= el;
+      lines.push(Float64Array.of(q[0], q[1], q[2], q[0] + ex * l * 0.5, q[1] + ey * l * 0.5, q[2] + ez * l * 0.5, q[0] + ex * l, q[1] + ey * l, q[2] + ez * l));
+    }
+    return lines;
+  }
+
+  // ───────────────────────── the map: the field from above, and its 25 views ─────────────────────────
+  const MAP_R = 24;                    // m, half the side of the mapped square around the field's centre
+
+  function viewAim(cam, world) {       // where the view's centre line meets the ground, within reason
+    const lookDist = cam.pitch < -0.02 ? cam.height / Math.tan(-cam.pitch) : 30;
+    return clamp(lookDist, 2, 5);               // a wedge, not a sightline: the far field is implied
+  }
+
+  function buildMap(options) {
+    const o = Object.assign({}, DEFAULTS, options);
+    const t0 = Date.now();
+    const world = createWorld(o.seed), cams = [];
+    for (let k = 1; k <= VIEWS; k++) cams.push(camera(o.seed, k, world));
+    const [SW, SH] = SHEETS[o.sheet] || SHEETS.A3;
+    const margin = Math.round(SW * 0.055), bottom = Math.round(SW * 0.085);
+    const frame = { x: margin, y: margin, w: SW - 2 * margin, h: SH - margin - bottom };
+    const side = Math.min(frame.h, frame.w * 0.62), k = side / (2 * MAP_R);
+    const box = { x: frame.x, y: frame.y, w: side, h: side };
+    const X = (x) => box.x + (x + MAP_R) * k, Y = (z) => box.y + (z + MAP_R) * k;   // +z down the sheet
+
+    // contours: marching squares on the ground, every 0.15 m, segments chained into lines
+    const step = 0.3, G = Math.round(2 * MAP_R / step), hs = new Float64Array((G + 1) * (G + 1));
+    let lo = Infinity, hi = -Infinity;
+    for (let j = 0; j <= G; j++) for (let i = 0; i <= G; i++) {
+      const h = world.ground(-MAP_R + i * step, -MAP_R + j * step); hs[j * (G + 1) + i] = h;
+      lo = Math.min(lo, h); hi = Math.max(hi, h);
+    }
+    const contours = [], interval = 0.15;
+    for (let level = Math.ceil(lo / interval) * interval; level < hi; level += interval) {
+      const segs = [];
+      for (let j = 0; j < G; j++) for (let i = 0; i < G; i++) {
+        const a = hs[j * (G + 1) + i], b = hs[j * (G + 1) + i + 1], c = hs[(j + 1) * (G + 1) + i + 1], d = hs[(j + 1) * (G + 1) + i];
+        const e = [];
+        const cross = (p, q, x0, z0, x1, z1) => { if ((p < level) !== (q < level)) { const t = (level - p) / (q - p); e.push([x0 + (x1 - x0) * t, z0 + (z1 - z0) * t]); } };
+        cross(a, b, i, j, i + 1, j); cross(b, c, i + 1, j, i + 1, j + 1); cross(c, d, i + 1, j + 1, i, j + 1); cross(d, a, i, j + 1, i, j);
+        if (e.length === 2) segs.push(e);
+        else if (e.length === 4) { segs.push([e[0], e[1]]); segs.push([e[2], e[3]]); }
+      }
+      for (const line of chain(segs)) contours.push(line.flatMap(([gx, gz]) => [X(-MAP_R + gx * step), Y(-MAP_R + gz * step)]));
+    }
+
+    // tall grass, in the second pen: the cartographer's tuft, sized by how tall the meadow grows
+    const meadow = [], tr = mulberry32(ihash(world.seed ^ 0x6a09e667));
+    for (let z = -MAP_R + 0.5; z < MAP_R; z += 1) for (let x = -MAP_R + 0.5; x < MAP_R; x += 1) {
+      const px = x + (tr() - 0.5) * 0.7, pz = z + (tr() - 0.5) * 0.7, m = world.meadow(px, pz);
+      if (m.height < 0.55 || tr() > m.density) continue;
+      const s = 0.7 + 1.3 * (m.height - 0.55) / 0.65, bx = X(px), by = Y(pz);
+      meadow.push([bx, by, bx, by - s], [bx, by, bx - s * 0.45, by - s * 0.8], [bx, by, bx + s * 0.45, by - s * 0.8]);
+    }
+
+    // the views: where each stands, which way it looks and how far, numbered
+    const views = [];
+    for (const c of cams) {
+      const ex = c.eye[0], ez = c.eye[2], reach = viewAim(c, world), half = Math.atan(Math.tan(o.fov * Math.PI / 360));
+      const ray = (a) => [X(ex + Math.cos(a) * reach), Y(ez + Math.sin(a) * reach)];
+      const l = ray(c.heading - half), r = ray(c.heading + half);
+      views.push([X(ex), Y(ez), ...l], [X(ex), Y(ez), ...r]);
+      const arc = [];
+      for (let i = 0; i <= 12; i++) arc.push(...ray(c.heading - half + 2 * half * i / 12));
+      views.push(arc);
+      views.push(circle(X(ex), Y(ez), Math.max(0.8, 0.5 + 0.35 * Math.log2(1 + c.height))));
+      const away = Math.atan2(ez, ex), size = 2.6, label = String(c.view);
+      const lx = X(ex) + Math.cos(away) * 4.2 - (global.StrokeFont ? global.StrokeFont.width(label, size) / 2 : 0), ly = Y(ez) + Math.sin(away) * 4.2 - size / 2;
+      views.push(...textStrokes(label, lx, ly, size));
+    }
+    const clipped = (lines) => lines.flatMap((l) => clipLine(l, box));
+    const frameLines = [[box.x, box.y, box.x + side, box.y, box.x + side, box.y + side, box.x, box.y + side, box.x, box.y]];
+
+    // the legend: the 25 views as a table, a scale bar
+    const legend = [], lx = box.x + side + Math.max(10, SW * 0.03), size = Math.max(2.2, SW * 0.0062), lineH = Math.min(size * 1.85, side / 27);
+    legend.push(...textStrokes('VIEW   EYE      FACING   LOOKS DOWN', lx, box.y, size));
+    cams.forEach((c, i) => {
+      // compass bearing, with north up the sheet (−z)
+      const deg = ((Math.atan2(Math.cos(c.heading), -Math.sin(c.heading)) * 180 / Math.PI) % 360 + 360) % 360;
+      const row = String(c.view).padStart(2, ' ') + '     ' + c.height.toFixed(2).padStart(5, ' ') + ' M  ' + String(Math.round(deg)).padStart(3, ' ') + '      ' + String(Math.round(-c.pitch * 180 / Math.PI)).padStart(2, ' ');
+      legend.push(...textStrokes(row, lx, box.y + (i + 1.4) * lineH, size));
+    });
+    const sy = box.y + side - 2, sx = lx;
+    legend.push([sx, sy, sx + 5 * k, sy], [sx, sy - 1.2, sx, sy + 1.2], [sx + 5 * k, sy - 1.2, sx + 5 * k, sy + 1.2], [sx + 2.5 * k, sy - 0.7, sx + 2.5 * k, sy + 0.7]);
+    legend.push(...textStrokes('5 M', sx + 5 * k + 2, sy - size / 2, size));
+    legend.push(...textStrokes('CONTOURS EVERY 0.15 M', sx, sy - size * 2.4, size));
+    legend.push(...textStrokes('FACING: DEGREES FROM NORTH, UP THE SHEET', sx, sy - size * 4.4, size));
+    legend.push(...textStrokes('LOOKS DOWN: DEGREES BELOW LEVEL', sx, sy - size * 6.4, size));
+    legend.push(...textStrokes('WEDGES: THE LENS, DRAWN TO 5 M AT MOST', sx, sy - size * 8.4, size));
+
+    const result = { kind: 'map', options: o, world, cameras: cams, sheet: { w: SW, h: SH }, frame };
+    const ground = clipped(contours).concat(frameLines), grass = clipped(meadow), marks = clipped(views);
+    result.stats = { strokes: ground.length + grass.length + marks.length + legend.length, ink: 0 };
+    const text = [
+      'PLOTTED FIELD - FIELD ' + world.seed + ' - THE ' + VIEWS + ' VIEWS',
+      'THE FIELD FROM ABOVE, ' + (2 * MAP_R) + ' BY ' + (2 * MAP_R) + ' M - EACH VIEW WHERE IT STANDS, WHICH WAY IT LOOKS, AND HOW FAR',
+    ];
+    result.caption = text;
+    result.layers = [
+      { id: 'ground', label: '1 contours', pen: 1, strokes: ground },
+      { id: 'meadow', label: '2 tall grass', pen: 2, strokes: grass },
+      { id: 'views', label: '3 views and legend', pen: 1, strokes: marks.concat(legend, captionStrokes(text, frame.x, frame.y + frame.h, SW)) },
+    ];
+    finish(result, t0);
+    return result;
+  }
+
+  // a small map in the caption band of a view sheet: the 25 positions, this view's field of view
+  function insetMap(r) {
+    const { frame, sheet, camera: own, options: o } = r;
+    const s = Math.min(30, sheet.h - (frame.y + frame.h) - 7);
+    if (s < 12) return [];
+    const box = { x: frame.x + frame.w - s, y: frame.y + frame.h + 5, w: s, h: s }, k = s / (2 * MAP_R);
+    const X = (x) => box.x + (x + MAP_R) * k, Y = (z) => box.y + (z + MAP_R) * k;
+    const out = [[box.x, box.y, box.x + s, box.y, box.x + s, box.y + s, box.x, box.y + s, box.x, box.y]];
+    for (let v = 1; v <= VIEWS; v++) {
+      const c = v === own.view ? own : camera(r.world.seed, v, r.world);
+      out.push(circle(X(c.eye[0]), Y(c.eye[2]), v === own.view ? 0.7 : 0.3, v === own.view ? 12 : 6));
+    }
+    const reach = viewAim(own, r.world), half = o.fov * Math.PI / 360, ex = own.eye[0], ez = own.eye[2];
+    const ray = (a) => [X(ex + Math.cos(a) * reach), Y(ez + Math.sin(a) * reach)];
+    const wedge = [X(ex), Y(ez), ...ray(own.heading - half)];
+    for (let i = 1; i <= 8; i++) wedge.push(...ray(own.heading - half + 2 * half * i / 8));
+    wedge.push(X(ex), Y(ez));
+    return out.concat(clipLine(wedge, box));
+  }
+
+  // ───────────────────────── plotting helpers ─────────────────────────
+  function circle(cx, cy, r, n = 16) {
+    const out = [];
+    for (let i = 0; i <= n; i++) out.push(cx + r * Math.cos(TAU * i / n), cy + r * Math.sin(TAU * i / n));
+    return out;
+  }
+  // segments [[a,b],…] with shared endpoints → polylines
+  function chain(segs) {
+    const key = (p) => Math.round(p[0] * 1e4) + ',' + Math.round(p[1] * 1e4), ends = new Map(), used = new Uint8Array(segs.length), out = [];
+    segs.forEach((s, i) => { for (const p of s) { const kk = key(p); if (!ends.has(kk)) ends.set(kk, []); ends.get(kk).push(i); } });
+    const next = (p) => (ends.get(key(p)) || []).find((i) => !used[i]);
+    for (let i = 0; i < segs.length; i++) {
+      if (used[i]) continue;
+      used[i] = 1; const line = [segs[i][0], segs[i][1]];
+      for (const dir of [1, -1]) {
+        for (;;) {
+          const tip = dir === 1 ? line[line.length - 1] : line[0], j = next(tip);
+          if (j === undefined) break;
+          used[j] = 1; const s = segs[j], far = key(s[0]) === key(tip) ? s[1] : s[0];
+          if (dir === 1) line.push(far); else line.unshift(far);
+        }
+      }
+      out.push(line);
+    }
+    return out;
+  }
+  // a flat polyline clipped to a box → zero or more flat polylines (Liang–Barsky per segment)
+  function clipLine(l, b) {
+    const out = []; let cur = null;
+    for (let i = 0; i + 3 < l.length; i += 2) {
+      let x0 = l[i], y0 = l[i + 1], x1 = l[i + 2], y1 = l[i + 3], t0 = 0, t1 = 1;
+      const dx = x1 - x0, dy = y1 - y0;
+      let ok = true;
+      for (const [p, q] of [[-dx, x0 - b.x], [dx, b.x + b.w - x0], [-dy, y0 - b.y], [dy, b.y + b.h - y0]]) {
+        if (p === 0) { if (q < 0) { ok = false; break; } continue; }
+        const t = q / p;
+        if (p < 0) { if (t > t1) { ok = false; break; } if (t > t0) t0 = t; } else { if (t < t0) { ok = false; break; } if (t < t1) t1 = t; }
+      }
+      if (!ok) { if (cur) { out.push(cur); cur = null; } continue; }
+      const ax = x0 + dx * t0, ay = y0 + dy * t0, bx = x0 + dx * t1, by = y0 + dy * t1;
+      if (!cur || t0 > 0) { if (cur) out.push(cur); cur = [ax, ay]; }
+      cur.push(bx, by);
+      if (t1 < 1) { out.push(cur); cur = null; }
+    }
+    if (cur) out.push(cur);
+    return out.filter((p) => p.length >= 4);
+  }
+  function textStrokes(str, x, y, size) {
+    if (typeof global.StrokeFont === 'undefined') return [];
+    return global.StrokeFont.text(str, x, y, size).map((pl) => pl.flatMap((p) => [p.x, p.y]));
+  }
+  function captionStrokes(lines, x, top, sheetW) {
+    const size = Math.max(2.4, sheetW * 0.0075), y = top + size * 2.2;
+    return lines.flatMap((str, i) => textStrokes(str, x, y + i * size * 1.9, size));
+  }
+  function finish(r, t0) {
+    let ink = 0, strokes = 0;
+    for (const layer of r.layers) for (const s of layer.strokes) {
+      strokes++;
+      for (let k = 2; k < s.length; k += 2) ink += Math.hypot(s[k] - s[k - 2], s[k + 1] - s[k - 1]);
+    }
+    const pens = new Set(r.layers.filter((l) => l.strokes.length).map((l) => l.pen)).size;
+    Object.assign(r.stats, {
+      strokesAll: strokes, inkAll: ink / 1000,
+      minutes: (ink / 25 + strokes * 0.45) / 60 + (pens - 1) * 3,   // 25 mm/s, 0.45 s a stroke, 3 min a pen change
+      ms: Date.now() - t0,
+    });
   }
 
   // ───────────────────────── caption and SVG ─────────────────────────
   const hms = (s) => [Math.floor(s / 3600), Math.floor(s / 60) % 60, Math.floor(s) % 60].map((v) => String(v).padStart(2, '0')).join(':');
   function caption(r) {
-    const o = r.options, c = r.camera;
+    if (r.kind === 'map') return r.caption;
+    const o = r.options, c = r.camera, s = r.stats;
     return [
       'PLOTTED FIELD - FIELD ' + r.world.seed + ' - VIEW ' + c.view + ' OF ' + VIEWS,
-      'EYE ' + c.height.toFixed(2) + ' M - ' + hms(o.instant) + ' INTO THE HOUR - ' + r.stats.strokes + ' STROKES - ' + r.stats.ink.toFixed(0) + ' M OF LINE',
+      'EYE ' + c.height.toFixed(2) + ' M - ' + hms(o.instant) + ' INTO THE HOUR - ' + s.strokes + ' STROKES - ' + s.ink.toFixed(0) + ' M OF LINE'
+        + (s.heads ? ' - ' + s.heads + ' SEED HEADS' : ''),
     ];
   }
-  function captionLines(r) {
-    if (typeof global.StrokeFont === 'undefined') return [];
-    const size = Math.max(2.4, r.sheet.w * 0.0075), x = r.frame.x, y = r.frame.y + r.frame.h + size * 2.2;
-    return caption(r).flatMap((str, i) => global.StrokeFont.text(str, x, y + i * size * 1.9, size));
-  }
-  function svg(r, { pen = 0.3 } = {}) {
+  const INKS = { sepia: '#7a4b2c', green: '#3f5a3c', grey: '#6a6e78', black: '#1b1a1f' };
+  function svg(r, { pen = 0.3, ink2 = 'sepia' } = {}) {
     const f = (v) => +v.toFixed(2);
+    const colour = (p) => (p === 2 ? INKS[ink2] || INKS.sepia : 'black');
     const out = [];
     out.push('<?xml version="1.0" encoding="UTF-8"?>');
     out.push('<svg xmlns="http://www.w3.org/2000/svg" xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape" width="' + r.sheet.w + 'mm" height="' + r.sheet.h + 'mm" viewBox="0 0 ' + r.sheet.w + ' ' + r.sheet.h + '">');
     out.push('<title>' + caption(r).join(' / ') + '</title>');
-    out.push('<g id="grass" inkscape:groupmode="layer" inkscape:label="1 grass" fill="none" stroke="black" stroke-width="' + pen + '" stroke-linecap="round" stroke-linejoin="round">');
-    for (const s of r.strokes) {
-      let d = 'M' + f(s[0]) + ' ' + f(s[1]);
-      for (let k = 2; k < s.length; k += 2) d += 'L' + f(s[k]) + ' ' + f(s[k + 1]);
-      out.push('<path d="' + d + '"/>');
+    for (const layer of r.layers) {
+      out.push('<g id="' + layer.id + '" inkscape:groupmode="layer" inkscape:label="' + layer.label + (layer.pen === 2 ? ' (pen 2: ' + ink2 + ')' : '') + '" fill="none" stroke="' + colour(layer.pen) + '" stroke-width="' + pen + '" stroke-linecap="round" stroke-linejoin="round">');
+      for (const s of layer.strokes) {
+        let d = 'M' + f(s[0]) + ' ' + f(s[1]);
+        for (let k = 2; k < s.length; k += 2) d += 'L' + f(s[k]) + ' ' + f(s[k + 1]);
+        out.push('<path d="' + d + '"/>');
+      }
+      out.push('</g>');
     }
-    out.push('</g>');
-    out.push('<g id="caption" inkscape:groupmode="layer" inkscape:label="2 caption" fill="none" stroke="black" stroke-width="' + pen + '" stroke-linecap="round" stroke-linejoin="round">');
-    for (const pl of captionLines(r)) out.push('<polyline points="' + pl.map((p) => f(p.x) + ',' + f(p.y)).join(' ') + '"/>');
-    out.push('</g></svg>');
+    out.push('</svg>');
     return out.join('\n');
   }
 
-  const api = { build, svg, caption, captionLines, camera, createWorld, DEFAULTS, SHEETS, VIEWS };
+  const api = { build, buildMap, svg, caption, camera, createWorld, headLines, DEFAULTS, SHEETS, VIEWS, INKS };
   global.PlottedField = api;
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
 })(typeof window !== 'undefined' ? window : globalThis);

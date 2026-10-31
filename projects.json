@@ -10,7 +10,7 @@
         "canvas",
         "svg"
       ],
-      "description": "A grass field drawn by a pen, one stroke per blade. A seed makes one field — ground, tufts, heights, every blade — and that field has 25 views, cameras from lying in the grass to standing on a roof; the seconds into the hour fix the wind. Hidden lines are removed front to back against each blade's real width, the distance thins into the paper rather than into grey, and the moon's light is where the pen lifts. A plotter-ready SVG with its caption in single-stroke letters.",
+      "description": "A grass field drawn by a pen, one stroke per blade. A seed makes one field — ground, tufts, heights, every blade — and that field has 25 views, cameras from lying in the grass to standing on a roof; the seconds into the hour fix the wind. Hidden lines are removed front to back against each blade's real width, the distance thins into the paper rather than into grey, and the moon's light is where the pen lifts. Seed heads ride above the leaves in a second pen; a 26th sheet maps the field from above with all 25 cameras. Plotter-ready SVGs, one layer per pen, captions in single-stroke letters.",
       "thumb": "preview.png"
     },
     {
