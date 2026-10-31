@@ -29,10 +29,18 @@
   let grid = null, meta = null;
   function load(bin, json) { grid = bin; meta = json; return api; }
   async function fetchData(base) {
-    const [jr, br] = await Promise.all([fetch(base + 'geo.json'), fetch(base + 'geo.bin.gz')]);
-    if (!jr.ok || !br.ok) throw new Error('geography data missing');
-    const ds = new DecompressionStream('gzip');
-    const buf = await new Response(br.body.pipeThrough(ds)).arrayBuffer();
+    const jr = await fetch(base + 'geo.json');
+    let br = await fetch(base + 'geo.bin.gz').catch(() => null), body;
+    if (br && br.ok) body = br.body;
+    else {                                   // hosts that serve no binaries get the same bytes as base64 text
+      const tr = await fetch(base + 'geo.bin.gz.b64.txt');
+      if (!tr.ok) throw new Error('geography data missing');
+      const bin = atob((await tr.text()).trim()), u = new Uint8Array(bin.length);
+      for (let i = 0; i < bin.length; i++) u[i] = bin.charCodeAt(i);
+      body = new Blob([u]).stream();
+    }
+    if (!jr.ok) throw new Error('geography data missing');
+    const buf = await new Response(body.pipeThrough(new DecompressionStream('gzip'))).arrayBuffer();
     return load(new Uint8Array(buf), await jr.json());
   }
   const ready = () => !!grid;
