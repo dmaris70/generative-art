@@ -209,13 +209,72 @@ void main() {
   if (uShow == 1) frag = vec4(vec3(vShade), 1.0);        // ?show=clouds: the cloud shadows alone
   if (uShow == 2) frag = vec4(vec3(vSilver), 1.0);       // ?show=gusts: where the wind turns blades pale
 }`;
+  // ── the sea, drawn the way the grass is: a field of thin strokes, here lying along the crests of
+  // moving waves (two wind-sea trains, a swell, a ripple). Each stroke rides the surface; crests lift
+  // and curl it; steep crests turn white; in a gale some strokes lie along the wind as streaks of foam.
+  const SEA_VS = COMMON + `
+uniform mat4 uVP; uniform vec3 uEye; uniform vec2 uOrigin; uniform float uCell; uniform int uN; uniform int uPer;
+uniform float uTime; uniform int uSegs; uniform float uSpan; uniform float uSea; uniform float uPx;
+uniform vec4 uW1; uniform vec4 uW2; uniform vec4 uW3; uniform vec4 uW4; uniform vec4 uWo; uniform float uAmp;
+uniform float uWhite; uniform float uFoam; uniform float uGlassy;
+uniform int uGlitch; uniform float uG; uniform float uP;
+out float vCov; out float vSide;
+out float vT; out vec3 vN; out vec3 vTan; out vec3 vPos; out float vTone; out float vSilver; out float vFade; out float vShade;
+out float vId; out float vCluster; flat out uint vHash;
+vec3 waves(vec2 p) {                 // height and its gradient
+  vec4 W[4] = vec4[4](uW1, uW2, uW3, uW4); float h = 0.0; vec2 g = vec2(0.0);
+  for (int i = 0; i < 4; i++) { float ph = W[i].z * dot(W[i].xy, p) - uWo[i] * uTime + float(i) * 1.7;
+    h += W[i].w * sin(ph); g += W[i].w * W[i].z * W[i].xy * cos(ph); }
+  return vec3(h, g);
+}
+void main() {
+  int inst = gl_InstanceID, k = inst % uPer, c = inst / uPer;
+  ivec2 cell = ivec2(floor(uOrigin / uCell)) + ivec2(c % uN, c / uN);
+  uint hb = hash(uint(cell.x) * 73856093u ^ uint(cell.y) * 19349663u ^ uint(k) * 83492791u ^ uint(uSeed) * 2654435761u ^ 0x5ea5ea5u);
+  // only the sea's share of the strokes (the rest of the field is meadow), thinned with distance
+  if (h01(hb ^ 0x9u) >= uSea) { gl_Position = vec4(2.0, 2.0, 2.0, 1.0); return; }
+  vec2 root = (vec2(cell) + vec2(h01(hb), h01(hb ^ 0x68bc21ebu))) * uCell;
+  float d = distance(root, uEye.xz);
+  float keep = clamp(pow(6.0 / max(d, 6.0), 1.25), 0.05, 1.0), kf = keep * float(uPer) * 0.75;
+  if (float(k) >= ceil(kf)) { gl_Position = vec4(2.0, 2.0, 2.0, 1.0); return; }
+  float fadeK = clamp(kf - float(k), 0.0, 1.0);
+  vec3 w0 = waves(root);
+  float crest = clamp(0.5 + 0.5 * w0.x / max(uAmp, 1e-3), 0.0, 1.0), steep = length(w0.yz);
+  // along the crest, a little turned; in a gale, some lie along the wind instead (foam streaks)
+  vec2 dir = uW1.xy, along = vec2(-dir.y, dir.x);
+  float yaw = (h01(hb ^ 0x2u) - 0.5) * mix(1.4, 0.5, uGlassy);
+  bool streak = h01(hb ^ 0x3u) < uFoam * 0.35;
+  if (streak) along = dir;
+  along = vec2(along.x * cos(yaw) - along.y * sin(yaw), along.x * sin(yaw) + along.y * cos(yaw));
+  float len = min(1.1, (0.18 + 0.5 * h01(hb ^ 0x4u)) * (0.8 + 0.5 * crest) * (streak ? 2.5 : 1.0) / sqrt(keep));
+  vec2 a = root - along * len * 0.5, b = root + along * len * 0.5;
+  vec3 p0 = vec3(a.x, waves(a).x, a.y), p2 = vec3(b.x, waves(b).x, b.y);
+  vec3 p1 = vec3(root.x, w0.x + len * (0.04 + 0.2 * crest * min(1.0, steep * 2.0)), root.y);   // the crest curls up
+  int seg = gl_VertexID / 2; float side = float(gl_VertexID % 2) * 2.0 - 1.0;
+  float t = float(seg) / float(uSegs), s = 1.0 - t;
+  vec3 pos = s * s * p0 + 2.0 * s * t * p1 + t * t * p2;
+  vec3 tan = normalize(2.0 * s * (p1 - p0) + 2.0 * t * (p2 - p1));
+  vec3 across = normalize(vec3(-0.5 * w0.y, 1.0, -0.5 * w0.z) * 0.8 + vec3(-tan.z, 0.0, tan.x) * 0.2);   // upright, leaning with the slope
+  float w = (0.003 + 0.004 * h01(hb ^ 0x6u)) * sin(3.14159 * clamp(t, 0.02, 0.98)) / sqrt(keep) * fadeK;
+  float px = 2.0 * w * uPx / max(distance(pos, uEye), 0.05);
+  vCov = 1.0; if (px < 1.2 && px > 0.0) { vCov = px / 1.2; w *= 1.2 / px; }
+  pos += across * side * w; vSide = side;
+  if (uGlitch == 5 && uG > 0.01) { float q = 0.64 * pow(0.5, floor(uP * 7.0)) * uG; pos = floor(pos / q + 0.5) * q; }
+  vT = 0.55 + 0.45 * crest; vTan = tan; vN = normalize(cross(across, tan)); vPos = pos; vTone = 0.8 + 0.4 * h01(hb ^ 0x7u);
+  vSilver = uWhite * smoothstep(0.62, 0.95, crest) * smoothstep(0.05, 0.25, steep) + (streak ? 0.6 * uFoam : 0.0);   // white horses
+  vec2 lo = root - uOrigin, hi = uOrigin + uSpan - root;
+  vFade = smoothstep(0.0, 7.0, min(min(lo.x, lo.y), min(hi.x, hi.y)));
+  vShade = cloudShade(root);
+  vId = float(hash(hb) & 0xffffu) / 65535.0; vHash = hash(hb); vCluster = crest;
+  gl_Position = uVP * vec4(pos, 1.0);
+}`;
   const GROUND_VS = COMMON + `
-uniform mat4 uVP; uniform vec2 uOrigin; uniform float uSpan; uniform int uRes;
+uniform mat4 uVP; uniform vec2 uOrigin; uniform float uSpan; uniform int uRes; uniform float uDrop;
 out vec3 vPos;
 void main() {
   int i = gl_VertexID % (uRes + 1), j = gl_VertexID / (uRes + 1);
   vec2 p = uOrigin + vec2(float(i), float(j)) / float(uRes) * uSpan;
-  vPos = vec3(p.x, ground(p) - 0.01, p.y);
+  vPos = vec3(p.x, ground(p) - 0.01 - uDrop, p.y);     // at sea, below the deepest trough
   gl_Position = uVP * vec4(vPos, 1.0);
 }`;
   const GROUND_FS = COMMON + `
@@ -398,7 +457,14 @@ void main() {
     vec3 paper = vec3(0.9, 0.893, 0.876);
     // the ink follows the frame's own brightness (its 90th percentile), so a dark, wet field still draws
     vec3 cn = c / max(uP90 * uGain, 0.04);
-    vec3 inked = paper * (1.0 - 0.94 * smoothstep(vec3(0.2), vec3(1.1), cn));
+    // ink goes where there is drawing — a blade, a crest, brighter than its surroundings — and only
+    // lightly where the frame is merely bright, so fog and haze turn to paper, as they do in daylight
+    vec2 pxI = 1.0 / uRes; float Lm = 0.0;
+    for (int i = 0; i < 8; i++) { float a = float(i) * 0.7853982; Lm += lumAt(uv + vec2(cos(a), sin(a)) * pxI * 4.0); }
+    Lm /= 8.0;
+    float detail = smoothstep(0.015, 0.2, lumOf(c) - Lm);
+    vec3 amt = clamp(vec3(detail) * 0.85 + smoothstep(vec3(0.2), vec3(1.1), cn) * 0.4, 0.0, 1.0);
+    vec3 inked = paper * (1.0 - 0.94 * amt);
     inked -= (vn(gl_FragCoord.xy * 0.5) - 0.5) * 0.045 + (0.5 + 0.5 * sin(gl_FragCoord.y * 2.1)) * 0.012;
     c = mix(c, inked, uInk);
   }
@@ -446,7 +512,7 @@ void main() { vec2 p = vec2(float((gl_VertexID << 1) & 2), float(gl_VertexID & 2
     for (let i = 0; i < n; i++) { const name = gl.getActiveUniform(p, i).name; u[name] = gl.getUniformLocation(p, name); }
     return { p, u };
   }
-  const grass = program(GRASS_VS, GRASS_FS), groundP = program(GROUND_VS, GROUND_FS);
+  const grass = program(GRASS_VS, GRASS_FS), groundP = program(GROUND_VS, GROUND_FS), seaP = program(SEA_VS, GRASS_FS);
   const trees = program(TREES_VS, TREES_FS), sky = program(SKY_VS, SKY_FS), post = program(POST_VS, POST_FS);
   const TREE_M = 2400, TREE_R = 70, SHOW = { clouds: 1, gusts: 2 }[Q.get('show')] || 0;
   const vao = gl.createVertexArray();
@@ -561,9 +627,11 @@ void main() { vec2 p = vec2(float((gl_VertexID << 1) & 2), float(gl_VertexID & 2
     const smG = (a, b, x) => { const t = Math.min(1, Math.max(0, (x - a) / (b - a))); return t * t * (3 - 2 * t); };
     const seaness = geo ? smG(20, -40, geo.coastKm) : 0, biome = geo && geo.land ? geo.biome : null;
     const absLat = J ? Math.abs(J.lat) : 45;
-    const density = geo ? (1 - 0.55 * seaness) * (biome ? biome.density : 1) : 1;   // at sea, a fringe of reeds
-    const hScale = geo ? (1 - 0.35 * smG(35, 60, absLat)) * (1 + 0.15 * smG(15, 0, absLat)) * (biome ? biome.height : 1) * (1 + 0.35 * seaness) : 1;
-    relief = geo && geo.land ? 1 + Math.min(2, geo.elev / 1200 + geo.rough / 400) * (1 - seaness) : 1;
+    const density = geo ? (1 - seaness) * (biome ? biome.density : 1) : 1;           // the meadow gives way to the sea
+    const hScale = geo ? (1 - 0.35 * smG(35, 60, absLat)) * (1 + 0.15 * smG(15, 0, absLat)) * (biome ? biome.height : 1) : 1;
+    relief = (geo && geo.land ? 1 + Math.min(2, geo.elev / 1200 + geo.rough / 400) : 1) * (1 - seaness);   // the sea is level
+    // the sea's conditions where the journey is
+    const SS = seaness > 0.001 && wx ? Wx.seaState(wx, J.lat) : null;
     // the score: which glitch, which colour, which measurement, now
     let G = O.glitch ? { kind: O.glitch, p: (sE % 12) / 12, e: 1 } : O.score ? Score.glitchAt(ms, fx ? fx.stormFactor : 0) : null;
     // crossing the equator mirrors the image for an hour; the date line slices time for ten minutes
@@ -583,7 +651,8 @@ void main() { vec2 p = vec2(float((gl_VertexID << 1) & 2), float(gl_VertexID & 2
     const e = eyeAt(sE), pa = eyeAt(sE - 60), pb = eyeAt(sE + 60);
     if (fx) e.h = 0.32 + (e.h - 0.32) * fx.heightScale;          // pressure: low keeps the eye in the grass
     let hx = pb.x - pa.x, hz = pb.z - pa.z; const hl = Math.hypot(hx, hz) || 1; hx /= hl; hz /= hl;
-    const eye = [e.x, groundH(e.x, e.z) + e.h, e.z];
+    const seaAmp = SS ? (SS.frozen ? 0.02 : 0.12 + 0.38 * Math.sqrt(SS.hs) + 0.15 * Math.sqrt(SS.swellH)) : 0;
+    const eye = [e.x, groundH(e.x, e.z) + e.h + 1.1 * seaAmp * seaness, e.z];
     const lx = e.x + hx * 14, lz = e.z + hz * 14;
     const look = [lx, groundH(lx, lz) + 0.35, lz];
     let L = lightAt(s), W = windAt(s);
@@ -611,7 +680,7 @@ void main() { vec2 p = vec2(float((gl_VertexID << 1) & 2), float(gl_VertexID & 2
     // the night is darker than the day: exposure follows the light's height (7° → 1.5, 38° → 3.0)
     const elev = Math.asin(L[1]) * 180 / Math.PI;
     const thin = geo && geo.land ? Math.exp(-geo.elev / 2500) : 1;   // thinner air higher up
-    const exposure = (1 + 0.15 * (1 - thin) + 0.3 * (biome ? biome.pale : 0) + 2.2 * seaness * (fx ? fx.night : 0) + (fx ? 1.6 * wx.cloud * wx.cloud : 0))   // sparse reeds at night need more light; overcast light is even, not dark * (1.5 + 1.5 * Math.min(1, Math.max(0, (elev - 7) / 31))) * (fx && !O.lightHere ? 1 - 0.3 * fx.night : 1) + (fx && !O.lightHere ? 0.45 * fx.night : 0);   // night: darker, never unreadable
+    const exposure = (1 + 0.15 * (1 - thin) + 0.3 * (biome ? biome.pale : 0) + (fx ? 1.6 * wx.cloud * wx.cloud : 0))   // overcast light is even, not dark * (1.5 + 1.5 * Math.min(1, Math.max(0, (elev - 7) / 31))) * (fx && !O.lightHere ? 1 - 0.3 * fx.night : 1) + (fx && !O.lightHere ? 0.45 * fx.night : 0);   // night: darker, never unreadable
     const fog = (fx ? fx.fog : 0.04) * thin;
 
     // the day's atmosphere: mist at dawn and dusk, clouds drifting downwind, their cover changing
@@ -637,7 +706,7 @@ void main() { vec2 p = vec2(float((gl_VertexID << 1) & 2), float(gl_VertexID & 2
     gl.uniform1f(tr.uFog, fog); gl.uniform1f(tr.uExposure, exposure); gl.uniform1f(tr.uSeed, O.seed); atmosU(tr);
     gl.drawArrays(gl.TRIANGLE_STRIP, 0, 2 * (TREE_M + 1));
 
-    gl.useProgram(groundP.p); const g = groundP.u; atmosU(g); gl.uniform3fv(g.uLight, L); gl.uniform1f(g.uRelief, relief);
+    gl.useProgram(groundP.p); const g = groundP.u; atmosU(g); gl.uniform3fv(g.uLight, L); gl.uniform1f(g.uRelief, relief); gl.uniform1f(g.uDrop, (2.2 * seaAmp + 0.3) * seaness);
     gl.uniformMatrix4fv(g.uVP, false, VP); gl.uniform2f(g.uOrigin, origin[0], origin[1]); gl.uniform1f(g.uSpan, SPAN);
     gl.uniform1i(g.uRes, RES); gl.uniform3fv(g.uEye, eye); gl.uniform1f(g.uFog, fog); gl.uniform1f(g.uExposure, exposure); gl.uniform1f(g.uSeed, O.seed);
     gl.drawElements(gl.TRIANGLES, idx.length, gl.UNSIGNED_SHORT, 0);
@@ -654,6 +723,28 @@ void main() { vec2 p = vec2(float((gl_VertexID << 1) & 2), float(gl_VertexID & 2
     gl.uniform3f(u.uWind, W.x, W.z, W.strength); gl.uniform1i(u.uSegs, SEGS); gl.uniform3fv(u.uLight, L);
     gl.uniform1f(u.uFog, fog); gl.uniform1f(u.uExposure, exposure); gl.uniform1f(u.uSeed, O.seed);
     gl.drawArraysInstanced(gl.TRIANGLE_STRIP, 0, 2 * (SEGS + 1), N * N * O.per);
+    if (SS) {
+      // four wave trains: wind sea and a shorter one beside it, the swell, a ripple. Periods are true;
+      // wavelengths are shortened to fit the 46 m window (a third of the deep-water length).
+      const toDir = (from) => { const a = (from + 180) * Math.PI / 180; return [Math.sin(a), -Math.cos(a)]; };
+      const Lw = Math.min(28, Math.max(1.5, 9.81 * SS.T * SS.T / (2 * Math.PI) / 3)), Ls = Math.min(40, Math.max(6, 9.81 * SS.swellT * SS.swellT / (2 * Math.PI) / 3));
+      const dw = toDir(SS.from), ds = toDir(SS.swellFrom), rot = (v, r) => [v[0] * Math.cos(r) - v[1] * Math.sin(r), v[0] * Math.sin(r) + v[1] * Math.cos(r)];
+      const still = SS.frozen ? 0 : 1, aw = seaAmp * 0.5 * still, as = (0.06 + 0.3 * Math.sqrt(SS.swellH)) * still;
+      const trains = [[dw, 2 * Math.PI / Lw, aw, 2 * Math.PI / SS.T], [rot(dw, 0.5), 2 * Math.PI / Lw * 1.7, aw * 0.45, 2 * Math.PI / SS.T * 1.3],
+        [ds, 2 * Math.PI / Ls, as, 2 * Math.PI / SS.swellT], [rot(dw, -0.7), 2 * Math.PI / Lw * 3.1, 0.015 + aw * 0.12, 2 * Math.PI / SS.T * 1.76]];
+      gl.useProgram(seaP.p); const v = seaP.u; atmosU(v);
+      trains.forEach(([d, k, amp], i) => gl.uniform4f(v['uW' + (i + 1)], d[0], d[1], k, amp));
+      gl.uniform4f(v.uWo, ...trains.map((t) => t[3] * still)); gl.uniform1f(v.uAmp, aw + as + 0.02);
+      gl.uniform1f(v.uSea, seaness); gl.uniform1f(v.uWhite, SS.frozen ? 0 : SS.whitecaps); gl.uniform1f(v.uFoam, SS.frozen ? 0 : SS.foam); gl.uniform1f(v.uGlassy, SS.glassy);
+      gl.uniform1f(v.uRelief, relief); gl.uniform1f(v.uSpan, SPAN); gl.uniform1f(v.uPx, canvas.height * 0.5 / Math.tan(0.31));
+      gl.uniform1i(v.uShow, SHOW); gl.uniform1i(v.uGlitch, G ? G.kind : 0); gl.uniform1f(v.uG, G ? G.e : 0); gl.uniform1f(v.uP, G ? G.p : 0);
+      gl.uniform1i(v.uTint, C ? C.mode : 0); gl.uniform1f(v.uTintE, C ? C.e * nightK : 0); gl.uniform1f(v.uHue, tintHue);
+      gl.uniform3fv(v.uDichA, dichA); gl.uniform3fv(v.uDichB, dichB); gl.uniform1f(v.uDich, O.dich === 0 ? 0 : dich * (O.dich || 1));
+      gl.uniformMatrix4fv(v.uVP, false, VP); gl.uniform3fv(v.uEye, eye); gl.uniform2f(v.uOrigin, origin[0], origin[1]);
+      gl.uniform1f(v.uCell, CELL); gl.uniform1i(v.uN, N); gl.uniform1i(v.uPer, O.per); gl.uniform1f(v.uTime, (sE % 86400));
+      gl.uniform1i(v.uSegs, SEGS); gl.uniform3fv(v.uLight, L); gl.uniform1f(v.uFog, fog); gl.uniform1f(v.uExposure, exposure); gl.uniform1f(v.uSeed, O.seed);
+      gl.drawArraysInstanced(gl.TRIANGLE_STRIP, 0, 2 * (SEGS + 1), N * N * O.per);
+    }
 
     // resolve the antialiased scene; once a second, keep a small copy for the history
     gl.bindFramebuffer(gl.READ_FRAMEBUFFER, msFB); gl.bindFramebuffer(gl.DRAW_FRAMEBUFFER, sceneFB);
@@ -684,13 +775,14 @@ void main() { vec2 p = vec2(float((gl_VertexID << 1) & 2), float(gl_VertexID & 2
       wet = Math.min(1, 0.7 * sm(0.55, 0.95, wx.rh) + 0.6 * fx.rain + 0.5 * sm(0.05, 0.2, fx.fog));
       windy = sm(0.45, 1.0, fx.windStrength);
     } else { inkW = sm(26, 34, elev); wet = 0.25 + 0.25 * Math.sin(TAU * s / 25200); windy = sm(0.55, 1.0, W.strength); }
-    let style = { ink: O.paper ? inkW : 0, wash: 0.8 * wet, char: 0.6 * windy, water: 0.14 + 0.2 * wet, drip: wet };
+    let style = { ink: O.paper ? inkW : 0, wash: 0.8 * wet, char: 0.6 * windy, water: 0, drip: 0 };   // water only where the journey is over the sea (below)
     const forced = { nocturne: { ink: 0, wash: 0, char: 0, water: 0, drip: 0 }, ink: { ink: 1, wash: 0, char: 0, water: 0, drip: 0 },
       wash: { ink: 0, wash: 0.9, char: 0, water: 0, drip: 0 }, charcoal: { ink: 0, wash: 0, char: 0.75, water: 0, drip: 0 },
       water: { ink: 0, wash: 0, char: 0, water: 0.32, drip: 1 } }[O.style];
     // the waterline never rises above the horizon: at sea it sits just below it
     const horizonUv = Math.min(0.55, Math.max(0.2, (hzn[1] + 1) / 2 - 0.03));
-    if (geo) { style.water += (horizonUv - style.water) * seaness;
+    // at sea, and only at sea: the waterline just below the horizon; threads only if it is also wet
+    if (geo) {   // the sea is drawn as a surface now: no reflection register
       if (biome) style.char = Math.min(0.9, style.char + biome.comb); }
     if (forced) style = forced;
     const wsx = W.x * -hz + W.z * hx, wsy = 0.4 * (W.x * hx + W.z * hz), wl = Math.hypot(wsx, wsy) || 1;
@@ -765,7 +857,7 @@ void main() { vec2 p = vec2(float((gl_VertexID << 1) & 2), float(gl_VertexID & 2
         return { lines: ['W = (' + W.x.toFixed(2) + ', ' + W.z.toFixed(2) + ') X ' + W.strength.toFixed(2)], anchor: [px, py, pz], arrow: [px + W.x * 2.5, py, pz + W.z * 2.5] }; }
       case 9: return { lines: ['ENTROPY OF THIS FRAME', entropyOfLatest().toFixed(2) + ' BITS OF 8'] };
       case 11: case 12: case 13: case 14: case 15: return weatherLines(M.kind, ms, f);
-      case 16: case 17: case 18: case 19: case 20: return geoLines(M.kind, ms, f);
+      case 16: case 17: case 18: case 19: case 20: case 21: return geoLines(M.kind, ms, f);
       default: { const t = Score.todaySoFar(ms); return { lines: ['TODAY ' + grp(t.events) + ' EVENTS', t.glitches + ' GLITCHES - ' + t.colours + ' COLOUR MINUTES', grp(t.measures) + ' MEASUREMENTS'] }; }
     }
   }
@@ -787,6 +879,10 @@ void main() { vec2 p = vec2(float((gl_VertexID << 1) & 2), float(gl_VertexID & 2
         if (!c) return { lines: ['NOTHING CROSSED', 'IN 60 DAYS'] };
         const d = new Date(c.when), ago = (ms - c.when) / 36e5;
         return { lines: ['CROSSED ' + up(c.what), pad(d.getDate(), 2) + '.' + pad(d.getMonth() + 1, 2) + ' ' + pad(d.getHours(), 2) + ':' + pad(d.getMinutes(), 2) + ' - ' + dur(Math.max(0, Math.round(ago))) + ' AGO'] }; }
+      case 21: { if (g.land || !f.wx) return { lines: ['ON LAND - THE NEAREST SEA:', up('the ' + g.sea) + ', ' + grp(g.coastKm) + ' KM'] };
+        const q = Wx.seaState(f.wx, J.lat);
+        return { lines: ['SEA STATE ' + q.douglas + ' - ' + q.name, 'WAVES ' + q.hs.toFixed(1) + ' M, ' + q.T.toFixed(1) + ' S, FROM ' + Math.round(q.from) + ' DEG',
+          'SWELL ' + q.swellH.toFixed(1) + ' M, ' + q.swellT.toFixed(0) + ' S - ' + (q.measured ? 'MEASURED' : 'FROM THE WIND')] }; }
       default: { const a = Geo.antipode(J.lat, J.lon), ga = Geo.at(a.lat, a.lon);
         return { lines: ['THE ANTIPODE ' + deg(a.lat, 'N', 'S') + ' ' + deg(a.lon, 'E', 'W'), ga.land ? 'LAND - ' + up(ga.country) : 'SEA - ' + up('the ' + ga.sea)] }; }
     }

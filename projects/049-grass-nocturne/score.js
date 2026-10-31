@@ -5,7 +5,7 @@
 //   · a glitch in every minute of the day (0 … 1439) that is a prime number — 227 a day, about
 //     9.5 an hour, at irregular gaps of 1 to 14 minutes; not in the minute after a colour minute
 //   · a colour minute whenever the clock read as a number, HHMM, is prime (14:23 → 1423)
-//   · a measurement every 30 seconds, without break: all twenty kinds every 10 minutes, shuffled
+//   · a measurement every 30 seconds, without break: all twenty-one kinds every 10.5 minutes, shuffled
 //   · in a storm where the journey is, extra glitch minutes, up to twice as many (see glitchMinute)
 // Every screen computes the same events at the same second, and any day's log can be listed.
 (function (global) {
@@ -15,7 +15,7 @@
   const LOUD = [8, 9];                      // mirror and inversion: a few times a day, not every hour
   const QUIET = [1, 2, 3, 4, 5, 6, 7, 10];
   const COLOURS = ['', 'hue by hash', 'hue by depth', 'hue by time', 'hue by cluster', 'complement', 'prime colour', 'gust in colour', 'dichroic'];
-  const MEASURES = ['', 'blade', 'probability', 'census', 'frame', 'next prime', 'phase', 'repeat', 'wind', 'entropy', 'today', 'place', 'wind there', 'air', 'sky', 'condition', 'ground', 'nearest', 'travelled', 'crossing', 'antipode'];
+  const MEASURES = ['', 'blade', 'probability', 'census', 'frame', 'next prime', 'phase', 'repeat', 'wind', 'entropy', 'today', 'place', 'wind there', 'air', 'sky', 'condition', 'ground', 'nearest', 'travelled', 'crossing', 'antipode', 'sea'];
   const NM = MEASURES.length - 1;
 
   function ih(x) {
