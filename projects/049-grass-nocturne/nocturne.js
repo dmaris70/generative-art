@@ -94,6 +94,12 @@ float ground(vec2 p) {
 uniform mat4 uVP; uniform vec3 uEye; uniform vec2 uOrigin; uniform float uCell; uniform int uN; uniform int uPer;
 uniform float uTime; uniform vec3 uWind; uniform int uSegs; uniform float uSpan;
 uniform int uGlitch; uniform float uG; uniform float uP; uniform float uPx; uniform float uDensity; uniform float uHScale;
+uniform vec4 uW1; uniform vec4 uW2; uniform vec4 uW3; uniform vec4 uW4; uniform vec4 uWo; uniform float uAmp; uniform float uSeaMove; uniform float uSeaWhite; uniform float uSeaT;
+float seaCrest(vec2 p) {             // 0 in the trough … 1 on the crest of the sea where the journey is
+  vec4 W[4] = vec4[4](uW1, uW2, uW3, uW4); float h = 0.0;
+  for (int i = 0; i < 4; i++) h += W[i].w * sin(W[i].z * dot(W[i].xy, p) - uWo[i] * uSeaT + float(i) * 1.7);
+  return clamp(0.5 + 0.5 * h / max(uAmp, 1e-3), 0.0, 1.0);
+}
 out float vCov; out float vSide;
 out float vT; out vec3 vN; out vec3 vTan; out vec3 vPos; out float vTone; out float vSilver; out float vFade; out float vShade;
 out float vId; out float vCluster; flat out uint vHash;
@@ -123,9 +129,12 @@ void main() {
   float gust = 0.5 + 0.5 * sin(along * 0.28 - uTime * 1.6 + 2.0 * vnoise(root * 0.07));
   float flutter = 0.08 * sin(uTime * (2.2 + 1.5 * h01(hb ^ 0x4u)) + h01(hb ^ 0x5u) * 6.28);
   vec2 bendDir = own * lean + Wd * uWind.z * (0.2 + 0.9 * gust * gust) + own.yx * vec2(1.0, -1.0) * flutter;
+  // at sea, the sea's waves roll through the meadow: blades lean with the passing crests
+  float crest = 0.5;
+  if (uSeaMove > 0.001) { crest = seaCrest(root); bendDir += uW1.xy * uSeaMove * (crest - 0.35) * (0.5 + 1.2 * min(1.0, uAmp)); }
   // a bending blade shows its paler side: strong gusts read as bright waves crossing the field
   float windAmt = uWind.z * (0.2 + 0.9 * gust * gust);
-  vSilver = smoothstep(0.22, 0.75, windAmt);
+  vSilver = max(smoothstep(0.22, 0.75, windAmt), uSeaMove * uSeaWhite * smoothstep(0.7, 0.97, crest));   // crests that would whiten
   // the window of cells fades out at its edges, so the meadow has no hard end
   vec2 lo = root - uOrigin, hi = uOrigin + uSpan - root;
   vFade = smoothstep(0.0, 7.0, min(min(lo.x, lo.y), min(hi.x, hi.y)));
@@ -480,7 +489,7 @@ void main() { vec2 p = vec2(float((gl_VertexID << 1) & 2), float(gl_VertexID & 2
     seed: num('seed', 49) >>> 0, per: Math.max(4, Math.min(24, num('blades', 14) | 0)), scale: Math.max(0.25, Math.min(2, num('scale', 1))),
     dim: Q.has('dim') ? Q.get('dim') : '19-22:0.6,22-7:0.35', hud: Q.get('hud') !== '0', speed: Math.max(0, num('speed', 1)), still: Q.get('still') === '1',
     score: Q.get('score') !== '0', dich: Q.has('dichroic') ? num('dichroic', 1) : null,
-    weather: Q.get('weather') !== '0' && !!global.Weather, style: Q.get('style') || 'auto', paper: Q.get('paper') !== '0', near: Math.max(0, Math.min(1.5, num('near', 1))), geo: Q.get('geo') !== '0' && !!global.Geography, from: num('from', 0), lightHere: Q.get('light') === 'local', glitch: num('glitch', 0) | 0, colour: num('colour', 0) | 0, measure: num('measure', 0) | 0,
+    weather: Q.get('weather') !== '0' && !!global.Weather, style: Q.get('style') || 'auto', paper: Q.get('paper') !== '0', near: Math.max(0, Math.min(1.5, num('near', 1))), geo: Q.get('geo') !== '0' && !!global.Geography, seaSurface: Q.get('sea') === 'surface', from: num('from', 0), lightHere: Q.get('light') === 'local', glitch: num('glitch', 0) | 0, colour: num('colour', 0) | 0, measure: num('measure', 0) | 0,
   };
   const Score = global.Score, Wx = global.Weather;
   // where the meadow is: ?from=lat,lon (start there) · ?place=lat,lon · ?route=lat,lon;lat,lon;… · ?lat= · ?days= · ?start=
@@ -625,11 +634,11 @@ void main() { vec2 p = vec2(float((gl_VertexID << 1) & 2), float(gl_VertexID & 2
       geoAt = Math.floor(ms / 1000); geo = Geo.at(J.lat, J.lon); geoEv = Geo.events(J1, ms, O.from);
     }
     const smG = (a, b, x) => { const t = Math.min(1, Math.max(0, (x - a) / (b - a))); return t * t * (3 - 2 * t); };
-    const seaness = geo ? smG(20, -40, geo.coastKm) : 0, biome = geo && geo.land ? geo.biome : null;
+    const seaness = geo && !geo.land ? smG(0, -40, geo.coastKm) : 0, biome = geo && geo.land ? geo.biome : null;
     const absLat = J ? Math.abs(J.lat) : 45;
-    const density = geo ? (1 - seaness) * (biome ? biome.density : 1) : 1;           // the meadow gives way to the sea
+    const density = biome ? biome.density : 1;                                        // the meadow stays, at sea too
     const hScale = geo ? (1 - 0.35 * smG(35, 60, absLat)) * (1 + 0.15 * smG(15, 0, absLat)) * (biome ? biome.height : 1) : 1;
-    relief = (geo && geo.land ? 1 + Math.min(2, geo.elev / 1200 + geo.rough / 400) : 1) * (1 - seaness);   // the sea is level
+    relief = geo && geo.land ? 1 + Math.min(2, geo.elev / 1200 + geo.rough / 400) : 1;
     // the sea's conditions where the journey is
     const SS = seaness > 0.001 && wx ? Wx.seaState(wx, J.lat) : null;
     // the score: which glitch, which colour, which measurement, now
@@ -652,7 +661,8 @@ void main() { vec2 p = vec2(float((gl_VertexID << 1) & 2), float(gl_VertexID & 2
     if (fx) e.h = 0.32 + (e.h - 0.32) * fx.heightScale;          // pressure: low keeps the eye in the grass
     let hx = pb.x - pa.x, hz = pb.z - pa.z; const hl = Math.hypot(hx, hz) || 1; hx /= hl; hz /= hl;
     const seaAmp = SS ? (SS.frozen ? 0.02 : 0.12 + 0.38 * Math.sqrt(SS.hs) + 0.15 * Math.sqrt(SS.swellH)) : 0;
-    const eye = [e.x, groundH(e.x, e.z) + e.h + 1.1 * seaAmp * seaness, e.z];
+    const surf = O.seaSurface ? seaness : 0;   // the separate wave surface only when asked for
+    const eye = [e.x, groundH(e.x, e.z) + e.h + 1.1 * seaAmp * surf, e.z];
     const lx = e.x + hx * 14, lz = e.z + hz * 14;
     const look = [lx, groundH(lx, lz) + 0.35, lz];
     let L = lightAt(s), W = windAt(s);
@@ -706,12 +716,26 @@ void main() { vec2 p = vec2(float((gl_VertexID << 1) & 2), float(gl_VertexID & 2
     gl.uniform1f(tr.uFog, fog); gl.uniform1f(tr.uExposure, exposure); gl.uniform1f(tr.uSeed, O.seed); atmosU(tr);
     gl.drawArrays(gl.TRIANGLE_STRIP, 0, 2 * (TREE_M + 1));
 
-    gl.useProgram(groundP.p); const g = groundP.u; atmosU(g); gl.uniform3fv(g.uLight, L); gl.uniform1f(g.uRelief, relief); gl.uniform1f(g.uDrop, (2.2 * seaAmp + 0.3) * seaness);
+    gl.useProgram(groundP.p); const g = groundP.u; atmosU(g); gl.uniform3fv(g.uLight, L); gl.uniform1f(g.uRelief, relief); gl.uniform1f(g.uDrop, (2.2 * seaAmp + 0.3) * surf);
     gl.uniformMatrix4fv(g.uVP, false, VP); gl.uniform2f(g.uOrigin, origin[0], origin[1]); gl.uniform1f(g.uSpan, SPAN);
     gl.uniform1i(g.uRes, RES); gl.uniform3fv(g.uEye, eye); gl.uniform1f(g.uFog, fog); gl.uniform1f(g.uExposure, exposure); gl.uniform1f(g.uSeed, O.seed);
     gl.drawElements(gl.TRIANGLES, idx.length, gl.UNSIGNED_SHORT, 0);
 
+    // the sea's four wave trains: wind sea, a shorter sea, the swell, a ripple. Periods are true;
+    // wavelengths are shortened to a third so the waves fit the 46 m view.
+    let trains = null, still = 1, aw = 0, as = 0;
+    if (SS) {
+      const toDir = (from) => { const a = (from + 180) * Math.PI / 180; return [Math.sin(a), -Math.cos(a)]; };
+      const Lw = Math.min(28, Math.max(1.5, 9.81 * SS.T * SS.T / (2 * Math.PI) / 3)), Ls = Math.min(40, Math.max(6, 9.81 * SS.swellT * SS.swellT / (2 * Math.PI) / 3));
+      const dw = toDir(SS.from), ds = toDir(SS.swellFrom), rot = (v, r) => [v[0] * Math.cos(r) - v[1] * Math.sin(r), v[0] * Math.sin(r) + v[1] * Math.cos(r)];
+      still = SS.frozen ? 0 : 1; aw = seaAmp * 0.5 * still; as = (0.06 + 0.3 * Math.sqrt(SS.swellH)) * still;
+      trains = [[dw, 2 * Math.PI / Lw, aw, 2 * Math.PI / SS.T], [rot(dw, 0.5), 2 * Math.PI / Lw * 1.7, aw * 0.45, 2 * Math.PI / SS.T * 1.3],
+        [ds, 2 * Math.PI / Ls, as, 2 * Math.PI / SS.swellT], [rot(dw, -0.7), 2 * Math.PI / Lw * 3.1, 0.015 + aw * 0.12, 2 * Math.PI / SS.T * 1.76]];
+    }
+    const setTrains = (v) => { if (!trains) return; trains.forEach(([d, k, amp], i) => gl.uniform4f(v['uW' + (i + 1)], d[0], d[1], k, amp));
+      gl.uniform4f(v.uWo, ...trains.map((t) => t[3] * still)); gl.uniform1f(v.uAmp, aw + as + 0.02); };
     gl.useProgram(grass.p); const u = grass.u; atmosU(u); gl.uniform1f(u.uSpan, SPAN);
+    setTrains(u); gl.uniform1f(u.uSeaMove, trains ? seaness * still : 0); gl.uniform1f(u.uSeaWhite, SS ? SS.whitecaps : 0); gl.uniform1f(u.uSeaT, sE % 86400);
     gl.uniform1f(u.uRelief, relief); gl.uniform1f(u.uDensity, density); gl.uniform1f(u.uHScale, hScale);
     gl.uniform1i(u.uShow, SHOW);
     gl.uniform1i(u.uGlitch, G ? G.kind : 0); gl.uniform1f(u.uG, G ? G.e : 0); gl.uniform1f(u.uP, G ? G.p : 0);
@@ -723,18 +747,8 @@ void main() { vec2 p = vec2(float((gl_VertexID << 1) & 2), float(gl_VertexID & 2
     gl.uniform3f(u.uWind, W.x, W.z, W.strength); gl.uniform1i(u.uSegs, SEGS); gl.uniform3fv(u.uLight, L);
     gl.uniform1f(u.uFog, fog); gl.uniform1f(u.uExposure, exposure); gl.uniform1f(u.uSeed, O.seed);
     gl.drawArraysInstanced(gl.TRIANGLE_STRIP, 0, 2 * (SEGS + 1), N * N * O.per);
-    if (SS) {
-      // four wave trains: wind sea and a shorter one beside it, the swell, a ripple. Periods are true;
-      // wavelengths are shortened to fit the 46 m window (a third of the deep-water length).
-      const toDir = (from) => { const a = (from + 180) * Math.PI / 180; return [Math.sin(a), -Math.cos(a)]; };
-      const Lw = Math.min(28, Math.max(1.5, 9.81 * SS.T * SS.T / (2 * Math.PI) / 3)), Ls = Math.min(40, Math.max(6, 9.81 * SS.swellT * SS.swellT / (2 * Math.PI) / 3));
-      const dw = toDir(SS.from), ds = toDir(SS.swellFrom), rot = (v, r) => [v[0] * Math.cos(r) - v[1] * Math.sin(r), v[0] * Math.sin(r) + v[1] * Math.cos(r)];
-      const still = SS.frozen ? 0 : 1, aw = seaAmp * 0.5 * still, as = (0.06 + 0.3 * Math.sqrt(SS.swellH)) * still;
-      const trains = [[dw, 2 * Math.PI / Lw, aw, 2 * Math.PI / SS.T], [rot(dw, 0.5), 2 * Math.PI / Lw * 1.7, aw * 0.45, 2 * Math.PI / SS.T * 1.3],
-        [ds, 2 * Math.PI / Ls, as, 2 * Math.PI / SS.swellT], [rot(dw, -0.7), 2 * Math.PI / Lw * 3.1, 0.015 + aw * 0.12, 2 * Math.PI / SS.T * 1.76]];
-      gl.useProgram(seaP.p); const v = seaP.u; atmosU(v);
-      trains.forEach(([d, k, amp], i) => gl.uniform4f(v['uW' + (i + 1)], d[0], d[1], k, amp));
-      gl.uniform4f(v.uWo, ...trains.map((t) => t[3] * still)); gl.uniform1f(v.uAmp, aw + as + 0.02);
+    if (SS && O.seaSurface) {
+      gl.useProgram(seaP.p); const v = seaP.u; atmosU(v); setTrains(v);
       gl.uniform1f(v.uSea, seaness); gl.uniform1f(v.uWhite, SS.frozen ? 0 : SS.whitecaps); gl.uniform1f(v.uFoam, SS.frozen ? 0 : SS.foam); gl.uniform1f(v.uGlassy, SS.glassy);
       gl.uniform1f(v.uRelief, relief); gl.uniform1f(v.uSpan, SPAN); gl.uniform1f(v.uPx, canvas.height * 0.5 / Math.tan(0.31));
       gl.uniform1i(v.uShow, SHOW); gl.uniform1i(v.uGlitch, G ? G.kind : 0); gl.uniform1f(v.uG, G ? G.e : 0); gl.uniform1f(v.uP, G ? G.p : 0);
