@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Root Section — Generative Art</title>
+  <style>
+    html, body { margin: 0; height: 100%; background: #000; overflow: hidden; }
+    canvas#gl { position: fixed; inset: 0; display: block; width: 100%; height: 100%; }
+    a.back {
+      position: fixed; top: 14px; left: 16px; z-index: 10; color: #d8b4fe;
+      font: 13px ui-sans-serif, system-ui, sans-serif; text-decoration: none; opacity: .5; transition: opacity .6s;
+    }
+    a.back:hover { opacity: 1; }
+    body.quiet a.back { opacity: 0; pointer-events: none; }   /* on a wall: no links, no cursor */
+    body.quiet { cursor: none; }
+    #hud {
+      position: fixed; right: 1.2vw; bottom: 1vh; color: #9a8f80; opacity: .6; pointer-events: none; white-space: pre; text-align: right;
+      font: max(10px, 0.9vh)/1.35 ui-monospace, SFMono-Regular, Menlo, monospace; letter-spacing: .04em;
+    }
+  </style>
+</head>
+<body>
+  <a class="back" href="../../">← gallery</a>
+  <canvas id="gl" aria-label="Root Section: a live cross-section of soil in which roots grow with the real season"></canvas>
+  <div id="hud" role="status"></div>
+  <script>
+    (function () { let t = 0; const quiet = () => document.body.classList.add('quiet');
+      const wake = () => { document.body.classList.remove('quiet'); clearTimeout(t); t = setTimeout(quiet, 4000); };
+      addEventListener('mousemove', wake); addEventListener('keydown', wake); t = setTimeout(quiet, 4000); })();
+  </script>
+  <script src="roots.js?v=1"></script>
+</body>
+</html>
