@@ -54,6 +54,29 @@ genre, not a reproduction, and **no code was taken from *Field***.
   black, the image is tone-mapped to grayscale, and one step of noise is added to stop
   banding on 8-bit LED panels.
 
+## Drawing quality and dichroic colour
+
+- **Creased blades:** each blade folds along its middle, so its two halves catch the light
+  differently. It narrows to a real point.
+- **Light through the blades:** when a blade is lit from behind, its edges and tip glow.
+- **No blinking at distance:** the last blade kept in a thinned-out cell is drawn in proportion
+  to how far it is kept, so the far field fades smoothly instead of flickering.
+- **Thin blades stay lines:** a blade narrower than a pixel is widened to one and made fainter
+  by the same ratio, so it does not break into dots.
+- **Dichroic film:**
+  - **How it works:** each blade carries an imagined thin film whose thickness varies a little
+    from blade to blade. The colour it reflects depends on the angles to the viewer and to the
+    light, and light passing through shows the complementary colour. As blades bend and the
+    camera drifts, the colours shift.
+  - **Always on:** at 18% strength, as a shimmer on the grey.
+  - **Full strength:** in the score's colour mode 8.
+  - **The pair changes through the day,** crossing over in the last half hour of each block:
+    - 00–06: cyan and magenta
+    - 06–12: gold and blue
+    - 12–18: green and violet
+    - 18–24: copper and teal
+  - **Settings:** `?dichroic=0` turns it off; `?dichroic=2` doubles the shimmer.
+
 ## The score: glitches, colour and measurements
 
 Over the meadow runs a score of abstract events (`score.js`). Nothing in it is random at run
@@ -63,7 +86,7 @@ the date and minute. Every screen shows the same event at the same second.
 | Layer | When | Rate |
 |---|---|---|
 | **Glitch** | Every minute of the day (0–1439) that is prime, starting 5–40 s into it and lasting 6–20 s; never in the minute after a colour minute | 227 a day, about 9.5 an hour |
-| **Colour** | Every minute whose clock time read as a number is prime (14:23 → 1423); the whole minute, fading in and out over 4 s | 211 a day, about 8.8 an hour |
+| **Colour** | Every minute whose clock time read as a number is prime (14:23 → 1423); the whole minute, fading in and out over 4 s; eight modes | 211 a day, about 8.8 an hour |
 | **Measurement** | Every 30 s without break; all ten kinds every 5 minutes, in a shuffled order, never the same twice in a row | 2,880 a day |
 
 **Glitches, each an idea.**
@@ -88,6 +111,7 @@ Mirror and inversion pass only one time in eight, about six times a day between 
 5. A colour and its complement, split down the middle of the screen.
 6. A single primary.
 7. Colour carried by the wind.
+8. Dichroic at full strength.
 
 **Measurements.** All are drawn in the single-stroke letters of 048 and read the same functions
 that draw the image:
@@ -120,7 +144,7 @@ finishing pass applies the whole-image glitches and colours. One frame a second 
   it to the GPU. `?hud=0` hides the status line, `?seed=N` gives a different meadow.
 - **Diagnostics:** `?show=clouds` and `?show=gusts` display the cloud shadows or the gust
   waves on their own, for checking at installation.
-- **Holding one event:** `?glitch=1…10`, `?colour=1…7` and `?measure=1…10` hold a single event on
+- **Holding one event:** `?glitch=1…10`, `?colour=1…8` and `?measure=1…10` hold a single event on
   screen for checking. `?score=0` turns the score off.
 - **Rehearsal:** `?at=2026-11-02T21:40&speed=60` starts the clock at that time and runs it 60
   times faster. `?still=1` holds the clock and draws a single frame, for thumbnails.

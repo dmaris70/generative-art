@@ -13,7 +13,7 @@
 //
 // URL: ?seed=N · ?blades=<per cell, 4…24> · ?scale=<render scale> · ?dim=19-22:0.6,22-7:0.35
 //      ?hud=0 · ?at=2026-11-02T14:20 & ?speed=60 (rehearsal) · ?still=1 (hold the clock)
-//      ?glitch=<1…10> · ?colour=<1…7> · ?measure=<1…10> (hold one event, for checking) · ?score=0
+//      ?dichroic=<0…5> (0 off; scales the shimmer) · ?glitch=<1…10> · ?colour=<1…8> · ?measure=<1…10> (hold one event, for checking) · ?score=0
 //
 // Over it runs the score (score.js): glitches on prime minutes, colour on prime clock times,
 // a measurement every 30 s. The glitches and colours are abstract notions — time, memory,
@@ -88,7 +88,8 @@ float ground(vec2 p) {
   const GRASS_VS = COMMON + `
 uniform mat4 uVP; uniform vec3 uEye; uniform vec2 uOrigin; uniform float uCell; uniform int uN; uniform int uPer;
 uniform float uTime; uniform vec3 uWind; uniform int uSegs; uniform float uSpan;
-uniform int uGlitch; uniform float uG; uniform float uP;
+uniform int uGlitch; uniform float uG; uniform float uP; uniform float uPx;
+out float vCov; out float vSide;
 out float vT; out vec3 vN; out vec3 vTan; out vec3 vPos; out float vTone; out float vSilver; out float vFade; out float vShade;
 out float vId; out float vCluster; flat out uint vHash;
 void main() {
@@ -99,7 +100,10 @@ void main() {
   float d = distance(root, uEye.xz);
   // fewer blades with distance, each a little wider, so the field keeps its tone
   float keep = clamp(pow(7.0 / max(d, 7.0), 1.35), 0.04, 1.0);
-  if (float(k) >= ceil(keep * float(uPer))) { gl_Position = vec4(2.0, 2.0, 2.0, 1.0); return; }
+  float kf = keep * float(uPer);
+  if (float(k) >= ceil(kf)) { gl_Position = vec4(2.0, 2.0, 2.0, 1.0); return; }
+  // the last blade kept in a cell is drawn in proportion to how far it is kept: no blinking
+  float fadeK = clamp(kf - float(k), 0.0, 1.0);
   // the meadow: tall in drifts, short in lawns; tufts share a stature
   float meadow = smoothstep(0.25, 0.8, 0.6 * vnoise(root * 0.06) + 0.4 * vnoise(root * 0.17 + 9.0));
   float tuft = vnoise(root * 1.1 + 3.0);
@@ -132,11 +136,20 @@ void main() {
   vec3 pos = s * s * p0 + 2.0 * s * t * p1 + t * t * p2;
   vec3 tan = normalize(2.0 * s * (p1 - p0) + 2.0 * t * (p2 - p1));
   vec3 across = normalize(vec3(-bd.y, 0.0, bd.x) * 0.6 + vec3(-own.y, 0.0, own.x) * 0.4);
-  float w = (0.004 + 0.004 * h01(hb ^ 0x6u)) * (1.0 - pow(t, 1.4)) / sqrt(keep);
+  // a leaf narrowing to a real point
+  float w = (0.004 + 0.004 * h01(hb ^ 0x6u)) * pow(1.0 - t, 0.75) * (1.0 - 0.25 * t) / sqrt(keep) * fadeK;
+  // thinner than a pixel: widen to a pixel and give back the difference as faintness, so thin
+  // blades stay continuous lines instead of breaking into dots
+  float px = 2.0 * w * uPx / max(distance(pos, uEye), 0.05);
+  vCov = 1.0;
+  if (px < 1.2 && px > 0.0) { vCov = px / 1.2; w *= 1.2 / px; }
   pos += across * side * w;
+  vSide = side;
   // quantisation: positions snap to a grid that halves six times, until the field is smooth again
   if (uGlitch == 5 && uG > 0.01) { float q = 0.64 * pow(0.5, floor(uP * 7.0)) * uG; pos = floor(pos / q + 0.5) * q; }
-  vT = t; vTan = tan; vN = normalize(cross(across, tan)); vPos = pos; vTone = 0.8 + 0.4 * h01(hb ^ 0x7u);
+  // the blade is creased along its middle: each half tilts away, so light falls differently on each
+  vec3 flatN = normalize(cross(across, tan));
+  vT = t; vTan = tan; vN = normalize(flatN + across * side * 0.45); vPos = pos; vTone = 0.8 + 0.4 * h01(hb ^ 0x7u);
   vId = float(hash(hb) & 0xffffu) / 65535.0; vHash = hash(hb);
   vCluster = h01(uint(int(floor(root.x * 1.1 + 3.0))) * 0x9e3779b9u ^ uint(int(floor(root.y * 1.1 + 3.0))) * 0x85ebca6bu ^ 0x51u);
   gl_Position = uVP * vec4(pos, 1.0);
@@ -146,6 +159,8 @@ void main() {
   const GRASS_FS = COMMON + `
 uniform vec3 uEye; uniform vec3 uLight; uniform float uFog; uniform float uExposure; uniform int uShow;
 uniform int uGlitch; uniform float uG; uniform int uTint; uniform float uTintE; uniform float uHue;
+uniform vec3 uDichA; uniform vec3 uDichB; uniform float uDich;
+in float vCov; in float vSide;
 in float vT; in vec3 vN; in vec3 vTan; in vec3 vPos; in float vTone; in float vSilver; in float vFade; in float vShade;
 in float vId; in float vCluster; flat in uint vHash;
 out vec4 frag;
@@ -157,13 +172,27 @@ void main() {
   float rim = pow(1.0 - abs(dot(N, V)), 3.0) * 0.25 * vT;
   float occ = mix(0.12, 1.0, smoothstep(0.0, 0.75, vT));
   float silver = 0.95 * vSilver * vT * (0.4 + 0.6 * diff);
-  float e = (0.03 + (0.46 * diff * vTone + 1.2 * sheen + rim + silver) * vShade) * occ * vFade;
+  // light through the blade: lit from behind, its edges and tip glow
+  float back = pow(max(0.0, dot(-V, uLight)), 3.0) * (0.35 + 0.65 * vT);
+  float trans = back * (0.6 + 0.4 * max(0.0, dot(-N, uLight)));
+  float e = (0.03 + (0.46 * diff * vTone + 1.2 * sheen + rim + silver + 0.85 * trans) * vShade) * occ * vFade * vCov;
   e = atmos(e, vPos, uEye, uLight, uFog);
   float lum = 1.0 - exp(-e * uExposure);
   float g = (h01(uint(gl_FragCoord.x) * 1973u ^ uint(gl_FragCoord.y) * 9277u) - 0.5) / 255.0;   // no banding on 8-bit panels
   // colour that encodes something about the blade: its number, its distance, its tuft, the wind
   vec3 col = vec3(lum);
   float dist = distance(vPos, uEye);
+  // dichroic: a thin film whose thickness differs a little from blade to blade; the colour it
+  // reflects depends on the angles to the viewer and the light, and what the light passes
+  // through is the complement. As blades bend and the camera drifts, the colours shift.
+  if (uDich > 0.001) {
+    float film = 0.7 + 0.6 * vId;
+    float phase = film * (1.8 * abs(dot(N, V)) + 0.9 * abs(dot(N, uLight))) + 0.35 * vT;
+    float i = 0.5 + 0.5 * cos(6.2831853 * phase);
+    vec3 refl = mix(uDichA, uDichB, i), thru = mix(uDichB, uDichA, i);
+    vec3 dich = mix(refl, thru, clamp(trans * 2.5, 0.0, 1.0));
+    col = mix(col, lum * dich * 1.75, uDich);
+  }
   if (uTint == 1) col = mix(col, lum * hue3(vId) * 1.7, uTintE);
   if (uTint == 2) col = mix(col, lum * hue3(mix(0.04, 0.62, clamp(dist / 40.0, 0.0, 1.0))) * 1.7, uTintE);
   if (uTint == 4) col = mix(col, lum * hue3(vCluster) * 1.7, uTintE);
@@ -268,7 +297,7 @@ void main() { vec2 p = vec2(float((gl_VertexID << 1) & 2), float(gl_VertexID & 2
   const O = {
     seed: num('seed', 49) >>> 0, per: Math.max(4, Math.min(24, num('blades', 14) | 0)), scale: Math.max(0.25, Math.min(2, num('scale', 1))),
     dim: Q.has('dim') ? Q.get('dim') : '19-22:0.6,22-7:0.35', hud: Q.get('hud') !== '0', speed: Math.max(0, num('speed', 1)), still: Q.get('still') === '1',
-    score: Q.get('score') !== '0', glitch: num('glitch', 0) | 0, colour: num('colour', 0) | 0, measure: num('measure', 0) | 0,
+    score: Q.get('score') !== '0', dich: Q.has('dichroic') ? num('dichroic', 1) : null, glitch: num('glitch', 0) | 0, colour: num('colour', 0) | 0, measure: num('measure', 0) | 0,
   };
   const Score = global.Score;
   const t0Real = Date.now(), t0Wall = Q.has('at') && !isNaN(Date.parse(Q.get('at'))) ? Date.parse(Q.get('at')) : t0Real;
@@ -385,6 +414,12 @@ void main() { vec2 p = vec2(float((gl_VertexID << 1) & 2), float(gl_VertexID & 2
     const G = O.glitch ? { kind: O.glitch, p: (sE % 12) / 12, e: 1 } : O.score ? Score.glitchAt(ms) : null;
     const C = O.colour ? { mode: O.colour, hue: 0.07, e: 1 } : O.score ? Score.colourAt(ms) : null;
     const tintHue = C ? (C.mode === 3 ? s / 86400 : C.hue) : 0;
+    // the dichroic pair of the hour: four pairs through the day, crossing over half an hour
+    const DP = [[[0.1, 0.9, 1.0], [1.0, 0.15, 0.85]], [[1.0, 0.72, 0.18], [0.16, 0.36, 1.0]], [[0.3, 1.0, 0.45], [0.62, 0.2, 1.0]], [[1.0, 0.45, 0.2], [0.1, 0.85, 0.8]]];
+    const blk = s / 21600, bi = Math.floor(blk) % 4, bj = (bi + 1) % 4, bt = Math.min(1, Math.max(0, (blk - Math.floor(blk) - 0.9167) / 0.0833));
+    const mixc = (a, b) => a.map((v, i) => v + (b[i] - v) * bt);
+    const dichA = mixc(DP[bi][0], DP[bj][0]), dichB = mixc(DP[bi][1], DP[bj][1]);
+    const dich = C && C.mode === 8 ? 0.18 + 0.82 * C.e : C ? 0.18 * (1 - C.e) : 0.18;
     // look along the path, 14 m ahead, a little above the grass there
     const e = eyeAt(sE), pa = eyeAt(sE - 60), pb = eyeAt(sE + 60);
     let hx = pb.x - pa.x, hz = pb.z - pa.z; const hl = Math.hypot(hx, hz) || 1; hx /= hl; hz /= hl;
@@ -433,6 +468,8 @@ void main() { vec2 p = vec2(float((gl_VertexID << 1) & 2), float(gl_VertexID & 2
     gl.uniform1i(u.uShow, SHOW);
     gl.uniform1i(u.uGlitch, G ? G.kind : 0); gl.uniform1f(u.uG, G ? G.e : 0); gl.uniform1f(u.uP, G ? G.p : 0);
     gl.uniform1i(u.uTint, C ? C.mode : 0); gl.uniform1f(u.uTintE, C ? C.e : 0); gl.uniform1f(u.uHue, tintHue);
+    gl.uniform3fv(u.uDichA, dichA); gl.uniform3fv(u.uDichB, dichB); gl.uniform1f(u.uDich, O.dich === 0 ? 0 : dich * (O.dich || 1));
+    gl.uniform1f(u.uPx, canvas.height * 0.5 / Math.tan(0.31));
     gl.uniformMatrix4fv(u.uVP, false, VP); gl.uniform3fv(u.uEye, eye); gl.uniform2f(u.uOrigin, origin[0], origin[1]);
     gl.uniform1f(u.uCell, CELL); gl.uniform1i(u.uN, N); gl.uniform1i(u.uPer, O.per); gl.uniform1f(u.uTime, time);
     gl.uniform3f(u.uWind, W.x, W.z, W.strength); gl.uniform1i(u.uSegs, SEGS); gl.uniform3fv(u.uLight, L);
