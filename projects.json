@@ -3,6 +3,16 @@
   "author": "dmaris70",
   "projects": [
     {
+      "slug": "049-grass-nocturne",
+      "title": "Grass Nocturne",
+      "year": 2026,
+      "tools": [
+        "webgl2"
+      ],
+      "description": "A live meadow for a large screen, lit by one low light on black and locked to the local clock. A camera drifts through it at a few centimetres a second on a path that repeats only every 20 days; the light's bearing and height follow the real day, raking at night and flat at noon; gust fronts cross the field. Every blade is computed in the shader from its world cell, so nothing is stored and every screen shows the same moment.",
+      "thumb": "preview.png"
+    },
+    {
       "slug": "047-edition-of-390",
       "title": "Edition of 390",
       "year": 2026,
