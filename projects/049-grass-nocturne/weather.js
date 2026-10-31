@@ -22,6 +22,53 @@
   const START = Date.UTC(2026, 10, 1);                   // day 0 of the journey: 1 Nov 2026
 
   // ───────────────────────── where the meadow is ─────────────────────────
+  // ── where the meadow is, chosen four ways (all from the date and the settings alone):
+  //   journey  starts at a place (or a meridian) and circles the earth in `days`, latitude swinging
+  //            between 60°N and 45°S over 1.5 × `days`, beginning at the start place's latitude
+  //   place    stays at one place          parallel  circles the earth along one latitude
+  //   route    travels along great circles through a list of places and back to the first, once in `days`
+  function parseSettings(q) {
+    const pt = (v) => { const m = String(v || '').split(',').map(Number); return m.length === 2 && m.every(isFinite) ? { lat: Math.max(-89, Math.min(89, m[0])), lon: m[1] } : null; };
+    const days = Math.max(1, +q.get('days') || 365.25), st = q.has('start') ? Date.parse(q.get('start') + (String(q.get('start')).length <= 10 ? 'T00:00:00Z' : '')) : NaN;
+    const start = isFinite(st) ? st : START;
+    if (q.has('place') && pt(q.get('place'))) return { mode: 'place', place: pt(q.get('place')), days, start };
+    if (q.has('route')) { const r = String(q.get('route')).split(';').map(pt).filter(Boolean); if (r.length >= 2) return { mode: 'route', route: r, days, start }; if (r.length === 1) return { mode: 'place', place: r[0], days, start }; }
+    const from = q.get('from'), fp = pt(from), fl = fp ? fp.lon : (isFinite(+from) ? +from : 0);
+    if (q.has('lat') && isFinite(+q.get('lat'))) return { mode: 'parallel', lat: Math.max(-89, Math.min(89, +q.get('lat'))), fromLon: fl, days, start };
+    return { mode: 'journey', from: fp, fromLon: fl, days, start };
+  }
+  function slerp(a, b, f) {
+    const R = Math.PI / 180, toV = (p) => [Math.cos(p.lat * R) * Math.cos(p.lon * R), Math.cos(p.lat * R) * Math.sin(p.lon * R), Math.sin(p.lat * R)];
+    const A = toV(a), B = toV(b), d = Math.acos(Math.max(-1, Math.min(1, A[0] * B[0] + A[1] * B[1] + A[2] * B[2])));
+    if (d < 1e-9) return { lat: a.lat, lon: a.lon };
+    const s1 = Math.sin((1 - f) * d) / Math.sin(d), s2 = Math.sin(f * d) / Math.sin(d), v = A.map((x, i) => x * s1 + B[i] * s2);
+    return { lat: Math.asin(v[2]) / R, lon: Math.atan2(v[1], v[0]) / R, d };
+  }
+  const arc = (a, b) => slerp(a, b, 0.5).d || 0;
+  function track(cfg = { mode: 'journey', fromLon: 0, days: 365.25, start: START }) {
+    const P = cfg.days, S = cfg.start;
+    const wrap = (l) => ((l + 180) % 360 + 360) % 360 - 180;
+    let fn;
+    if (cfg.mode === 'place') fn = () => ({ lat: cfg.place.lat, lon: cfg.place.lon });
+    else if (cfg.mode === 'parallel') fn = (days) => ({ lat: cfg.lat, lon: wrap(cfg.fromLon + days * 360 / P) });
+    else if (cfg.mode === 'route') {
+      const pts = cfg.route, legs = pts.map((p, i) => arc(p, pts[(i + 1) % pts.length])), total = legs.reduce((a, b) => a + b, 0) || 1;
+      fn = (days) => {
+        let f = (((days / P) % 1) + 1) % 1 * total;
+        for (let i = 0; i < pts.length; i++) { if (f <= legs[i] || i === pts.length - 1) { const q = slerp(pts[i], pts[(i + 1) % pts.length], legs[i] ? Math.min(1, f / legs[i]) : 0); return { lat: q.lat, lon: q.lon }; } f -= legs[i]; }
+      };
+    } else {
+      // the latitude swing starts at the start place's latitude (or at the old default phase)
+      const lat0 = cfg.from ? Math.max(-44.9, Math.min(59.9, cfg.from.lat)) : null, phi = lat0 === null ? 0.6 : Math.asin((lat0 - 7.5) / 52.5);
+      // from a place: the swing takes one circuit too, so after `days` the meadow is home again;
+      // from a meridian only: 1.5 circuits, so the track repeats every three
+      const LP = cfg.from ? P : P * 1.5;
+      fn = (days) => ({ lat: 7.5 + 52.5 * Math.sin(2 * Math.PI * days / LP + phi), lon: wrap(cfg.fromLon + days * 360 / P) });
+    }
+    const T = (ms) => { const days = (ms - S) / 864e5, p = fn(days); return { lat: p.lat, lon: p.lon, day: Math.floor(days), days, mode: cfg.mode }; };
+    T.START = S; T.cfg = cfg;
+    return T;
+  }
   function journey(ms, fromLon = 0) {
     const days = (ms - START) / 864e5;
     let lon = fromLon + days * 360 / 365.25;
@@ -118,13 +165,13 @@
   }
 
   // ───────────────────────── the live reader ─────────────────────────
-  function createReader({ fromLon = 0, fetchFn = (u) => fetch(u).then((r) => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); }), every = 15 * 60000, ease = 5 * 60000 } = {}) {
+  function createReader({ fromLon = 0, track: T = null, fetchFn = (u) => fetch(u).then((r) => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); }), every = 15 * 60000, ease = 5 * 60000 } = {}) {
     let last = null, prev = null, gotAt = 0, asked = 0, place = null, error = '';
     function poll(ms) {
       const q = Math.floor(ms / every);
       if (q === asked) return;
       asked = q;
-      const j = journey(ms, fromLon);
+      const j = T ? T(ms) : journey(ms, fromLon);
       fetchFn(url(j.lat, j.lon)).then((data) => {
         if (data && data.error) throw new Error(data.reason || 'refused');
         prev = last ? current(ms) : null; last = parse(data); gotAt = Date.now(); place = j; error = '';
@@ -139,7 +186,7 @@
     return { poll, current, get place() { return place; } };
   }
 
-  const api = { journey, sunAt, solarClock, url, parse, builtIn, effects, pairFor, createReader, lerpState, WMO, START };
+  const api = { journey, track, parseSettings, slerp, sunAt, solarClock, url, parse, builtIn, effects, pairFor, createReader, lerpState, WMO, START };
   global.Weather = api;
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
 })(typeof window !== 'undefined' ? window : globalThis);

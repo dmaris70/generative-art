@@ -117,6 +117,30 @@ wherever it has got to.
   day per screen, far below the service's free limit. The preview link on claude.ai cannot
   reach it, so there the piece shows its built-in weather.
 
+## Where the meadow is: choosing the place (`setup.html`)
+
+`setup.html` is a world map drawn from the piece's own geography data. Click to choose; it
+shows the circuit, where the meadow is now, the share of the circuit at sea, its length, and
+the countries crossed in order. It writes the address for the wall's browser, with a button to
+copy it. Four ways to choose:
+
+| Mode | Address | What happens |
+|---|---|---|
+| **Start here, travel the world** (recommended: the office) | `?from=lat,lon` | Day 1 is the place's own weather and ground. The meadow leaves eastward, goes once round the earth, its latitude swinging between 60°N and 45°S, and is home again after one circuit. |
+| One fixed place | `?place=lat,lon` | The meadow stays at one place: its live weather, sun and ground, permanently. |
+| A route between places | `?route=lat,lon;lat,lon;…` | Along great circles from place to place and back to the first, once per circuit. |
+| Along one latitude | `?lat=…&from=lat,lon` | Once round the earth on one parallel, so the sun and seasons stay alike while the ground changes. |
+
+- **Common settings:** `?days=` is the length of one circuit (365 by default); `?start=YYYY-MM-DD`
+  is day 1 (1 Nov 2026 by default).
+- **The old setting still works:** `?from=<longitude>` starts at that meridian, with the
+  latitude cycle of a year and a half.
+- **Synchronised:** the place follows from the date and the settings alone, so every screen with
+  the same address is in the same place.
+- **Example:** starting at Athens, the circuit is 40,080 km, 54% at sea, through 16 countries:
+  Greece, Turkey, Russia, Ukraine, Mongolia, China, North Korea, Japan, Chile, Argentina, Brazil,
+  Sierra Leone, Guinea, Mali, Algeria and Libya.
+
 ## The ground under the journey (`geography.js`, `data/`)
 
 The piece knows the earth offline. It reads a 0.25° grid (1440 × 720 cells) built by

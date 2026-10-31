@@ -417,10 +417,12 @@ void main() { vec2 p = vec2(float((gl_VertexID << 1) & 2), float(gl_VertexID & 2
     weather: Q.get('weather') !== '0' && !!global.Weather, style: Q.get('style') || 'auto', paper: Q.get('paper') !== '0', near: Math.max(0, Math.min(1.5, num('near', 1))), geo: Q.get('geo') !== '0' && !!global.Geography, from: num('from', 0), lightHere: Q.get('light') === 'local', glitch: num('glitch', 0) | 0, colour: num('colour', 0) | 0, measure: num('measure', 0) | 0,
   };
   const Score = global.Score, Wx = global.Weather;
-  const reader = O.weather ? Wx.createReader({ fromLon: O.from }) : null;
+  // where the meadow is: ?from=lat,lon (start there) · ?place=lat,lon · ?route=lat,lon;lat,lon;… · ?lat= · ?days= · ?start=
+  const TRACK = Wx ? Wx.track(Wx.parseSettings(Q)) : null;
+  const reader = O.weather ? Wx.createReader({ track: TRACK }) : null;
   const Geo = global.Geography;
   if (O.geo) Geo.fetchData(new URL('data/', document.currentScript ? document.currentScript.src : location.href).href).catch((e) => console.log('nocturne: geography —', e.message));
-  const J1 = (t, fl) => Wx.journey(t, fl); J1.START = Wx ? Wx.START : 0;
+  const J1 = (t) => TRACK(t); J1.START = TRACK ? TRACK.START : 0;
   let geoAt = -1, geo = null, geoEv = null;
   const stillUntil = Date.now() + (O.weather ? 15000 : 0);  // a held clock waits for a reading (15 s at most)
   const t0Real = Date.now(), t0Wall = Q.has('at') && !isNaN(Date.parse(Q.get('at'))) ? Date.parse(Q.get('at')) : t0Real;
@@ -550,7 +552,7 @@ void main() { vec2 p = vec2(float((gl_VertexID << 1) & 2), float(gl_VertexID & 2
     let J = null, sun = null, wx = null, fx = null;
     if (reader) {
       reader.poll(ms);
-      J = Wx.journey(ms, O.from); sun = Wx.sunAt(ms, J.lat, J.lon); wx = reader.current(ms); fx = Wx.effects(wx, sun);
+      J = TRACK(ms); sun = Wx.sunAt(ms, J.lat, J.lon); wx = reader.current(ms); fx = Wx.effects(wx, sun);
     }
     // the ground under the journey, once a second
     if (J && O.geo && Geo.ready() && Math.floor(ms / 1000) !== geoAt) {
@@ -793,7 +795,7 @@ void main() { vec2 p = vec2(float((gl_VertexID << 1) & 2), float(gl_VertexID & 2
     if (!f.J) return { lines: ['WEATHER OFF', 'THE BUILT-IN DAY'] };
     const w = f.wx, there = Wx.solarClock(ms, f.J.lon), none = w.builtIn;
     switch (kind) {
-      case 11: return { lines: [deg(f.J.lat, 'N', 'S') + ' ' + deg(f.J.lon, 'E', 'W'), hhmm(there) + ' THERE - SUN ' + Math.abs(f.sun.el).toFixed(0) + (f.sun.el >= 0 ? ' DEG HIGH' : ' DEG BELOW'), 'DAY ' + (f.J.day + 1) + ' OF THE JOURNEY'] };
+      case 11: return { lines: [deg(f.J.lat, 'N', 'S') + ' ' + deg(f.J.lon, 'E', 'W'), hhmm(there) + ' THERE - SUN ' + Math.abs(f.sun.el).toFixed(0) + (f.sun.el >= 0 ? ' DEG HIGH' : ' DEG BELOW'), f.J.mode === 'place' ? 'A FIXED PLACE' : 'DAY ' + (f.J.day + 1) + (f.J.mode === 'route' ? ' OF THE ROUTE' : ' OF THE JOURNEY')] };
       case 12: return { lines: ['WIND ' + w.speed.toFixed(1) + ' M/S FROM ' + Math.round(w.dir) + ' DEG', 'GUSTS ' + w.gusts.toFixed(1) + ' M/S'].concat(none ? ['BUILT-IN, NO READING'] : []) };
       case 13: return { lines: ['PRESSURE ' + Math.round(w.pressure) + ' HPA ' + (Math.abs(w.trend) < 0.3 ? 'STEADY' : (w.trend > 0 ? 'RISING ' : 'FALLING ') + Math.abs(w.trend).toFixed(1)), 'HUMIDITY ' + Math.round(w.rh * 100) + '% - ' + w.temp.toFixed(1) + ' C'] };
       case 14: return { lines: ['CLOUD ' + Math.round(w.cloud * 100) + '% - VISIBILITY ' + (w.vis / 1000).toFixed(1) + ' KM', 'PRECIPITATION ' + w.precip.toFixed(1) + ' MM/H' + (w.snow > 0 ? ' - SNOW ' + w.snow.toFixed(1) + ' CM/H' : '')] };
