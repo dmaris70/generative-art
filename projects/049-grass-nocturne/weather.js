@@ -164,14 +164,47 @@
     const z = PAIRS[PAIRS.length - 1]; return [z[1], z[2]];
   }
 
+  // ───────────────────────── the sea ─────────────────────────
+  function marineUrl(lat, lon) {
+    return 'https://marine-api.open-meteo.com/v1/marine?latitude=' + lat.toFixed(1) + '&longitude=' + lon.toFixed(1)
+      + '&current=wave_height,wave_direction,wave_period,swell_wave_height,swell_wave_direction,swell_wave_period&timezone=GMT';
+  }
+  function parseMarine(j) {
+    const c = (j && j.current) || {}, ok = (v) => typeof v === 'number' && isFinite(v);
+    if (!ok(c.wave_height)) return null;
+    return { hs: c.wave_height, period: ok(c.wave_period) ? c.wave_period : null, dir: ok(c.wave_direction) ? c.wave_direction : null,
+      swellH: ok(c.swell_wave_height) ? c.swell_wave_height : 0, swellT: ok(c.swell_wave_period) ? c.swell_wave_period : null,
+      swellDir: ok(c.swell_wave_direction) ? c.swell_wave_direction : null };
+  }
+  // The conditions of the sea: measured waves where the marine service has them, else the sea a
+  // wind of that speed raises (fully developed: Hs ≈ 0.0214 U², T ≈ 0.73 U), on the Douglas scale.
+  const DOUGLAS = [[0.03, 'CALM, GLASSY'], [0.1, 'CALM, RIPPLED'], [0.5, 'SMOOTH'], [1.25, 'SLIGHT'], [2.5, 'MODERATE'],
+    [4, 'ROUGH'], [6, 'VERY ROUGH'], [9, 'HIGH'], [14, 'VERY HIGH'], [Infinity, 'PHENOMENAL']];
+  function seaState(w, lat) {
+    const U = Math.max(0, w.speed), m = w.marine;
+    const hs = m ? m.hs : Math.min(14, 0.0214 * U * U), T = (m && m.period) || Math.max(1.2, 0.73 * U);
+    const from = m && m.dir !== null ? m.dir : w.dir;
+    const swellH = m ? m.swellH : 0.35 * hs + 0.15, swellT = (m && m.swellT) || Math.max(6, T * 1.6), swellFrom = m && m.swellDir !== null ? m.swellDir : (w.dir + 35) % 360;
+    let douglas = DOUGLAS.findIndex(([h]) => hs < h);
+    const frozen = w.temp < -1.8 && Math.abs(lat) > 50;
+    return {
+      hs, T, from, swellH, swellT, swellFrom, douglas, name: frozen ? 'FROZEN' : DOUGLAS[douglas][1], measured: !!m, frozen,
+      whitecaps: Math.max(0, Math.min(1, (U - 4) / 10)),            // white horses from about 4 m/s (Beaufort 3)
+      foam: Math.max(0, Math.min(1, (U - 14) / 8)),                 // streaks of foam along the wind from about 14 m/s (Beaufort 7)
+      glassy: Math.max(0, 1 - hs / 0.1),
+    };
+  }
+
   // ───────────────────────── the live reader ─────────────────────────
   function createReader({ fromLon = 0, track: T = null, fetchFn = (u) => fetch(u).then((r) => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); }), every = 15 * 60000, ease = 5 * 60000 } = {}) {
-    let last = null, prev = null, gotAt = 0, asked = 0, place = null, error = '';
+    let last = null, prev = null, gotAt = 0, asked = 0, place = null, error = '', marine = null, marineAt = 0;
     function poll(ms) {
       const q = Math.floor(ms / every);
       if (q === asked) return;
       asked = q;
       const j = T ? T(ms) : journey(ms, fromLon);
+      // the sea there, if there is one (the marine service answers nulls over land)
+      fetchFn(marineUrl(j.lat, j.lon)).then((m) => { marine = parseMarine(m); marineAt = Date.now(); }).catch(() => {});
       fetchFn(url(j.lat, j.lon)).then((data) => {
         if (data && data.error) throw new Error(data.reason || 'refused');
         prev = last ? current(ms) : null; last = parse(data); gotAt = Date.now(); place = j; error = '';
@@ -179,14 +212,15 @@
     }
     function current(ms) {
       const age = last ? Date.now() - gotAt : Infinity;
-      if (!last || age > 60 * 60000) return Object.assign(builtIn(ms), { error });
+      const m = marine && Date.now() - marineAt < 60 * 60000 ? marine : null;
+      if (!last || age > 60 * 60000) return Object.assign(builtIn(ms), { error, marine: m });
       const t = Math.min(1, age / ease);
-      return Object.assign(prev ? lerpState(prev, last, t) : last, { ageMin: age / 60000, error });
+      return Object.assign(prev ? lerpState(prev, last, t) : last, { ageMin: age / 60000, error, marine: m });
     }
     return { poll, current, get place() { return place; } };
   }
 
-  const api = { journey, track, parseSettings, slerp, sunAt, solarClock, url, parse, builtIn, effects, pairFor, createReader, lerpState, WMO, START };
+  const api = { seaState, marineUrl, parseMarine, DOUGLAS, journey, track, parseSettings, slerp, sunAt, solarClock, url, parse, builtIn, effects, pairFor, createReader, lerpState, WMO, START };
   global.Weather = api;
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
 })(typeof window !== 'undefined' ? window : globalThis);
