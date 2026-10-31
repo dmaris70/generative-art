@@ -117,6 +117,60 @@ wherever it has got to.
   day per screen, far below the service's free limit. The preview link on claude.ai cannot
   reach it, so there the piece shows its built-in weather.
 
+## The ground under the journey (`geography.js`, `data/`)
+
+The piece knows the earth offline. It reads a 0.25° grid (1440 × 720 cells) built by
+`data/build_geo.py` from public data:
+
+| Layer | Source | License |
+|---|---|---|
+| Country of each land cell; sea or ocean name of every cell; 2,512 cities (population ≥ 150,000, or a capital) | Natural Earth, 1:50m and 1:10m | Public domain |
+| Elevation on land | ETOPO 2022, NOAA National Centers for Environmental Information, sampled every 0.5° | Public domain |
+| Distance to the coast | Computed from the land mask (shortest path over the grid, in km) | — |
+| Climate zone (not yet added; see below) | Köppen-Geiger V3, Beck et al. (2023), *Scientific Data* 10, 724, 1991–2020, 0.5° | CC BY 4.0 |
+
+Country names and borders are Natural Earth's, which show de facto boundaries. Names appear
+only as text in the measurements, never as a picture of a map.
+
+**What the ground does.**
+
+| Fact | In the meadow |
+|---|---|
+| **Sea or land** | Within 20 km inland the sea begins to show, and by 40 km offshore it is full. At sea the waterline rises to just below the horizon (55% of the screen at most), and the meadow thins to a fringe of tall reeds standing in water. |
+| **Elevation and roughness** | The ground's relief grows with height and with how much the land varies nearby, up to three times. Air is thinner higher up: less haze and slightly brighter. |
+| **Latitude** | Grass is up to 35% shorter toward 60° and up to 15% taller at the equator. |
+| **Climate zone** | Once added: tropical is dense and tall; desert is sparse, short and pale; steppe is tufted and combed by wind (more charcoal); temperate is today's meadow; cold is shorter; tundra is low; ice is almost bare. |
+| **At sea, at night** | Brighter exposure, so the sparse reeds still read. |
+
+**Crossings.**
+- The **equator** mirrors the image for an hour.
+- The **date line** gives ten minutes of time slice.
+- A **tropic** brings a day with half as many colour minutes again (304 instead of 211).
+- Coastlines, borders, seas and every 15° of longitude are logged; a measurement reads the
+  most recent.
+
+**Five more measurements** (20 kinds, all every 10 minutes):
+- the ground (country or sea, distance to the coast, height, climate)
+- the nearest city, its distance and bearing
+- distance travelled, and the next landfall or departure to sea
+- the last thing crossed and when
+- the antipode, and whether it is land or sea
+
+**The first year** (from 0° on 1 Nov 2026): 60% of the time at sea; 11 countries (Italy, France,
+Croatia, Bosnia and Herzegovina, Serbia, Hungary, Romania, Ukraine, Russia, Chile, Argentina);
+33,600 km.
+
+**The climate map is not in yet.** figshare, which hosts it, answers automated downloads with a
+bot challenge, so it could not be fetched from here. To add it:
+1. Download `koppen_geiger_tif.zip` from https://doi.org/10.6084/m9.figshare.21789074.
+2. Put its 0.5° 1991–2020 map, `koppen_geiger_0p5.tif`, in the source folder as
+   `koppen_0p5.tif`.
+3. Run `python3 data/build_geo.py <sources> data`.
+
+The engine picks it up without other changes. Until then the measurement says
+`CLIMATE MAP NOT YET ADDED`, and the meadow ignores climate. `?geo=0` ignores the ground
+altogether.
+
 ## Four registers, borrowed as techniques
 
 Four ways of making marks are layered over the meadow, and the weather where the journey is
