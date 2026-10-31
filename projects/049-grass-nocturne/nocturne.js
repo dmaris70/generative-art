@@ -634,7 +634,7 @@ void main() { vec2 p = vec2(float((gl_VertexID << 1) & 2), float(gl_VertexID & 2
       geoAt = Math.floor(ms / 1000); geo = Geo.at(J.lat, J.lon); geoEv = Geo.events(J1, ms, O.from);
     }
     const smG = (a, b, x) => { const t = Math.min(1, Math.max(0, (x - a) / (b - a))); return t * t * (3 - 2 * t); };
-    const seaness = geo ? smG(20, -40, geo.coastKm) : 0, biome = geo && geo.land ? geo.biome : null;
+    const seaness = geo && !geo.land ? smG(0, -40, geo.coastKm) : 0, biome = geo && geo.land ? geo.biome : null;
     const absLat = J ? Math.abs(J.lat) : 45;
     const density = biome ? biome.density : 1;                                        // the meadow stays, at sea too
     const hScale = geo ? (1 - 0.35 * smG(35, 60, absLat)) * (1 + 0.15 * smG(15, 0, absLat)) * (biome ? biome.height : 1) : 1;
