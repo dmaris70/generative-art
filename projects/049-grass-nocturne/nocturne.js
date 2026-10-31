@@ -16,7 +16,7 @@
 //      ?weather=0 (the built-in day instead of the journey) · ?from=<longitude the journey starts at>
 //      ?light=local (light follows the local day, not the sun where the journey is)
 //      ?style=auto|nocturne|ink|wash|charcoal|water (auto: the weather chooses) · ?paper=0 (never paper)
-//      ?near=0…1.5 (the faded near field; 0 off)
+//      ?near=0…1.5 (the faded near field; 0 off) · ?geo=0 (ignore the ground under the journey)
 //      ?dichroic=<0…5> (0 off; scales the shimmer) · ?glitch=<1…10> · ?colour=<1…8> · ?measure=<1…10> (hold one event, for checking) · ?score=0
 //
 // Over it runs the score (score.js): glitches on prime minutes, colour on prime clock times,
@@ -85,14 +85,15 @@ float atmos(float e, vec3 pos, vec3 eye, vec3 L, float fog) {
   float side = 0.45 + 0.55 * pow(max(0.0, dot(vh, lh)), 2.0);
   return e * t + uMist * side * (1.0 - t);
 }
+uniform float uRelief;
 float ground(vec2 p) {
-  return 0.8 * sin(p.x * 0.053 + 1.3) * cos(p.y * 0.047 - 0.4) + 0.4 * sin(p.x * 0.11 - p.y * 0.083 + 2.0) + 0.45 * (vnoise(p * 0.18) - 0.5);
+  return uRelief * (0.8 * sin(p.x * 0.053 + 1.3) * cos(p.y * 0.047 - 0.4) + 0.4 * sin(p.x * 0.11 - p.y * 0.083 + 2.0) + 0.45 * (vnoise(p * 0.18) - 0.5));
 }
 `;
   const GRASS_VS = COMMON + `
 uniform mat4 uVP; uniform vec3 uEye; uniform vec2 uOrigin; uniform float uCell; uniform int uN; uniform int uPer;
 uniform float uTime; uniform vec3 uWind; uniform int uSegs; uniform float uSpan;
-uniform int uGlitch; uniform float uG; uniform float uP; uniform float uPx;
+uniform int uGlitch; uniform float uG; uniform float uP; uniform float uPx; uniform float uDensity; uniform float uHScale;
 out float vCov; out float vSide;
 out float vT; out vec3 vN; out vec3 vTan; out vec3 vPos; out float vTone; out float vSilver; out float vFade; out float vShade;
 out float vId; out float vCluster; flat out uint vHash;
@@ -104,14 +105,14 @@ void main() {
   float d = distance(root, uEye.xz);
   // fewer blades with distance, each a little wider, so the field keeps its tone
   float keep = clamp(pow(7.0 / max(d, 7.0), 1.35), 0.04, 1.0);
-  float kf = keep * float(uPer);
+  float kf = keep * float(uPer) * uDensity;
   if (float(k) >= ceil(kf)) { gl_Position = vec4(2.0, 2.0, 2.0, 1.0); return; }
   // the last blade kept in a cell is drawn in proportion to how far it is kept: no blinking
   float fadeK = clamp(kf - float(k), 0.0, 1.0);
   // the meadow: tall in drifts, short in lawns; tufts share a stature
   float meadow = smoothstep(0.25, 0.8, 0.6 * vnoise(root * 0.06) + 0.4 * vnoise(root * 0.17 + 9.0));
   float tuft = vnoise(root * 1.1 + 3.0);
-  float H = (0.1 + 0.75 * meadow) * (0.55 + 0.6 * tuft) * (0.7 + 0.5 * h01(hb ^ 0x1u));
+  float H = (0.1 + 0.75 * meadow) * (0.55 + 0.6 * tuft) * (0.7 + 0.5 * h01(hb ^ 0x1u)) * uHScale;
   float yaw = h01(hb ^ 0x2u) * 6.2831853, lean = 0.12 + 0.35 * h01(hb ^ 0x3u);
   vec2 own = vec2(cos(yaw), sin(yaw));
   // gust fronts travel downwind; a flutter rides on them
@@ -385,7 +386,7 @@ void main() {
     vec3 paper = vec3(0.9, 0.893, 0.876);
     // the ink follows the frame's own brightness (its 90th percentile), so a dark, wet field still draws
     vec3 cn = c / max(uP90, 0.04);
-    vec3 inked = paper * (1.0 - 0.94 * smoothstep(vec3(0.12), vec3(0.95), cn));
+    vec3 inked = paper * (1.0 - 0.94 * smoothstep(vec3(0.2), vec3(1.1), cn));
     inked -= (vn(gl_FragCoord.xy * 0.5) - 0.5) * 0.045 + (0.5 + 0.5 * sin(gl_FragCoord.y * 2.1)) * 0.012;
     c = mix(c, inked, uInk);
   }
@@ -401,10 +402,14 @@ void main() { vec2 p = vec2(float((gl_VertexID << 1) & 2), float(gl_VertexID & 2
     seed: num('seed', 49) >>> 0, per: Math.max(4, Math.min(24, num('blades', 14) | 0)), scale: Math.max(0.25, Math.min(2, num('scale', 1))),
     dim: Q.has('dim') ? Q.get('dim') : '19-22:0.6,22-7:0.35', hud: Q.get('hud') !== '0', speed: Math.max(0, num('speed', 1)), still: Q.get('still') === '1',
     score: Q.get('score') !== '0', dich: Q.has('dichroic') ? num('dichroic', 1) : null,
-    weather: Q.get('weather') !== '0' && !!global.Weather, style: Q.get('style') || 'auto', paper: Q.get('paper') !== '0', near: Math.max(0, Math.min(1.5, num('near', 1))), from: num('from', 0), lightHere: Q.get('light') === 'local', glitch: num('glitch', 0) | 0, colour: num('colour', 0) | 0, measure: num('measure', 0) | 0,
+    weather: Q.get('weather') !== '0' && !!global.Weather, style: Q.get('style') || 'auto', paper: Q.get('paper') !== '0', near: Math.max(0, Math.min(1.5, num('near', 1))), geo: Q.get('geo') !== '0' && !!global.Geography, from: num('from', 0), lightHere: Q.get('light') === 'local', glitch: num('glitch', 0) | 0, colour: num('colour', 0) | 0, measure: num('measure', 0) | 0,
   };
   const Score = global.Score, Wx = global.Weather;
   const reader = O.weather ? Wx.createReader({ fromLon: O.from }) : null;
+  const Geo = global.Geography;
+  if (O.geo) Geo.fetchData(new URL('data/', document.currentScript ? document.currentScript.src : location.href).href).catch((e) => console.log('nocturne: geography —', e.message));
+  const J1 = (t, fl) => Wx.journey(t, fl); J1.START = Wx ? Wx.START : 0;
+  let geoAt = -1, geo = null, geoEv = null;
   const stillUntil = Date.now() + (O.weather ? 15000 : 0);  // a held clock waits for a reading (15 s at most)
   const t0Real = Date.now(), t0Wall = Q.has('at') && !isNaN(Date.parse(Q.get('at'))) ? Date.parse(Q.get('at')) : t0Real;
   const now = () => (O.still ? t0Wall : t0Wall + (Date.now() - t0Real) * O.speed);
@@ -524,7 +529,8 @@ void main() { vec2 p = vec2(float((gl_VertexID << 1) & 2), float(gl_VertexID & 2
     const a = vhash(ix, iz), b = vhash(ix + 1, iz), c = vhash(ix, iz + 1), d = vhash(ix + 1, iz + 1);
     return (a + (b - a) * fx) + ((c + (d - c) * fx) - (a + (b - a) * fx)) * fz;
   }
-  const groundH = (x, z) => 0.8 * Math.sin(x * 0.053 + 1.3) * Math.cos(z * 0.047 - 0.4) + 0.4 * Math.sin(x * 0.11 - z * 0.083 + 2.0) + 0.45 * (vnoise(x * 0.18, z * 0.18) - 0.5);
+  let relief = 1;                                  // the ground's relief where the journey is
+  const groundH = (x, z) => relief * (0.8 * Math.sin(x * 0.053 + 1.3) * Math.cos(z * 0.047 - 0.4) + 0.4 * Math.sin(x * 0.11 - z * 0.083 + 2.0) + 0.45 * (vnoise(x * 0.18, z * 0.18) - 0.5));
 
   function frame() {
     const ms = now(), s = dayS(ms), sE = epochS(ms), time = (ms / 1000) % 86400;
@@ -534,9 +540,22 @@ void main() { vec2 p = vec2(float((gl_VertexID << 1) & 2), float(gl_VertexID & 2
       reader.poll(ms);
       J = Wx.journey(ms, O.from); sun = Wx.sunAt(ms, J.lat, J.lon); wx = reader.current(ms); fx = Wx.effects(wx, sun);
     }
+    // the ground under the journey, once a second
+    if (J && O.geo && Geo.ready() && Math.floor(ms / 1000) !== geoAt) {
+      geoAt = Math.floor(ms / 1000); geo = Geo.at(J.lat, J.lon); geoEv = Geo.events(J1, ms, O.from);
+    }
+    const smG = (a, b, x) => { const t = Math.min(1, Math.max(0, (x - a) / (b - a))); return t * t * (3 - 2 * t); };
+    const seaness = geo ? smG(20, -40, geo.coastKm) : 0, biome = geo && geo.land ? geo.biome : null;
+    const absLat = J ? Math.abs(J.lat) : 45;
+    const density = geo ? (1 - 0.7 * seaness) * (biome ? biome.density : 1) : 1;   // at sea, a fringe of reeds
+    const hScale = geo ? (1 - 0.35 * smG(35, 60, absLat)) * (1 + 0.15 * smG(15, 0, absLat)) * (biome ? biome.height : 1) * (1 + 0.35 * seaness) : 1;
+    relief = geo && geo.land ? 1 + Math.min(2, geo.elev / 1200 + geo.rough / 400) * (1 - seaness) : 1;
     // the score: which glitch, which colour, which measurement, now
-    const G = O.glitch ? { kind: O.glitch, p: (sE % 12) / 12, e: 1 } : O.score ? Score.glitchAt(ms, fx ? fx.stormFactor : 0) : null;
-    const C = O.colour ? { mode: O.colour, hue: 0.07, e: 1 } : O.score ? Score.colourAt(ms) : null;
+    let G = O.glitch ? { kind: O.glitch, p: (sE % 12) / 12, e: 1 } : O.score ? Score.glitchAt(ms, fx ? fx.stormFactor : 0) : null;
+    // crossing the equator mirrors the image for an hour; the date line slices time for ten minutes
+    if (!O.glitch && geoEv && geoEv.equator) G = { kind: 8, p: (sE % 3600) / 3600, e: 1, cause: 'THE EQUATOR, CROSSED' };
+    else if (!O.glitch && geoEv && geoEv.dateLine) G = { kind: 1, p: (sE % 600) / 600, e: 1, cause: 'THE DATE LINE, CROSSED' };
+    const C = O.colour ? { mode: O.colour, hue: 0.07, e: 1 } : O.score ? Score.colourAt(ms, !!(geoEv && geoEv.tropic)) : null;
     const tintHue = C ? (C.mode === 3 ? s / 86400 : C.hue) : 0;
     // the dichroic pair of the hour: four pairs through the day, crossing over half an hour
     const DP = [[[0.1, 0.9, 1.0], [1.0, 0.15, 0.85]], [[1.0, 0.72, 0.18], [0.16, 0.36, 1.0]], [[0.3, 1.0, 0.45], [0.62, 0.2, 1.0]], [[1.0, 0.45, 0.2], [0.1, 0.85, 0.8]]];
@@ -577,8 +596,9 @@ void main() { vec2 p = vec2(float((gl_VertexID << 1) & 2), float(gl_VertexID & 2
     gl.enable(gl.DEPTH_TEST); gl.disable(gl.CULL_FACE);
     // the night is darker than the day: exposure follows the light's height (7° → 1.5, 38° → 3.0)
     const elev = Math.asin(L[1]) * 180 / Math.PI;
-    const exposure = (1.5 + 1.5 * Math.min(1, Math.max(0, (elev - 7) / 31))) * (fx && !O.lightHere ? 1 - 0.3 * fx.night : 1) + (fx && !O.lightHere ? 0.45 * fx.night : 0);   // night: darker, never unreadable
-    const fog = fx ? fx.fog : 0.04;
+    const thin = geo && geo.land ? Math.exp(-geo.elev / 2500) : 1;   // thinner air higher up
+    const exposure = (1 + 0.15 * (1 - thin) + 0.3 * (biome ? biome.pale : 0) + 0.9 * seaness * (fx ? fx.night : 0))   // sparse reeds at night need more light * (1.5 + 1.5 * Math.min(1, Math.max(0, (elev - 7) / 31))) * (fx && !O.lightHere ? 1 - 0.3 * fx.night : 1) + (fx && !O.lightHere ? 0.45 * fx.night : 0);   // night: darker, never unreadable
+    const fog = (fx ? fx.fog : 0.04) * thin;
 
     // the day's atmosphere: mist at dawn and dusk, clouds drifting downwind, their cover changing
     const hr = s / 3600, mist = 0.01 + 0.04 * Math.exp(-(((hr - 6.5) / 1.5) ** 2)) + 0.03 * Math.exp(-(((hr - 19) / 1.6) ** 2)) + (fx ? fx.mistBoost : 0);
@@ -598,17 +618,18 @@ void main() { vec2 p = vec2(float((gl_VertexID << 1) & 2), float(gl_VertexID & 2
     gl.drawArrays(gl.TRIANGLES, 0, 3);
     gl.enable(gl.DEPTH_TEST);
 
-    gl.useProgram(trees.p); const tr = trees.u;
+    gl.useProgram(trees.p); const tr = trees.u; gl.uniform1f(tr.uRelief, relief);
     gl.uniformMatrix4fv(tr.uVP, false, VP); gl.uniform1i(tr.uM, TREE_M); gl.uniform1f(tr.uR, TREE_R); gl.uniform3fv(tr.uEye, eye); gl.uniform3fv(tr.uLight, L);
     gl.uniform1f(tr.uFog, fog); gl.uniform1f(tr.uExposure, exposure); gl.uniform1f(tr.uSeed, O.seed); atmosU(tr);
     gl.drawArrays(gl.TRIANGLE_STRIP, 0, 2 * (TREE_M + 1));
 
-    gl.useProgram(groundP.p); const g = groundP.u; atmosU(g); gl.uniform3fv(g.uLight, L);
+    gl.useProgram(groundP.p); const g = groundP.u; atmosU(g); gl.uniform3fv(g.uLight, L); gl.uniform1f(g.uRelief, relief);
     gl.uniformMatrix4fv(g.uVP, false, VP); gl.uniform2f(g.uOrigin, origin[0], origin[1]); gl.uniform1f(g.uSpan, SPAN);
     gl.uniform1i(g.uRes, RES); gl.uniform3fv(g.uEye, eye); gl.uniform1f(g.uFog, fog); gl.uniform1f(g.uExposure, exposure); gl.uniform1f(g.uSeed, O.seed);
     gl.drawElements(gl.TRIANGLES, idx.length, gl.UNSIGNED_SHORT, 0);
 
     gl.useProgram(grass.p); const u = grass.u; atmosU(u); gl.uniform1f(u.uSpan, SPAN);
+    gl.uniform1f(u.uRelief, relief); gl.uniform1f(u.uDensity, density); gl.uniform1f(u.uHScale, hScale);
     gl.uniform1i(u.uShow, SHOW);
     gl.uniform1i(u.uGlitch, G ? G.kind : 0); gl.uniform1f(u.uG, G ? G.e : 0); gl.uniform1f(u.uP, G ? G.p : 0);
     gl.uniform1i(u.uTint, C ? C.mode : 0); gl.uniform1f(u.uTintE, C ? C.e * nightK : 0); gl.uniform1f(u.uHue, tintHue);
@@ -653,6 +674,10 @@ void main() { vec2 p = vec2(float((gl_VertexID << 1) & 2), float(gl_VertexID & 2
     const forced = { nocturne: { ink: 0, wash: 0, char: 0, water: 0, drip: 0 }, ink: { ink: 1, wash: 0, char: 0, water: 0, drip: 0 },
       wash: { ink: 0, wash: 0.9, char: 0, water: 0, drip: 0 }, charcoal: { ink: 0, wash: 0, char: 0.75, water: 0, drip: 0 },
       water: { ink: 0, wash: 0, char: 0, water: 0.32, drip: 1 } }[O.style];
+    // the waterline never rises above the horizon: at sea it sits just below it
+    const horizonUv = Math.min(0.55, Math.max(0.2, (hzn[1] + 1) / 2 - 0.03));
+    if (geo) { style.water += (horizonUv - style.water) * seaness; style.drip = Math.max(style.drip, 0.6 * seaness);
+      if (biome) style.char = Math.min(0.9, style.char + biome.comb); }
     if (forced) style = forced;
     const wsx = W.x * -hz + W.z * hx, wsy = 0.4 * (W.x * hx + W.z * hz), wl = Math.hypot(wsx, wsy) || 1;
     gl.uniform1f(pu.uWaterY, style.water); gl.uniform1f(pu.uRipple, 0.3 + (fx ? fx.windStrength : W.strength)); gl.uniform1f(pu.uDrip, style.drip);
@@ -660,7 +685,7 @@ void main() { vec2 p = vec2(float((gl_VertexID << 1) & 2), float(gl_VertexID & 2
     gl.drawArrays(gl.TRIANGLES, 0, 3);
     gl.activeTexture(gl.TEXTURE0);
 
-    overlay(ms, sE, { eye, look, hx, hz, VP, ndc, W, G, C, origin, J, sun, wx, style });
+    overlay(ms, sE, { eye, look, hx, hz, VP, ndc, W, G, C, origin, J, sun, wx, style, geo });
 
     stage.style.opacity = String(dimAt(ms, O.dim));
     if (ov) ov.style.opacity = stage.style.opacity;
@@ -722,11 +747,32 @@ void main() { vec2 p = vec2(float((gl_VertexID << 1) & 2), float(gl_VertexID & 2
         return { lines: ['W = (' + W.x.toFixed(2) + ', ' + W.z.toFixed(2) + ') X ' + W.strength.toFixed(2)], anchor: [px, py, pz], arrow: [px + W.x * 2.5, py, pz + W.z * 2.5] }; }
       case 9: return { lines: ['ENTROPY OF THIS FRAME', entropyOfLatest().toFixed(2) + ' BITS OF 8'] };
       case 11: case 12: case 13: case 14: case 15: return weatherLines(M.kind, ms, f);
+      case 16: case 17: case 18: case 19: case 20: return geoLines(M.kind, ms, f);
       default: { const t = Score.todaySoFar(ms); return { lines: ['TODAY ' + grp(t.events) + ' EVENTS', t.glitches + ' GLITCHES - ' + t.colours + ' COLOUR MINUTES', grp(t.measures) + ' MEASUREMENTS'] }; }
     }
   }
   const s0 = (ms) => dayS(ms);
   const deg = (v, pos, neg) => Math.abs(v).toFixed(1) + ' ' + (v >= 0 ? pos : neg);
+  const up = (str) => String(str).toUpperCase().replace(/[^A-Z0-9 .,:;\/*=+()<>#%-]/g, ' ').replace(/\s+/g, ' ').trim();
+  const dur = (h) => (h >= 24 ? Math.floor(h / 24) + ' D ' : '') + (h % 24) + ' H';
+  function geoLines(kind, ms, f) {
+    if (!f.J || !f.geo) return { lines: ['GROUND NOT LOADED', O.geo ? 'READING THE MAP' : 'GEOGRAPHY OFF'] };
+    const g = f.geo, J = f.J;
+    switch (kind) {
+      case 16: return { lines: g.land
+        ? [up(g.country), 'LAND - ' + grp(g.coastKm) + ' KM FROM THE COAST - ' + grp(g.elev) + ' M ABOVE THE SEA', g.hasClimate ? 'CLIMATE ' + up(g.climate) + ' - ' + (g.biome ? g.biome.name : '') : 'CLIMATE MAP NOT YET ADDED']
+        : [up('the ' + g.sea), 'SEA - ' + grp(-g.coastKm) + ' KM FROM THE COAST'] };
+      case 17: { const p = Geo.nearestPlace(J.lat, J.lon); return { lines: ['NEAREST CITY ' + up(p.name) + ', ' + up(p.country), grp(p.km) + ' KM, BEARING ' + Math.round(p.bearing) + ' DEG'] }; }
+      case 18: { const km = Geo.travelled(J1, ms, O.from), n = Geo.nextChange(J1, ms, O.from, !g.land);
+        return { lines: ['TRAVELLED ' + grp(km) + ' KM IN ' + (J.day + 1) + ' DAYS', n ? (g.land ? 'TO SEA IN ' + dur(n.hours) + ': ' + up(n.ground.sea) : 'LANDFALL IN ' + dur(n.hours) + ': ' + up(n.ground.country)) : 'NO CHANGE FOR 200 DAYS'] }; }
+      case 19: { const c = Geo.lastCrossing(J1, ms, O.from);
+        if (!c) return { lines: ['NOTHING CROSSED', 'IN 60 DAYS'] };
+        const d = new Date(c.when), ago = (ms - c.when) / 36e5;
+        return { lines: ['CROSSED ' + up(c.what), pad(d.getDate(), 2) + '.' + pad(d.getMonth() + 1, 2) + ' ' + pad(d.getHours(), 2) + ':' + pad(d.getMinutes(), 2) + ' - ' + dur(Math.max(0, Math.round(ago))) + ' AGO'] }; }
+      default: { const a = Geo.antipode(J.lat, J.lon), ga = Geo.at(a.lat, a.lon);
+        return { lines: ['THE ANTIPODE ' + deg(a.lat, 'N', 'S') + ' ' + deg(a.lon, 'E', 'W'), ga.land ? 'LAND - ' + up(ga.country) : 'SEA - ' + up('the ' + ga.sea)] }; }
+    }
+  }
   function weatherLines(kind, ms, f) {
     if (!f.J) return { lines: ['WEATHER OFF', 'THE BUILT-IN DAY'] };
     const w = f.wx, there = Wx.solarClock(ms, f.J.lon), none = w.builtIn;
@@ -751,7 +797,7 @@ void main() { vec2 p = vec2(float((gl_VertexID << 1) & 2), float(gl_VertexID & 2
     ox.strokeStyle = f.style && f.style.ink > 0.5 ? 'rgb(32, 30, 34)' : 'rgb(222, 219, 211)'; ox.beginPath();
     // the cause, low on the left, while a glitch or a colour is on
     const causes = [];
-    if (f.G && f.G.e > 0.02) causes.push('GLITCH ' + f.G.kind + ' - ' + Score.GLITCHES[f.G.kind].toUpperCase() + (f.G.m !== undefined ? ' - MINUTE ' + f.G.m + ' IS PRIME' : ''));
+    if (f.G && f.G.e > 0.02) causes.push('GLITCH ' + f.G.kind + ' - ' + Score.GLITCHES[f.G.kind].toUpperCase() + (f.G.cause ? ' - ' + f.G.cause : f.G.m !== undefined ? ' - MINUTE ' + f.G.m + ' IS PRIME' : ''));
     if (f.C && f.C.e > 0.02) causes.push('COLOUR ' + f.C.mode + ' - ' + Score.COLOURS[f.C.mode].toUpperCase() + (f.C.hhmm !== undefined ? ' - ' + f.C.hhmm + ' IS PRIME' : ''));
     causes.forEach((c, i) => strokeText(c, W * 0.035, H * 0.93 - (causes.length - 1 - i) * lh, size));
     ox.globalAlpha = 0.85; ox.stroke();
@@ -760,7 +806,7 @@ void main() { vec2 p = vec2(float((gl_VertexID << 1) & 2), float(gl_VertexID & 2
     if (!M || M.e <= 0.01) { ox.globalAlpha = 1; return; }
     if (M.k !== cacheK || O.measure) { cacheK = M.k; cache = measurement(M, ms, sE, f); }
     let info = cache;
-    if (M.kind === 4 || M.kind === 5 || M.kind === 7 || M.kind >= 10) info = measurement(M, ms, sE, f);   // these change while shown
+    if (M.kind === 4 || M.kind === 5 || M.kind === 7 || (M.kind >= 10 && M.kind <= 15)) info = measurement(M, ms, sE, f);   // these change while shown
     ox.beginPath();
     let tx = W * 0.035, ty = H * 0.08;
     if (info.anchor) {

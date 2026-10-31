@@ -5,7 +5,7 @@
 //   · a glitch in every minute of the day (0 … 1439) that is a prime number — 227 a day, about
 //     9.5 an hour, at irregular gaps of 1 to 14 minutes; not in the minute after a colour minute
 //   · a colour minute whenever the clock read as a number, HHMM, is prime (14:23 → 1423)
-//   · a measurement every 30 seconds, without break: all fifteen kinds every 7.5 minutes, shuffled
+//   · a measurement every 30 seconds, without break: all twenty kinds every 10 minutes, shuffled
 //   · in a storm where the journey is, extra glitch minutes, up to twice as many (see glitchMinute)
 // Every screen computes the same events at the same second, and any day's log can be listed.
 (function (global) {
@@ -15,7 +15,7 @@
   const LOUD = [8, 9];                      // mirror and inversion: a few times a day, not every hour
   const QUIET = [1, 2, 3, 4, 5, 6, 7, 10];
   const COLOURS = ['', 'hue by hash', 'hue by depth', 'hue by time', 'hue by cluster', 'complement', 'prime colour', 'gust in colour', 'dichroic'];
-  const MEASURES = ['', 'blade', 'probability', 'census', 'frame', 'next prime', 'phase', 'repeat', 'wind', 'entropy', 'today', 'place', 'wind there', 'air', 'sky', 'condition'];
+  const MEASURES = ['', 'blade', 'probability', 'census', 'frame', 'next prime', 'phase', 'repeat', 'wind', 'entropy', 'today', 'place', 'wind there', 'air', 'sky', 'condition', 'ground', 'nearest', 'travelled', 'crossing', 'antipode'];
   const NM = MEASURES.length - 1;
 
   function ih(x) {
@@ -35,10 +35,11 @@
   const smooth = (x) => { x = Math.max(0, Math.min(1, x)); return x * x * (3 - 2 * x); };
   const envelope = (p, a) => smooth(p / a) * smooth((1 - p) / a);
 
-  function colourMinute(day, m) {
+  // boost: the day after the journey crosses a tropic, HHMM + 2400 being prime also counts
+  function colourMinute(day, m, boost = false) {
     if (m < 0) return null;
     const hhmm = Math.floor(m / 60) * 100 + (m % 60);
-    if (!isPrime(hhmm)) return null;
+    if (!isPrime(hhmm) && !(boost && isPrime(hhmm + 2400))) return null;
     const h = ih((day * 1441 + m) ^ 0xc0104e);
     return { mode: 1 + (h % 8), hue: (ih(h) % 3600) / 3600, hhmm, m };
   }
@@ -58,8 +59,8 @@
     const p = (s - g.start) / g.dur;
     return Object.assign({}, g, { p, e: envelope(p, 0.15), name: GLITCHES[g.kind] });
   }
-  function colourAt(ms) {
-    const c = colourMinute(dayKey(ms), minuteOf(ms));
+  function colourAt(ms, boost = false) {
+    const c = colourMinute(dayKey(ms), minuteOf(ms), boost);
     if (!c) return null;
     const p = secondOf(ms) / 60;
     return Object.assign({}, c, { p, e: envelope(p, 4 / 60), name: COLOURS[c.mode] });
