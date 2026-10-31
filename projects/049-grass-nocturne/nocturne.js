@@ -684,13 +684,14 @@ void main() { vec2 p = vec2(float((gl_VertexID << 1) & 2), float(gl_VertexID & 2
       wet = Math.min(1, 0.7 * sm(0.55, 0.95, wx.rh) + 0.6 * fx.rain + 0.5 * sm(0.05, 0.2, fx.fog));
       windy = sm(0.45, 1.0, fx.windStrength);
     } else { inkW = sm(26, 34, elev); wet = 0.25 + 0.25 * Math.sin(TAU * s / 25200); windy = sm(0.55, 1.0, W.strength); }
-    let style = { ink: O.paper ? inkW : 0, wash: 0.8 * wet, char: 0.6 * windy, water: 0.14 + 0.2 * wet, drip: wet };
+    let style = { ink: O.paper ? inkW : 0, wash: 0.8 * wet, char: 0.6 * windy, water: 0, drip: 0 };   // water only where the journey is over the sea (below)
     const forced = { nocturne: { ink: 0, wash: 0, char: 0, water: 0, drip: 0 }, ink: { ink: 1, wash: 0, char: 0, water: 0, drip: 0 },
       wash: { ink: 0, wash: 0.9, char: 0, water: 0, drip: 0 }, charcoal: { ink: 0, wash: 0, char: 0.75, water: 0, drip: 0 },
       water: { ink: 0, wash: 0, char: 0, water: 0.32, drip: 1 } }[O.style];
     // the waterline never rises above the horizon: at sea it sits just below it
     const horizonUv = Math.min(0.55, Math.max(0.2, (hzn[1] + 1) / 2 - 0.03));
-    if (geo) { style.water += (horizonUv - style.water) * seaness;
+    // at sea, and only at sea: the waterline just below the horizon; threads only if it is also wet
+    if (geo) { style.water = horizonUv * seaness; style.drip = wet * seaness;
       if (biome) style.char = Math.min(0.9, style.char + biome.comb); }
     if (forced) style = forced;
     const wsx = W.x * -hz + W.z * hx, wsy = 0.4 * (W.x * hx + W.z * hz), wl = Math.hypot(wsx, wsy) || 1;
