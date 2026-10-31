@@ -160,7 +160,7 @@ only as text in the measurements, never as a picture of a map.
 
 | Fact | In the meadow |
 |---|---|
-| **Sea or land** | Within 20 km inland the sea begins to show, and by 40 km offshore it is full. The meadow stays and moves with the sea's waves (see The sea). |
+| **Sea or land** | A place on land is always land, however close to the coast. Off the coast the sea comes in gradually and is full by 40 km offshore. The meadow stays and moves with the sea's waves (see The sea). |
 | **Elevation and roughness** | The ground's relief grows with height and with how much the land varies nearby, up to three times. Air is thinner higher up: less haze and slightly brighter. |
 | **Latitude** | Grass is up to 35% shorter toward 60° and up to 15% taller at the equator. |
 | **Climate zone** | Once added: tropical is dense and tall; desert is sparse, short and pale; steppe is tufted and combed by wind (more charcoal); temperate is today's meadow; cold is shorter; tundra is low; ice is almost bare. |
