@@ -13,7 +13,7 @@
   const GLITCHES = ['', 'time slice', 'echo', 'sorting', 'transposition', 'quantisation', 'one bit', 'identity', 'mirror', 'inversion', 'recursion'];
   const LOUD = [8, 9];                      // mirror and inversion: a few times a day, not every hour
   const QUIET = [1, 2, 3, 4, 5, 6, 7, 10];
-  const COLOURS = ['', 'hue by hash', 'hue by depth', 'hue by time', 'hue by cluster', 'complement', 'prime colour', 'gust in colour'];
+  const COLOURS = ['', 'hue by hash', 'hue by depth', 'hue by time', 'hue by cluster', 'complement', 'prime colour', 'gust in colour', 'dichroic'];
   const MEASURES = ['', 'blade', 'probability', 'census', 'frame', 'next prime', 'phase', 'repeat', 'wind', 'entropy', 'today'];
 
   function ih(x) {
@@ -38,7 +38,7 @@
     const hhmm = Math.floor(m / 60) * 100 + (m % 60);
     if (!isPrime(hhmm)) return null;
     const h = ih((day * 1441 + m) ^ 0xc0104e);
-    return { mode: 1 + (h % 7), hue: (ih(h) % 3600) / 3600, hhmm, m };
+    return { mode: 1 + (h % 8), hue: (ih(h) % 3600) / 3600, hhmm, m };
   }
   function glitchMinute(day, m) {
     if (!isPrime(m) || colourMinute(day, m - 1)) return null;
