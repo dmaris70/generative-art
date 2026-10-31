@@ -13,6 +13,8 @@
 //
 // URL: ?seed=N · ?blades=<per cell, 4…24> · ?scale=<render scale> · ?dim=19-22:0.6,22-7:0.35
 //      ?hud=0 · ?at=2026-11-02T14:20 & ?speed=60 (rehearsal) · ?still=1 (hold the clock)
+//      ?weather=0 (the built-in day instead of the journey) · ?from=<longitude the journey starts at>
+//      ?light=local (light follows the local day, not the sun where the journey is)
 //      ?dichroic=<0…5> (0 off; scales the shimmer) · ?glitch=<1…10> · ?colour=<1…8> · ?measure=<1…10> (hold one event, for checking) · ?score=0
 //
 // Over it runs the score (score.js): glitches on prime minutes, colour on prime clock times,
@@ -252,7 +254,18 @@ void main() {
 precision highp float; precision highp sampler2DArray;
 uniform sampler2D uScene; uniform sampler2DArray uHist; uniform int uHead; uniform int uLayers; uniform float uFilled;
 uniform vec2 uRes; uniform int uGlitch; uniform float uG; uniform float uP; uniform int uTint; uniform float uTintE; uniform float uHue;
+uniform float uRain; uniform float uSnow; uniform float uSlant; uniform float uTimeS; uniform float uTilt; uniform float uFlash;
 out vec4 frag;
+float r1(float x) { return fract(sin(x * 12.9898) * 43758.5453); }
+// falling lines: columns of dashes, each column its own speed and phase; slanted by the wind
+float falling(vec2 uv, float cols, float speed, float len, float dens) {
+  vec2 p = vec2(uv.x * uRes.x / uRes.y, uv.y); p.x += (1.0 - p.y) * uSlant;
+  float cx = floor(p.x * cols), r = r1(cx + cols);
+  if (r > dens) return 0.0;
+  float y = fract(p.y + uTimeS * speed * (0.7 + 0.6 * r) + r * 7.0);
+  float dx = abs(fract(p.x * cols) - 0.5) * uRes.y / cols;
+  return (1.0 - smoothstep(0.4, 1.1, dx)) * smoothstep(0.0, 0.015, y) * (1.0 - smoothstep(len, len + 0.015, y)) * (0.35 + 0.5 * r);
+}
 vec3 hue3(float h) { vec3 k = clamp(abs(mod(h * 6.0 + vec3(0.0, 4.0, 2.0), 6.0) - 3.0) - 1.0, 0.0, 1.0); return mix(vec3(1.0), k, 0.78); }
 float lumOf(vec3 c) { return dot(c, vec3(0.299, 0.587, 0.114)); }
 vec3 past(vec2 uv, float ago) {
@@ -261,7 +274,11 @@ vec3 past(vec2 uv, float ago) {
   return texture(uHist, vec3(uv, float(layer))).rgb;
 }
 void main() {
-  vec2 uv = gl_FragCoord.xy / uRes;
+  vec2 uv0 = gl_FragCoord.xy / uRes;
+  // the pressure trend tilts the horizon (by at most 2°), zoomed just enough to hide the corners
+  float ca = cos(uTilt), sa = sin(uTilt), asp = uRes.x / uRes.y;
+  vec2 d0 = (uv0 - 0.5) * vec2(asp, 1.0);
+  vec2 uv = vec2(ca * d0.x - sa * d0.y, sa * d0.x + ca * d0.y) / vec2(asp, 1.0) / (1.0 + abs(sa) * asp) + 0.5;
   vec3 c = texture(uScene, uv).rgb;
   if (uGlitch == 1) c = mix(c, past(uv, uv.x * 40.0), uG);                                   // time slice
   if (uGlitch == 2 && abs(uv.y - mix(1.25, -0.25, uP)) < 0.13) c = mix(c, past(uv, 60.0), uG);   // echo
@@ -287,6 +304,18 @@ void main() {
     vec3 prim = uHue < 0.3333 ? vec3(1.0, 0.1, 0.08) : uHue < 0.6667 ? vec3(0.1, 1.0, 0.22) : vec3(0.16, 0.26, 1.0);
     c = mix(c, L * prim * 1.9, uTintE);
   }
+  // rain: falling lines in three depths, the meadow darkened a little
+  if (uRain > 0.001) {
+    float f = falling(uv0, 90.0, -0.9, 0.09, uRain) + falling(uv0, 170.0, -1.3, 0.06, uRain) * 0.7 + falling(uv0, 260.0, -1.7, 0.04, uRain) * 0.5;
+    c = c * (1.0 - 0.22 * uRain) + vec3(f) * 0.55 * uRain;
+  }
+  // snow: slow short marks, lighter greys, colour drained
+  if (uSnow > 0.001) {
+    float f = falling(uv0, 120.0, -0.06, 0.006, uSnow) + falling(uv0, 210.0, -0.09, 0.004, uSnow) * 0.7;
+    float L2 = lumOf(c);
+    c = mix(c, vec3(L2), 0.85 * uSnow); c = mix(c, c * 0.75 + 0.13, 0.5 * uSnow); c += vec3(f) * 0.6 * uSnow;
+  }
+  if (uFlash > 0.5) c = 1.0 - c;                                                                  // storm: one inverted frame
   frag = vec4(c, 1.0);
 }`;
   const POST_VS = `#version 300 es
@@ -297,9 +326,12 @@ void main() { vec2 p = vec2(float((gl_VertexID << 1) & 2), float(gl_VertexID & 2
   const O = {
     seed: num('seed', 49) >>> 0, per: Math.max(4, Math.min(24, num('blades', 14) | 0)), scale: Math.max(0.25, Math.min(2, num('scale', 1))),
     dim: Q.has('dim') ? Q.get('dim') : '19-22:0.6,22-7:0.35', hud: Q.get('hud') !== '0', speed: Math.max(0, num('speed', 1)), still: Q.get('still') === '1',
-    score: Q.get('score') !== '0', dich: Q.has('dichroic') ? num('dichroic', 1) : null, glitch: num('glitch', 0) | 0, colour: num('colour', 0) | 0, measure: num('measure', 0) | 0,
+    score: Q.get('score') !== '0', dich: Q.has('dichroic') ? num('dichroic', 1) : null,
+    weather: Q.get('weather') !== '0' && !!global.Weather, from: num('from', 0), lightHere: Q.get('light') === 'local', glitch: num('glitch', 0) | 0, colour: num('colour', 0) | 0, measure: num('measure', 0) | 0,
   };
-  const Score = global.Score;
+  const Score = global.Score, Wx = global.Weather;
+  const reader = O.weather ? Wx.createReader({ fromLon: O.from }) : null;
+  const stillUntil = Date.now() + (O.weather ? 4000 : 0);   // a held clock waits briefly for a reading
   const t0Real = Date.now(), t0Wall = Q.has('at') && !isNaN(Date.parse(Q.get('at'))) ? Date.parse(Q.get('at')) : t0Real;
   const now = () => (O.still ? t0Wall : t0Wall + (Date.now() - t0Real) * O.speed);
 
@@ -410,37 +442,63 @@ void main() { vec2 p = vec2(float((gl_VertexID << 1) & 2), float(gl_VertexID & 2
 
   function frame() {
     const ms = now(), s = dayS(ms), sE = epochS(ms), time = (ms / 1000) % 86400;
+    // the journey and its weather
+    let J = null, sun = null, wx = null, fx = null;
+    if (reader) {
+      reader.poll(ms);
+      J = Wx.journey(ms, O.from); sun = Wx.sunAt(ms, J.lat, J.lon); wx = reader.current(ms); fx = Wx.effects(wx, sun);
+    }
     // the score: which glitch, which colour, which measurement, now
-    const G = O.glitch ? { kind: O.glitch, p: (sE % 12) / 12, e: 1 } : O.score ? Score.glitchAt(ms) : null;
+    const G = O.glitch ? { kind: O.glitch, p: (sE % 12) / 12, e: 1 } : O.score ? Score.glitchAt(ms, fx ? fx.stormFactor : 0) : null;
     const C = O.colour ? { mode: O.colour, hue: 0.07, e: 1 } : O.score ? Score.colourAt(ms) : null;
     const tintHue = C ? (C.mode === 3 ? s / 86400 : C.hue) : 0;
     // the dichroic pair of the hour: four pairs through the day, crossing over half an hour
     const DP = [[[0.1, 0.9, 1.0], [1.0, 0.15, 0.85]], [[1.0, 0.72, 0.18], [0.16, 0.36, 1.0]], [[0.3, 1.0, 0.45], [0.62, 0.2, 1.0]], [[1.0, 0.45, 0.2], [0.1, 0.85, 0.8]]];
     const blk = s / 21600, bi = Math.floor(blk) % 4, bj = (bi + 1) % 4, bt = Math.min(1, Math.max(0, (blk - Math.floor(blk) - 0.9167) / 0.0833));
     const mixc = (a, b) => a.map((v, i) => v + (b[i] - v) * bt);
-    const dichA = mixc(DP[bi][0], DP[bj][0]), dichB = mixc(DP[bi][1], DP[bj][1]);
-    const dich = C && C.mode === 8 ? 0.18 + 0.82 * C.e : C ? 0.18 * (1 - C.e) : 0.18;
+    let dichA = mixc(DP[bi][0], DP[bj][0]), dichB = mixc(DP[bi][1], DP[bj][1]);
+    if (fx) [dichA, dichB] = Wx.pairFor(fx.temp);                // the temperature there chooses the pair
+    const nightK = fx && !O.lightHere ? 1 - 0.5 * fx.night : 1;  // night there: quieter colour
+    const dich = (C && C.mode === 8 ? 0.18 + 0.82 * C.e : C ? 0.18 * (1 - C.e) : 0.18) * nightK;
     // look along the path, 14 m ahead, a little above the grass there
     const e = eyeAt(sE), pa = eyeAt(sE - 60), pb = eyeAt(sE + 60);
+    if (fx) e.h = 0.32 + (e.h - 0.32) * fx.heightScale;          // pressure: low keeps the eye in the grass
     let hx = pb.x - pa.x, hz = pb.z - pa.z; const hl = Math.hypot(hx, hz) || 1; hx /= hl; hz /= hl;
     const eye = [e.x, groundH(e.x, e.z) + e.h, e.z];
     const lx = e.x + hx * 14, lz = e.z + hz * 14;
     const look = [lx, groundH(lx, lz) + 0.35, lz];
-    const L = lightAt(s), W = windAt(s), aspect = canvas.width / canvas.height;
+    let L = lightAt(s), W = windAt(s);
+    const aspect = canvas.width / canvas.height;
+    if (fx) {
+      // the sun where the journey is (north is −z); below the horizon it stays a low light, darker
+      if (!O.lightHere) {
+        // by night there, a low light from the opposite bearing stands in (the night is still lit)
+        const n = fx.night, el = (Math.max(5, sun.el) * (1 - n) + 9 * n) * Math.PI / 180;
+        const az = (sun.az + 180 * n) * Math.PI / 180;
+        L = [Math.cos(el) * Math.sin(az), Math.sin(el), -Math.cos(el) * Math.cos(az)];
+      }
+      // the wind there, with the built-in gusting riding on it; snow slows everything
+      const osc = (W.strength - 0.25) / 0.75;
+      W = { x: fx.windX, z: fx.windZ, strength: (fx.windStrength * (0.75 + 0.25 * osc) + 0.3 * fx.gustiness * osc) * (1 - 0.6 * fx.snow) };
+    }
     const VP = mat(eye, look, 0.62, aspect);
     // the window of cells sits ahead of the eye, where the view is
-    const fx = look[0] - eye[0], fz = look[2] - eye[2], fl = Math.hypot(fx, fz) || 1;
-    const origin = [eye[0] + fx / fl * (SPAN * 0.38) - SPAN / 2, eye[2] + fz / fl * (SPAN * 0.38) - SPAN / 2];
+    const vx = look[0] - eye[0], vz = look[2] - eye[2], fl = Math.hypot(vx, vz) || 1;
+    const origin = [eye[0] + vx / fl * (SPAN * 0.38) - SPAN / 2, eye[2] + vz / fl * (SPAN * 0.38) - SPAN / 2];
     gl.bindFramebuffer(gl.FRAMEBUFFER, msFB);
     gl.viewport(0, 0, canvas.width, canvas.height);
     gl.clearColor(0, 0, 0, 1); gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
     gl.enable(gl.DEPTH_TEST); gl.disable(gl.CULL_FACE);
     // the night is darker than the day: exposure follows the light's height (7° → 1.5, 38° → 3.0)
-    const elev = Math.asin(L[1]) * 180 / Math.PI, exposure = 1.5 + 1.5 * Math.min(1, Math.max(0, (elev - 7) / 31)), fog = 0.04;
+    const elev = Math.asin(L[1]) * 180 / Math.PI;
+    const exposure = (1.5 + 1.5 * Math.min(1, Math.max(0, (elev - 7) / 31))) * (fx && !O.lightHere ? 1 - 0.3 * fx.night : 1) + (fx && !O.lightHere ? 0.45 * fx.night : 0);   // night: darker, never unreadable
+    const fog = fx ? fx.fog : 0.04;
 
     // the day's atmosphere: mist at dawn and dusk, clouds drifting downwind, their cover changing
-    const hr = s / 3600, mist = 0.01 + 0.04 * Math.exp(-(((hr - 6.5) / 1.5) ** 2)) + 0.03 * Math.exp(-(((hr - 19) / 1.6) ** 2));
-    const cloudOff = [-s * 1.8 * Math.cos(0.6), -s * 1.8 * Math.sin(0.6)], cover = 0.36 + 0.14 * Math.sin(TAU * s / 5400);   // from broken cloud to mostly clear, every 90 min
+    const hr = s / 3600, mist = 0.01 + 0.04 * Math.exp(-(((hr - 6.5) / 1.5) ** 2)) + 0.03 * Math.exp(-(((hr - 19) / 1.6) ** 2)) + (fx ? fx.mistBoost : 0);
+    const cloudDir = fx ? Math.atan2(fx.windZ, fx.windX) : 0.6, cloudSpeed = fx ? 0.6 + 3 * fx.windStrength : 1.8;
+    const cloudOff = [-s * cloudSpeed * Math.cos(cloudDir), -s * cloudSpeed * Math.sin(cloudDir)];
+    const cover = fx ? fx.cover + 0.05 * Math.sin(TAU * s / 5400) : 0.36 + 0.14 * Math.sin(TAU * s / 5400);   // weather: real cloud; else broken to clear every 90 min
     const atmosU = (u2) => { gl.uniform2f(u2.uCloudOff, cloudOff[0], cloudOff[1]); gl.uniform1f(u2.uCloudCover, cover); gl.uniform1f(u2.uMist, mist); };
     // where the horizon and the light fall on screen
     const ndc = (x, y, z) => { const w = VP[3] * x + VP[7] * y + VP[11] * z + VP[15]; return [(VP[0] * x + VP[4] * y + VP[8] * z + VP[12]) / w, (VP[1] * x + VP[5] * y + VP[9] * z + VP[13]) / w, w]; };
@@ -467,7 +525,7 @@ void main() { vec2 p = vec2(float((gl_VertexID << 1) & 2), float(gl_VertexID & 2
     gl.useProgram(grass.p); const u = grass.u; atmosU(u); gl.uniform1f(u.uSpan, SPAN);
     gl.uniform1i(u.uShow, SHOW);
     gl.uniform1i(u.uGlitch, G ? G.kind : 0); gl.uniform1f(u.uG, G ? G.e : 0); gl.uniform1f(u.uP, G ? G.p : 0);
-    gl.uniform1i(u.uTint, C ? C.mode : 0); gl.uniform1f(u.uTintE, C ? C.e : 0); gl.uniform1f(u.uHue, tintHue);
+    gl.uniform1i(u.uTint, C ? C.mode : 0); gl.uniform1f(u.uTintE, C ? C.e * nightK : 0); gl.uniform1f(u.uHue, tintHue);
     gl.uniform3fv(u.uDichA, dichA); gl.uniform3fv(u.uDichB, dichB); gl.uniform1f(u.uDich, O.dich === 0 ? 0 : dich * (O.dich || 1));
     gl.uniform1f(u.uPx, canvas.height * 0.5 / Math.tan(0.31));
     gl.uniformMatrix4fv(u.uVP, false, VP); gl.uniform3fv(u.uEye, eye); gl.uniform2f(u.uOrigin, origin[0], origin[1]);
@@ -490,11 +548,16 @@ void main() { vec2 p = vec2(float((gl_VertexID << 1) & 2), float(gl_VertexID & 2
     gl.uniform1i(pu.uHead, head); gl.uniform1i(pu.uLayers, LAYERS); gl.uniform1f(pu.uFilled, filled);
     gl.uniform2f(pu.uRes, canvas.width, canvas.height);
     gl.uniform1i(pu.uGlitch, G ? G.kind : 0); gl.uniform1f(pu.uG, G ? G.e : 0); gl.uniform1f(pu.uP, G ? G.p : 0);
-    gl.uniform1i(pu.uTint, C ? C.mode : 0); gl.uniform1f(pu.uTintE, C ? C.e : 0); gl.uniform1f(pu.uHue, tintHue);
+    gl.uniform1i(pu.uTint, C ? C.mode : 0); gl.uniform1f(pu.uTintE, C ? C.e * nightK : 0); gl.uniform1f(pu.uHue, tintHue);
+    // weather in the finishing pass: falling lines, snow's stillness, the tilt, the storm's flashes
+    const slant = fx ? -(fx.windX * hz - fx.windZ * hx) * Math.min(1, fx.windStrength) * 0.35 : 0;   // wind across the view
+    const flash = fx && fx.storm && Score.ih(Math.floor(ms / 120) ^ 0x7a11) % 83 === 0 ? 1 : 0;
+    gl.uniform1f(pu.uRain, fx ? fx.rain : 0); gl.uniform1f(pu.uSnow, fx ? fx.snow : 0); gl.uniform1f(pu.uSlant, slant);
+    gl.uniform1f(pu.uTimeS, (ms / 1000) % 3600); gl.uniform1f(pu.uTilt, fx ? fx.tilt : 0); gl.uniform1f(pu.uFlash, flash);
     gl.drawArrays(gl.TRIANGLES, 0, 3);
     gl.activeTexture(gl.TEXTURE0);
 
-    overlay(ms, sE, { eye, look, hx, hz, VP, ndc, W, G, C, origin });
+    overlay(ms, sE, { eye, look, hx, hz, VP, ndc, W, G, C, origin, J, sun, wx });
 
     stage.style.opacity = String(dimAt(ms, O.dim));
     if (ov) ov.style.opacity = stage.style.opacity;
@@ -502,7 +565,7 @@ void main() { vec2 p = vec2(float((gl_VertexID << 1) & 2), float(gl_VertexID & 2
       const d = new Date(ms), hh = String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0');
       hud.textContent = 'GRASS NOCTURNE · ' + hh + ' · EYE ' + e.h.toFixed(2) + ' M · LIGHT ' + Math.round(Math.asin(L[1]) * 180 / Math.PI) + '° · WIND ' + W.strength.toFixed(2);
     }
-    if (!O.still) requestAnimationFrame(frame);       // a held clock is drawn once
+    if (!O.still || Date.now() < stillUntil) requestAnimationFrame(frame);   // a held clock is drawn once (after waiting for weather)
     else canvas.dataset.drawn = '1';
   }
   // ───────────────────────── the measurements ─────────────────────────
@@ -555,10 +618,23 @@ void main() { vec2 p = vec2(float((gl_VertexID << 1) & 2), float(gl_VertexID & 2
       case 8: { const W = f.W, dist = 9, px = f.eye[0] + fwd[0] * dist, pz = f.eye[2] + fwd[1] * dist, py = groundH(px, pz) + 0.6;
         return { lines: ['W = (' + W.x.toFixed(2) + ', ' + W.z.toFixed(2) + ') X ' + W.strength.toFixed(2)], anchor: [px, py, pz], arrow: [px + W.x * 2.5, py, pz + W.z * 2.5] }; }
       case 9: return { lines: ['ENTROPY OF THIS FRAME', entropyOfLatest().toFixed(2) + ' BITS OF 8'] };
+      case 11: case 12: case 13: case 14: case 15: return weatherLines(M.kind, ms, f);
       default: { const t = Score.todaySoFar(ms); return { lines: ['TODAY ' + grp(t.events) + ' EVENTS', t.glitches + ' GLITCHES - ' + t.colours + ' COLOUR MINUTES', grp(t.measures) + ' MEASUREMENTS'] }; }
     }
   }
   const s0 = (ms) => dayS(ms);
+  const deg = (v, pos, neg) => Math.abs(v).toFixed(1) + ' ' + (v >= 0 ? pos : neg);
+  function weatherLines(kind, ms, f) {
+    if (!f.J) return { lines: ['WEATHER OFF', 'THE BUILT-IN DAY'] };
+    const w = f.wx, there = Wx.solarClock(ms, f.J.lon), none = w.builtIn;
+    switch (kind) {
+      case 11: return { lines: [deg(f.J.lat, 'N', 'S') + ' ' + deg(f.J.lon, 'E', 'W'), hhmm(there) + ' THERE - SUN ' + Math.abs(f.sun.el).toFixed(0) + (f.sun.el >= 0 ? ' DEG HIGH' : ' DEG BELOW'), 'DAY ' + (f.J.day + 1) + ' OF THE JOURNEY'] };
+      case 12: return { lines: ['WIND ' + w.speed.toFixed(1) + ' M/S FROM ' + Math.round(w.dir) + ' DEG', 'GUSTS ' + w.gusts.toFixed(1) + ' M/S'].concat(none ? ['BUILT-IN, NO READING'] : []) };
+      case 13: return { lines: ['PRESSURE ' + Math.round(w.pressure) + ' HPA ' + (Math.abs(w.trend) < 0.3 ? 'STEADY' : (w.trend > 0 ? 'RISING ' : 'FALLING ') + Math.abs(w.trend).toFixed(1)), 'HUMIDITY ' + Math.round(w.rh * 100) + '% - ' + w.temp.toFixed(1) + ' C'] };
+      case 14: return { lines: ['CLOUD ' + Math.round(w.cloud * 100) + '% - VISIBILITY ' + (w.vis / 1000).toFixed(1) + ' KM', 'PRECIPITATION ' + w.precip.toFixed(1) + ' MM/H' + (w.snow > 0 ? ' - SNOW ' + w.snow.toFixed(1) + ' CM/H' : '')] };
+      default: return { lines: none ? ['NO READING', 'BUILT-IN WEATHER' + (w.error ? ' - ' + String(w.error).toUpperCase().replace(/[^A-Z0-9 .:\/-]/g, '').slice(0, 40) : '')] : ['WEATHER CODE ' + w.code + ' - ' + (Wx.WMO[w.code] || 'UNLISTED'), 'READ ' + Math.round(w.ageMin || 0) + ' MIN AGO'] };
+    }
+  }
   function strokeText(str, x, y, size) {
     if (!font) return;
     for (const pl of font.text(str, x, y, size)) { ox.moveTo(pl[0].x, pl[0].y); for (let i = 1; i < pl.length; i++) ox.lineTo(pl[i].x, pl[i].y); }
@@ -581,7 +657,7 @@ void main() { vec2 p = vec2(float((gl_VertexID << 1) & 2), float(gl_VertexID & 2
     if (!M || M.e <= 0.01) { ox.globalAlpha = 1; return; }
     if (M.k !== cacheK || O.measure) { cacheK = M.k; cache = measurement(M, ms, sE, f); }
     let info = cache;
-    if (M.kind === 4 || M.kind === 5 || M.kind === 7 || M.kind === 10) info = measurement(M, ms, sE, f);   // these count while shown
+    if (M.kind === 4 || M.kind === 5 || M.kind === 7 || M.kind >= 10) info = measurement(M, ms, sE, f);   // these change while shown
     ox.beginPath();
     let tx = W * 0.035, ty = H * 0.08;
     if (info.anchor) {
