@@ -63,14 +63,24 @@ float vnoise(vec2 p) {
   vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * f); ivec2 c = ivec2(i);
   return mix(mix(vhash(c), vhash(c + ivec2(1, 0)), f.x), mix(vhash(c + ivec2(0, 1)), vhash(c + ivec2(1, 1)), f.x), f.y);
 }
+// the sky's work: cloud shadows drifting downwind, and a mist lit from the light's side
+uniform vec2 uCloudOff; uniform float uCloudCover; uniform float uMist;
+float fbm2(vec2 p) { return 0.6 * vnoise(p) + 0.3 * vnoise(p * 2.03 + 5.2) + 0.1 * vnoise(p * 4.1 + 1.7); }
+float cloudShade(vec2 p) { return 1.0 - 0.78 * smoothstep(uCloudCover, uCloudCover + 0.16, fbm2((p + uCloudOff) / 34.0)); }
+float atmos(float e, vec3 pos, vec3 eye, vec3 L, float fog) {
+  float t = exp(-distance(pos, eye) * fog);
+  vec2 vh = normalize((pos - eye).xz + 1e-5), lh = normalize(L.xz + 1e-5);
+  float side = 0.45 + 0.55 * pow(max(0.0, dot(vh, lh)), 2.0);
+  return e * t + uMist * side * (1.0 - t);
+}
 float ground(vec2 p) {
   return 0.8 * sin(p.x * 0.053 + 1.3) * cos(p.y * 0.047 - 0.4) + 0.4 * sin(p.x * 0.11 - p.y * 0.083 + 2.0) + 0.45 * (vnoise(p * 0.18) - 0.5);
 }
 `;
   const GRASS_VS = COMMON + `
 uniform mat4 uVP; uniform vec3 uEye; uniform vec2 uOrigin; uniform float uCell; uniform int uN; uniform int uPer;
-uniform float uTime; uniform vec3 uWind; uniform int uSegs;
-out float vT; out vec3 vN; out vec3 vTan; out vec3 vPos; out float vTone;
+uniform float uTime; uniform vec3 uWind; uniform int uSegs; uniform float uSpan;
+out float vT; out vec3 vN; out vec3 vTan; out vec3 vPos; out float vTone; out float vSilver; out float vFade; out float vShade;
 void main() {
   int inst = gl_InstanceID, k = inst % uPer, c = inst / uPer;
   ivec2 cell = ivec2(floor(uOrigin / uCell)) + ivec2(c % uN, c / uN);
@@ -91,6 +101,13 @@ void main() {
   float gust = 0.5 + 0.5 * sin(along * 0.28 - uTime * 1.6 + 2.0 * vnoise(root * 0.07));
   float flutter = 0.08 * sin(uTime * (2.2 + 1.5 * h01(hb ^ 0x4u)) + h01(hb ^ 0x5u) * 6.28);
   vec2 bendDir = own * lean + uWind.xy * uWind.z * (0.2 + 0.9 * gust * gust) + own.yx * vec2(1.0, -1.0) * flutter;
+  // a bending blade shows its paler side: strong gusts read as bright waves crossing the field
+  float windAmt = uWind.z * (0.2 + 0.9 * gust * gust);
+  vSilver = smoothstep(0.22, 0.75, windAmt);
+  // the window of cells fades out at its edges, so the meadow has no hard end
+  vec2 lo = root - uOrigin, hi = uOrigin + uSpan - root;
+  vFade = smoothstep(0.0, 7.0, min(min(lo.x, lo.y), min(hi.x, hi.y)));
+  vShade = cloudShade(root);
   float bend = min(length(bendDir), 1.2); vec2 bd = bendDir / max(length(bendDir), 1e-4);
   float th = bend * 1.05;
   float y0 = ground(root);
@@ -108,8 +125,8 @@ void main() {
   gl_Position = uVP * vec4(pos, 1.0);
 }`;
   const GRASS_FS = COMMON + `
-uniform vec3 uEye; uniform vec3 uLight; uniform float uFog; uniform float uExposure;
-in float vT; in vec3 vN; in vec3 vTan; in vec3 vPos; in float vTone;
+uniform vec3 uEye; uniform vec3 uLight; uniform float uFog; uniform float uExposure; uniform int uShow;
+in float vT; in vec3 vN; in vec3 vTan; in vec3 vPos; in float vTone; in float vSilver; in float vFade; in float vShade;
 out vec4 frag;
 void main() {
   vec3 V = normalize(uEye - vPos), N = faceforward(vN, -V, vN), H = normalize(uLight + V);
@@ -117,12 +134,14 @@ void main() {
   float th = dot(vTan, H), sheen = pow(max(0.0, 1.0 - th * th), 36.0) * (0.25 + 0.75 * vT);
   float rim = pow(1.0 - abs(dot(N, V)), 3.0) * 0.25 * vT;
   float occ = mix(0.12, 1.0, smoothstep(0.0, 0.75, vT));
-  float e = (0.04 + 0.32 * diff * vTone + 1.2 * sheen + rim) * occ;
-  float d = distance(vPos, uEye);
-  e *= exp(-d * uFog);
+  float silver = 0.95 * vSilver * vT * (0.4 + 0.6 * diff);
+  float e = (0.03 + (0.46 * diff * vTone + 1.2 * sheen + rim + silver) * vShade) * occ * vFade;
+  e = atmos(e, vPos, uEye, uLight, uFog);
   float lum = 1.0 - exp(-e * uExposure);
   float g = (h01(uint(gl_FragCoord.x) * 1973u ^ uint(gl_FragCoord.y) * 9277u) - 0.5) / 255.0;   // no banding on 8-bit panels
   frag = vec4(vec3(lum + g), 1.0);
+  if (uShow == 1) frag = vec4(vec3(vShade), 1.0);        // ?show=clouds: the cloud shadows alone
+  if (uShow == 2) frag = vec4(vec3(vSilver), 1.0);       // ?show=gusts: where the wind turns blades pale
 }`;
   const GROUND_VS = COMMON + `
 uniform mat4 uVP; uniform vec2 uOrigin; uniform float uSpan; uniform int uRes;
@@ -134,8 +153,38 @@ void main() {
   gl_Position = uVP * vec4(vPos, 1.0);
 }`;
   const GROUND_FS = COMMON + `
-uniform vec3 uEye; uniform float uFog; uniform float uExposure; in vec3 vPos; out vec4 frag;
-void main() { float e = 0.02 * exp(-distance(vPos, uEye) * uFog); frag = vec4(vec3(1.0 - exp(-e * uExposure)), 1.0); }`;
+uniform vec3 uEye; uniform vec3 uLight; uniform float uFog; uniform float uExposure; in vec3 vPos; out vec4 frag;
+void main() { float e = atmos((0.012 + 0.06 * max(uLight.y, 0.0)) * cloudShade(vPos.xz), vPos, uEye, uLight, uFog); frag = vec4(vec3(1.0 - exp(-e * uExposure)), 1.0); }`;
+  // a tree line on a ring round the field, its height from noise on the ground plane (no seam)
+  const TREES_VS = COMMON + `
+uniform mat4 uVP; uniform int uM; uniform float uR;
+out vec3 vPos;
+void main() {
+  int i = gl_VertexID / 2; bool top = gl_VertexID % 2 == 1;
+  float a = float(i) / float(uM) * 6.2831853;
+  vec2 p = vec2(cos(a), sin(a)) * uR;
+  float n = vnoise(p * 0.09 + 11.0), n2 = vnoise(p * 0.45 + 3.0);
+  float crowns = vnoise(p * 1.1 + 5.0) * 0.6 + vnoise(p * 2.6 + 1.0) * 0.4;   // the broken edge of leaves
+  float hgt = 1.4 + 7.5 * pow(n, 1.8) + 1.2 * n2 + (0.6 + 2.0 * n) * crowns;   // hedgerow, trees standing out of it
+  vPos = vec3(p.x, ground(p * 0.5) + (top ? hgt : -3.0), p.y);
+  gl_Position = uVP * vec4(vPos, 1.0);
+}`;
+  const TREES_FS = COMMON + `
+uniform vec3 uEye; uniform vec3 uLight; uniform float uFog; uniform float uExposure; in vec3 vPos; out vec4 frag;
+void main() { float e = atmos(0.0, vPos, uEye, uLight, uFog * 0.45); frag = vec4(vec3(1.0 - exp(-e * uExposure)), 1.0); }`;
+  // the sky: black, with the mist glowing low on the light's side and a faint airglow at the horizon
+  const SKY_VS = `#version 300 es
+void main() { vec2 p = vec2(float((gl_VertexID << 1) & 2), float(gl_VertexID & 2)); gl_Position = vec4(p * 2.0 - 1.0, 1.0, 1.0); }`;
+  const SKY_FS = `#version 300 es
+precision highp float;
+uniform vec2 uRes; uniform float uHorizonY; uniform float uLightX; uniform float uMist; uniform float uExposure; out vec4 frag;
+void main() {
+  vec2 ndc = gl_FragCoord.xy / uRes * 2.0 - 1.0;
+  float glow = exp(-max(0.0, ndc.y - uHorizonY) / 0.12);
+  float side = 0.45 + 0.55 * exp(-pow(ndc.x - uLightX, 2.0) / 0.8);
+  float e = (uMist * 1.15 * side + 0.012) * glow;
+  frag = vec4(vec3(1.0 - exp(-e * uExposure)), 1.0);
+}`;
 
   // ───────────────────────── the screen ─────────────────────────
   const Q = new URLSearchParams(location.search), num = (k, d) => (Q.has(k) && isFinite(+Q.get(k)) ? +Q.get(k) : d);
@@ -165,6 +214,8 @@ void main() { float e = 0.02 * exp(-distance(vPos, uEye) * uFog); frag = vec4(ve
     return { p, u };
   }
   const grass = program(GRASS_VS, GRASS_FS), groundP = program(GROUND_VS, GROUND_FS);
+  const trees = program(TREES_VS, TREES_FS), sky = program(SKY_VS, SKY_FS);
+  const TREE_M = 2400, TREE_R = 70, SHOW = { clouds: 1, gusts: 2 }[Q.get('show')] || 0;
   const vao = gl.createVertexArray();
   // the ground mesh: indices for a (RES+1)² grid
   const RES = 96, idx = [];
@@ -219,12 +270,34 @@ void main() { float e = 0.02 * exp(-distance(vPos, uEye) * uFog); frag = vec4(ve
     // the night is darker than the day: exposure follows the light's height (7° → 1.5, 38° → 3.0)
     const elev = Math.asin(L[1]) * 180 / Math.PI, exposure = 1.5 + 1.5 * Math.min(1, Math.max(0, (elev - 7) / 31)), fog = 0.04;
 
-    gl.useProgram(groundP.p); const g = groundP.u;
+    // the day's atmosphere: mist at dawn and dusk, clouds drifting downwind, their cover changing
+    const hr = s / 3600, mist = 0.01 + 0.04 * Math.exp(-(((hr - 6.5) / 1.5) ** 2)) + 0.03 * Math.exp(-(((hr - 19) / 1.6) ** 2));
+    const cloudOff = [-s * 1.8 * Math.cos(0.6), -s * 1.8 * Math.sin(0.6)], cover = 0.36 + 0.14 * Math.sin(TAU * s / 5400);   // from broken cloud to mostly clear, every 90 min
+    const atmosU = (u2) => { gl.uniform2f(u2.uCloudOff, cloudOff[0], cloudOff[1]); gl.uniform1f(u2.uCloudCover, cover); gl.uniform1f(u2.uMist, mist); };
+    // where the horizon and the light fall on screen
+    const ndc = (x, y, z) => { const w = VP[3] * x + VP[7] * y + VP[11] * z + VP[15]; return [(VP[0] * x + VP[4] * y + VP[8] * z + VP[12]) / w, (VP[1] * x + VP[5] * y + VP[9] * z + VP[13]) / w, w]; };
+    const hzn = ndc(eye[0] + hx * 500, eye[1], eye[2] + hz * 500);
+    const lhl = Math.hypot(L[0], L[2]) || 1, lp = ndc(eye[0] + L[0] / lhl * 500, eye[1], eye[2] + L[2] / lhl * 500);
+    const lightX = lp[2] > 0 ? lp[0] : (lp[0] > 0 ? -3 : 3);
+    gl.disable(gl.DEPTH_TEST);
+    gl.useProgram(sky.p); const k2 = sky.u;
+    gl.uniform2f(k2.uRes, canvas.width, canvas.height); gl.uniform1f(k2.uHorizonY, hzn[1]); gl.uniform1f(k2.uLightX, lightX);
+    gl.uniform1f(k2.uMist, mist); gl.uniform1f(k2.uExposure, exposure);
+    gl.drawArrays(gl.TRIANGLES, 0, 3);
+    gl.enable(gl.DEPTH_TEST);
+
+    gl.useProgram(trees.p); const tr = trees.u;
+    gl.uniformMatrix4fv(tr.uVP, false, VP); gl.uniform1i(tr.uM, TREE_M); gl.uniform1f(tr.uR, TREE_R); gl.uniform3fv(tr.uEye, eye); gl.uniform3fv(tr.uLight, L);
+    gl.uniform1f(tr.uFog, fog); gl.uniform1f(tr.uExposure, exposure); gl.uniform1f(tr.uSeed, O.seed); atmosU(tr);
+    gl.drawArrays(gl.TRIANGLE_STRIP, 0, 2 * (TREE_M + 1));
+
+    gl.useProgram(groundP.p); const g = groundP.u; atmosU(g); gl.uniform3fv(g.uLight, L);
     gl.uniformMatrix4fv(g.uVP, false, VP); gl.uniform2f(g.uOrigin, origin[0], origin[1]); gl.uniform1f(g.uSpan, SPAN);
     gl.uniform1i(g.uRes, RES); gl.uniform3fv(g.uEye, eye); gl.uniform1f(g.uFog, fog); gl.uniform1f(g.uExposure, exposure); gl.uniform1f(g.uSeed, O.seed);
     gl.drawElements(gl.TRIANGLES, idx.length, gl.UNSIGNED_SHORT, 0);
 
-    gl.useProgram(grass.p); const u = grass.u;
+    gl.useProgram(grass.p); const u = grass.u; atmosU(u); gl.uniform1f(u.uSpan, SPAN);
+    gl.uniform1i(u.uShow, SHOW);
     gl.uniformMatrix4fv(u.uVP, false, VP); gl.uniform3fv(u.uEye, eye); gl.uniform2f(u.uOrigin, origin[0], origin[1]);
     gl.uniform1f(u.uCell, CELL); gl.uniform1i(u.uN, N); gl.uniform1i(u.uPer, O.per); gl.uniform1f(u.uTime, time);
     gl.uniform3f(u.uWind, W.x, W.z, W.strength); gl.uniform1i(u.uSegs, SEGS); gl.uniform3fv(u.uLight, L);
