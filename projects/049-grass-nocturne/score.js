@@ -5,7 +5,8 @@
 //   · a glitch in every minute of the day (0 … 1439) that is a prime number — 227 a day, about
 //     9.5 an hour, at irregular gaps of 1 to 14 minutes; not in the minute after a colour minute
 //   · a colour minute whenever the clock read as a number, HHMM, is prime (14:23 → 1423)
-//   · a measurement every 30 seconds, without break: all ten kinds every 5 minutes, shuffled
+//   · a measurement every 30 seconds, without break: all fifteen kinds every 7.5 minutes, shuffled
+//   · in a storm where the journey is, extra glitch minutes, up to twice as many (see glitchMinute)
 // Every screen computes the same events at the same second, and any day's log can be listed.
 (function (global) {
   'use strict';
@@ -14,7 +15,8 @@
   const LOUD = [8, 9];                      // mirror and inversion: a few times a day, not every hour
   const QUIET = [1, 2, 3, 4, 5, 6, 7, 10];
   const COLOURS = ['', 'hue by hash', 'hue by depth', 'hue by time', 'hue by cluster', 'complement', 'prime colour', 'gust in colour', 'dichroic'];
-  const MEASURES = ['', 'blade', 'probability', 'census', 'frame', 'next prime', 'phase', 'repeat', 'wind', 'entropy', 'today'];
+  const MEASURES = ['', 'blade', 'probability', 'census', 'frame', 'next prime', 'phase', 'repeat', 'wind', 'entropy', 'today', 'place', 'wind there', 'air', 'sky', 'condition'];
+  const NM = MEASURES.length - 1;
 
   function ih(x) {
     x >>>= 0; x ^= x >>> 16; x = Math.imul(x, 0x7feb352d) >>> 0; x ^= x >>> 15; x = Math.imul(x, 0x846ca68b) >>> 0; x ^= x >>> 16;
@@ -40,15 +42,18 @@
     const h = ih((day * 1441 + m) ^ 0xc0104e);
     return { mode: 1 + (h % 8), hue: (ih(h) % 3600) / 3600, hhmm, m };
   }
-  function glitchMinute(day, m) {
-    if (!isPrime(m) || colourMinute(day, m - 1)) return null;
+  // storm (0…1) from the weather where the journey is: also the minutes m for which m + 1440,
+  // m + 2880 or m + 4320 is prime, kept with probability `storm` — about twice as many in a gale
+  function glitchMinute(day, m, storm = 0) {
+    const extra = storm > 0 && (isPrime(m + 1440) || isPrime(m + 2880) || isPrime(m + 4320)) && (ih((day * 1441 + m) ^ 0x57) % 1000) / 1000 < storm;
+    if ((!isPrime(m) && !extra) || colourMinute(day, m - 1)) return null;
     const h = ih((day * 1441 + m) ^ 0x6117c4);
     let kind = 1 + (h % 10);
     if (LOUD.includes(kind) && ih(h) % 8 !== 0) kind = QUIET[ih(h ^ 7) % QUIET.length];
     return { kind, start: 5 + (ih(h ^ 1) % 35), dur: 6 + (ih(h ^ 2) % 15), m };
   }
-  function glitchAt(ms) {
-    const g = glitchMinute(dayKey(ms), minuteOf(ms)), s = secondOf(ms);
+  function glitchAt(ms, storm = 0) {
+    const g = glitchMinute(dayKey(ms), minuteOf(ms), storm), s = secondOf(ms);
     if (!g || s < g.start || s >= g.start + g.dur) return null;
     const p = (s - g.start) / g.dur;
     return Object.assign({}, g, { p, e: envelope(p, 0.15), name: GLITCHES[g.kind] });
@@ -59,16 +64,16 @@
     const p = secondOf(ms) / 60;
     return Object.assign({}, c, { p, e: envelope(p, 4 / 60), name: COLOURS[c.mode] });
   }
-  // every 5 minutes, each of the ten measurements once, in a shuffled order; a block never
+  // every 7.5 minutes, each of the fifteen measurements once, in a shuffled order; a block never
   // opens with the kind that closed the one before
   function block(b) {
-    const order = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
-    for (let i = 9; i > 0; i--) { const j = ih((b * 11 + i) ^ 0x3e45) % (i + 1); [order[i], order[j]] = [order[j], order[i]]; }
+    const order = Array.from({ length: NM }, (_, i) => i + 1);
+    for (let i = NM - 1; i > 0; i--) { const j = ih((b * 11 + i) ^ 0x3e45) % (i + 1); [order[i], order[j]] = [order[j], order[i]]; }
     return order;
   }
   function measureKind(k) {
-    const b = Math.floor(k / 10), i = k - b * 10, order = block(b);
-    if (order[0] === block(b - 1)[9]) [order[0], order[1]] = [order[1], order[0]];
+    const b = Math.floor(k / NM), i = k - b * NM, order = block(b);
+    if (order[0] === block(b - 1)[NM - 1]) [order[0], order[1]] = [order[1], order[0]];
     return order[i];
   }
   function measureAt(ms) {

@@ -77,6 +77,46 @@ genre, not a reproduction, and **no code was taken from *Field***.
     - 18–24: copper and teal
   - **Settings:** `?dichroic=0` turns it off; `?dichroic=2` doubles the shimmer.
 
+## The journey and its weather (`weather.js`)
+
+The meadow travels once round the earth in a year, and its weather is the live weather of
+wherever it has got to.
+
+- **Where it is:** longitude moves east 0.9856° a day (360° in a year) from a starting meridian
+  (`?from=`, default 0°). Latitude swings between 60°N and 45°S over a year and a half, so the
+  track does not repeat for three years. Day 1 is 1 Nov 2026. The place follows from the date
+  alone, so every screen is in the same place.
+- **The reading:** Open-Meteo (free, no key) is asked every 15 minutes for the place rounded
+  to 0.1°. Each new reading eases in over 5 minutes. With no reading for an hour (offline,
+  refused, over the limit), the piece falls back to its own built-in weather and says so in
+  a measurement. It never stops.
+- **What each reading does:**
+
+| Reading there | In the meadow |
+|---|---|
+| Sun's height and bearing | The light's height and bearing. By night there, a low stand-in light from the opposite side, and the field darker but readable. `?light=local` keeps the office's own day instead. |
+| Temperature | The dichroic pair: below −10 °C cyan/violet, 5 °C cyan/magenta, 15 °C green/violet, 24 °C gold/blue, above 34 °C copper/magenta, blended in between |
+| Wind speed and direction | The gusts' strength and direction; also the direction and speed of the cloud shadows |
+| Gusts (over the mean wind) | How hard the gusts pulse, and extra glitch minutes: up to 1.64× as many in a gale |
+| Cloud cover | How much of the field is in cloud shadow |
+| Humidity, visibility, fog | Haze: dry air sharp to the trees, fog closing the field in to about 10 m |
+| Rain | Falling lines in three depths, slanted by the wind across the view; the meadow darker |
+| Snow | Slow short marks; motion slowed by 60%; greys lighter; colour drained |
+| Pressure | The camera's height: low pressure keeps the eye in the grass |
+| Pressure over 3 hours | The horizon tilts, up to 2°, falling one way and rising the other |
+| Thunderstorm | Single inverted frames, at random-looking but reproducible moments |
+| Night there | Colour at half strength |
+
+- **Five more measurements** join the 30-second cycle, so 15 kinds every 7.5 minutes:
+  - the place and the solar time there, with the sun's height and the day of the journey
+  - wind and gusts
+  - pressure and its trend, humidity, temperature
+  - cloud, visibility, precipitation
+  - the weather code with its name, or "no reading" and the reason
+- **Network:** the wall needs outgoing access to `api.open-meteo.com`. That is 96 requests a
+  day per screen, far below the service's free limit. The preview link on claude.ai cannot
+  reach it, so there the piece shows its built-in weather.
+
 ## The score: glitches, colour and measurements
 
 Over the meadow runs a score of abstract events (`score.js`). Nothing in it is random at run
@@ -87,7 +127,7 @@ the date and minute. Every screen shows the same event at the same second.
 |---|---|---|
 | **Glitch** | Every minute of the day (0–1439) that is prime, starting 5–40 s into it and lasting 6–20 s; never in the minute after a colour minute | 227 a day, about 9.5 an hour |
 | **Colour** | Every minute whose clock time read as a number is prime (14:23 → 1423); the whole minute, fading in and out over 4 s; eight modes | 211 a day, about 8.8 an hour |
-| **Measurement** | Every 30 s without break; all ten kinds every 5 minutes, in a shuffled order, never the same twice in a row | 2,880 a day |
+| **Measurement** | Every 30 s without break; all fifteen kinds every 7.5 minutes, in a shuffled order, never the same twice in a row | 2,880 a day |
 
 **Glitches, each an idea.**
 1. *Time slice*: each column is a different second, from now (left) to 40 s ago (right).
@@ -144,7 +184,9 @@ finishing pass applies the whole-image glitches and colours. One frame a second 
   it to the GPU. `?hud=0` hides the status line, `?seed=N` gives a different meadow.
 - **Diagnostics:** `?show=clouds` and `?show=gusts` display the cloud shadows or the gust
   waves on their own, for checking at installation.
-- **Holding one event:** `?glitch=1…10`, `?colour=1…8` and `?measure=1…10` hold a single event on
+- **Weather:** `?weather=0` uses the built-in day instead of the journey; `?from=<longitude>`
+  sets where the journey starts; `?light=local` keeps the office's own day.
+- **Holding one event:** `?glitch=1…10`, `?colour=1…8` and `?measure=1…15` hold a single event on
   screen for checking. `?score=0` turns the score off.
 - **Rehearsal:** `?at=2026-11-02T21:40&speed=60` starts the clock at that time and runs it 60
   times faster. `?still=1` holds the clock and draws a single frame, for thumbnails.
