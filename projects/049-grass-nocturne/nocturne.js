@@ -15,6 +15,7 @@
 //      ?hud=0 · ?at=2026-11-02T14:20 & ?speed=60 (rehearsal) · ?still=1 (hold the clock)
 //      ?weather=0 (the built-in day instead of the journey) · ?from=<longitude the journey starts at>
 //      ?light=local (light follows the local day, not the sun where the journey is)
+//      ?style=auto|nocturne|ink|wash|charcoal|water (auto: the weather chooses) · ?paper=0 (never paper)
 //      ?dichroic=<0…5> (0 off; scales the shimmer) · ?glitch=<1…10> · ?colour=<1…8> · ?measure=<1…10> (hold one event, for checking) · ?score=0
 //
 // Over it runs the score (score.js): glitches on prime minutes, colour on prime clock times,
@@ -255,6 +256,7 @@ precision highp float; precision highp sampler2DArray;
 uniform sampler2D uScene; uniform sampler2DArray uHist; uniform int uHead; uniform int uLayers; uniform float uFilled;
 uniform vec2 uRes; uniform int uGlitch; uniform float uG; uniform float uP; uniform int uTint; uniform float uTintE; uniform float uHue;
 uniform float uRain; uniform float uSnow; uniform float uSlant; uniform float uTimeS; uniform float uTilt; uniform float uFlash;
+uniform float uWaterY; uniform float uRipple; uniform float uDrip; uniform float uInk; uniform float uWash; uniform float uChar; uniform vec2 uWDir; uniform float uP90;
 out vec4 frag;
 float r1(float x) { return fract(sin(x * 12.9898) * 43758.5453); }
 // falling lines: columns of dashes, each column its own speed and phase; slanted by the wind
@@ -268,6 +270,11 @@ float falling(vec2 uv, float cols, float speed, float len, float dens) {
 }
 vec3 hue3(float h) { vec3 k = clamp(abs(mod(h * 6.0 + vec3(0.0, 4.0, 2.0), 6.0) - 3.0) - 1.0, 0.0, 1.0); return mix(vec3(1.0), k, 0.78); }
 float lumOf(vec3 c) { return dot(c, vec3(0.299, 0.587, 0.114)); }
+// ── the four registers borrowed as techniques: paper and ink, wash, charcoal, water
+float hh(vec2 p) { return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }
+float vn(vec2 p) { vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * f);
+  return mix(mix(hh(i), hh(i + vec2(1.0, 0.0)), f.x), mix(hh(i + vec2(0.0, 1.0)), hh(i + vec2(1.0, 1.0)), f.x), f.y); }
+float lumAt(vec2 uv) { return lumOf(texture(uScene, uv).rgb); }
 vec3 past(vec2 uv, float ago) {
   float n = min(floor(ago + 0.5), uFilled);
   int layer = (uHead - int(n) + uLayers * 8) % uLayers;
@@ -277,7 +284,15 @@ void main() {
   vec2 uv0 = gl_FragCoord.xy / uRes;
   // the pressure trend tilts the horizon (by at most 2°), zoomed just enough to hide the corners
   float ca = cos(uTilt), sa = sin(uTilt), asp = uRes.x / uRes.y;
-  vec2 d0 = (uv0 - 0.5) * vec2(asp, 1.0);
+  // water: below the waterline the meadow is seen reflected, squashed, broken into rippling bands
+  vec2 uvS = uv0; float depthW = -1.0;
+  if (uWaterY > 0.001 && uv0.y < uWaterY) {
+    depthW = (uWaterY - uv0.y) / uWaterY;
+    float band = floor(uv0.y * uRes.y / (2.0 + 7.0 * depthW));
+    float rip = uRipple * (0.003 + 0.022 * depthW) * (sin(band * 1.7 + uTimeS * 1.3) + 1.2 * (vn(vec2(band * 0.37, uTimeS * 0.5)) - 0.5));
+    uvS = vec2(uv0.x + rip, uWaterY + (uWaterY - uv0.y) * 0.85);
+  }
+  vec2 d0 = (uvS - 0.5) * vec2(asp, 1.0);
   vec2 uv = vec2(ca * d0.x - sa * d0.y, sa * d0.x + ca * d0.y) / vec2(asp, 1.0) / (1.0 + abs(sa) * asp) + 0.5;
   vec3 c = texture(uScene, uv).rgb;
   if (uGlitch == 1) c = mix(c, past(uv, uv.x * 40.0), uG);                                   // time slice
@@ -304,16 +319,57 @@ void main() {
     vec3 prim = uHue < 0.3333 ? vec3(1.0, 0.1, 0.08) : uHue < 0.6667 ? vec3(0.1, 1.0, 0.22) : vec3(0.16, 0.26, 1.0);
     c = mix(c, L * prim * 1.9, uTintE);
   }
+  // charcoal: luminance dragged along the wind, broken by a dry brush skipping over the tooth
+  if (uChar > 0.001) {
+    vec2 px = 1.0 / uRes; float acc = 0.0;
+    for (int i = -3; i <= 3; i++) acc += lumAt(uv + uWDir * px * float(i) * 2.2);
+    acc /= 7.0;
+    vec2 q = vec2(dot(gl_FragCoord.xy, uWDir), dot(gl_FragCoord.xy, vec2(-uWDir.y, uWDir.x)));
+    float skip = smoothstep(0.3, 0.7, vn(vec2(q.x * 0.02, q.y * 0.6)));
+    float L0 = lumOf(c);
+    c += vec3((mix(L0, mix(acc, acc * skip * 1.5, 0.6), 0.65) - L0) * uChar);
+  }
+  // wash: tone that has bled, pigment pooled at the wash's edge, granulation in the paper
+  if (uWash > 0.001) {
+    vec2 px = 1.0 / uRes; float a1 = 0.0, a2 = 0.0;
+    for (int i = 0; i < 8; i++) { float a = float(i) * 0.7853982; vec2 o = vec2(cos(a), sin(a)); a1 += lumAt(uv + o * px * 5.0); a2 += lumAt(uv + o * px * 15.0); }
+    a1 /= 8.0; a2 /= 8.0;
+    float edge = max(0.0, a1 - a2), gran = 0.6 * vn(gl_FragCoord.xy * 0.33) + 0.4 * (0.5 + 0.5 * sin(gl_FragCoord.y * 1.7));
+    c += vec3((a1 * 0.85 + edge * 0.9 + (gran - 0.5) * 0.07 * (0.3 + a1) - lumOf(c)) * uWash);
+  }
+  // water: the reflection darker with depth; threads of light hanging from the waterline
+  if (depthW >= 0.0) {
+    c *= 0.66 * (1.0 - 0.3 * depthW);
+    float cols = 52.0, x = uv0.x * cols, ci = floor(x);
+    if (hh(vec2(ci, 7.0)) < 0.38 * uDrip) {
+      float len = 0.25 + 0.75 * hh(vec2(ci, 3.0));
+      if (depthW < len) {
+        float zz = (hh(vec2(ci, floor(uv0.y * uRes.y / 4.0))) - 0.5) * 0.35;
+        float dx = abs(fract(x) - 0.5 - zz) * uRes.x / cols;
+        c += vec3(1.0 - smoothstep(0.4, 1.4, dx)) * 0.55 * (1.0 - depthW / len);
+      }
+    }
+  }
   // rain: falling lines in three depths, the meadow darkened a little
   if (uRain > 0.001) {
     float f = falling(uv0, 90.0, -0.9, 0.09, uRain) + falling(uv0, 170.0, -1.3, 0.06, uRain) * 0.7 + falling(uv0, 260.0, -1.7, 0.04, uRain) * 0.5;
-    c = c * (1.0 - 0.22 * uRain) + vec3(f) * 0.55 * uRain;
+    c = c * (1.0 - 0.22 * uRain) + vec3(f) * 0.55 * uRain * (1.0 - 0.75 * uInk);   // on paper, rain is a fine line, not a bar
   }
   // snow: slow short marks, lighter greys, colour drained
   if (uSnow > 0.001) {
     float f = falling(uv0, 120.0, -0.06, 0.006, uSnow) + falling(uv0, 210.0, -0.09, 0.004, uSnow) * 0.7;
     float L2 = lumOf(c);
     c = mix(c, vec3(L2), 0.85 * uSnow); c = mix(c, c * 0.75 + 0.13, 0.5 * uSnow); c += vec3(f) * 0.6 * uSnow;
+  }
+  // paper and ink: the night turned to paper, light turned to ink; colour becomes its complement,
+  // as a dichroic film shows by transmitted light
+  if (uInk > 0.001) {
+    vec3 paper = vec3(0.9, 0.893, 0.876);
+    // the ink follows the frame's own brightness (its 90th percentile), so a dark, wet field still draws
+    vec3 cn = c / max(uP90, 0.04);
+    vec3 inked = paper * (1.0 - 0.94 * smoothstep(vec3(0.12), vec3(0.95), cn));
+    inked -= (vn(gl_FragCoord.xy * 0.5) - 0.5) * 0.045 + (0.5 + 0.5 * sin(gl_FragCoord.y * 2.1)) * 0.012;
+    c = mix(c, inked, uInk);
   }
   if (uFlash > 0.5) c = 1.0 - c;                                                                  // storm: one inverted frame
   frag = vec4(c, 1.0);
@@ -327,11 +383,11 @@ void main() { vec2 p = vec2(float((gl_VertexID << 1) & 2), float(gl_VertexID & 2
     seed: num('seed', 49) >>> 0, per: Math.max(4, Math.min(24, num('blades', 14) | 0)), scale: Math.max(0.25, Math.min(2, num('scale', 1))),
     dim: Q.has('dim') ? Q.get('dim') : '19-22:0.6,22-7:0.35', hud: Q.get('hud') !== '0', speed: Math.max(0, num('speed', 1)), still: Q.get('still') === '1',
     score: Q.get('score') !== '0', dich: Q.has('dichroic') ? num('dichroic', 1) : null,
-    weather: Q.get('weather') !== '0' && !!global.Weather, from: num('from', 0), lightHere: Q.get('light') === 'local', glitch: num('glitch', 0) | 0, colour: num('colour', 0) | 0, measure: num('measure', 0) | 0,
+    weather: Q.get('weather') !== '0' && !!global.Weather, style: Q.get('style') || 'auto', paper: Q.get('paper') !== '0', from: num('from', 0), lightHere: Q.get('light') === 'local', glitch: num('glitch', 0) | 0, colour: num('colour', 0) | 0, measure: num('measure', 0) | 0,
   };
   const Score = global.Score, Wx = global.Weather;
   const reader = O.weather ? Wx.createReader({ fromLon: O.from }) : null;
-  const stillUntil = Date.now() + (O.weather ? 4000 : 0);   // a held clock waits briefly for a reading
+  const stillUntil = Date.now() + (O.weather ? 15000 : 0);  // a held clock waits for a reading (15 s at most)
   const t0Real = Date.now(), t0Wall = Q.has('at') && !isNaN(Date.parse(Q.get('at'))) ? Date.parse(Q.get('at')) : t0Real;
   const now = () => (O.still ? t0Wall : t0Wall + (Date.now() - t0Real) * O.speed);
 
@@ -406,6 +462,18 @@ void main() { vec2 p = vec2(float((gl_VertexID << 1) & 2), float(gl_VertexID & 2
     }
     filled = all ? 0 : Math.min(LAYERS - 1, filled + 1);
     gl.bindFramebuffer(gl.READ_FRAMEBUFFER, null); gl.bindFramebuffer(gl.DRAW_FRAMEBUFFER, null);
+  }
+  let p90 = 0.5;
+  function brightness() {                         // the 90th percentile of the newest small frame's brightness
+    gl.bindFramebuffer(gl.READ_FRAMEBUFFER, histFB);
+    gl.framebufferTextureLayer(gl.READ_FRAMEBUFFER, gl.COLOR_ATTACHMENT0, histTex, 0, head);
+    const px = new Uint8Array(HIST_W * HIST_H * 4); gl.readPixels(0, 0, HIST_W, HIST_H, gl.RGBA, gl.UNSIGNED_BYTE, px);
+    gl.bindFramebuffer(gl.READ_FRAMEBUFFER, null);
+    const bins = new Uint32Array(256);
+    for (let i = 0; i < px.length; i += 4) bins[(0.299 * px[i] + 0.587 * px[i + 1] + 0.114 * px[i + 2]) | 0]++;
+    let n = 0; const want = HIST_W * HIST_H * 0.9;
+    for (let b = 0; b < 256; b++) { n += bins[b]; if (n >= want) return b / 255; }
+    return 1;
   }
   function entropyOfLatest() {                    // bits per pixel of the newest small frame's brightness
     gl.bindFramebuffer(gl.READ_FRAMEBUFFER, histFB);
@@ -538,7 +606,7 @@ void main() { vec2 p = vec2(float((gl_VertexID << 1) & 2), float(gl_VertexID & 2
     gl.bindFramebuffer(gl.READ_FRAMEBUFFER, msFB); gl.bindFramebuffer(gl.DRAW_FRAMEBUFFER, sceneFB);
     gl.blitFramebuffer(0, 0, canvas.width, canvas.height, 0, 0, canvas.width, canvas.height, gl.COLOR_BUFFER_BIT, gl.NEAREST);
     const second = Math.floor(ms / 1000);
-    if (filled < 0) pushHistory(true); else if (second !== lastSecond) pushHistory(false);
+    if (filled < 0) { pushHistory(true); p90 = brightness(); } else if (second !== lastSecond) { pushHistory(false); p90 = brightness(); }
     lastSecond = second;
     // the finishing pass, to the screen
     gl.bindFramebuffer(gl.FRAMEBUFFER, null); gl.disable(gl.DEPTH_TEST);
@@ -554,10 +622,27 @@ void main() { vec2 p = vec2(float((gl_VertexID << 1) & 2), float(gl_VertexID & 2
     const flash = fx && fx.storm && Score.ih(Math.floor(ms / 120) ^ 0x7a11) % 83 === 0 ? 1 : 0;
     gl.uniform1f(pu.uRain, fx ? fx.rain : 0); gl.uniform1f(pu.uSnow, fx ? fx.snow : 0); gl.uniform1f(pu.uSlant, slant);
     gl.uniform1f(pu.uTimeS, (ms / 1000) % 3600); gl.uniform1f(pu.uTilt, fx ? fx.tilt : 0); gl.uniform1f(pu.uFlash, flash);
+    // the registers: daylight there turns the night to paper; humidity and rain bring wash and
+    // water; wind drags the tone into charcoal strokes
+    const sm = (a, b, x) => { const t = Math.min(1, Math.max(0, (x - a) / (b - a))); return t * t * (3 - 2 * t); };
+    let inkW, wet, windy;
+    if (fx) {
+      inkW = O.lightHere ? sm(26, 34, elev) : sm(-4, 10, sun.el);
+      wet = Math.min(1, 0.7 * sm(0.55, 0.95, wx.rh) + 0.6 * fx.rain + 0.5 * sm(0.05, 0.2, fx.fog));
+      windy = sm(0.45, 1.0, fx.windStrength);
+    } else { inkW = sm(26, 34, elev); wet = 0.25 + 0.25 * Math.sin(TAU * s / 25200); windy = sm(0.55, 1.0, W.strength); }
+    let style = { ink: O.paper ? inkW : 0, wash: 0.8 * wet, char: 0.6 * windy, water: 0.14 + 0.2 * wet, drip: wet };
+    const forced = { nocturne: { ink: 0, wash: 0, char: 0, water: 0, drip: 0 }, ink: { ink: 1, wash: 0, char: 0, water: 0, drip: 0 },
+      wash: { ink: 0, wash: 0.9, char: 0, water: 0, drip: 0 }, charcoal: { ink: 0, wash: 0, char: 0.75, water: 0, drip: 0 },
+      water: { ink: 0, wash: 0, char: 0, water: 0.32, drip: 1 } }[O.style];
+    if (forced) style = forced;
+    const wsx = W.x * -hz + W.z * hx, wsy = 0.4 * (W.x * hx + W.z * hz), wl = Math.hypot(wsx, wsy) || 1;
+    gl.uniform1f(pu.uWaterY, style.water); gl.uniform1f(pu.uRipple, 0.3 + (fx ? fx.windStrength : W.strength)); gl.uniform1f(pu.uDrip, style.drip);
+    gl.uniform1f(pu.uP90, p90); gl.uniform1f(pu.uInk, style.ink); gl.uniform1f(pu.uWash, style.wash); gl.uniform1f(pu.uChar, style.char); gl.uniform2f(pu.uWDir, wsx / wl, wsy / wl);
     gl.drawArrays(gl.TRIANGLES, 0, 3);
     gl.activeTexture(gl.TEXTURE0);
 
-    overlay(ms, sE, { eye, look, hx, hz, VP, ndc, W, G, C, origin, J, sun, wx });
+    overlay(ms, sE, { eye, look, hx, hz, VP, ndc, W, G, C, origin, J, sun, wx, style });
 
     stage.style.opacity = String(dimAt(ms, O.dim));
     if (ov) ov.style.opacity = stage.style.opacity;
@@ -565,7 +650,7 @@ void main() { vec2 p = vec2(float((gl_VertexID << 1) & 2), float(gl_VertexID & 2
       const d = new Date(ms), hh = String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0');
       hud.textContent = 'GRASS NOCTURNE · ' + hh + ' · EYE ' + e.h.toFixed(2) + ' M · LIGHT ' + Math.round(Math.asin(L[1]) * 180 / Math.PI) + '° · WIND ' + W.strength.toFixed(2);
     }
-    if (!O.still || Date.now() < stillUntil) requestAnimationFrame(frame);   // a held clock is drawn once (after waiting for weather)
+    if (!O.still || (Date.now() < stillUntil && !(reader && reader.place))) requestAnimationFrame(frame);   // a held clock is drawn once (after waiting for weather)
     else canvas.dataset.drawn = '1';
   }
   // ───────────────────────── the measurements ─────────────────────────
@@ -632,7 +717,7 @@ void main() { vec2 p = vec2(float((gl_VertexID << 1) & 2), float(gl_VertexID & 2
       case 12: return { lines: ['WIND ' + w.speed.toFixed(1) + ' M/S FROM ' + Math.round(w.dir) + ' DEG', 'GUSTS ' + w.gusts.toFixed(1) + ' M/S'].concat(none ? ['BUILT-IN, NO READING'] : []) };
       case 13: return { lines: ['PRESSURE ' + Math.round(w.pressure) + ' HPA ' + (Math.abs(w.trend) < 0.3 ? 'STEADY' : (w.trend > 0 ? 'RISING ' : 'FALLING ') + Math.abs(w.trend).toFixed(1)), 'HUMIDITY ' + Math.round(w.rh * 100) + '% - ' + w.temp.toFixed(1) + ' C'] };
       case 14: return { lines: ['CLOUD ' + Math.round(w.cloud * 100) + '% - VISIBILITY ' + (w.vis / 1000).toFixed(1) + ' KM', 'PRECIPITATION ' + w.precip.toFixed(1) + ' MM/H' + (w.snow > 0 ? ' - SNOW ' + w.snow.toFixed(1) + ' CM/H' : '')] };
-      default: return { lines: none ? ['NO READING', 'BUILT-IN WEATHER' + (w.error ? ' - ' + String(w.error).toUpperCase().replace(/[^A-Z0-9 .:\/-]/g, '').slice(0, 40) : '')] : ['WEATHER CODE ' + w.code + ' - ' + (Wx.WMO[w.code] || 'UNLISTED'), 'READ ' + Math.round(w.ageMin || 0) + ' MIN AGO'] };
+      default: return { lines: [].concat(none ? ['NO READING', 'BUILT-IN WEATHER' + (w.error ? ' - ' + String(w.error).toUpperCase().replace(/[^A-Z0-9 .:\/-]/g, '').slice(0, 40) : '')] : ['WEATHER CODE ' + w.code + ' - ' + (Wx.WMO[w.code] || 'UNLISTED'), 'READ ' + Math.round(w.ageMin || 0) + ' MIN AGO'], ['INK ' + f.style.ink.toFixed(2) + ' WASH ' + f.style.wash.toFixed(2) + ' CHARCOAL ' + f.style.char.toFixed(2) + ' WATER ' + f.style.water.toFixed(2)]) };
     }
   }
   function strokeText(str, x, y, size) {
@@ -645,7 +730,7 @@ void main() { vec2 p = vec2(float((gl_VertexID << 1) & 2), float(gl_VertexID & 2
     ox.clearRect(0, 0, W, H);
     const size = Math.max(7, H * 0.016), lh = size * 1.9;
     ox.lineWidth = Math.max(1, H / 900); ox.lineCap = 'round'; ox.lineJoin = 'round';
-    ox.strokeStyle = 'rgb(222, 219, 211)'; ox.beginPath();
+    ox.strokeStyle = f.style && f.style.ink > 0.5 ? 'rgb(32, 30, 34)' : 'rgb(222, 219, 211)'; ox.beginPath();
     // the cause, low on the left, while a glitch or a colour is on
     const causes = [];
     if (f.G && f.G.e > 0.02) causes.push('GLITCH ' + f.G.kind + ' - ' + Score.GLITCHES[f.G.kind].toUpperCase() + (f.G.m !== undefined ? ' - MINUTE ' + f.G.m + ' IS PRIME' : ''));

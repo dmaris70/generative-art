@@ -117,6 +117,22 @@ wherever it has got to.
   day per screen, far below the service's free limit. The preview link on claude.ai cannot
   reach it, so there the piece shows its built-in weather.
 
+## Four registers, borrowed as techniques
+
+Four ways of making marks are layered over the meadow, and the weather where the journey is
+decides how much of each. They come from references for ink wash, high-key photography of
+reeds in water, and charcoal drawing. Only the techniques are taken; no composition is copied.
+
+| Register | What it does | Driven by |
+|---|---|---|
+| **Paper and ink** | The night becomes paper and the light becomes ink. Colour turns to its complement, as a dichroic film shows by transmitted light. The ink follows the frame's own brightness (its 90th percentile), so a dark, wet field still draws. | Daylight where the journey is (the sun from 4° below the horizon to 10° above). `?paper=0` never uses paper. |
+| **Wash** | Tone bleeds, pigment pools at the edge of a wash, and granulation runs through the paper. | Humidity, rain and fog |
+| **Charcoal** | Tone is dragged a short way along the wind's direction across the screen, and a dry brush skips over the paper's tooth. | Wind strength |
+| **Water** | Below a waterline the meadow is seen reflected, squashed and broken into rippling bands, with threads of light hanging from the line. | Always present, at 14% to 34% of the screen height, rising with humidity and rain. Ripples follow the wind; the threads follow the wet. |
+
+`?style=nocturne|ink|wash|charcoal|water` holds one register for checking. The weather
+measurement now also gives the four weights.
+
 ## The score: glitches, colour and measurements
 
 Over the meadow runs a score of abstract events (`score.js`). Nothing in it is random at run
