@@ -182,7 +182,12 @@ reeds in water, and charcoal drawing. Only the techniques are taken; no composit
 | **Paper and ink** | The night becomes paper and the light becomes ink. Colour turns to its complement, as a dichroic film shows by transmitted light. The ink follows the frame's own brightness (its 90th percentile), so a dark, wet field still draws. | Daylight where the journey is (the sun from 4° below the horizon to 10° above). `?paper=0` never uses paper. |
 | **Wash** | Tone bleeds, pigment pools at the edge of a wash, and granulation runs through the paper. | Humidity, rain and fog |
 | **Charcoal** | Tone is dragged a short way along the wind's direction across the screen, and a dry brush skips over the paper's tooth. | Wind strength |
-| **Water** | Below a waterline the meadow is seen reflected, squashed and broken into rippling bands, with threads of light hanging from the line. | Always present, at 14% to 34% of the screen height, rising with humidity and rain. Ripples follow the wind; the threads follow the wet. |
+| **Water** | Below a waterline the meadow is seen reflected in moving water. The ripples are a continuous field: fine and quick near the horizon, broad and slow near the eye, drifting with the wind. When it is wet, a few thin, broken threads of light hang from the line like ink lines in a wash. | Always present, at 14% to 34% of the screen height, rising with humidity and rain; at sea, just below the horizon. Ripples follow the wind; threads appear only with humidity, rain or fog. |
+
+**Automatic exposure.** Every second the piece measures its own frame's brightness (the 90th
+percentile of a 320 × 180 copy). A dark frame (night, storm, rain, open sea) is lifted, up to
+4×, until that reaches 0.32. Bright frames are left alone, and the change eases in over a few
+seconds. Night stays darker than day but never becomes a black wall.
 
 **The near field, faded.** Grass within about 4 m of the eye dissolves into soft, mottled,
 grainy pools of washed-out light and loses its contrast. *Field* has a faded quality in its

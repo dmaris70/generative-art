@@ -272,16 +272,19 @@ float falling(vec2 uv, float cols, float speed, float len, float dens) {
   return (1.0 - smoothstep(0.4, 1.1, dx)) * smoothstep(0.0, 0.015, y) * (1.0 - smoothstep(len, len + 0.015, y)) * (0.35 + 0.5 * r);
 }
 vec3 hue3(float h) { vec3 k = clamp(abs(mod(h * 6.0 + vec3(0.0, 4.0, 2.0), 6.0) - 3.0) - 1.0, 0.0, 1.0); return mix(vec3(1.0), k, 0.78); }
+uniform float uGain;
+// automatic exposure: dark frames (night, storm, sea) lifted up to 4×, bright frames untouched
+vec4 sceneAt(vec2 uv) { vec4 t = texture(uScene, uv); return vec4(t.rgb * uGain, t.a); }
 float lumOf(vec3 c) { return dot(c, vec3(0.299, 0.587, 0.114)); }
 // ── the four registers borrowed as techniques: paper and ink, wash, charcoal, water
 float hh(vec2 p) { return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }
 float vn(vec2 p) { vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * f);
   return mix(mix(hh(i), hh(i + vec2(1.0, 0.0)), f.x), mix(hh(i + vec2(0.0, 1.0)), hh(i + vec2(1.0, 1.0)), f.x), f.y); }
-float lumAt(vec2 uv) { return lumOf(texture(uScene, uv).rgb); }
+float lumAt(vec2 uv) { return lumOf(sceneAt(uv).rgb); }
 vec3 past(vec2 uv, float ago) {
   float n = min(floor(ago + 0.5), uFilled);
   int layer = (uHead - int(n) + uLayers * 8) % uLayers;
-  return texture(uHist, vec3(uv, float(layer))).rgb;
+  return texture(uHist, vec3(uv, float(layer))).rgb * uGain;
 }
 void main() {
   vec2 uv0 = gl_FragCoord.xy / uRes;
@@ -291,20 +294,26 @@ void main() {
   vec2 uvS = uv0; float depthW = -1.0;
   if (uWaterY > 0.001 && uv0.y < uWaterY) {
     depthW = (uWaterY - uv0.y) / uWaterY;
-    float band = floor(uv0.y * uRes.y / (2.0 + 7.0 * depthW));
-    float rip = uRipple * (0.003 + 0.022 * depthW) * (sin(band * 1.7 + uTimeS * 1.3) + 1.2 * (vn(vec2(band * 0.37, uTimeS * 0.5)) - 0.5));
-    uvS = vec2(uv0.x + rip, uWaterY + (uWaterY - uv0.y) * 0.85);
+    // a continuous field of ripples: fine and quick near the horizon, broad and slow near the eye,
+    // drifting with the wind; nothing is stepped
+    float persp = 1.0 / (depthW + 0.06);
+    float drift = uTimeS * (0.25 + 0.35 * uRipple) * sign(uSlant + 1e-4);
+    vec2 wp = vec2(uv0.x * (3.0 + 0.6 * persp) + drift * 0.3, persp * 2.2 - uTimeS * 0.35);
+    float n1 = vn(wp) - 0.5, n2 = vn(wp * 2.1 + vec2(7.3, uTimeS * 0.21)) - 0.5;
+    float swell = sin(persp * 3.1 - uTimeS * 0.9 + 2.5 * n1);
+    float amp = uRipple * (0.0015 + 0.016 * depthW);
+    uvS = vec2(uv0.x + amp * (0.8 * swell + 1.6 * n1 + 0.7 * n2), uWaterY + (uWaterY - uv0.y) * 0.85 + amp * 0.6 * (n2 + 0.5 * swell));
   }
   vec2 d0 = (uvS - 0.5) * vec2(asp, 1.0);
   vec2 uv = vec2(ca * d0.x - sa * d0.y, sa * d0.x + ca * d0.y) / vec2(asp, 1.0) / (1.0 + abs(sa) * asp) + 0.5;
-  vec3 c = texture(uScene, uv).rgb;
+  vec3 c = sceneAt(uv).rgb;
   // the near field, faded: the closest grass dissolves into soft, mottled, grainy light, losing
   // its contrast as if washed out, not focused away
-  float near = texture(uScene, uv).a * uNear;
+  float near = sceneAt(uv).a * uNear;
   if (near > 0.01) {
     vec2 px = 1.0 / uRes; float r = 3.0 + 18.0 * near; vec3 acc = vec3(0.0);
     for (int i = 0; i < 8; i++) { float a = float(i) * 0.7853982 + 0.39; vec2 o = vec2(cos(a), sin(a));
-      acc += texture(uScene, uv + o * px * r).rgb + texture(uScene, uv + o * px * r * 0.45).rgb; }
+      acc += sceneAt(uv + o * px * r).rgb + sceneAt(uv + o * px * r * 0.45).rgb; }
     acc /= 16.0;
     vec2 mp = gl_FragCoord.xy / (uRes.y * 0.07) + vec2(uTimeS * 0.02, uTimeS * 0.007);
     mp += 0.8 * vec2(vn(mp * 0.5 + 3.1), vn(mp * 0.5 + 8.7));      // warped, so the pools are not round squares
@@ -317,7 +326,7 @@ void main() {
   if (uGlitch == 1) c = mix(c, past(uv, uv.x * 40.0), uG);                                   // time slice
   if (uGlitch == 2 && abs(uv.y - mix(1.25, -0.25, uP)) < 0.13) c = mix(c, past(uv, 60.0), uG);   // echo
   if (uGlitch == 6) c = mix(c, vec3(step(0.14, lumOf(c))), uG);                               // one bit
-  if (uGlitch == 8) c = mix(c, texture(uScene, vec2(uv.x > 0.5 ? 1.0 - uv.x : uv.x, uv.y)).rgb, uG);   // mirror
+  if (uGlitch == 8) c = mix(c, sceneAt(vec2(uv.x > 0.5 ? 1.0 - uv.x : uv.x, uv.y)).rgb, uG);   // mirror
   if (uGlitch == 9) c = mix(c, 1.0 - c, uG);                                                    // inversion
   if (uGlitch == 10) {                                                                          // recursion
     vec2 p = uv; bool edge = false;
@@ -328,7 +337,7 @@ void main() {
       if (min(min(q.x, 1.0 - q.x), min(q.y, 1.0 - q.y)) < 0.008) { edge = true; break; }
       p = q;
     }
-    vec3 r = edge ? vec3(0.75) : texture(uScene, p).rgb;
+    vec3 r = edge ? vec3(0.75) : sceneAt(p).rgb;
     c = mix(c, r, uG);
   }
   float L = lumOf(c);
@@ -358,14 +367,17 @@ void main() {
   }
   // water: the reflection darker with depth; threads of light hanging from the waterline
   if (depthW >= 0.0) {
-    c *= 0.66 * (1.0 - 0.3 * depthW);
+    c *= 0.72 * (1.0 - 0.25 * depthW);
     float cols = 52.0, x = uv0.x * cols, ci = floor(x);
-    if (hh(vec2(ci, 7.0)) < 0.38 * uDrip) {
-      float len = 0.25 + 0.75 * hh(vec2(ci, 3.0));
+    if (hh(vec2(ci, 7.0)) < 0.22 * uDrip) {
+      float len = 0.2 + 0.6 * hh(vec2(ci, 3.0));
       if (depthW < len) {
-        float zz = (hh(vec2(ci, floor(uv0.y * uRes.y / 4.0))) - 0.5) * 0.35;
+        // a thin wandering line, its course a smooth function of depth, swaying slowly
+        float yy = uv0.y * uRes.y;
+        float zz = 0.28 * (vn(vec2(ci * 3.1, yy / 22.0 + uTimeS * 0.05)) - 0.5) + 0.08 * (vn(vec2(ci * 5.7, yy / 6.0)) - 0.5);
         float dx = abs(fract(x) - 0.5 - zz) * uRes.x / cols;
-        c += vec3(1.0 - smoothstep(0.4, 1.4, dx)) * 0.55 * (1.0 - depthW / len);
+        float broken = smoothstep(0.3, 0.5, vn(vec2(ci * 1.3, yy / 40.0)));      // gaps, as ink leaves them
+        c += vec3(1.0 - smoothstep(0.25, 0.9, dx)) * 0.32 * broken * (1.0 - depthW / len);
       }
     }
   }
@@ -385,7 +397,7 @@ void main() {
   if (uInk > 0.001) {
     vec3 paper = vec3(0.9, 0.893, 0.876);
     // the ink follows the frame's own brightness (its 90th percentile), so a dark, wet field still draws
-    vec3 cn = c / max(uP90, 0.04);
+    vec3 cn = c / max(uP90 * uGain, 0.04);
     vec3 inked = paper * (1.0 - 0.94 * smoothstep(vec3(0.2), vec3(1.1), cn));
     inked -= (vn(gl_FragCoord.xy * 0.5) - 0.5) * 0.045 + (0.5 + 0.5 * sin(gl_FragCoord.y * 2.1)) * 0.012;
     c = mix(c, inked, uInk);
@@ -486,7 +498,7 @@ void main() { vec2 p = vec2(float((gl_VertexID << 1) & 2), float(gl_VertexID & 2
     filled = all ? 0 : Math.min(LAYERS - 1, filled + 1);
     gl.bindFramebuffer(gl.READ_FRAMEBUFFER, null); gl.bindFramebuffer(gl.DRAW_FRAMEBUFFER, null);
   }
-  let p90 = 0.5;
+  let p90 = 0.5, gain = 1;
   function brightness() {                         // the 90th percentile of the newest small frame's brightness
     gl.bindFramebuffer(gl.READ_FRAMEBUFFER, histFB);
     gl.framebufferTextureLayer(gl.READ_FRAMEBUFFER, gl.COLOR_ATTACHMENT0, histTex, 0, head);
@@ -547,7 +559,7 @@ void main() { vec2 p = vec2(float((gl_VertexID << 1) & 2), float(gl_VertexID & 2
     const smG = (a, b, x) => { const t = Math.min(1, Math.max(0, (x - a) / (b - a))); return t * t * (3 - 2 * t); };
     const seaness = geo ? smG(20, -40, geo.coastKm) : 0, biome = geo && geo.land ? geo.biome : null;
     const absLat = J ? Math.abs(J.lat) : 45;
-    const density = geo ? (1 - 0.7 * seaness) * (biome ? biome.density : 1) : 1;   // at sea, a fringe of reeds
+    const density = geo ? (1 - 0.55 * seaness) * (biome ? biome.density : 1) : 1;   // at sea, a fringe of reeds
     const hScale = geo ? (1 - 0.35 * smG(35, 60, absLat)) * (1 + 0.15 * smG(15, 0, absLat)) * (biome ? biome.height : 1) * (1 + 0.35 * seaness) : 1;
     relief = geo && geo.land ? 1 + Math.min(2, geo.elev / 1200 + geo.rough / 400) * (1 - seaness) : 1;
     // the score: which glitch, which colour, which measurement, now
@@ -597,7 +609,7 @@ void main() { vec2 p = vec2(float((gl_VertexID << 1) & 2), float(gl_VertexID & 2
     // the night is darker than the day: exposure follows the light's height (7° → 1.5, 38° → 3.0)
     const elev = Math.asin(L[1]) * 180 / Math.PI;
     const thin = geo && geo.land ? Math.exp(-geo.elev / 2500) : 1;   // thinner air higher up
-    const exposure = (1 + 0.15 * (1 - thin) + 0.3 * (biome ? biome.pale : 0) + 0.9 * seaness * (fx ? fx.night : 0))   // sparse reeds at night need more light * (1.5 + 1.5 * Math.min(1, Math.max(0, (elev - 7) / 31))) * (fx && !O.lightHere ? 1 - 0.3 * fx.night : 1) + (fx && !O.lightHere ? 0.45 * fx.night : 0);   // night: darker, never unreadable
+    const exposure = (1 + 0.15 * (1 - thin) + 0.3 * (biome ? biome.pale : 0) + 2.2 * seaness * (fx ? fx.night : 0) + (fx ? 1.6 * wx.cloud * wx.cloud : 0))   // sparse reeds at night need more light; overcast light is even, not dark * (1.5 + 1.5 * Math.min(1, Math.max(0, (elev - 7) / 31))) * (fx && !O.lightHere ? 1 - 0.3 * fx.night : 1) + (fx && !O.lightHere ? 0.45 * fx.night : 0);   // night: darker, never unreadable
     const fog = (fx ? fx.fog : 0.04) * thin;
 
     // the day's atmosphere: mist at dawn and dusk, clouds drifting downwind, their cover changing
@@ -676,11 +688,15 @@ void main() { vec2 p = vec2(float((gl_VertexID << 1) & 2), float(gl_VertexID & 2
       water: { ink: 0, wash: 0, char: 0, water: 0.32, drip: 1 } }[O.style];
     // the waterline never rises above the horizon: at sea it sits just below it
     const horizonUv = Math.min(0.55, Math.max(0.2, (hzn[1] + 1) / 2 - 0.03));
-    if (geo) { style.water += (horizonUv - style.water) * seaness; style.drip = Math.max(style.drip, 0.6 * seaness);
+    if (geo) { style.water += (horizonUv - style.water) * seaness;
       if (biome) style.char = Math.min(0.9, style.char + biome.comb); }
     if (forced) style = forced;
     const wsx = W.x * -hz + W.z * hx, wsy = 0.4 * (W.x * hx + W.z * hz), wl = Math.hypot(wsx, wsy) || 1;
     gl.uniform1f(pu.uWaterY, style.water); gl.uniform1f(pu.uRipple, 0.3 + (fx ? fx.windStrength : W.strength)); gl.uniform1f(pu.uDrip, style.drip);
+    // ease toward the gain that brings the frame's 90th percentile up to 0.32
+    const gainTarget = Math.min(4, Math.max(1, 0.32 / Math.max(p90, 0.02)));
+    gain = O.still ? gainTarget : gain + (gainTarget - gain) * 0.02;
+    gl.uniform1f(pu.uGain, gain);
     gl.uniform1f(pu.uNear, O.near * (0.75 + 0.25 * wet)); gl.uniform1f(pu.uP90, p90); gl.uniform1f(pu.uInk, style.ink); gl.uniform1f(pu.uWash, style.wash); gl.uniform1f(pu.uChar, style.char); gl.uniform2f(pu.uWDir, wsx / wl, wsy / wl);
     gl.drawArrays(gl.TRIANGLES, 0, 3);
     gl.activeTexture(gl.TEXTURE0);
@@ -693,7 +709,7 @@ void main() { vec2 p = vec2(float((gl_VertexID << 1) & 2), float(gl_VertexID & 2
       const d = new Date(ms), hh = String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0');
       hud.textContent = 'GRASS NOCTURNE · ' + hh + ' · EYE ' + e.h.toFixed(2) + ' M · LIGHT ' + Math.round(Math.asin(L[1]) * 180 / Math.PI) + '° · WIND ' + W.strength.toFixed(2);
     }
-    if (!O.still || (Date.now() < stillUntil && !(reader && reader.place))) requestAnimationFrame(frame);   // a held clock is drawn once (after waiting for weather)
+    if (!O.still || (Date.now() < stillUntil && (!(reader && reader.place) || (O.geo && !geo)))) requestAnimationFrame(frame);   // a held clock is drawn once (after waiting for weather)
     else canvas.dataset.drawn = '1';
   }
   // ───────────────────────── the measurements ─────────────────────────
