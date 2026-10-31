@@ -16,6 +16,7 @@
 //      ?weather=0 (the built-in day instead of the journey) · ?from=<longitude the journey starts at>
 //      ?light=local (light follows the local day, not the sun where the journey is)
 //      ?style=auto|nocturne|ink|wash|charcoal|water (auto: the weather chooses) · ?paper=0 (never paper)
+//      ?near=0…1.5 (the faded near field; 0 off)
 //      ?dichroic=<0…5> (0 off; scales the shimmer) · ?glitch=<1…10> · ?colour=<1…8> · ?measure=<1…10> (hold one event, for checking) · ?score=0
 //
 // Over it runs the score (score.js): glitches on prime minutes, colour on prime clock times,
@@ -202,7 +203,8 @@ void main() {
   if (uTint == 7) col = mix(col, mix(vec3(lum), lum * hue3(uHue) * 2.2, 0.3 + 0.7 * vSilver), uTintE);
   // identity: each blade drawn as its own number, the 16 low bits of its hash along its length
   if (uGlitch == 7) { uint bit = (vHash >> uint(min(15.0, floor(vT * 16.0)))) & 1u; col = mix(col, vec3(float(bit) * (0.35 + 0.65 * vFade)), uG); }
-  frag = vec4(col + g, 1.0);
+  // alpha carries nearness: the finishing pass fades the closest grass
+  frag = vec4(col + g, 1.0 - smoothstep(0.6, 4.0, dist));
   if (uShow == 1) frag = vec4(vec3(vShade), 1.0);        // ?show=clouds: the cloud shadows alone
   if (uShow == 2) frag = vec4(vec3(vSilver), 1.0);       // ?show=gusts: where the wind turns blades pale
 }`;
@@ -217,7 +219,7 @@ void main() {
 }`;
   const GROUND_FS = COMMON + `
 uniform vec3 uEye; uniform vec3 uLight; uniform float uFog; uniform float uExposure; in vec3 vPos; out vec4 frag;
-void main() { float e = atmos((0.012 + 0.06 * max(uLight.y, 0.0)) * cloudShade(vPos.xz), vPos, uEye, uLight, uFog); frag = vec4(vec3(1.0 - exp(-e * uExposure)), 1.0); }`;
+void main() { float e = atmos((0.012 + 0.06 * max(uLight.y, 0.0)) * cloudShade(vPos.xz), vPos, uEye, uLight, uFog); frag = vec4(vec3(1.0 - exp(-e * uExposure)), 1.0 - smoothstep(0.6, 4.0, distance(vPos, uEye))); }`;
   // a tree line on a ring round the field, its height from noise on the ground plane (no seam)
   const TREES_VS = COMMON + `
 uniform mat4 uVP; uniform int uM; uniform float uR;
@@ -234,7 +236,7 @@ void main() {
 }`;
   const TREES_FS = COMMON + `
 uniform vec3 uEye; uniform vec3 uLight; uniform float uFog; uniform float uExposure; in vec3 vPos; out vec4 frag;
-void main() { float e = atmos(0.0, vPos, uEye, uLight, uFog * 0.45); frag = vec4(vec3(1.0 - exp(-e * uExposure)), 1.0); }`;
+void main() { float e = atmos(0.0, vPos, uEye, uLight, uFog * 0.45); frag = vec4(vec3(1.0 - exp(-e * uExposure)), 0.0); }`;
   // the sky: black, with the mist glowing low on the light's side and a faint airglow at the horizon
   const SKY_VS = `#version 300 es
 void main() { vec2 p = vec2(float((gl_VertexID << 1) & 2), float(gl_VertexID & 2)); gl_Position = vec4(p * 2.0 - 1.0, 1.0, 1.0); }`;
@@ -246,7 +248,7 @@ void main() {
   float glow = exp(-max(0.0, ndc.y - uHorizonY) / 0.12);
   float side = 0.45 + 0.55 * exp(-pow(ndc.x - uLightX, 2.0) / 0.8);
   float e = (uMist * 1.15 * side + 0.012) * glow;
-  frag = vec4(vec3(1.0 - exp(-e * uExposure)), 1.0);
+  frag = vec4(vec3(1.0 - exp(-e * uExposure)), 0.0);
 }`;
 
   // the finishing pass: glitches that act on the whole image, and colours that tint it; a
@@ -256,7 +258,7 @@ precision highp float; precision highp sampler2DArray;
 uniform sampler2D uScene; uniform sampler2DArray uHist; uniform int uHead; uniform int uLayers; uniform float uFilled;
 uniform vec2 uRes; uniform int uGlitch; uniform float uG; uniform float uP; uniform int uTint; uniform float uTintE; uniform float uHue;
 uniform float uRain; uniform float uSnow; uniform float uSlant; uniform float uTimeS; uniform float uTilt; uniform float uFlash;
-uniform float uWaterY; uniform float uRipple; uniform float uDrip; uniform float uInk; uniform float uWash; uniform float uChar; uniform vec2 uWDir; uniform float uP90;
+uniform float uWaterY; uniform float uRipple; uniform float uDrip; uniform float uInk; uniform float uWash; uniform float uChar; uniform vec2 uWDir; uniform float uP90; uniform float uNear;
 out vec4 frag;
 float r1(float x) { return fract(sin(x * 12.9898) * 43758.5453); }
 // falling lines: columns of dashes, each column its own speed and phase; slanted by the wind
@@ -295,6 +297,22 @@ void main() {
   vec2 d0 = (uvS - 0.5) * vec2(asp, 1.0);
   vec2 uv = vec2(ca * d0.x - sa * d0.y, sa * d0.x + ca * d0.y) / vec2(asp, 1.0) / (1.0 + abs(sa) * asp) + 0.5;
   vec3 c = texture(uScene, uv).rgb;
+  // the near field, faded: the closest grass dissolves into soft, mottled, grainy light, losing
+  // its contrast as if washed out, not focused away
+  float near = texture(uScene, uv).a * uNear;
+  if (near > 0.01) {
+    vec2 px = 1.0 / uRes; float r = 3.0 + 18.0 * near; vec3 acc = vec3(0.0);
+    for (int i = 0; i < 8; i++) { float a = float(i) * 0.7853982 + 0.39; vec2 o = vec2(cos(a), sin(a));
+      acc += texture(uScene, uv + o * px * r).rgb + texture(uScene, uv + o * px * r * 0.45).rgb; }
+    acc /= 16.0;
+    vec2 mp = gl_FragCoord.xy / (uRes.y * 0.07) + vec2(uTimeS * 0.02, uTimeS * 0.007);
+    mp += 0.8 * vec2(vn(mp * 0.5 + 3.1), vn(mp * 0.5 + 8.7));      // warped, so the pools are not round squares
+    float La = lumOf(acc), mott = 0.65 * vn(mp) + 0.35 * vn(mp * 2.3 + 5.1);
+    float pool = smoothstep(0.35, 0.85, mott);                     // pools of washed-out light
+    vec3 faded = mix(acc, vec3(La), 0.5) * 0.6 + vec3(0.04 + 0.42 * pool) * (0.45 + 1.2 * La);
+    faded += (hh(gl_FragCoord.xy + fract(uTimeS * 7.0) * 91.0) - 0.5) * 0.22 * (0.2 + lumOf(faded));
+    c = mix(c, faded, near);
+  }
   if (uGlitch == 1) c = mix(c, past(uv, uv.x * 40.0), uG);                                   // time slice
   if (uGlitch == 2 && abs(uv.y - mix(1.25, -0.25, uP)) < 0.13) c = mix(c, past(uv, 60.0), uG);   // echo
   if (uGlitch == 6) c = mix(c, vec3(step(0.14, lumOf(c))), uG);                               // one bit
@@ -383,7 +401,7 @@ void main() { vec2 p = vec2(float((gl_VertexID << 1) & 2), float(gl_VertexID & 2
     seed: num('seed', 49) >>> 0, per: Math.max(4, Math.min(24, num('blades', 14) | 0)), scale: Math.max(0.25, Math.min(2, num('scale', 1))),
     dim: Q.has('dim') ? Q.get('dim') : '19-22:0.6,22-7:0.35', hud: Q.get('hud') !== '0', speed: Math.max(0, num('speed', 1)), still: Q.get('still') === '1',
     score: Q.get('score') !== '0', dich: Q.has('dichroic') ? num('dichroic', 1) : null,
-    weather: Q.get('weather') !== '0' && !!global.Weather, style: Q.get('style') || 'auto', paper: Q.get('paper') !== '0', from: num('from', 0), lightHere: Q.get('light') === 'local', glitch: num('glitch', 0) | 0, colour: num('colour', 0) | 0, measure: num('measure', 0) | 0,
+    weather: Q.get('weather') !== '0' && !!global.Weather, style: Q.get('style') || 'auto', paper: Q.get('paper') !== '0', near: Math.max(0, Math.min(1.5, num('near', 1))), from: num('from', 0), lightHere: Q.get('light') === 'local', glitch: num('glitch', 0) | 0, colour: num('colour', 0) | 0, measure: num('measure', 0) | 0,
   };
   const Score = global.Score, Wx = global.Weather;
   const reader = O.weather ? Wx.createReader({ fromLon: O.from }) : null;
@@ -555,7 +573,7 @@ void main() { vec2 p = vec2(float((gl_VertexID << 1) & 2), float(gl_VertexID & 2
     const origin = [eye[0] + vx / fl * (SPAN * 0.38) - SPAN / 2, eye[2] + vz / fl * (SPAN * 0.38) - SPAN / 2];
     gl.bindFramebuffer(gl.FRAMEBUFFER, msFB);
     gl.viewport(0, 0, canvas.width, canvas.height);
-    gl.clearColor(0, 0, 0, 1); gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+    gl.clearColor(0, 0, 0, 0); gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
     gl.enable(gl.DEPTH_TEST); gl.disable(gl.CULL_FACE);
     // the night is darker than the day: exposure follows the light's height (7° → 1.5, 38° → 3.0)
     const elev = Math.asin(L[1]) * 180 / Math.PI;
@@ -638,7 +656,7 @@ void main() { vec2 p = vec2(float((gl_VertexID << 1) & 2), float(gl_VertexID & 2
     if (forced) style = forced;
     const wsx = W.x * -hz + W.z * hx, wsy = 0.4 * (W.x * hx + W.z * hz), wl = Math.hypot(wsx, wsy) || 1;
     gl.uniform1f(pu.uWaterY, style.water); gl.uniform1f(pu.uRipple, 0.3 + (fx ? fx.windStrength : W.strength)); gl.uniform1f(pu.uDrip, style.drip);
-    gl.uniform1f(pu.uP90, p90); gl.uniform1f(pu.uInk, style.ink); gl.uniform1f(pu.uWash, style.wash); gl.uniform1f(pu.uChar, style.char); gl.uniform2f(pu.uWDir, wsx / wl, wsy / wl);
+    gl.uniform1f(pu.uNear, O.near * (0.75 + 0.25 * wet)); gl.uniform1f(pu.uP90, p90); gl.uniform1f(pu.uInk, style.ink); gl.uniform1f(pu.uWash, style.wash); gl.uniform1f(pu.uChar, style.char); gl.uniform2f(pu.uWDir, wsx / wl, wsy / wl);
     gl.drawArrays(gl.TRIANGLES, 0, 3);
     gl.activeTexture(gl.TEXTURE0);
 

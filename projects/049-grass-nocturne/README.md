@@ -130,6 +130,13 @@ reeds in water, and charcoal drawing. Only the techniques are taken; no composit
 | **Charcoal** | Tone is dragged a short way along the wind's direction across the screen, and a dry brush skips over the paper's tooth. | Wind strength |
 | **Water** | Below a waterline the meadow is seen reflected, squashed and broken into rippling bands, with threads of light hanging from the line. | Always present, at 14% to 34% of the screen height, rising with humidity and rain. Ripples follow the wind; the threads follow the wet. |
 
+**The near field, faded.** Grass within about 4 m of the eye dissolves into soft, mottled,
+grainy pools of washed-out light and loses its contrast. *Field* has a faded quality in its
+near grass too; here it is done as a wash and grain rather than as lens blur. It is stronger
+when the air is wet where the journey is. The grass and ground write their nearness into the
+scene's alpha channel, and the finishing pass reads it. `?near=0` turns it off, `?near=1.5`
+strengthens it.
+
 `?style=nocturne|ink|wash|charcoal|water` holds one register for checking. The weather
 measurement now also gives the four weights.
 
