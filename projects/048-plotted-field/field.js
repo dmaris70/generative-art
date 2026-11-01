@@ -347,18 +347,33 @@
       if (projected.length) stamp(projected[0], projected[0].length / 3, 0.006, 0.6);
     }
 
+    // ── optional extension (059 Plotted Sky): runs after all grass is drawn, with every ground
+    // cell stamped, and may add pen layers and a caption line. Without it nothing here changes.
+    let extra = null;
+    if (typeof o.extend === 'function') {
+      while (o.ground && gi < ground.length) {
+        const q = ground[gi++][1];
+        mask.tri(q[0], q[1], q[2], q[3], q[4], q[5]); mask.tri(q[0], q[1], q[4], q[5], q[6], q[7]);
+      }
+      extra = o.extend({ options: o, world, camera: cam, basis: B, eye: E, F, frame, grain, mask, MW, MH, moon: M });
+    }
+
     const result = { kind: 'view', options: o, world, camera: cam, sheet: { w: SW, h: SH }, frame };
     result.stats = {
       planted, considered: blades.length, drawn, culled, heads: headsDrawn,
       strokes: grass.length + heads.length, ink: (ink + headInk) / 1000,
     };
+    if (extra && extra.stats) result.extra = extra.stats;
     const text = caption(result);
+    if (extra && extra.title) text[0] = text[0].replace('PLOTTED FIELD', extra.title);
+    if (extra && extra.caption) text.push(...extra.caption);
     const inset = insetMap(result);
     const words = captionStrokes(text, frame.x, frame.y + frame.h, SW);
     result.layers = [
       { id: 'grass', label: '1 grass', pen: 1, strokes: grass },
       { id: 'heads', label: '2 seed heads', pen: 2, strokes: heads },
-      { id: 'caption', label: '3 caption and map', pen: 1, strokes: words.concat(inset) },
+      ...(extra && extra.layers ? extra.layers : []),
+      { id: 'caption', label: (extra && extra.layers && extra.layers.length ? extra.layers.length + 3 : 3) + ' caption and map', pen: 1, strokes: words.concat(inset) },
     ];
     finish(result, t0);
     return result;

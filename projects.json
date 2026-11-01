@@ -3,6 +3,14 @@
   "author": "dmaris70",
   "projects": [
     {
+      "slug": "059-plotted-sky",
+      "title": "Plotted Sky",
+      "year": 2026,
+      "tools": ["svg", "pen plotter"],
+      "description": "An engraver's sky over 048 Plotted Field. One cloud deck per field sits 600 m up, and every view looks at it from its own eye, so the 25 views share one sky. The deck's pattern is the folded cloud engine from 057 and 058, run on the CPU so every sheet is the same file on every machine. It is ruled the way engravers drew skies: horizontal lines, more lines between them as the tone deepens, a cross-ruling in the darkest cloud, broken where the tone changes. Lit cloud is where the pen lifts. The grass hides the sky, and the moon clears it.",
+      "thumb": "preview.png"
+    },
+    {
       "slug": "058-folded-weather",
       "title": "Folded Weather",
       "year": 2026,
