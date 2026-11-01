@@ -3,6 +3,14 @@
   "author": "dmaris70",
   "projects": [
     {
+      "slug": "055-ruled-light",
+      "title": "Ruled Light",
+      "year": 2026,
+      "tools": ["webgl2", "lil-gui", "led wall"],
+      "description": "The first piece made for an LED wall. Nothing curved is drawn: straight filaments stretched between moving rails pile into parabolic envelopes, added as light on true black at the wall's native resolution, one texel per LED. Over a seamless loop of integer-frequency motion, each bundle passes from parallel band to fan to envelope and back, so curves form and dissolve. Kiosk output, an LED-emitter loupe, a black floor for the lowest codes LED processors handle badly, and deterministic master frames.",
+      "thumb": "preview.png"
+    },
+    {
       "slug": "054-undertow",
       "title": "Undertow",
       "year": 2026,
