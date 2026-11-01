@@ -104,6 +104,7 @@ float ground(vec2 p) {
 uniform mat4 uVP; uniform vec3 uEye; uniform vec2 uOrigin; uniform float uCell; uniform int uN; uniform int uPer;
 uniform float uTime; uniform vec3 uWind; uniform int uSegs; uniform float uSpan;
 uniform int uGlitch; uniform float uG; uniform float uP; uniform float uPx; uniform float uDensity; uniform float uHScale;
+uniform vec3 uSway; uniform float uBow;
 uniform vec4 uW1; uniform vec4 uW2; uniform vec4 uW3; uniform vec4 uW4; uniform vec4 uWo; uniform float uAmp; uniform float uSeaMove; uniform float uSeaWhite; uniform float uSeaT;
 float seaCrest(vec2 p) {             // 0 in the trough … 1 on the crest of the sea where the journey is
   vec4 W[4] = vec4[4](uW1, uW2, uW3, uW4); float h = 0.0;
@@ -149,6 +150,8 @@ void main() {
   vec2 lo = root - uOrigin, hi = uOrigin + uSpan - root;
   vFade = smoothstep(0.0, 7.0, min(min(lo.x, lo.y), min(hi.x, hi.y)));
   vShade = cloudShade(root);
+  bendDir += uSway.xy * uSway.z;                                            // unison: the whole field as one
+  if (uBow > 0.001) bendDir += normalize(uEye.xz - root + 1e-4) * uBow * 0.9;   // the révérence: toward the viewer
   float bend = min(length(bendDir), 1.2); vec2 bd = bendDir / max(length(bendDir), 1e-4);
   float th = bend * 1.05;
   float y0 = ground(root);
@@ -305,7 +308,7 @@ void main() {
   // ── flowers, in the real look: stems with a head of petals, in drifts, moving with the same wind
   const FLOWER_VS = COMMON + `
 uniform mat4 uVP; uniform vec3 uEye; uniform vec2 uOrigin; uniform int uFN; uniform float uFCell;
-uniform float uTime; uniform vec3 uWind; uniform float uFlowers;
+uniform float uTime; uniform vec3 uWind; uniform float uFlowers; uniform vec3 uSway; uniform float uBow;
 out vec3 vPos; out vec3 vN; out vec3 vAlb; out float vPetal; out float vShadeF;
 vec3 bez(vec3 a, vec3 b, vec3 c, float t) { float s = 1.0 - t; return s * s * a + 2.0 * s * t * b + t * t * c; }
 void main() {
@@ -324,6 +327,7 @@ void main() {
   float yaw = h01(hb ^ 0x7u) * 6.2831853;
   vec2 bd = uWind.xy * uWind.z * (0.25 + 0.8 * gust * gust) + vec2(cos(yaw), sin(yaw)) * 0.15
           + vec2(sin(uTime * (1.7 + h01(hb ^ 0x8u)) + yaw), cos(uTime * 1.3 + yaw)) * 0.04;
+  bd += uSway.xy * uSway.z; if (uBow > 0.001) bd += normalize(uEye.xz - root + 1e-4) * uBow * 0.9;
   float th = min(length(bd), 1.0) * 0.7; vec2 bdir = bd / max(length(bd), 1e-4);
   vec3 p0 = vec3(root.x, ground(root), root.y);
   vec3 p1 = p0 + vec3(bdir.x * H * sin(th) * 0.15, H * 0.6, bdir.y * H * sin(th) * 0.15);
@@ -432,6 +436,7 @@ precision highp float; precision highp sampler2DArray;
 uniform sampler2D uScene; uniform sampler2DArray uHist; uniform int uHead; uniform int uLayers; uniform float uFilled;
 uniform vec2 uRes; uniform int uGlitch; uniform float uG; uniform float uP; uniform int uTint; uniform float uTintE; uniform float uHue;
 uniform float uRain; uniform float uSnow; uniform float uSlant; uniform float uTimeS; uniform float uTilt; uniform float uFlash;
+uniform float uStage;
 uniform float uWaterY; uniform float uRipple; uniform float uDrip; uniform float uInk; uniform float uWash; uniform float uChar; uniform vec2 uWDir; uniform float uP90; uniform float uNear;
 out vec4 frag;
 float r1(float x) { return fract(sin(x * 12.9898) * 43758.5453); }
@@ -595,6 +600,7 @@ void main() {
     inked -= (vn(gl_FragCoord.xy * 0.5) - 0.5) * 0.045 + (0.5 + 0.5 * sin(gl_FragCoord.y * 2.1)) * 0.012;
     c = mix(c, inked, uInk);
   }
+  if (uStage > 0.001) { vec2 q = (uv0 - vec2(0.5, 0.42)) * vec2(uRes.x / uRes.y, 1.0); c *= mix(1.0, 0.5 + 0.75 * exp(-dot(q, q) / 0.22), uStage); }   // a stage light
   if (uFlash > 0.5) c = 1.0 - c;                                                                  // storm: one inverted frame
   frag = vec4(c, 1.0);
 }`;
@@ -613,6 +619,12 @@ void main() { vec2 p = vec2(float((gl_VertexID << 1) & 2), float(gl_VertexID & 2
   // where the meadow is: ?from=lat,lon (start there) · ?place=lat,lon · ?route=lat,lon;lat,lon;… · ?lat= · ?days= · ?start=
   const TRACK = Wx ? Wx.track(Wx.parseSettings(Q)) : null;
   const reader = O.weather ? Wx.createReader({ track: TRACK }) : null;
+  // the homage (the default): two homes, each with its own reader for glimpses, and the real look
+  const HOMAGE = TRACK && TRACK.cfg.mode === 'homage', HOMES = HOMAGE ? TRACK.cfg.homes : [];
+  const homeReaders = HOMAGE && O.weather ? HOMES.map((h) => Wx.createReader({ track: () => ({ lat: h.lat, lon: h.lon }) })) : [];
+  if (HOMAGE && !Q.has('look')) O.look = 1;
+  O.dedication = Q.get('dedication') === '1'; O.glimpses = Q.get('glimpses') !== '0';
+  let seedNow = O.seed;
   const Geo = global.Geography;
   if (O.geo) Geo.fetchData(new URL('data/', document.currentScript ? document.currentScript.src : location.href).href).catch((e) => console.log('nocturne: geography —', e.message));
   const J1 = (t) => TRACK(t); J1.START = TRACK ? TRACK.START : 0;
@@ -731,7 +743,7 @@ void main() { vec2 p = vec2(float((gl_VertexID << 1) & 2), float(gl_VertexID & 2
   }
   // the shader's ground, in JS, so the eye always clears it
   const ihash = (x) => { x >>>= 0; x ^= x >>> 16; x = Math.imul(x, 0x7feb352d) >>> 0; x ^= x >>> 15; x = Math.imul(x, 0x846ca68b) >>> 0; x ^= x >>> 16; return x >>> 0; };
-  const vhash = (cx, cz) => (ihash((Math.imul(cx >>> 0, 0x9e3779b9) ^ Math.imul(cz >>> 0, 0x85ebca6b) ^ O.seed) >>> 0) & 0xffffff) / 16777215;
+  const vhash = (cx, cz) => (ihash((Math.imul(cx >>> 0, 0x9e3779b9) ^ Math.imul(cz >>> 0, 0x85ebca6b) ^ seedNow) >>> 0) & 0xffffff) / 16777215;
   function vnoise(x, z) {
     const ix = Math.floor(x), iz = Math.floor(z); let fx = x - ix, fz = z - iz; fx = fx * fx * (3 - 2 * fx); fz = fz * fz * (3 - 2 * fz);
     const a = vhash(ix, iz), b = vhash(ix + 1, iz), c = vhash(ix, iz + 1), d = vhash(ix + 1, iz + 1);
@@ -748,9 +760,23 @@ void main() { vec2 p = vec2(float((gl_VertexID << 1) & 2), float(gl_VertexID & 2
       reader.poll(ms);
       J = TRACK(ms); sun = Wx.sunAt(ms, J.lat, J.lon); wx = reader.current(ms); fx = Wx.effects(wx, sun);
     }
-    // the ground under the journey, once a second
-    if (J && O.geo && Geo.ready() && Math.floor(ms / 1000) !== geoAt) {
-      geoAt = Math.floor(ms / 1000); geo = Geo.at(J.lat, J.lon); geoEv = Geo.events(J1, ms, O.from);
+    // the homage: where in the week, and whether this second is a glimpse of a home
+    let PH = null, GL = null;
+    if (J && J.mode === 'homage') {
+      PH = J.phase; homeReaders.forEach((r) => r.poll(ms));
+      GL = O.glimpses ? Wx.glimpseAt(ms, PH) : null;
+      if (GL) {
+        const h = HOMES[GL.home]; J = Object.assign({}, J, { lat: h.lat, lon: h.lon, glimpse: GL.home });
+        sun = Wx.sunAt(ms, h.lat, h.lon);
+        if (homeReaders[GL.home]) { wx = homeReaders[GL.home].current(ms); fx = Wx.effects(wx, sun); }
+      }
+      const at = GL ? GL.home : PH.state === 'home' ? PH.home : -1;
+      seedNow = O.seed + 101 * (at + 1);          // each home its own meadow; the journey another
+    }
+    // the ground under the journey, once a second (and at once when the place cuts)
+    const geoKey = J ? Math.floor(ms / 1000) + '|' + J.lat.toFixed(3) + ',' + J.lon.toFixed(3) : '';
+    if (J && O.geo && Geo.ready() && geoKey !== geoAt) {
+      geoAt = geoKey; geo = Geo.at(J.lat, J.lon); geoEv = Geo.events(J1, ms, O.from);
     }
     const smG = (a, b, x) => { const t = Math.min(1, Math.max(0, (x - a) / (b - a))); return t * t * (3 - 2 * t); };
     const seaness = geo && !geo.land ? smG(0, -40, geo.coastKm) : 0, biome = geo && geo.land ? geo.biome : null;
@@ -764,6 +790,9 @@ void main() { vec2 p = vec2(float((gl_VertexID << 1) & 2), float(gl_VertexID & 2
     let G = O.glitch ? { kind: O.glitch, p: (sE % 12) / 12, e: 1 } : O.score ? Score.glitchAt(ms, fx ? fx.stormFactor : 0) : null;
     // crossing the equator mirrors the image for an hour; the date line slices time for ten minutes
     if (!O.glitch && geoEv && geoEv.equator) G = { kind: 8, p: (sE % 3600) / 3600, e: 1, cause: 'THE EQUATOR, CROSSED' };
+    // cuts tear: the edges of a glimpse, an arrival and a departure are a second of datamosh
+    if (!O.glitch && GL && GL.edge < 0.35) G = { kind: 11, p: GL.p, e: 1, cause: 'GLIMPSE OF ' + HOMES[GL.home].name };
+    if (!O.glitch && PH && PH.state === 'home' && (PH.since < 1500 || PH.left < 1500)) G = { kind: 11, p: (ms % 1500) / 1500, e: 1, cause: PH.since < 1500 ? 'ARRIVAL AT ' + HOMES[PH.home].name : 'DEPARTURE FROM ' + HOMES[PH.home].name };
     else if (!O.glitch && geoEv && geoEv.dateLine) G = { kind: 1, p: (sE % 600) / 600, e: 1, cause: 'THE DATE LINE, CROSSED' };
     const C = O.colour ? { mode: O.colour, hue: 0.07, e: 1 } : O.score ? Score.colourAt(ms, !!(geoEv && geoEv.tropic)) : null;
     const tintHue = C ? (C.mode === 3 ? s / 86400 : C.hue) : 0;
@@ -797,6 +826,25 @@ void main() { vec2 p = vec2(float((gl_VertexID << 1) & 2), float(gl_VertexID & 2
       // the wind there, with the built-in gusting riding on it; snow slows everything
       const osc = (W.strength - 0.25) / 0.75;
       W = { x: fx.windX, z: fx.windZ, strength: (fx.windStrength * (0.75 + 0.25 * osc) + 0.3 * fx.gustiness * osc) * (1 - 0.6 * fx.snow) };
+    }
+    // ── the dance. Tempo follows the place: allegro (120) at the first home, adagio (66) at the second,
+    // blending on the way. Gusts are phrased in eights with the accent on one; some minutes the
+    // field moves in unison, the rest in canon; on arrival it bows; at a home, a stage light.
+    let dance = null, sway = [0, 0, 0], bow = 0, stageK = 0;
+    if (PH) {
+      const athens = GL ? 1 - GL.home : PH.state === 'home' ? 1 - PH.home : (PH.path.from === HOMES[0] ? 1 - (0.5 - 0.5 * Math.cos(Math.PI * PH.f)) : 0.5 - 0.5 * Math.cos(Math.PI * PH.f));
+      const bpm = 66 + 54 * athens, beats = sE * bpm / 60, count = Math.floor(beats) % 8 + 1, frac = beats % 1;
+      const accent = count === 1 ? 1 : count === 5 ? 0.6 : 0.25;
+      W = { x: W.x, z: W.z, strength: W.strength * (0.8 + 0.4 * accent * Math.exp(-frac * 4)) };
+      const unisonMin = Score.ih(Math.floor(ms / 6e4) ^ 0x8a1) % 3 === 0, sm60 = (ms % 6e4) / 6e4;
+      if (unisonMin) { const a = 0.38 * Math.sin(Math.PI * sm60) * Math.sin(2 * Math.PI * beats / 8); sway = [W.x, W.z, a]; }
+      if (PH.state === 'home' && !GL) {
+        const b = PH.since / 6e4; bow = b < 1 ? Math.sin(Math.PI * Math.min(1, b)) : 0;          // the révérence: the first minute
+        W = { x: W.x, z: W.z, strength: W.strength * (1 - 0.8 * bow) };
+        stageK = 0.45 * Math.min(1, PH.since / 6e4);
+      }
+      if (GL) stageK = 0.45;
+      dance = { bpm: Math.round(bpm), count, tempo: bpm > 105 ? 'ALLEGRO' : bpm > 85 ? 'MODERATO' : 'ADAGIO', unison: unisonMin };
     }
     const VP = mat(eye, look, 0.62, aspect);
     // the window of cells sits ahead of the eye, where the view is
@@ -847,12 +895,12 @@ void main() { vec2 p = vec2(float((gl_VertexID << 1) & 2), float(gl_VertexID & 2
 
     gl.useProgram(trees.p); const tr = trees.u; gl.uniform1f(tr.uRelief, relief); colU(tr);
     gl.uniformMatrix4fv(tr.uVP, false, VP); gl.uniform1i(tr.uM, TREE_M); gl.uniform1f(tr.uR, TREE_R); gl.uniform3fv(tr.uEye, eye); gl.uniform3fv(tr.uLight, L);
-    gl.uniform1f(tr.uFog, fog); gl.uniform1f(tr.uExposure, exposure); gl.uniform1f(tr.uSeed, O.seed); atmosU(tr);
+    gl.uniform1f(tr.uFog, fog); gl.uniform1f(tr.uExposure, exposure); gl.uniform1f(tr.uSeed, seedNow); atmosU(tr);
     gl.drawArrays(gl.TRIANGLE_STRIP, 0, 2 * (TREE_M + 1));
 
     gl.useProgram(groundP.p); const g = groundP.u; atmosU(g); colU(g); gl.uniform3fv(g.uLight, L); gl.uniform1f(g.uRelief, relief); gl.uniform1f(g.uDrop, (2.2 * seaAmp + 0.3) * surf);
     gl.uniformMatrix4fv(g.uVP, false, VP); gl.uniform2f(g.uOrigin, origin[0], origin[1]); gl.uniform1f(g.uSpan, SPAN);
-    gl.uniform1i(g.uRes, RES); gl.uniform3fv(g.uEye, eye); gl.uniform1f(g.uFog, fog); gl.uniform1f(g.uExposure, exposure); gl.uniform1f(g.uSeed, O.seed);
+    gl.uniform1i(g.uRes, RES); gl.uniform3fv(g.uEye, eye); gl.uniform1f(g.uFog, fog); gl.uniform1f(g.uExposure, exposure); gl.uniform1f(g.uSeed, seedNow);
     gl.drawElements(gl.TRIANGLES, idx.length, gl.UNSIGNED_SHORT, 0);
 
     // the sea's four wave trains: wind sea, a shorter sea, the swell, a ripple. Periods are true;
@@ -869,6 +917,7 @@ void main() { vec2 p = vec2(float((gl_VertexID << 1) & 2), float(gl_VertexID & 2
     const setTrains = (v) => { if (!trains) return; trains.forEach(([d, k, amp], i) => gl.uniform4f(v['uW' + (i + 1)], d[0], d[1], k, amp));
       gl.uniform4f(v.uWo, ...trains.map((t) => t[3] * still)); gl.uniform1f(v.uAmp, aw + as + 0.02); };
     gl.useProgram(grass.p); const u = grass.u; atmosU(u); colU(u); gl.uniform1f(u.uSpan, SPAN);
+    gl.uniform3fv(u.uSway, sway); gl.uniform1f(u.uBow, bow);
     setTrains(u); gl.uniform1f(u.uSeaMove, trains ? seaness * still : 0); gl.uniform1f(u.uSeaWhite, SS ? SS.whitecaps : 0); gl.uniform1f(u.uSeaT, sE % 86400);
     gl.uniform1f(u.uRelief, relief); gl.uniform1f(u.uDensity, density); gl.uniform1f(u.uHScale, hScale);
     gl.uniform1i(u.uShow, SHOW);
@@ -879,7 +928,7 @@ void main() { vec2 p = vec2(float((gl_VertexID << 1) & 2), float(gl_VertexID & 2
     gl.uniformMatrix4fv(u.uVP, false, VP); gl.uniform3fv(u.uEye, eye); gl.uniform2f(u.uOrigin, origin[0], origin[1]);
     gl.uniform1f(u.uCell, CELL); gl.uniform1i(u.uN, N); gl.uniform1i(u.uPer, O.per); gl.uniform1f(u.uTime, time);
     gl.uniform3f(u.uWind, W.x, W.z, W.strength); gl.uniform1i(u.uSegs, SEGS); gl.uniform3fv(u.uLight, L);
-    gl.uniform1f(u.uFog, fog); gl.uniform1f(u.uExposure, exposure); gl.uniform1f(u.uSeed, O.seed);
+    gl.uniform1f(u.uFog, fog); gl.uniform1f(u.uExposure, exposure); gl.uniform1f(u.uSeed, seedNow);
     gl.drawArraysInstanced(gl.TRIANGLE_STRIP, 0, 2 * (SEGS + 1), N * N * O.per);
     if (O.look && O.flowers > 0) {
       // flowers in season: the warm half of the year where the journey is, all year in the tropics
@@ -891,8 +940,8 @@ void main() { vec2 p = vec2(float((gl_VertexID << 1) & 2), float(gl_VertexID & 2
         gl.useProgram(flowerP.p); const fu = flowerP.u; atmosU(fu); colU(fu);
         gl.uniformMatrix4fv(fu.uVP, false, VP); gl.uniform3fv(fu.uEye, eye); gl.uniform2f(fu.uOrigin, origin[0], origin[1]);
         gl.uniform1i(fu.uFN, FN); gl.uniform1f(fu.uFCell, FCELL); gl.uniform1f(fu.uTime, time); gl.uniform3f(fu.uWind, W.x, W.z, W.strength);
-        gl.uniform1f(fu.uFlowers, fAmt); gl.uniform1f(fu.uRelief, relief); gl.uniform3fv(fu.uLight, L);
-        gl.uniform1f(fu.uFog, fog); gl.uniform1f(fu.uExposure, exposure); gl.uniform1f(fu.uSeed, O.seed);
+        gl.uniform1f(fu.uFlowers, fAmt); gl.uniform3fv(fu.uSway, sway); gl.uniform1f(fu.uBow, bow); gl.uniform1f(fu.uRelief, relief); gl.uniform3fv(fu.uLight, L);
+        gl.uniform1f(fu.uFog, fog); gl.uniform1f(fu.uExposure, exposure); gl.uniform1f(fu.uSeed, seedNow);
         gl.drawArraysInstanced(gl.TRIANGLES, 0, 84, FN * FN);
       }
     }
@@ -905,7 +954,7 @@ void main() { vec2 p = vec2(float((gl_VertexID << 1) & 2), float(gl_VertexID & 2
       gl.uniform3fv(v.uDichA, dichA); gl.uniform3fv(v.uDichB, dichB); gl.uniform1f(v.uDich, O.dich === 0 ? 0 : dich * (O.dich || 1));
       gl.uniformMatrix4fv(v.uVP, false, VP); gl.uniform3fv(v.uEye, eye); gl.uniform2f(v.uOrigin, origin[0], origin[1]);
       gl.uniform1f(v.uCell, CELL); gl.uniform1i(v.uN, N); gl.uniform1i(v.uPer, O.per); gl.uniform1f(v.uTime, (sE % 86400));
-      gl.uniform1i(v.uSegs, SEGS); gl.uniform3fv(v.uLight, L); gl.uniform1f(v.uFog, fog); gl.uniform1f(v.uExposure, exposure); gl.uniform1f(v.uSeed, O.seed);
+      gl.uniform1i(v.uSegs, SEGS); gl.uniform3fv(v.uLight, L); gl.uniform1f(v.uFog, fog); gl.uniform1f(v.uExposure, exposure); gl.uniform1f(v.uSeed, seedNow);
       gl.drawArraysInstanced(gl.TRIANGLE_STRIP, 0, 2 * (SEGS + 1), N * N * O.per);
     }
 
@@ -954,11 +1003,12 @@ void main() { vec2 p = vec2(float((gl_VertexID << 1) & 2), float(gl_VertexID & 2
     const gainTarget = Math.min(4, Math.max(1, 0.32 / Math.max(p90, 0.02)));
     gain = O.still ? gainTarget : gain + (gainTarget - gain) * 0.02;
     gl.uniform1f(pu.uGain, gain);
+    gl.uniform1f(pu.uStage, stageK);
     gl.uniform1f(pu.uNear, O.near * (0.75 + 0.25 * wet)); gl.uniform1f(pu.uP90, p90); gl.uniform1f(pu.uInk, style.ink); gl.uniform1f(pu.uWash, style.wash); gl.uniform1f(pu.uChar, style.char); gl.uniform2f(pu.uWDir, wsx / wl, wsy / wl);
     gl.drawArrays(gl.TRIANGLES, 0, 3);
     gl.activeTexture(gl.TEXTURE0);
 
-    overlay(ms, sE, { eye, look, hx, hz, VP, ndc, W, G, C, origin, J, sun, wx, style, geo, bright: dayK > 0.6 && cloudK < 0.85 });
+    overlay(ms, sE, { eye, look, hx, hz, VP, ndc, W, G, C, origin, J, sun, wx, style, geo, bright: dayK > 0.6 && cloudK < 0.85, PH, GL, dance });
 
     stage.style.opacity = String(dimAt(ms, O.dim));
     if (ov) ov.style.opacity = stage.style.opacity;
@@ -974,7 +1024,7 @@ void main() { vec2 p = vec2(float((gl_VertexID << 1) & 2), float(gl_VertexID & 2
   // census of the window, the clock, the score. Drawn in the single-stroke letters of 048.
   const font = global.StrokeFont;
   const PER_SEGS = SEGS, FRAME_EPOCH = new Date(2026, 10, 1).getTime();      // frames counted from 1 Nov 2026, 00:00
-  const hbOf = (cx, cz, k) => ihash(((Math.imul(cx >>> 0, 73856093) ^ Math.imul(cz >>> 0, 19349663) ^ Math.imul(k, 83492791) ^ Math.imul(O.seed, 2654435761)) >>> 0));
+  const hbOf = (cx, cz, k) => ihash(((Math.imul(cx >>> 0, 73856093) ^ Math.imul(cz >>> 0, 19349663) ^ Math.imul(k, 83492791) ^ Math.imul(seedNow, 2654435761)) >>> 0));
   const h01 = (x) => (ihash(x) & 0xffffff) / 16777215;
   const smoothJS = (a, b, x) => { const t = Math.max(0, Math.min(1, (x - a) / (b - a))); return t * t * (3 - 2 * t); };
   function bladeAt(cx, cz, k) {                   // the vertex shader's blade, in JS
@@ -1021,6 +1071,7 @@ void main() { vec2 p = vec2(float((gl_VertexID << 1) & 2), float(gl_VertexID & 2
       case 9: return { lines: ['ENTROPY OF THIS FRAME', entropyOfLatest().toFixed(2) + ' BITS OF 8'] };
       case 11: case 12: case 13: case 14: case 15: return weatherLines(M.kind, ms, f);
       case 16: case 17: case 18: case 19: case 20: case 21: return geoLines(M.kind, ms, f);
+      case 22: return homageLines(ms, f);
       default: { const t = Score.todaySoFar(ms); return { lines: ['TODAY ' + grp(t.events) + ' EVENTS', t.glitches + ' GLITCHES - ' + t.colours + ' COLOUR MINUTES', grp(t.measures) + ' MEASUREMENTS'] }; }
     }
   }
@@ -1050,11 +1101,24 @@ void main() { vec2 p = vec2(float((gl_VertexID << 1) & 2), float(gl_VertexID & 2
         return { lines: ['THE ANTIPODE ' + deg(a.lat, 'N', 'S') + ' ' + deg(a.lon, 'E', 'W'), ga.land ? 'LAND - ' + up(ga.country) : 'SEA - ' + up('the ' + ga.sea)] }; }
     }
   }
+  function homageLines(ms, f) {
+    if (!f.PH) return { lines: ['NOT IN THE HOMAGE', 'A ' + (f.J ? f.J.mode : 'FIXED').toUpperCase() + ' TRACK'] };
+    const P = f.PH, d = f.dance, c = 'COUNT ' + d.count + ' OF 8 - ' + d.tempo + ' ' + d.bpm + (d.unison ? ' - UNISON' : ' - CANON');
+    const hrs = (x) => (x >= 864e5 ? Math.floor(x / 864e5) + ' D ' : '') + Math.floor(x % 864e5 / 36e5) + ' H';
+    if (P.state === 'home') {
+      const other = HOMES[1 - P.home], here = HOMES[P.home];
+      return { lines: ['IN RESIDENCE - ' + here.name + ' - DAY ' + (Math.floor(P.since / 864e5) + 1) + ' OF 3', c,
+        other.name + ' ' + grp(Geo.haversine(here.lat, here.lon, other.lat, other.lon)) + ' KM - LEAVING IN ' + hrs(P.left)] };
+    }
+    const T = P.path, far = T.pts.slice(1, -1).sort((a, b) => Geo.haversine(b.lat, b.lon, T.from.lat, T.from.lon) - Geo.haversine(a.lat, a.lon, T.from.lat, T.from.lon))[0];
+    const via = far ? Geo.nearestPlace(far.lat, far.lon) : null;
+    return { lines: ['TRIP ' + (T.n + 1) + ' - ' + T.from.name + ' TO ' + T.to.name + ' - ' + T.label, grp(T.km) + ' KM, ' + Math.round(P.f * 100) + '% ALONG' + (via ? ' - BY WAY OF ' + up(via.name) : ''), c] };
+  }
   function weatherLines(kind, ms, f) {
     if (!f.J) return { lines: ['WEATHER OFF', 'THE BUILT-IN DAY'] };
     const w = f.wx, there = Wx.solarClock(ms, f.J.lon), none = w.builtIn;
     switch (kind) {
-      case 11: return { lines: [deg(f.J.lat, 'N', 'S') + ' ' + deg(f.J.lon, 'E', 'W'), hhmm(there) + ' THERE - SUN ' + Math.abs(f.sun.el).toFixed(0) + (f.sun.el >= 0 ? ' DEG HIGH' : ' DEG BELOW'), f.J.mode === 'place' ? 'A FIXED PLACE' : 'DAY ' + (f.J.day + 1) + (f.J.mode === 'route' ? ' OF THE ROUTE' : ' OF THE JOURNEY')] };
+      case 11: return { lines: [deg(f.J.lat, 'N', 'S') + ' ' + deg(f.J.lon, 'E', 'W'), hhmm(there) + ' THERE - SUN ' + Math.abs(f.sun.el).toFixed(0) + (f.sun.el >= 0 ? ' DEG HIGH' : ' DEG BELOW'), f.J.mode === 'place' ? 'A FIXED PLACE' : f.J.mode === 'homage' ? (f.GL ? 'GLIMPSE OF ' + HOMES[f.GL.home].name : f.PH.state === 'home' ? 'AT ' + HOMES[f.PH.home].name : 'TRIP ' + (f.PH.n + 1)) : 'DAY ' + (f.J.day + 1) + (f.J.mode === 'route' ? ' OF THE ROUTE' : ' OF THE JOURNEY')] };
       case 12: return { lines: ['WIND ' + w.speed.toFixed(1) + ' M/S FROM ' + Math.round(w.dir) + ' DEG', 'GUSTS ' + w.gusts.toFixed(1) + ' M/S'].concat(none ? ['BUILT-IN, NO READING'] : []) };
       case 13: return { lines: ['PRESSURE ' + Math.round(w.pressure) + ' HPA ' + (Math.abs(w.trend) < 0.3 ? 'STEADY' : (w.trend > 0 ? 'RISING ' : 'FALLING ') + Math.abs(w.trend).toFixed(1)), 'HUMIDITY ' + Math.round(w.rh * 100) + '% - ' + w.temp.toFixed(1) + ' C'] };
       case 14: return { lines: ['CLOUD ' + Math.round(w.cloud * 100) + '% - VISIBILITY ' + (w.vis / 1000).toFixed(1) + ' KM', 'PRECIPITATION ' + w.precip.toFixed(1) + ' MM/H' + (w.snow > 0 ? ' - SNOW ' + w.snow.toFixed(1) + ' CM/H' : '')] };
@@ -1074,6 +1138,8 @@ void main() { vec2 p = vec2(float((gl_VertexID << 1) & 2), float(gl_VertexID & 2
     ox.strokeStyle = (f.style && f.style.ink > 0.5) || (O.look && f.bright) ? 'rgb(24, 26, 32)' : 'rgb(222, 219, 211)'; ox.beginPath();
     // the cause, low on the left, while a glitch or a colour is on
     const causes = [];
+    if (f.GL) causes.push('GLIMPSE - ' + HOMES[f.GL.home].name);
+    if (O.dedication && (ms / 1000) % 3600 > 10 && (ms / 1000) % 3600 < 50) causes.push('FOR THE ROYAL BALLET SCHOOL AND THE CENTRE FOR DANCE STUDIES');
     if (f.G && f.G.e > 0.02) causes.push('GLITCH ' + f.G.kind + ' - ' + Score.GLITCHES[f.G.kind].toUpperCase() + (f.G.cause ? ' - ' + f.G.cause : f.G.m !== undefined ? ' - MINUTE ' + f.G.m + ' IS PRIME' : ''));
     if (f.C && f.C.e > 0.02) causes.push('COLOUR ' + f.C.mode + ' - ' + Score.COLOURS[f.C.mode].toUpperCase() + (f.C.hhmm !== undefined ? ' - ' + f.C.hhmm + ' IS PRIME' : ''));
     causes.forEach((c, i) => strokeText(c, W * 0.035, H * 0.93 - (causes.length - 1 - i) * lh, size));
@@ -1083,7 +1149,7 @@ void main() { vec2 p = vec2(float((gl_VertexID << 1) & 2), float(gl_VertexID & 2
     if (!M || M.e <= 0.01) { ox.globalAlpha = 1; return; }
     if (M.k !== cacheK || O.measure) { cacheK = M.k; cache = measurement(M, ms, sE, f); }
     let info = cache;
-    if (M.kind === 4 || M.kind === 5 || M.kind === 7 || (M.kind >= 10 && M.kind <= 15)) info = measurement(M, ms, sE, f);   // these change while shown
+    if (M.kind === 4 || M.kind === 5 || M.kind === 7 || (M.kind >= 10 && M.kind <= 15) || M.kind === 22) info = measurement(M, ms, sE, f);   // these change while shown
     ox.beginPath();
     let tx = W * 0.035, ty = H * 0.08;
     if (info.anchor) {
