@@ -3,6 +3,16 @@
   "author": "dmaris70",
   "projects": [
     {
+      "slug": "051-waking-world",
+      "title": "The Waking World",
+      "year": 2026,
+      "tools": [
+        "canvas"
+      ],
+      "description": "Wikipedia editing across the world under the real day and night. Every human edit to an article is a spark where its language's readers live; titles appear in their own script with Wikipedia's own English title, but only once Wikipedia has kept the edit for 15 minutes. A rhythm panel plots each language's day by UTC or by its readers' sun time, where the curves fall onto one human day.",
+      "thumb": "preview.png"
+    },
+    {
       "slug": "050-root-section",
       "title": "Root Section",
       "year": 2026,

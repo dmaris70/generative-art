@@ -160,7 +160,7 @@ only as text in the measurements, never as a picture of a map.
 
 | Fact | In the meadow |
 |---|---|
-| **Sea or land** | Within 20 km inland the sea begins to show, and by 40 km offshore it is full. At sea the waterline rises to just below the horizon (55% of the screen at most), and the meadow thins to a fringe of tall reeds standing in water. |
+| **Sea or land** | A place on land is always land, however close to the coast. Off the coast the sea comes in gradually and is full by 40 km offshore. The meadow stays and moves with the sea's waves (see The sea). |
 | **Elevation and roughness** | The ground's relief grows with height and with how much the land varies nearby, up to three times. Air is thinner higher up: less haze and slightly brighter. |
 | **Latitude** | Grass is up to 35% shorter toward 60° and up to 15% taller at the equator. |
 | **Climate zone** | Once added: tropical is dense and tall; desert is sparse, short and pale; steppe is tufted and combed by wind (more charcoal); temperate is today's meadow; cold is shorter; tundra is low; ice is almost bare. |
@@ -195,12 +195,43 @@ The engine picks it up without other changes. Until then the measurement says
 `CLIMATE MAP NOT YET ADDED`, and the meadow ignores climate. `?geo=0` ignores the ground
 altogether.
 
+## The real look (`?look=real`)
+
+The same meadow, rendered in colour instead of as line-drawn blades. Everything else stays
+unchanged: the clock, the journey, the weather, the geography, the score and the
+measurements.
+
+- **Grass:** each blade is green varying from blade to blade, drying to straw toward the tip, in
+  dry tufts and in dry, hot or pale-climate weather. It is dark at the root, lit as a canopy from
+  above and on its faces, and glows where the light passes through.
+- **Flowers:** in drifts, on stems among the grass, moving with the same wind: pink, white, red,
+  orange and violet, with yellow centres. They appear in the warm half of the year where the
+  journey is (all year in the tropics), fewer in dry or cold climates, none under snow.
+  `?flowers=0…3` sets how many.
+- **Light:** the sun's colour and the sky's colour follow the sun's height where the journey is:
+  white at midday, gold low down, a moonlit blue at night, greyer under cloud. The sky runs from a
+  pale horizon to a deeper zenith with a glow round the sun. The ground is earth and the tree line
+  a dark wood. Aerial haze is gentle near and pale toward the horizon.
+- **Off in this look, unless asked for:** the paper, wash and charcoal registers and the dichroic
+  shimmer. The faded near field, automatic exposure, glitches and colour minutes still apply.
+
+**A new glitch, datamosh** (glitch 11, in both looks):
+- columns smeared upward from one row into vertical streaks;
+- horizontal bars displaced sideways, some flooded with a flat blue;
+- 16-pixel blocks replaced by an earlier frame.
+
+The technique is taken from a datamoshed meadow photograph shared as a reference; its
+composition is not copied.
+
 ## The sea
 
-Where the journey is over the sea, the meadow gives way to a moving sea surface, made the way
-the grass is made: thousands of thin strokes. Each stroke lies along a wave crest, rides the
-surface, lifts and curls a little at the crest, and catches the light along its length. The
-meadow fades out and the sea fades in from 20 km inland to 40 km offshore.
+Where the journey is over the sea, every element of the piece stays intact: the meadow, its
+ground, the tree line, the mist, the score and the registers. The sea shows through the meadow's
+movement. Its waves and swell roll through the grass as moving crests, with the sea's real periods
+and directions, and where crests would whiten the blades turn pale.
+
+`?sea=surface` adds a separate sea surface instead: a field of strokes lying along the crests and
+riding the waves, which replaces the meadow at sea. It is off by default.
 
 **Where the conditions come from.** Every 15 minutes the piece asks Open-Meteo's marine service
 for the waves where the journey is: significant wave height, period and direction, and the swell's
@@ -210,7 +241,7 @@ measurement says which.
 
 **The sea states** (the Douglas scale) and what they look like:
 
-| State | Waves | In the piece |
+| State | Waves | In the piece (the meadow's movement; the surface with `?sea=surface`) |
 |---|---|---|
 | 0 Calm, glassy | under 0.03 m | Barely moving; strokes long, aligned and still |
 | 1 Calm, rippled | to 0.1 m | Fine ripples only |
@@ -232,8 +263,8 @@ measurement says which.
   dramatic without swallowing the view.
 - **White crests:** appear from about 4 m/s of wind, on the steep tops.
 - **Foam streaks:** from about 14 m/s, some strokes turn to lie along the wind.
-- **The camera** rides above the highest crests.
-- **No reflection at sea:** the sea itself is the surface.
+- **The camera** rides above the highest crests when the surface is drawn.
+- **No reflection at sea** in either case.
 
 ## Four registers, borrowed as techniques
 
