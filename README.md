@@ -373,6 +373,24 @@ site, one file per style, and `strata.js`, the facade whose `build(opts)` and
 records the analysis the design came from. Parameters force a style, floor count, detail,
 site density or building count; **R** reseeds.
 
+## Loop Engine — seamless GIFs
+
+[`projects/053-loop-engine`](projects/053-loop-engine/) makes seeded, seamlessly looping
+GIFs. Two-sided cards spin in 3D. Streams of metaball ink orbit them and shed specks. Both
+are drawn on a coarse pixel grid, in flat palettes of three or four inks, and occlude each
+other through a shared depth buffer. Every motion uses integer frequencies of the loop
+phase, so frame *N* equals frame 0 exactly (tested across 120 scenes with 0 cells
+different).
+
+- **In the browser:** tune it in the panel, then use **⬇ Export GIF** (or press **G**).
+  **Space** pauses, and **←/→** step one frame.
+- **Batch:** `node tools/loopgif.mjs 1 42 sunset --count 10 --palette bauhaus --out gifs/`.
+  The CLI writes the same bytes as the browser export for the same seed and parameters.
+- **Encoder:** `engine.js` contains a GIF89a encoder with no dependencies. It uses a global
+  palette and LZW, and crops each frame to the cells that changed. The renderer already
+  outputs palette indices, so no colours are quantized. A 960×540 loop of 96 frames is
+  about 150–300 KB.
+
 ## Contact sheet
 
 `variations.html` renders one piece across many seeds as a grid of live tiles — the
