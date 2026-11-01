@@ -3,6 +3,14 @@
   "author": "dmaris70",
   "projects": [
     {
+      "slug": "058-folded-weather",
+      "title": "Folded Weather",
+      "year": 2026,
+      "tools": ["webgl2", "glsl"],
+      "description": "Five studies built on the folded cloud engine from 057. The output reduces exactly to three fields (density, sky weight and depth), and each study grades them its own way: Hours, a 96 s day with dusk light and stars through the gaps; Drift, fold constants travelling a closed 60 s path; Sumi, ink on paper; Strata, the depth read as a contour survey; Atlas, nine seeds side by side. Seeds come from a measured, screened parameter space.",
+      "thumb": "preview.png"
+    },
+    {
       "slug": "057-after-nishitsuji",
       "title": "After Nishitsuji",
       "year": 2026,
