@@ -252,6 +252,59 @@ shows the real look.
   `?place=`, `?route=` or `?lat=` give the earlier tracks. `?look=lines` gives the line-drawn
   meadow.
 
+## The lexicon of the journey (`lexicon.js`, `data/lexicon.json`, `logbook.html`)
+
+Part of the homage. A vocabulary of dance travels with the meadow: what is carried between the
+two schools, what changes on the way, what is lost, and what remains.
+
+- **The dataset:** 103 terms and 10 etymologies, in English and Greek.
+  - It covers ancient Greek dance, the court dances, the classical vocabulary, the schools and
+    notations, modern and contemporary dance, and Greek folk dance.
+  - Each term has its Greek, its literal meaning, a description, a family, the place and year of
+    its origin, how the schools differ, its status (*shared, living, rare, historical, lost*),
+    a tie to Athens or London, and a motion.
+  - It is a **draft** written for this piece, for review by both schools. The descriptions are
+    original. Dates and places are approximate where the history is uncertain.
+- **Every three minutes, a new term**, fixed by the clock so every screen agrees:
+  - **On a crossing**, the vocabulary travels through time. From Athens to London it runs from
+    the oldest words to the newest; on the way back it runs from the newest to the oldest. Among
+    the terms of that age, the piece picks the one whose origin is nearest the meadow.
+  - **At a home**, half the terms belong to the place: in Athens, the Greek, ancient and folk
+    words; in London, the English school. The other half come from anywhere.
+  - **Arrival:** after the bow comes the *canto* of the trip just ended (minutes 1–4), its eight
+    milestone terms. Then comes the *refrain* (minutes 4–13): only terms every school shares.
+  - **Once an hour at a home** (minutes 30–33): the *etymology* of one word, step by step from
+    the Greek to the English (βαλλίζω → ballare → balletto → ballet; ορχήστρα, the dancing floor
+    → orchestra, the players).
+- **In the margin** (left, the first 100 s of each term): the term, its Greek, its literal
+  meaning, a description, its origin and year, how the schools differ, and its status.
+  - The text is in the piece's single-stroke letters, on a faint backing. The ink is dark or
+    light, depending on what is measured behind it.
+  - A **lost** term loses its letters as it is read.
+- **In the field:** the word grows in the grass, first in one language, then in the other (in
+  Athens Greek first, in London English first).
+  - It is anamorphic: written as seen from the eye. Blades in the letters stand taller,
+    straighter and bleached; around them the meadow is mown low and in shadow.
+  - Erosion takes the letters back blade by blade: faster while travelling, and fastest for a
+    lost term.
+  - It reads best when the camera lifts; from low in the grass it is a trace.
+- **In the motion:** while a term is shown, the field moves in its motion:
+  - *sink* (plié), *rise* (relevé), *spiral* (pirouette), *leap* (a ring flies outward),
+    *line* (arabesque), *sway* (port de bras), *tremble* (bourrée), *beat* (on every count);
+  - *extend* (développé), *fall* (and recovery), *circle* (the chorus), *still* (the wind holds
+    its breath).
+- **On the map:** a diamond marks where the term was first danced, when that place is inside the
+  map.
+- **Greek letters:** Greek capitals are drawn in the same single strokes. They live in
+  `lexicon.js` because `assets/strokefont.js` is frozen. Letters with a Latin twin (Α, Β, Ε, …)
+  use the Latin glyph; accents are dropped, as the Latin letters have none.
+- **The logbook** (`logbook.html`): one A3 sheet per week, in single strokes for a pen plotter.
+  - It shows both crossings, their sixteen milestone terms, a line from each to where the term
+    was first danced, and the lists in English and Greek. It downloads as SVG.
+  - It is computed by the same functions as the wall, so it records what the meadow showed.
+- **Settings:** `?lexicon=0` leaves the lexicon out.
+- **Not built yet:** a companion page or QR code for passers-by. This is left open.
+
 ## The real look (`?look=real`)
 
 The same meadow, rendered in colour instead of as line-drawn blades. Everything else stays
@@ -434,6 +487,10 @@ finishing pass applies the whole-image glitches and colours. One frame a second 
   0.056 m/s.
 - **Headless Chromium on software WebGL2:** it renders at 08:05, 14:20, 17:12 and 21:40 with no
   console errors. Two frames 2 s apart differ in 32% of their bytes, so the grass is moving.
+- **The lexicon:** in Node, a simulated week gives 3,208 term windows, 144 etymologies, and a
+  canto and a refrain at each arrival. All 103 terms appear. Every character in the dataset has a
+  glyph. In Chromium it renders while travelling, in residence in Athens and London, in canto,
+  etymology, lost-word, rain and night conditions, and in the logbook, with no console errors.
 - **Not checked:** frame rate on a real GPU and on the wall's own computer. The software
   renderer is too slow to measure that. Before installing, find a `blades`/`scale` setting
   that holds 60 fps at the wall's resolution, then run it for 72 hours.
