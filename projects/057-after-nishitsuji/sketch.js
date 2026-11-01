@@ -1,10 +1,15 @@
-// After Nishitsuji — a faithful transcription of a twigl "geekest" one-liner by Yohei Nishitsuji
-// (x.com/yoheinishitsuji/status/1999814369925046474), expanded into readable GLSL ES 3.00.
+// After Nishitsuji — a faithful transcription of a twigl "geekest" one-liner by Yohei Nishitsuji,
+// expanded into readable GLSL ES 3.00.
+//   twigl:  https://twigl.app?ol=true&ss=-OgMbTexmkAwvg_2mnM_  (published source, the default)
+//   post:   x.com/yoheinishitsuji/status/1999814369925046474
 //
-// The original, verbatim:
+// The twigl source, verbatim:
 //   for(float i,g,e,s;++i<99.;o.rgb+=.01-hsv(.1,g*.016-e*.3,s/2e2)){vec3 p=vec3((FC.xy-.5*r)/r.y*5.
-//   +vec2(0,9),g)*rotate3D(-1.1-cos(t*.15)*.1,vec3(1,11.+sin(t)*.15,-1.5));s=2.;for(int i;i++<19;
+//   +vec2(0,9),g)*rotate3D(-1.15-cos(t*.2)*.05,vec3(1,11.+sin(t)*.2,-1.5));s=2.;for(int i;i++<19;
 //   p=vec3(.08,4,-1)-abs(abs(p)*e-vec3(3,4,3)))s*=e=7.1/dot(p,p*.51);g+=p.y/s;s=log2(s)/exp(e);}
+//
+// The variant quoted with the post differs only in the camera:
+//   rotate3D(-1.1-cos(t*.15)*.1, vec3(1,11.+sin(t)*.15,-1.5))
 //
 // twigl provides FC (gl_FragCoord), r (resolution), t (seconds), o (output) and the helpers
 // hsv() and rotate3D(), reproduced below. Defaults reproduce the original exactly; the panel
@@ -16,7 +21,13 @@
   addEventListener('error', e => err(e.message));
 
   const q = new URLSearchParams(location.search);
+  // camera: rotate3D(-base - cos(t*freq)*amp, vec3(1, 11 + sin(t)*axis, -1.5))
+  const CAMERAS = {
+    twigl: { base: 1.15, freq: 0.2, amp: 0.05, axis: 0.2 },
+    post: { base: 1.1, freq: 0.15, amp: 0.1, axis: 0.15 },
+  };
   const P = {
+    camera: q.get('camera') === 'post' ? 'post' : 'twigl',
     steps: 99,          // outer march limit (original: ++i<99. → 98 samples)
     folds: 19,          // inner fold iterations
     scale: 7.1,         // inversion numerator: e = scale / dot(p, p*.51)
@@ -38,6 +49,7 @@ in vec2 a; void main(){ gl_Position = vec4(a, 0., 1.); }`;
 precision highp float;
 uniform vec2 r; uniform float t;
 uniform int uSteps, uFolds; uniform float uScale, uZoom, uHue;
+uniform vec4 uCam; // base, freq, amp, axis
 out vec4 o;
 
 // twigl helpers
@@ -60,7 +72,7 @@ void main(){
   o = vec4(0., 0., 0., 1.);
   float g = 0., e = 0., s = 0.;
   // camera: slow sway of the rotation angle and axis
-  mat3 R = rotate3D(-1.1 - cos(t*.15)*.1, vec3(1., 11. + sin(t)*.15, -1.5));
+  mat3 R = rotate3D(-uCam.x - cos(t*uCam.y)*uCam.z, vec3(1., 11. + sin(t)*uCam.w, -1.5));
   for (int i = 1; i < 1000; i++) {
     if (i >= uSteps) break;
     // ray position: screen plane offset upward by 9, depth = accumulated distance g
@@ -99,7 +111,7 @@ void main(){
   gl.enableVertexAttribArray(loc);
   gl.vertexAttribPointer(loc, 2, gl.FLOAT, false, 0, 0);
   const U = n => gl.getUniformLocation(prog, n);
-  const u = { r: U('r'), t: U('t'), steps: U('uSteps'), folds: U('uFolds'), scale: U('uScale'), zoom: U('uZoom'), hue: U('uHue') };
+  const u = { r: U('r'), t: U('t'), steps: U('uSteps'), folds: U('uFolds'), scale: U('uScale'), zoom: U('uZoom'), hue: U('uHue'), cam: U('uCam') };
 
   function resize() {
     const w = Math.round(innerWidth * P.resolution), h = Math.round(innerHeight * P.resolution);
@@ -119,6 +131,8 @@ void main(){
     gl.uniform1f(u.scale, P.scale);
     gl.uniform1f(u.zoom, P.zoom);
     gl.uniform1f(u.hue, P.hue);
+    const c = CAMERAS[P.camera];
+    gl.uniform4f(u.cam, c.base, c.freq, c.amp, c.axis);
     gl.drawArrays(gl.TRIANGLES, 0, 3);
     requestAnimationFrame(draw);
   }
@@ -132,6 +146,7 @@ void main(){
 
   if (window.lil) {
     const gui = new lil.GUI({ title: 'After Nishitsuji' });
+    gui.add(P, 'camera', { 'twigl (published)': 'twigl', 'post text': 'post' });
     gui.add(P, 'steps', 10, 300, 1);
     gui.add(P, 'folds', 4, 30, 1);
     gui.add(P, 'scale', 5, 9, 0.01);
@@ -139,7 +154,7 @@ void main(){
     gui.add(P, 'hue', 0, 1, 0.005);
     gui.add(P, 'speed', 0, 3, 0.01);
     gui.add(P, 'resolution', 0.25, 2, 0.05);
-    gui.add({ reset() { Object.assign(P, { steps: 99, folds: 19, scale: 7.1, zoom: 5, hue: 0.1, speed: 1 }); gui.controllersRecursive().forEach(c => c.updateDisplay()); } }, 'reset').name('reset to original');
+    gui.add({ reset() { Object.assign(P, { camera: 'twigl', steps: 99, folds: 19, scale: 7.1, zoom: 5, hue: 0.1, speed: 1 }); gui.controllersRecursive().forEach(c => c.updateDisplay()); } }, 'reset').name('reset to original');
     gui.add({ save }, 'save').name('save PNG');
     if (innerWidth < 640) gui.close();
   }
