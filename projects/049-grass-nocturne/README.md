@@ -195,6 +195,52 @@ The engine picks it up without other changes. Until then the measurement says
 `CLIMATE MAP NOT YET ADDED`, and the meadow ignores climate. `?geo=0` ignores the ground
 altogether.
 
+## The homage: Athens and London (the default)
+
+With no settings in the address, the piece is a homage to the cooperation between the Royal
+Ballet School and the Centre for Dance Studies. The meadow keeps a week between two homes: a
+place in Athens (37.9704 N, 23.7011 E) and Covent Garden in London (51.5132 N, 0.1232 W). It
+shows the real look.
+
+- **The week** (from 1 Nov 2026, UTC): three days in residence in Athens, half a day crossing,
+  three days in London, and half a day back. Light, weather and ground are always those of where
+  the meadow is.
+- **Every crossing different:** each trip's route is fixed by its number.
+  - About 3 in 10 go nearly direct (2,391 km), or bend a few hundred km off the line.
+  - About 5 in 10 make a detour through one to three points, 300 to 2,500 km to either side.
+  - About 1 in 6 are extreme, by way of one or two places anywhere on earth at least 2,500 km
+    from either home: tens of thousands of km in the same half day.
+  - Departure and arrival are eased, slow at either end.
+- **Glimpses:** in about one five-minute slot in four, a sudden cut of 2–7 seconds to a home.
+  - At a home, it cuts to the other home; while travelling, to both in turn.
+  - Each glimpse brings that home's own meadow, its sun and its live weather (each home has its
+    own reader).
+  - The cuts tear with a moment of datamosh, as do arrivals and departures.
+  - About 3.5 an hour, at the same second on every screen. `?glimpses=0` turns them off.
+- **The dance:**
+  - **Tempo:** follows the place: allegro (120 beats a minute) in Athens, adagio (66) in London,
+    blending on the way.
+  - **Phrasing:** gusts are phrased in counts of eight, the strongest on 1 and again on 5.
+  - **Unison and canon:** in about one minute in three the whole field sways as one, swelling
+    and fading over the minute. Otherwise the movement passes across the field as a canon.
+  - **The révérence:** for the first minute after arriving, every blade and flower bows toward
+    the viewer and the wind drops.
+  - **Stage light:** while in residence, and during glimpses, a soft light falls on the centre
+    of the field.
+  - **Each place its own meadow:** each home has its own meadow, and the journey another. The
+    change happens under the arrival's datamosh.
+- **The homage measurement** (22 kinds now):
+  - in residence: the home, the day of three, the count and tempo, unison or canon, the other
+    home's distance, and time until leaving;
+  - travelling: the trip number, the route kind, its length, how far along, and the city nearest
+    its farthest point.
+- **The dedication:** *For the Royal Ballet School and the Centre for Dance Studies*, lettered for
+  forty seconds at the start of each hour, with the agreement of the Royal Ballet School. Names
+  only: no logos or institutional colours. `?dedication=0` hides it.
+- **Other settings:** `?homes=lat,lon;lat,lon` changes the two homes. `?journey=1`, `?from=`,
+  `?place=`, `?route=` or `?lat=` give the earlier tracks. `?look=lines` gives the line-drawn
+  meadow.
+
 ## The real look (`?look=real`)
 
 The same meadow, rendered in colour instead of as line-drawn blades. Everything else stays
