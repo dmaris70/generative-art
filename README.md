@@ -438,6 +438,18 @@ no curve is ever drawn.
 - **Keys:** **L** loupe · **H** hide everything but the wall · **F** fullscreen · **Space**
   pause · **R** reseed · **S** save master. `?t=0.25` holds a fixed phase.
 
+## Luminous Field — colour fields that breathe
+
+[`projects/056-luminous-field`](projects/056-luminous-field/) is the second piece on the LED-wall
+engine. It translates Rothko's classic format into light: a ground carrying one to three
+soft-edged rectangles, with feathered brushed borders, two inks layered through horizontal
+scumbles, a seam of light at the edge and a core of light inside. On wide walls it hangs a row of
+related canvases in one register. Seeds set the proportions and seven colour registers set the
+palette, so no painting is copied. Over an exact loop (default 10 minutes) the fields breathe:
+edges swell by about 2%, feathers open and close, luminance rises and falls, and the brushed edges
+re-form. `node tools/luminous-field-check.mjs` checks the loop, determinism, seed identity and
+layout. Output, kiosk, loupe and export are as for Ruled Light.
+
 ## Contact sheet
 
 `variations.html` renders one piece across many seeds as a grid of live tiles — the
