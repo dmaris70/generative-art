@@ -235,8 +235,8 @@ shows the real look.
   - travelling: the trip number, the route kind, its length, how far along, and the city nearest
     its farthest point.
 - **The dedication:** *For the Royal Ballet School and the Centre for Dance Studies*, lettered for
-  forty seconds at the start of each hour. **Only with `?dedication=1`.** It stays off the
-  public default until both institutions have agreed to be named.
+  forty seconds at the start of each hour, with the agreement of the Royal Ballet School. Names
+  only: no logos or institutional colours. `?dedication=0` hides it.
 - **Other settings:** `?homes=lat,lon;lat,lon` changes the two homes. `?journey=1`, `?from=`,
   `?place=`, `?route=` or `?lat=` give the earlier tracks. `?look=lines` gives the line-drawn
   meadow.
