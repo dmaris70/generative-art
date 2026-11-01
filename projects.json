@@ -3,10 +3,24 @@
   "author": "dmaris70",
   "projects": [
     {
+      "slug": "053-undertow",
+      "title": "Undertow",
+      "year": 2026,
+      "tools": [
+        "webgl2"
+      ],
+      "description": "A seagrass meadow at depth, after the idiom of Leander Herzog's Field (2026) moved under water. Tens of thousands of twisting ribbons are bent on the GPU by a current of calm water and long gusts, a back-and-forth surge and a travelling swell; light circles slowly above the surface and arrives as caustics, shafts and satin glints on near-black. Drag to part the grass, shift / right-drag to turn, scroll to approach; ?seed= and ?n= set the bed and its density.",
+      "thumb": "preview.png"
+    },
+    {
       "slug": "052-naza",
       "title": "NAZA",
       "year": 2026,
-      "tools": ["webgl2", "canvas", "lil-gui"],
+      "tools": [
+        "webgl2",
+        "canvas",
+        "lil-gui"
+      ],
       "description": "Titled by the artist after a documentary about collateral deaths. Guernica's proportion (776.6 × 349.3 cm) and grisaille, and the structure of its ground — dark wings, a pyramid of light, a jagged lamp, a band of newsprint, shards and a fallen diagonal — never its figures. Then salvos of dark drops cut across it and combs tear it, exactly: every gesture is an invertible marbling map computed per pixel on the GPU, so any moment renders directly. Two observers read the ink in one bit — a machined screen on the glass, or a hand-painted one carried by the ink — with Soto's moiré panel and Mellan's spiral among them. Each bath ends in a print, a score and a plotter drawing.",
       "thumb": "preview.png"
     },
@@ -45,7 +59,10 @@
       "slug": "047-edition-of-390",
       "title": "Edition of 390",
       "year": 2026,
-      "tools": ["canvas", "svg"],
+      "tools": [
+        "canvas",
+        "svg"
+      ],
       "description": "For #PCDTokyo2026 (theme: 25). The room at NEORT++ is open 10:00 – 16:30 JST: 390 minutes, and each minute is one offset of the 25-grid, so one tiling with exact 25-fold symmetry that no other minute has. The screen grows the current minute's tiling, rests, and at the minute fades into the next. A code opens the visitor's page, which computes the same tiling from the phone's clock and hands it over as a plotter-ready SVG: the tiling of the minute you stood there. Nothing stored, nothing served. Outside the hours, a rehearsal.",
       "thumb": "preview.png"
     },
@@ -53,7 +70,9 @@
       "slug": "046-twenty-five-fold",
       "title": "Twenty-five-fold",
       "year": 2026,
-      "tools": ["canvas"],
+      "tools": [
+        "canvas"
+      ],
       "description": "For #PCDTokyo2026 (theme: 25). A crystal can repeat with 2-, 3-, 4- or 6-fold symmetry and no other; a pattern that never repeats is not bound by that. A tiling with exact 25-fold symmetry — de Bruijn's 25 families of parallel lines read as their dual, every crossing one rhombus, twelve shapes — grown from the centre a tile a frame, then turned through the 14.4° that leaves it unchanged. Then another offset: the same symmetry, none of the same tiles.",
       "thumb": "preview.png"
     },
@@ -61,7 +80,10 @@
       "slug": "045-every-25-token-sketch",
       "title": "Every 25-Token Sketch",
       "year": 2026,
-      "tools": ["canvas", "BigInt"],
+      "tools": [
+        "canvas",
+        "BigInt"
+      ],
       "description": "For #PCDTokyo2026 (theme: 25). An homage to つぶやきProcessing: every program of a fifteen-symbol pixel language, enumerated in order, shortest first, and drawn as it arrives — 8 a second on a conveyor of 25 tiles with its code beneath, while a slow lane keeps the program that scores best for structure and lets its claim fade. 5 programs of one token, 2,500 of four, 328,125 of six; the first 25-token program arrives in 2.9 × 10¹⁷ years. A Library of Babel of sketches, read from the first shelf.",
       "thumb": "preview.png"
     },
@@ -69,7 +91,9 @@
       "slug": "044-the-25th-frame",
       "title": "The 25th Frame",
       "year": 2026,
-      "tools": ["canvas"],
+      "tools": [
+        "canvas"
+      ],
       "description": "For #PCDTokyo2026 (theme: 25). The Soviet 25th-frame myth, the other way round: the number 25 is never in any frame. Every frame is fair-coin noise, and from one frame alone nothing can be read. Outside the figure every cell flips to its opposite on each frame, so any two frames cancel to flat grey; inside it the noise holds still (or drifts). The figure exists only in time — for the eye, through persistence of vision, and for a camera on an exposure of two frames or more. Pause it, screenshot it, and it is gone.",
       "thumb": "preview.png"
     },
@@ -77,7 +101,11 @@
       "slug": "043-8212890625",
       "title": "…8212890625 — the receipt of a number that is its own square",
       "year": 2026,
-      "tools": ["canvas", "BigInt", "strokefont"],
+      "tools": [
+        "canvas",
+        "BigInt",
+        "strokefont"
+      ],
       "description": "For #PCDTokyo2026 (theme: 25). 25² = 625, 625² = 390625, 90625² = 8212890625: each square keeps the ending of the number it came from, and the endings grow, converging to a number with infinitely many digits to the left — …896109004106619977392256259918212890625 — that is its own square (a 10-adic idempotent, and the only one squaring can reach, with 25 as its seed). Every squaring is written out as hand-written long multiplication on a till roll: the receipt gets longer forever, and its right-hand end never changes again.",
       "thumb": "preview.png"
     },
@@ -85,7 +113,9 @@
       "slug": "042-every-25-pixel-image",
       "title": "Every 25-Pixel Image, Exhausted in One Day",
       "year": 2026,
-      "tools": ["canvas"],
+      "tools": [
+        "canvas"
+      ],
       "description": "For #PCDTokyo2026 (theme: 25). A 5 × 5 grid of cells can show 2²⁵ = 33,554,432 images; this sheet shows 25 of them on every frame and counts through all of them in binary, 1,500 a second — the top-left cell changing every image, the bottom-right once, three hours in. Every image has been shown after 6 h 12 m 49 s, one exhibition day. Locked to Tokyo time: it begins at 10:00:00 JST, finishes at 16:12:49 JST, and rests on the last 25 images. After John F. Simon Jr.'s Every Icon (1997), whose 32 × 32 grid would outlast the universe.",
       "thumb": "preview.png"
     },
@@ -93,7 +123,10 @@
       "slug": "041-between-a-square-and-a-cube",
       "title": "Between a Square and a Cube — y² = x³ − 2",
       "year": 2026,
-      "tools": ["canvas", "BigInt"],
+      "tools": [
+        "canvas",
+        "BigInt"
+      ],
       "description": "For #PCDTokyo2026 (theme: 25). 25 = 5², 27 = 3³, and 26 is the only whole number directly between a square and a cube: the curve y² = x³ − 2 passes through exactly one pair of lattice points, (3, ±5). From that pair, straight lines alone — chord and tangent — find rational point after rational point on the curve, each written out exactly along the ray that found it, the fractions (computed exactly with BigInt) outgrowing the sheet while the curve never meets another lattice point. A star of lines through (3, 5), then its mirror; or a seeded web of chords.",
       "thumb": "preview.png"
     },
@@ -101,7 +134,10 @@
       "slug": "037-watercolor-landscape",
       "title": "Watercolor Landscape v1 — the same landscape in watercolour",
       "year": 2026,
-      "tools": ["p5.js", "p5.brush"],
+      "tools": [
+        "p5.js",
+        "p5.brush"
+      ],
       "description": "The scene engine of Oil Landscape v1, repainted by a watercolourist: light to dark, far to near, with the paper as the only white. Graded skies laid wet into wet, clouds dropped into the damp sky, mountains as washes with hard-edged shadow glazes, granulation, backruns, lifted lights, dry brush, sponge, rigger grass blown by a wind field, white gouache snow, sepia pen hatching, spatter and salt — every p5.brush watercolour tool (fillBleed, fillTexture, wash, hatchArray, massArray, custom brushes, fields) used for what it does best. Five moods, three scene types, three viewpoints.",
       "thumb": ""
     },
@@ -109,7 +145,10 @@
       "slug": "036-aerial-recession",
       "title": "Oil Landscape v1 — computed landscape in oil",
       "year": 2026,
-      "tools": ["p5.js", "p5.brush"],
+      "tools": [
+        "p5.js",
+        "p5.brush"
+      ],
       "description": "The classical rules of landscape depth computed instead of painted, then laid in oil: one camera over one ground plane sizes every field, tree, cloud and river bend by 1/z; one transmittance term 1 − e^(−kz) cools, flattens and simplifies whatever recedes; a low sun (or the moon, or an overcast) splits peaks into lit and shadow planes. The underpainting is read back and repainted in thousands of directional oil strokes with bristles, impasto, scumbles and glazes. Five moods, three scene types, three viewpoints, a framing group of trees. Formerly \"Aerial Recession\".",
       "thumb": ""
     },
@@ -117,7 +156,9 @@
       "slug": "031-ruled-continuum",
       "title": "Ruled Continuum — curve stitching",
       "year": 2026,
-      "tools": ["p5.js"],
+      "tools": [
+        "p5.js"
+      ],
       "description": "Nothing curved is ever drawn: bundles of straight glissandi, anchored to rails moving in opposite phase, pile into caustic sweeps that read as continuous curves though every mark is straight — doubly-ruled surfaces massed into a field. Ink at low opacity on a faint metric ground; the seed fixes every rail forever, so the same integer rebuilds the same architecture to the last filament.",
       "thumb": ""
     },
@@ -125,7 +166,9 @@
       "slug": "030-drawn-spectra",
       "title": "Drawn Spectra — the gesture as score",
       "year": 2026,
-      "tools": ["p5.js"],
+      "tools": [
+        "p5.js"
+      ],
       "description": "A time × frequency plane read the way a score is read: freehand arc-bundles — glissandi, trembling held tones, staccato flecks — stand in for sound events, each strand independently hand-tremored so a sweep reads as a breathing band rather than a wire. Black ink on a faint staff-ruled ground; colour, when it enters, maps pitch to hue.",
       "thumb": ""
     },
@@ -133,7 +176,9 @@
       "slug": "029-ramus",
       "title": "Ramus — branching gesture",
       "year": 2026,
-      "tools": ["p5.js"],
+      "tools": [
+        "p5.js"
+      ],
       "description": "A single tapered stroke that cannot stop dividing: heading, thickness and a shared noise-field pass down through each generation as the line ramifies into a calligraphic arborescence, thick at the root and hairline at the tips. Ink on paper, with a sanguine accent reserved for a minority of branches; no grid — the whole tree is the biography of one gesture.",
       "thumb": ""
     },
@@ -200,7 +245,9 @@
       "slug": "011-isometric-strata",
       "title": "Isometric Strata",
       "year": 2026,
-      "tools": ["p5.js"],
+      "tools": [
+        "p5.js"
+      ],
       "description": "Generative architectural drawing sheets: a hand-drawn axonometric of a building on its site — Mexican-modern patio mat, deconstructivist tower, geodesic expo mast or brutalist mosaic block — inside a full title block, floor scale, legend tallied from the geometry, scale bar and specification, on textured graph paper. R for a new sheet.",
       "thumb": ""
     },
@@ -208,7 +255,10 @@
       "slug": "010-plotter-interrupt",
       "title": "Plotter Interrupt",
       "year": 2026,
-      "tools": ["p5.js", "plotter"],
+      "tools": [
+        "p5.js",
+        "plotter"
+      ],
       "description": "A field of irregular dotted rulings and heavy fragmented bars, with a void where the pen never came down. The menu down the left is a real HP-GL program whose every value is measured off the drawing beside it. Stroke-only; press V for plotter-ready SVG.",
       "thumb": ""
     },
@@ -216,7 +266,9 @@
       "slug": "009-watercolor-painter",
       "title": "Watercolor Painter",
       "year": 2026,
-      "tools": ["p5.js"],
+      "tools": [
+        "p5.js"
+      ],
       "description": "A watercolour painting studio: drop any image (photo or line art), then pick a colour and click any region to paint it — real bleed, RYB colour mixing at seams, and paper tooth. Also auto-colours the whole image.",
       "thumb": ""
     },
@@ -224,7 +276,9 @@
       "slug": "008-watercolor-tree",
       "title": "Watercolor Tree",
       "year": 2026,
-      "tools": ["p5.js"],
+      "tools": [
+        "p5.js"
+      ],
       "description": "Colours a line drawing with the watercolour technique — drop a tree PNG on the canvas to paint it. Also a standalone generative watercolour tree.",
       "thumb": ""
     },
@@ -232,7 +286,9 @@
       "slug": "007-watercolor-landscape",
       "title": "Watercolor Landscape",
       "year": 2026,
-      "tools": ["p5.js"],
+      "tools": [
+        "p5.js"
+      ],
       "description": "A generative watercolour landscape — outlined shape-trees (conifers + round crowns), a sun disc and layered noise-ridge hills — using the watercolor module's shapes technique.",
       "thumb": ""
     },
@@ -240,7 +296,9 @@
       "slug": "006-grid-collapse",
       "title": "Grid Collapse",
       "year": 2026,
-      "tools": ["p5.js"],
+      "tools": [
+        "p5.js"
+      ],
       "description": "An ordered grid dissolving into randomness across a noise-warped front — after Tyler Hobbs' 'structure from randomness'.",
       "thumb": ""
     },
@@ -248,7 +306,9 @@
       "slug": "005-differential-growth",
       "title": "Differential Growth",
       "year": 2026,
-      "tools": ["p5.js"],
+      "tools": [
+        "p5.js"
+      ],
       "description": "A closed line that grows, repels itself and folds into organic coral-like boundaries. Animated; R reseeds.",
       "thumb": ""
     },
@@ -256,7 +316,9 @@
       "slug": "004-flow-ribbons",
       "title": "Flow Ribbons",
       "year": 2026,
-      "tools": ["p5.js"],
+      "tools": [
+        "p5.js"
+      ],
       "description": "Non-overlapping flow-field ribbons with variable-scale zones, turbulence regions and crisp polygon edges — after Tyler Hobbs' Fidenza.",
       "thumb": ""
     },
@@ -264,7 +326,9 @@
       "slug": "003-watercolor",
       "title": "Watercolor",
       "year": 2026,
-      "tools": ["p5.js"],
+      "tools": [
+        "p5.js"
+      ],
       "description": "Watercolour shapes bled from geometric polygons on textured paper — reimplements the watercolorizer / Tyler Hobbs evolution algorithm.",
       "thumb": ""
     },
@@ -272,7 +336,9 @@
       "slug": "002-particle-life",
       "title": "Particle Life",
       "year": 2026,
-      "tools": ["p5.js"],
+      "tools": [
+        "p5.js"
+      ],
       "description": "Life-like clustering from a seeded species×species attraction matrix. Tune it live; R for a new universe.",
       "thumb": ""
     },
@@ -280,7 +346,9 @@
       "slug": "001-flow-field",
       "title": "Flow Field",
       "year": 2026,
-      "tools": ["p5.js"],
+      "tools": [
+        "p5.js"
+      ],
       "description": "Particles advected through a Perlin-noise vector field. Live params + reproducible seed.",
       "thumb": ""
     }

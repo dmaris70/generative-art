@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
+  <title>Undertow — Generative Art</title>
+  <style>
+    html, body { margin: 0; height: 100%; background: #000; overflow: hidden; touch-action: none; }
+    canvas { display: block; width: 100vw; height: 100vh; cursor: crosshair; }
+    a.back {
+      position: fixed; top: 14px; left: 16px; z-index: 10;
+      color: #9fc7d4; font: 13px ui-sans-serif, system-ui, sans-serif;
+      text-decoration: none; opacity: .45; transition: opacity .3s;
+    }
+    a.back:hover { opacity: 1; }
+    #intro {
+      position: fixed; inset: 0; display: flex; align-items: center; justify-content: center;
+      pointer-events: none; color: #cfe3ea; font: 300 15px/1.6 Georgia, 'Times New Roman', serif;
+      letter-spacing: .04em; text-align: center; transition: opacity 3s ease;
+    }
+    #intro small { display: block; margin-top: 18px; font: 11px ui-sans-serif, system-ui, sans-serif; opacity: .55; letter-spacing: .08em; }
+    #intro.gone { opacity: 0; }
+    #error { position: fixed; left: 16px; bottom: 16px; color: #f99; font: 12px ui-monospace, monospace; white-space: pre-wrap; }
+  </style>
+</head>
+<body>
+  <a class="back" href="../../">← gallery</a>
+  <canvas id="gl" aria-label="Undertow"></canvas>
+  <div id="intro"><div><em>Undertow</em>, 2026<small>drag to part the seagrass · shift / right-drag or two fingers to turn · scroll to approach</small></div></div>
+  <pre id="error" hidden></pre>
+  <script>
+    addEventListener('error', e => { const el = document.getElementById('error'); el.textContent = '⚠ ' + e.message; el.hidden = false; });
+  </script>
+  <script src="undertow.js"></script>
+</body>
+</html>
