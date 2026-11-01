@@ -249,7 +249,7 @@
         return [cw / 2 - st.loupe.cx * z, ch / 2 - (st.H - st.loupe.cy) * z, st.W * z, st.H * z];
       }
       const aw = Math.max(1, cw - st.insetRight);
-      const pad = Math.round(Math.min(aw, ch) * 0.04);
+      const pad = st.noPad ? 0 : Math.round(Math.min(aw, ch) * 0.04); // noPad: the wall is the window
       const s = Math.min((aw - 2 * pad) / st.W, (ch - 2 * pad) / st.H);
       const w = st.W * s, h = st.H * s;
       return [(aw - w) / 2, (ch - h) / 2, w, h];
