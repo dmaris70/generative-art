@@ -37,6 +37,16 @@
       "thumb": "preview.png"
     },
     {
+      "slug": "050-root-section",
+      "title": "Root Section",
+      "year": 2026,
+      "tools": [
+        "webgl2"
+      ],
+      "description": "A floor-to-ceiling cut through the soil in which roots grow over a 92-day season, as fast as the real weather allows: warmth above 5 °C times a soil-water bucket fed by rain, re-downloaded on every load so nothing is stored and every screen agrees. The graphics card decides from one number how much of each of some 70,000 root segments exists; sap pulses run toward the stems with the sun, and each rain soaks down as a wetting front.",
+      "thumb": "preview.png"
+    },
+    {
       "slug": "049-grass-nocturne",
       "title": "Grass Nocturne",
       "year": 2026,
