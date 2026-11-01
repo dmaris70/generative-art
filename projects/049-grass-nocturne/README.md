@@ -195,6 +195,34 @@ The engine picks it up without other changes. Until then the measurement says
 `CLIMATE MAP NOT YET ADDED`, and the meadow ignores climate. `?geo=0` ignores the ground
 altogether.
 
+## The real look (`?look=real`)
+
+The same meadow, rendered in colour instead of as line-drawn blades. Everything else stays
+unchanged: the clock, the journey, the weather, the geography, the score and the
+measurements.
+
+- **Grass:** each blade is green varying from blade to blade, drying to straw toward the tip, in
+  dry tufts and in dry, hot or pale-climate weather. It is dark at the root, lit as a canopy from
+  above and on its faces, and glows where the light passes through.
+- **Flowers:** in drifts, on stems among the grass, moving with the same wind: pink, white, red,
+  orange and violet, with yellow centres. They appear in the warm half of the year where the
+  journey is (all year in the tropics), fewer in dry or cold climates, none under snow.
+  `?flowers=0…3` sets how many.
+- **Light:** the sun's colour and the sky's colour follow the sun's height where the journey is:
+  white at midday, gold low down, a moonlit blue at night, greyer under cloud. The sky runs from a
+  pale horizon to a deeper zenith with a glow round the sun. The ground is earth and the tree line
+  a dark wood. Aerial haze is gentle near and pale toward the horizon.
+- **Off in this look, unless asked for:** the paper, wash and charcoal registers and the dichroic
+  shimmer. The faded near field, automatic exposure, glitches and colour minutes still apply.
+
+**A new glitch, datamosh** (glitch 11, in both looks):
+- columns smeared upward from one row into vertical streaks;
+- horizontal bars displaced sideways, some flooded with a flat blue;
+- 16-pixel blocks replaced by an earlier frame.
+
+The technique is taken from a datamoshed meadow photograph shared as a reference; its
+composition is not copied.
+
 ## The sea
 
 Where the journey is over the sea, every element of the piece stays intact: the meadow, its
