@@ -1,16 +1,21 @@
 # After Nishitsuji
 
 *A transcription, not an original work.* A one-line twigl shader by Yohei Nishitsuji
-([x.com/yoheinishitsuji/status/1999814369925046474](https://x.com/yoheinishitsuji/status/1999814369925046474)),
+([published on twigl](https://twigl.app?ol=true&ss=-OgMbTexmkAwvg_2mnM_), shown in
+[this post](https://x.com/yoheinishitsuji/status/1999814369925046474)),
 expanded into readable GLSL ES 3.00 and run as a standalone WebGL2 page. At the default settings
 the output matches the original: a cloud deck seen from above, drifting under a slowly swaying
 camera.
 
-## Original (verbatim)
+## Original (verbatim, from the twigl snapshot, mode 7 "geekest 300 es", dated 2025-12-13)
 
 ```glsl
-for(float i,g,e,s;++i<99.;o.rgb+=.01-hsv(.1,g*.016-e*.3,s/2e2)){vec3 p=vec3((FC.xy-.5*r)/r.y*5.+vec2(0,9),g)*rotate3D(-1.1-cos(t*.15)*.1,vec3(1,11.+sin(t)*.15,-1.5));s=2.;for(int i;i++<19;p=vec3(.08,4,-1)-abs(abs(p)*e-vec3(3,4,3)))s*=e=7.1/dot(p,p*.51);g+=p.y/s;s=log2(s)/exp(e);}
+for(float i,g,e,s;++i<99.;o.rgb+=.01-hsv(.1,g*.016-e*.3,s/2e2)){vec3 p=vec3((FC.xy-.5*r)/r.y*5.+vec2(0,9),g)*rotate3D(-1.15-cos(t*.2)*.05,vec3(1,11.+sin(t)*.2,-1.5));s=2.;for(int i;i++<19;p=vec3(.08,4,-1)-abs(abs(p)*e-vec3(3,4,3)))s*=e=7.1/dot(p,p*.51);g+=p.y/s;s=log2(s)/exp(e);}
 ```
+
+The version quoted with the post differs only in the camera:
+`rotate3D(-1.1-cos(t*.15)*.1,vec3(1,11.+sin(t)*.15,-1.5))` (a slightly higher, slower, wider sway).
+The panel's **camera** control switches between them; `?camera=post` selects the post's version.
 
 ## How it works
 
@@ -27,7 +32,7 @@ floats are set to 0, as twigl relies on in practice.
 
 ## Controls
 
-Panel: march steps, fold count, inversion scale, zoom, hue, speed, render resolution,
+Panel: camera (twigl / post), march steps, fold count, inversion scale, zoom, hue, speed, render resolution,
 **reset to original**, save PNG. Keys: F fullscreen, H hide, space pause, S save PNG.
 `?t=<seconds>` freezes the clock at a fixed time (used for `preview.png`, `t=3`).
 
