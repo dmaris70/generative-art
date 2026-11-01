@@ -457,13 +457,14 @@ piece: Yohei Nishitsuji's one-line twigl shader (a cloud deck seen from above) e
 readable GLSL, with twigl's implicit inputs and helpers made explicit and each stage annotated.
 Defaults reproduce the original; the panel exposes its constants. Rights remain with the author.
 
-## Folded Weather — five studies on one engine
+## Folded Weather — eleven studies on one engine
 
 [`projects/058-folded-weather`](projects/058-folded-weather/) builds on the engine transcribed in
 057. Nishitsuji's output reduces exactly to three fields (density W, sky weight S, depth g), so the
-march can be relit and redrawn without changing it. Hours runs a 96-second day with dusk light and
-stars through the gaps; Drift moves the fold constants round a closed 60-second path; Sumi reads
-density as ink; Strata reads depth as contours; Atlas lays out nine seeds. The seed space was
+march can be relit and redrawn without changing it. Light: Hours (a 96-second day), Drift (the fold
+constants on a closed 60-second path), Slit (each column a different moment of that path), Aurora.
+Print: Sumi, Intaglio (engraved line), Cyanotype. Survey: Strata (contours), Satellite (simulated
+infrared enhancement). Form: Tessera (hex mosaic, one march per tile), Atlas (nine seeds). The seed space was
 measured first: the y components of the fold offset and box must stay equal, and the rest respond
 chaotically, so `node tools/folded-weather-screen.mjs` screens raw seeds with the page's own shader
 and ships the ones that keep a healthy deck.
