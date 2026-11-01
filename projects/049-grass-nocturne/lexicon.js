@@ -59,6 +59,17 @@
     }
     return out;
   }
+  // the same, letter by letter: [{i, ch, cx, cy, pls}], so each letter can move on its own
+  function chars(str, x, y, size, drop) {
+    const s = size / G, out = [], cs = norm(str);
+    for (let i = 0; i < cs.length; i++) {
+      if (cs[i] === ' ' || (drop && drop(i))) continue;
+      const g = glyph(cs[i]); if (!g) continue;
+      const ox = x + i * ADV * s;
+      out.push({ i, ch: cs[i], cx: ox + 2 * s, cy: y + 3 * s, pls: g.map((flat) => { const pts = []; for (let k = 0; k < flat.length; k += 2) pts.push({ x: ox + flat[k] * s, y: y + flat[k + 1] * s }); return pts; }) });
+    }
+    return out;
+  }
   // words to lines of at most n characters
   function wrap(str, n) {
     const out = []; let line = '';
@@ -136,7 +147,7 @@
     return { at, milestones, fieldWord, terms: T, etymology: E, WIN, tripStart };
   }
 
-  const api = { create, text, width, norm, wrap, glyph, STATUS, yearWords, WIN };
+  const api = { create, text, chars, width, norm, wrap, glyph, STATUS, yearWords, WIN };
   global.Lexicon = api;
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
 })(typeof window !== 'undefined' ? window : globalThis);

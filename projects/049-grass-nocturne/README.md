@@ -276,10 +276,24 @@ two schools, what changes on the way, what is lost, and what remains.
   - **Once an hour at a home** (minutes 30–33): the *etymology* of one word, step by step from
     the Greek to the English (βαλλίζω → ballare → balletto → ballet; ορχήστρα, the dancing floor
     → orchestra, the players).
-- **In the margin** (left, the first 100 s of each term): the term, its Greek, its literal
-  meaning, a description, its origin and year, how the schools differ, and its status.
-  - The text is in the piece's single-stroke letters, on a faint backing. The ink is dark or
-    light, depending on what is measured behind it.
+- **The entry box** (the first 100 s of each term): the term, its Greek, its literal meaning, a
+  description, its origin and year, how the schools differ, and its status.
+  - **Where it stands:** the box travels the eight points of the studio, numbered as in the
+    Vaganova school and seen from the audience: 1 the front, then 2 front right, round to 8 front
+    left.
+  - Each term enters three points on from the last, so the box draws a star across the room.
+    While it is read, it glides a third of the way toward the next point.
+  - It gives way to the map at the top right and stays clear of the dedication line at the
+    bottom left.
+  - **Always readable:** the box sits on a backing. Its ink is dark or light, depending on the
+    brightness measured behind the box, wherever the box is.
+  - **The letters dance:** they enter on the beat, at the meadow's tempo (allegro in Athens,
+    adagio in London). The title's letters come in sixteenths, the term's in eighths, and the
+    rest a line a beat, each letter rising into place.
+  - The term and its Greek then move in the term's motion: they sink, rise, turn, leap, stretch
+    into a line, sway, tremble, fall and recover, or circle. They move all together when the
+    field is in unison, and one after another (in canon) when it is not.
+  - The year counts up like a dial as its line enters.
   - A **lost** term loses its letters as it is read.
 - **In the field:** the word grows in the grass, first in one language, then in the other (in
   Athens Greek first, in London English first).

@@ -773,9 +773,10 @@ void main() { vec2 p = vec2(float((gl_VertexID << 1) & 2), float(gl_VertexID & 2
     gl.bindFramebuffer(gl.READ_FRAMEBUFFER, null);
     const bins = new Uint32Array(256);
     for (let i = 0; i < px.length; i += 4) bins[(0.299 * px[i] + 0.587 * px[i + 1] + 0.114 * px[i + 2]) | 0]++;
-    // and the mean brightness behind the margin, where the lexicon is written (left 40 %, rows 15–65 % from the bottom)
+    // and the mean brightness behind the lexicon's box, wherever it was last drawn (rows count from the bottom)
     let ms2 = 0, mn = 0;
-    for (let y = Math.floor(HIST_H * 0.15); y < HIST_H * 0.65; y++) for (let x = 0; x < HIST_W * 0.4; x++) { const i = (y * HIST_W + x) * 4; ms2 += 0.299 * px[i] + 0.587 * px[i + 1] + 0.114 * px[i + 2]; mn++; }
+    const [rx0, ry0, rx1, ry1] = lexRect;
+    for (let y = Math.max(0, Math.floor(HIST_H * (1 - ry1))); y < Math.min(HIST_H, HIST_H * (1 - ry0)); y++) for (let x = Math.max(0, Math.floor(HIST_W * rx0)); x < Math.min(HIST_W, HIST_W * rx1); x++) { const i = (y * HIST_W + x) * 4; ms2 += 0.299 * px[i] + 0.587 * px[i + 1] + 0.114 * px[i + 2]; mn++; }
     marginLum = mn ? ms2 / mn / 255 : 0;
     let n = 0; const want = HIST_W * HIST_H * 0.9;
     for (let b = 0; b < 256; b++) { n += bins[b]; if (n >= want) return b / 255; }
@@ -1259,35 +1260,100 @@ void main() { vec2 p = vec2(float((gl_VertexID << 1) & 2), float(gl_VertexID & 2
     for (const pl of global.Lexicon.text(str, x, y, size, drop)) { ox.moveTo(pl[0].x, pl[0].y); for (let i = 1; i < pl.length; i++) ox.lineTo(pl[i].x, pl[i].y); }
   }
   // ── the lexicon in the margin: the entry, the canto of a trip, the etymology of a word
-  function drawLexicon(ms, f, size) {
-    const LX = f.LX, Lx = global.Lexicon, H = ov.height, t = LX.term;
-    const show = LX.mode === 'canto' || LX.mode === 'etym' ? smoothJS(0, 0.03, LX.p) * smoothJS(1, 0.97, LX.p) : smoothJS(0.01, 0.04, LX.p) * smoothJS(0.62, 0.56, LX.p);
+  // ── the lexicon in the frame: the entry, the canto of a trip, the etymology of a word.
+  // The box travels the eight points of the studio, numbered as in the Vaganova school (1 the
+  // front, then round by the dancer's right: 2 front right … 8 front left), seen from the audience.
+  // Each term enters three points on from the last, a star across the room, and glides a third of
+  // the way toward the next while it is read. Its letters enter on the beat, the term's own letters
+  // dance its motion (in unison or in canon with the field), and its year counts up like a dial.
+  const STAGE = [null, [0.5, 1], [0, 1], [0, 0.5], [0, 0.18], [0.5, 0], [1, 0.18], [1, 0.5], [1, 1]];   // x: 0 left … 1 right; y: 0 top … 1 bottom
+  const stagePoint = (k) => (((k * 3 + (ihash(Math.floor(k / 8) ^ 0x51a7) % 8)) % 8) + 8) % 8 + 1;
+  let lexRect = [0.03, 0.35, 0.4, 0.8];                     // where the box was last drawn (fractions of the frame), for the ink
+  function letterMove(kind, i, ph, beat, unison, A, size) {
+    const lag = unison ? 0 : i * 0.35, q = ph - lag, c = 0.5 - 0.5 * Math.cos(q);
+    switch (kind) {
+      case 'sink': return [0, A * 0.6 * c, 0];
+      case 'rise': return [0, -A * 0.6 * c, 0];
+      case 'spiral': return [0, 0, 0.3 * Math.sin(q)];
+      case 'leap': return [0, -A * 1.2 * Math.max(0, Math.sin(2 * q)) ** 2, 0];
+      case 'line': return [i * size * 0.22 * (0.5 - 0.5 * Math.cos(ph)), 0, 0];
+      case 'extend': return [i * size * 0.12 * (0.5 + 0.5 * Math.sin(ph)), -A * 0.2 * c, 0];
+      case 'sway': return [0, A * 0.5 * Math.sin(q), 0.08 * Math.cos(q)];
+      case 'tremble': return [A * 0.07 * Math.sin(ph * 37 + i * 7.1), A * 0.07 * Math.sin(ph * 41 + i * 3.7), 0];
+      case 'beat': return [0, -A * 0.5 * beat, 0];
+      case 'fall': { const k2 = Math.pow(0.5 - 0.5 * Math.cos(q * 0.5), 3); return [A * 0.3 * k2, A * 0.8 * k2, 0.6 * k2]; }
+      case 'circle': return [A * 0.4 * Math.cos(q), A * 0.4 * Math.sin(q), 0];
+      default: return [0, 0, 0];
+    }
+  }
+  function drawLexicon(ms, f, size, mapOn) {
+    const LX = f.LX, Lx = global.Lexicon, W = ov.width, H = ov.height, t = LX.term;
+    const long = LX.mode === 'canto' || LX.mode === 'etym';
+    const show = long ? smoothJS(0, 0.03, LX.p) * smoothJS(1, 0.97, LX.p) : smoothJS(0.01, 0.04, LX.p) * smoothJS(0.62, 0.56, LX.p);
     if (show < 0.01) return;
-    const light = marginLum > 0.42;                          // ink against what is behind it, on a faint backing like the map's
-    ox.save(); ox.strokeStyle = light ? 'rgb(24, 26, 32)' : 'rgb(232, 229, 221)';
-    const lines = [];                                        // [text, scale, drop]
+    const pv = long ? LX.p : Math.min(1, Math.max(0, (LX.p - 0.01) / 0.61));        // how far through being read
+    const tS = (long ? LX.p * 180 : (LX.p - 0.01) * LEX.WIN / 1000), bpm = f.dance ? f.dance.bpm : 90, bIn = Math.max(0, tS) * bpm / 60;
+    const beatFrac = bIn % 1, onAccent = Math.floor(bIn) % 4 === 0, beat = onAccent ? Math.exp(-beatFrac * 5) : 0.3 * Math.exp(-beatFrac * 5);
+    const unison = f.dance ? f.dance.unison : false, ph = bIn * Math.PI * 2 / 8;
+    // the lines: {s, sc, drop, dance (its letters move), year}
+    const lines = [], L = (s2, sc, o) => lines.push(Object.assign({ s: s2, sc }, o || {}));
     if (LX.mode === 'canto') {
-      lines.push(['CANTO ' + (LX.n + 1) + ' - ' + LX.from.name + ' TO ' + LX.to.name, 1], ['WHAT THE JOURNEY CARRIED', 0.8]);
-      LX.list.forEach((m, i) => lines.push([(i === LX.step ? '> ' : '  ') + (i + 1) + ' ' + m.term.t + ' - ' + m.term.gr, i === LX.step ? 1.05 : 0.9]));
+      L('CANTO ' + (LX.n + 1) + ' - ' + LX.from.name + ' TO ' + LX.to.name, 1); L('WHAT THE JOURNEY CARRIED', 0.8);
+      LX.list.forEach((m, i) => L((i === LX.step ? '> ' : '  ') + (i + 1) + ' ' + m.term.t + ' - ' + m.term.gr, i === LX.step ? 1.05 : 0.9, i === LX.step ? { dance: m.term.move } : null));
     } else if (LX.mode === 'etym') {
-      lines.push(['ETYMOLOGY - ' + LX.etym.word, 1]);
-      LX.etym.chain.forEach((c, i) => { if (i <= LX.step) lines.push([(i ? '> ' : '') + c[0], i === LX.step ? 1.35 : 1.05], ['  ' + c[1] + (c[2] ? ' - ' + c[2] : ''), 0.8]); });
+      L('ETYMOLOGY - ' + LX.etym.word, 1);
+      LX.etym.chain.forEach((c, i) => { if (i <= LX.step) { L((i ? '> ' : '') + c[0], i === LX.step ? 1.35 : 1.05, i === LX.step ? { dance: 'sway' } : null); L('  ' + c[1] + (c[2] ? ' - ' + c[2] : ''), 0.8); } });
     } else {
       // a lost word loses its letters while it is read
       const drop = LX.lost ? (i) => h01((Math.imul(LX.k, 31) + i * 7919) >>> 0) < 0.15 + 0.55 * LX.p : null;
-      lines.push([LX.mode === 'refrain' ? 'REFRAIN - WHAT REMAINS' : 'LEXICON OF THE JOURNEY', 0.8], [t.t, 1.7, drop], [t.gr, 1.3, drop]);
-      Lx.wrap('LITERALLY: ' + t.lit, 50).forEach((l) => lines.push([l, 0.9]));
-      Lx.wrap(t.does, 46).forEach((l) => lines.push([l, 0.9]));
-      lines.push([(t.place || '') + ', ' + Lx.yearWords(t.year) + ' - ' + t.fam, 0.8]);
-      if (t.schools) Lx.wrap(t.schools, 56).forEach((l) => lines.push([l, 0.8]));
-      lines.push([Lx.STATUS[t.status] || '', 0.8]);
+      L(LX.mode === 'refrain' ? 'REFRAIN - WHAT REMAINS' : 'LEXICON OF THE JOURNEY', 0.8);
+      L(t.t, 1.7, { drop, dance: t.move }); L(t.gr, 1.3, { drop, dance: t.move });
+      Lx.wrap('LITERALLY: ' + t.lit, 50).forEach((l) => L(l, 0.9));
+      Lx.wrap(t.does, 46).forEach((l) => L(l, 0.9));
+      L((t.place || '') + ', ' + Lx.yearWords(t.year) + ' - ' + t.fam, 0.8, { year: t.year });
+      if (t.schools) Lx.wrap(t.schools, 56).forEach((l) => L(l, 0.8));
+      L(Lx.STATUS[t.status] || '', 0.8);
     }
-    const x = ov.width * 0.035, y0 = H * 0.4; let y = y0, wMax = 0;
-    for (const [s2, sc] of lines) { wMax = Math.max(wMax, Lx.width(s2, size * sc)); y += size * 1.75 * Math.max(0.85, sc); }
-    ox.globalAlpha = 0.3 * show; ox.fillStyle = light ? 'rgb(255,255,255)' : 'rgb(0,0,0)'; ox.fillRect(x - size * 0.8, y0 - size * 0.8, wMax + size * 1.6, y - y0 + size * 0.3);
-    ox.beginPath(); y = y0;
-    for (const [s2, sc, drop] of lines) { lexText(s2, x, y, size * sc, drop); y += size * 1.75 * Math.max(0.85, sc); }
-    ox.globalAlpha = 0.9 * show; ox.stroke(); ox.restore();
+    // the entrance on the beat: the first lines letter by letter in eighths, the rest a line a beat
+    let at = 0;
+    lines.forEach((l, n) => { l.start = at; at += l.dance ? Lx.norm(l.s).length * 0.5 : n === 0 ? Lx.norm(l.s).length * 0.2 : 1; });
+    // the box's size, then its place on the stage
+    let bw = 0, bh = 0; for (const l of lines) { bw = Math.max(bw, Lx.width(l.s, size * l.sc)); bh += size * 1.75 * Math.max(0.85, l.sc); }
+    const pad = size * 0.8, BW = bw + 2 * pad, BH = bh + pad * 1.1;
+    const place = (n) => { const [fx, fy] = STAGE[n];
+      const x = fx === 0 ? W * 0.035 : fx === 1 ? W * 0.965 - BW : (W - BW) / 2;
+      const y = fy === 0 ? H * 0.07 : fy === 1 ? H * 0.86 - BH : fy < 0.3 ? H * 0.24 : (H - BH) / 2;
+      return [x, y]; };
+    const A0 = place(stagePoint(LX.k)), B0 = place(stagePoint(LX.k + 1)), g = 0.3 * smoothJS(0, 1, pv);
+    let bx = A0[0] + (B0[0] - A0[0]) * g, by = A0[1] + (B0[1] - A0[1]) * g;
+    if (mapOn && bx + BW > W * 0.71 && by < H * 0.52) bx = W * 0.71 - BW;              // the map has the top right
+    bx = Math.max(W * 0.03, Math.min(W * 0.97 - BW, bx)); by = Math.max(H * 0.06, Math.min(H * 0.86 - BH, by));
+    lexRect = [bx / W, by / H, (bx + BW) / W, (by + BH) / H];
+    const light = marginLum > 0.42;                          // ink against what is measured behind the box
+    ox.save(); ox.strokeStyle = light ? 'rgb(24, 26, 32)' : 'rgb(232, 229, 221)';
+    ox.globalAlpha = 0.38 * show; ox.fillStyle = light ? 'rgb(255,255,255)' : 'rgb(0,0,0)'; ox.fillRect(bx, by, BW, BH);
+    ox.beginPath(); let y = by + pad;
+    for (const l of lines) {
+      let str = l.s;
+      if (l.year !== undefined) {                            // the year counts up like a dial as the line enters
+        const e = smoothJS(0, 6, bIn - l.start), v = Math.round(l.year * e);
+        if (e < 1) str = str.replace(Lx.norm(Lx.yearWords(l.year)), v < 0 ? -v + ' BC' : String(v));
+      }
+      const sz = size * l.sc, A = sz * 0.35, x = bx + pad;
+      for (const c of Lx.chars(str, x, y, sz, l.drop)) {
+        const due = l.start + c.i * (l.dance ? 0.5 : l === lines[0] ? 0.2 : 0.04);
+        if (bIn < due) continue;                             // not yet entered
+        const [dx, dy, rot] = l.dance ? letterMove(l.dance, c.i, ph, beat, unison, A, sz) : [0, 0, 0];
+        const enter = Math.min(1, (bIn - due) / 0.5), ey = (1 - enter) * A * 0.8;    // a small rise into place
+        const co = Math.cos(rot), si = Math.sin(rot);
+        for (const pl of c.pls) pl.forEach((q, n) => {
+          const rx = q.x - c.cx, ry = q.y - c.cy, X = c.cx + rx * co - ry * si + dx, Y = c.cy + rx * si + ry * co + dy + ey;
+          if (n) ox.lineTo(X, Y); else ox.moveTo(X, Y);
+        });
+      }
+      y += size * 1.75 * Math.max(0.85, l.sc);
+    }
+    ox.globalAlpha = 0.92 * show; ox.stroke(); ox.restore();
   }
   function homageLines(ms, f) {
     if (!f.PH) return { lines: ['NOT IN THE HOMAGE', 'A ' + (f.J ? f.J.mode : 'FIXED').toUpperCase() + ' TRACK'] };
@@ -1333,8 +1399,9 @@ void main() { vec2 p = vec2(float((gl_VertexID << 1) & 2), float(gl_VertexID & 2
     causes.forEach((c, i) => strokeText(c, W * 0.035, H * 0.93 - (causes.length - 1 - i) * lh, size));
     ox.globalAlpha = 0.85; ox.stroke();
     // where: thirty seconds of every two minutes, and through every glimpse
-    if (O.where && f.PH && ((ms / 1000) % 120 < 30 || f.GL)) { ox.fillStyle = ox.strokeStyle; drawWhere(ms, f, size); ox.globalAlpha = 0.85; }
-    if (f.LX && global.Lexicon) drawLexicon(ms, f, size);
+    const mapOn = O.where && f.PH && ((ms / 1000) % 120 < 30 || f.GL);
+    if (mapOn) { ox.fillStyle = ox.strokeStyle; drawWhere(ms, f, size); ox.globalAlpha = 0.85; }
+    if (f.LX && global.Lexicon) drawLexicon(ms, f, size, mapOn);
     // the measurement of these 30 seconds
     const M = O.measure ? { kind: O.measure, k: Math.floor(sE / 30), e: 1 } : O.score ? Score.measureAt(ms) : null;
     if (!M || M.e <= 0.01) { ox.globalAlpha = 1; return; }
