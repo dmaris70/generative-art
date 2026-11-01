@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Folded Weather — Generative Art</title>
+  <style>
+    :root {
+      --bg: #0b1424; --ink: #eef3fb; --muted: #a9b8cf;
+      --glass: rgba(10, 20, 38, .58); --line: rgba(220, 232, 250, .18); --accent: #f2c38a;
+      --mono: ui-monospace, SFMono-Regular, Menlo, monospace;
+    }
+    html, body { margin: 0; height: 100%; background: var(--bg); color: var(--ink); overflow: hidden; font-family: var(--mono); }
+    canvas#c { position: fixed; inset: 0; width: 100%; height: 100%; display: block; }
+    a.back { position: fixed; top: 14px; left: 16px; z-index: 3; color: #e8d2b0; font: 13px ui-sans-serif, system-ui, sans-serif; text-decoration: none; opacity: .6; }
+    .panel {
+      position: fixed; z-index: 2; left: 16px; bottom: 16px; max-width: min(560px, calc(100% - 32px));
+      display: grid; gap: 10px; padding: 14px 16px; border-radius: 6px;
+      background: var(--glass); border: 1px solid var(--line);
+      backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
+    }
+    h1 { margin: 0; font: italic 400 30px/1 Georgia, serif; }
+    .note { margin: 0; font-size: 11px; line-height: 1.55; color: var(--muted); }
+    .row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+    .seg { display: inline-flex; border: 1px solid var(--line); border-radius: 4px; overflow: hidden; }
+    button { font: 10.5px/1 var(--mono); letter-spacing: .06em; text-transform: uppercase; color: var(--muted); background: none; border: 0; padding: 8px 10px; cursor: pointer; }
+    .seg button + button { border-left: 1px solid var(--line); }
+    button[aria-pressed="true"] { color: var(--bg); background: var(--accent); }
+    button.solo { border: 1px solid var(--line); border-radius: 4px; }
+    button:hover { color: var(--ink); } button[aria-pressed="true"]:hover { color: var(--bg); }
+    button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+    #seed { min-width: 3ch; text-align: center; font-size: 11px; }
+    .clock { position: fixed; z-index: 2; right: 16px; top: 14px; font-size: 11px; color: var(--ink); text-shadow: 0 1px 6px rgba(0,0,0,.6); font-variant-numeric: tabular-nums; }
+    body.bare .panel, body.bare a.back, body.bare .clock { display: none; }
+    .studies { display: grid; grid-template-columns: auto 1fr; gap: 6px 10px; align-items: center; }
+    .studies .seg { justify-self: start; }
+    .fam { font-size: 9.5px; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); opacity: .75; }
+    .err { color: #ffb4a8; font-size: 11px; margin: 0; }
+  </style>
+</head>
+<body>
+  <a class="back" href="../../">← gallery</a>
+  <canvas id="c" aria-label="Folded Weather — eleven studies of a folded cloud field"></canvas>
+  <div class="clock" id="clock"></div>
+  <section class="panel">
+    <h1>Folded Weather</h1>
+    <div class="studies" role="group" aria-label="Study">
+      <span class="fam">light</span><div class="seg"><button data-study="hours">hours</button><button data-study="drift">drift</button><button data-study="slit">slit</button><button data-study="aurora">aurora</button></div>
+      <span class="fam">print</span><div class="seg"><button data-study="sumi">sumi</button><button data-study="intaglio">intaglio</button><button data-study="cyanotype">cyanotype</button></div>
+      <span class="fam">survey</span><div class="seg"><button data-study="strata">strata</button><button data-study="satellite">satellite</button></div>
+      <span class="fam">form</span><div class="seg"><button data-study="tessera">tessera</button><button data-study="atlas">atlas</button></div>
+    </div>
+    <p class="note" id="note"></p>
+    <div class="row">
+      <div class="seg" role="group" aria-label="Seed">
+        <button id="prev" aria-label="Previous seed">‹</button><span id="seed"></span><button id="next" aria-label="Next seed">›</button>
+      </div>
+      <button class="solo" id="orig">seed 0</button>
+      <div class="seg" role="group" aria-label="Quality">
+        <button data-q="lo">draft</button><button data-q="md">std</button><button data-q="hi">fine</button>
+      </div>
+      <button class="solo" id="pause">pause</button>
+      <button class="solo" id="hide">hide</button>
+    </div>
+    <p class="err" id="err" hidden></p>
+  </section>
+  <script src="sketch.js"></script>
+</body>
+</html>
