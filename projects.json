@@ -3,6 +3,14 @@
   "author": "dmaris70",
   "projects": [
     {
+      "slug": "058-folded-weather",
+      "title": "Folded Weather",
+      "year": 2026,
+      "tools": ["webgl2", "glsl"],
+      "description": "Eleven studies built on the folded cloud engine from 057, in four families. The output reduces exactly to three fields (density, sky weight, depth), and each study grades them its own way. Light: Hours (a 96 s day), Drift (fold constants on a closed loop), Slit (each column a different moment of that loop), Aurora. Print: Sumi, Intaglio, Cyanotype. Survey: Strata (contours), Satellite (simulated infrared enhancement). Form: Tessera (hex mosaic, one march per tile), Atlas. Seeds come from a measured, screened parameter space.",
+      "thumb": "preview.png"
+    },
+    {
       "slug": "057-after-nishitsuji",
       "title": "After Nishitsuji",
       "year": 2026,
