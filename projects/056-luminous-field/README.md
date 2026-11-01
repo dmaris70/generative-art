@@ -46,6 +46,8 @@ Maroon, Chapel, Black on grey. The dark registers have a tighter feather and a q
 Black floor, dither, kiosk, loupe, master PNG and PNG-sequence export are inherited from the
 harness unchanged. See 055 for how to run a wall.
 
+**Screen mode** (the default wall): the wall is the browser window, at any size and orientation, edge to edge. It renders in device pixels up to 2560 on the long side, larger displays upscale, and the composition is rebuilt for the new shape 0.2 s after a resize: a landscape screen gets one canvas, a phone a tall single field, an ultra-wide a row. Fixed LED sizes remain in the *wall* menu; kiosk output always uses one of those. **I** shows the wall and loop details.
+
 **Reference look:** `?seed=1&p_preset=5&p_customW=2160&p_customH=2160&p_hang=0`
 
 Not yet done: a test on a real panel. The dark registers (Maroon, Chapel) sit close to the black
