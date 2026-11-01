@@ -469,6 +469,17 @@ measured first: the y components of the fold offset and box must stay equal, and
 chaotically, so `node tools/folded-weather-screen.mjs` screens raw seeds with the page's own shader
 and ships the ones that keep a healthy deck.
 
+## Plotted Sky — the folded clouds, ruled over the plotted field
+
+[`projects/059-plotted-sky`](projects/059-plotted-sky/) puts a sky over 048 Plotted Field. One cloud
+deck per field sits 600 m up; each of the 25 views follows its rays up to it, so neighbouring
+views share one sky, as they share the grass. The deck's pattern is the folded cloud engine (057,
+058) run on the CPU, so a sheet is the same SVG everywhere. It is ruled as engravers ruled skies:
+horizontal lines, lines between them where the tone deepens, a cross-ruling in the darkest cloud,
+and broken, flicked ends where the tone changes. Lit cloud is where the pen lifts, the grass and
+the rise of the ground hide the sky, and the moon clears it. 048 gained an optional `extend` hook;
+its own sheets are byte-identical.
+
 ## Contact sheet
 
 `variations.html` renders one piece across many seeds as a grid of live tiles — the
