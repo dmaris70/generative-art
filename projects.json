@@ -3,6 +3,14 @@
   "author": "dmaris70",
   "projects": [
     {
+      "slug": "054-undertow",
+      "title": "Undertow",
+      "year": 2026,
+      "tools": ["webgl2"],
+      "description": "A seagrass meadow at depth, after the idiom of Leander Herzog's Field (2026) moved under water. Tens of thousands of twisting ribbons are bent on the GPU by a current of calm water and long gusts, a back-and-forth surge and a travelling swell; light circles slowly above the surface and arrives as caustics, shafts and satin glints on near-black. Drag to part the grass, shift / right-drag to turn, scroll to approach; ?seed= and ?n= set the bed and its density.",
+      "thumb": "preview.png"
+    },
+    {
       "slug": "053-loop-engine",
       "title": "Loop Engine",
       "year": 2026,
