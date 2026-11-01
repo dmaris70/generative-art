@@ -11,9 +11,9 @@
 (function (global) {
   'use strict';
 
-  const GLITCHES = ['', 'time slice', 'echo', 'sorting', 'transposition', 'quantisation', 'one bit', 'identity', 'mirror', 'inversion', 'recursion'];
+  const GLITCHES = ['', 'time slice', 'echo', 'sorting', 'transposition', 'quantisation', 'one bit', 'identity', 'mirror', 'inversion', 'recursion', 'datamosh'];
   const LOUD = [8, 9];                      // mirror and inversion: a few times a day, not every hour
-  const QUIET = [1, 2, 3, 4, 5, 6, 7, 10];
+  const QUIET = [1, 2, 3, 4, 5, 6, 7, 10, 11];
   const COLOURS = ['', 'hue by hash', 'hue by depth', 'hue by time', 'hue by cluster', 'complement', 'prime colour', 'gust in colour', 'dichroic'];
   const MEASURES = ['', 'blade', 'probability', 'census', 'frame', 'next prime', 'phase', 'repeat', 'wind', 'entropy', 'today', 'place', 'wind there', 'air', 'sky', 'condition', 'ground', 'nearest', 'travelled', 'crossing', 'antipode', 'sea'];
   const NM = MEASURES.length - 1;
@@ -49,7 +49,7 @@
     const extra = storm > 0 && (isPrime(m + 1440) || isPrime(m + 2880) || isPrime(m + 4320)) && (ih((day * 1441 + m) ^ 0x57) % 1000) / 1000 < storm;
     if ((!isPrime(m) && !extra) || colourMinute(day, m - 1)) return null;
     const h = ih((day * 1441 + m) ^ 0x6117c4);
-    let kind = 1 + (h % 10);
+    let kind = 1 + (h % 11);
     if (LOUD.includes(kind) && ih(h) % 8 !== 0) kind = QUIET[ih(h ^ 7) % QUIET.length];
     return { kind, start: 5 + (ih(h ^ 1) % 35), dur: 6 + (ih(h ^ 2) % 15), m };
   }
