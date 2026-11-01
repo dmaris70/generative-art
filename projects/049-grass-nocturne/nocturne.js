@@ -106,12 +106,15 @@ uniform float uTime; uniform vec3 uWind; uniform int uSegs; uniform float uSpan;
 uniform int uGlitch; uniform float uG; uniform float uP; uniform float uPx; uniform float uDensity; uniform float uHScale;
 uniform vec3 uSway; uniform float uBow;
 uniform vec4 uW1; uniform vec4 uW2; uniform vec4 uW3; uniform vec4 uW4; uniform vec4 uWo; uniform float uAmp; uniform float uSeaMove; uniform float uSeaWhite; uniform float uSeaT;
+// the lexicon: the term's motion (kind, strength, seconds, anchor, direction, beat) and its word in the field
+uniform int uMove; uniform float uMoveS; uniform float uMoveT; uniform vec2 uMoveC; uniform vec2 uMoveD; uniform float uBeat;
+uniform sampler2D uWord; uniform float uWordS; uniform vec4 uWordBox; uniform float uErode;
 float seaCrest(vec2 p) {             // 0 in the trough … 1 on the crest of the sea where the journey is
   vec4 W[4] = vec4[4](uW1, uW2, uW3, uW4); float h = 0.0;
   for (int i = 0; i < 4; i++) h += W[i].w * sin(W[i].z * dot(W[i].xy, p) - uWo[i] * uSeaT + float(i) * 1.7);
   return clamp(0.5 + 0.5 * h / max(uAmp, 1e-3), 0.0, 1.0);
 }
-out float vCov; out float vSide;
+out float vCov; out float vSide; out float vWord;
 out float vT; out vec3 vN; out vec3 vTan; out vec3 vPos; out float vTone; out float vSilver; out float vFade; out float vShade;
 out float vId; out float vCluster; flat out uint vHash;
 void main() {
@@ -152,6 +155,34 @@ void main() {
   vShade = cloudShade(root);
   bendDir += uSway.xy * uSway.z;                                            // unison: the whole field as one
   if (uBow > 0.001) bendDir += normalize(uEye.xz - root + 1e-4) * uBow * 0.9;   // the révérence: toward the viewer
+  // the term's motion: the whole field dances the word for a while (see lexicon.js)
+  if (uMove > 0 && uMoveS > 0.001) {
+    vec2 rel = root - uMoveC; float rr = length(rel) + 1e-3; vec2 rad = rel / rr, tng = vec2(-rad.y, rad.x), nrm = vec2(-uMoveD.y, uMoveD.x);
+    float S = uMoveS, ph = uMoveT;
+    if (uMove == 1) H *= 1.0 - 0.3 * S * (0.5 - 0.5 * cos(ph * 0.9));                                   // sink: plié
+    else if (uMove == 2) H *= 1.0 + 0.25 * S * (0.5 - 0.5 * cos(ph * 0.9));                             // rise: relevé
+    else if (uMove == 3) bendDir += tng * S * 0.6 * smoothstep(0.0, 5.0, rr) * exp(-rr / 18.0);        // spiral: pirouette
+    else if (uMove == 4) { float ring = mod(ph * 5.0, 36.0); bendDir += rad * S * 0.9 * exp(-pow((rr - ring) / 1.6, 2.0)); }   // leap: a ring flies out
+    else if (uMove == 5) bendDir += uMoveD * S * 0.55;                                                  // line: arabesque
+    else if (uMove == 6) bendDir += nrm * S * 0.45 * sin(ph * 1.3 + dot(root, uMoveD) * 0.15);          // sway: port de bras
+    else if (uMove == 7) bendDir += own.yx * vec2(1.0, -1.0) * S * 0.12 * sin(ph * 17.0 + h01(hb ^ 0x5u) * 6.28);   // tremble: bourrée
+    else if (uMove == 8) bendDir += uMoveD * S * 0.6 * uBeat;                                           // beat: on every count
+    else if (uMove == 9) { float off = dot(rel, nrm); H *= 1.0 + 0.35 * S * exp(-off * off / 4.0) * step(0.0, dot(rel, uMoveD)) * (0.5 + 0.5 * sin(ph * 0.6)); }   // extend: développé
+    else if (uMove == 10) bendDir += uMoveD * S * 0.9 * pow(0.5 - 0.5 * cos(ph * 0.35), 3.0);           // fall: and recovery
+    else if (uMove == 11) bendDir += tng * S * 0.7 * exp(-pow((rr - 10.0) / 3.0, 2.0));                 // circle: the chorus
+  }
+  // the word, anamorphic: written as seen from the eye. Blades whose roots fall inside its letters on
+  // the screen stand taller, straighter and paler; erosion takes them back, blade by blade
+  float wordK = 0.0;
+  if (uWordS > 0.001) {
+    vec4 rc = uVP * vec4(root.x, ground(root), root.y, 1.0);
+    vec2 wu = (rc.xy / max(rc.w, 1e-3) - uWordBox.xy) / uWordBox.zw + 0.5; wu.y = 1.0 - wu.y;
+    if (rc.w > 0.5 && wu.x > 0.0 && wu.x < 1.0 && wu.y > 0.0 && wu.y < 1.0) {
+      vec2 tx = textureLod(uWord, wu, 0.0).rg; float keepW = smoothstep(uErode - 0.04, uErode + 0.04, 0.8 * vnoise(root * 2.7 + 5.0) + 0.2 * h01(hb ^ 0x9u));
+      float wm = tx.r * uWordS * keepW, halo = tx.g * (1.0 - tx.r) * uWordS * keepW;
+      H *= (1.0 + 0.6 * wm) * (1.0 - 0.55 * halo); bendDir *= 1.0 - 0.6 * wm; vSilver = max(vSilver, wm); wordK = wm - 0.6 * halo;
+    }
+  }
   float bend = min(length(bendDir), 1.2); vec2 bd = bendDir / max(length(bendDir), 1e-4);
   float th = bend * 1.05;
   float y0 = ground(root);
@@ -168,7 +199,7 @@ void main() {
   // thinner than a pixel: widen to a pixel and give back the difference as faintness, so thin
   // blades stay continuous lines instead of breaking into dots
   float px = 2.0 * w * uPx / max(distance(pos, uEye), 0.05);
-  vCov = 1.0;
+  vCov = 1.0; vWord = wordK;
   if (px < 1.2 && px > 0.0) { vCov = px / 1.2; w *= 1.2 / px; }
   pos += across * side * w;
   vSide = side;
@@ -187,7 +218,7 @@ void main() {
 uniform vec3 uEye; uniform vec3 uLight; uniform float uFog; uniform float uExposure; uniform int uShow;
 uniform int uGlitch; uniform float uG; uniform int uTint; uniform float uTintE; uniform float uHue;
 uniform vec3 uDichA; uniform vec3 uDichB; uniform float uDich;
-in float vCov; in float vSide;
+in float vCov; in float vSide; in float vWord;
 in float vT; in vec3 vN; in vec3 vTan; in vec3 vPos; in float vTone; in float vSilver; in float vFade; in float vShade;
 in float vId; in float vCluster; flat in uint vHash;
 out vec4 frag;
@@ -202,7 +233,7 @@ void main() {
   // light through the blade: lit from behind, its edges and tip glow
   float back = pow(max(0.0, dot(-V, uLight)), 3.0) * (0.35 + 0.65 * vT);
   float trans = back * (0.6 + 0.4 * max(0.0, dot(-N, uLight)));
-  float e = (0.03 + (0.46 * diff * vTone + 1.2 * sheen + rim + silver + 0.85 * trans) * vShade) * occ * vFade * vCov;
+  float e = (0.03 + (0.46 * diff * vTone + 1.2 * sheen + rim + silver + 0.85 * trans + 0.5 * max(vWord, 0.0) * vT) * vShade) * occ * vFade * vCov * (1.0 + min(vWord, 0.0));
   e = atmos(e, vPos, uEye, uLight, uFog);
   float lum = 1.0 - exp(-e * uExposure);
   float g = (h01(uint(gl_FragCoord.x) * 1973u ^ uint(gl_FragCoord.y) * 9277u) - 0.5) / 255.0;   // no banding on 8-bit panels
@@ -214,6 +245,7 @@ void main() {
     vec3 straw = mix(vec3(0.42, 0.37, 0.16), vec3(0.55, 0.50, 0.30), vTone - 0.8);
     float dry = clamp(uDry + 0.4 * smoothstep(0.55, 1.0, vT) * (0.25 + 0.75 * vCluster) + 0.2 * (vCluster - 0.5), 0.0, 1.0);
     vec3 alb = mix(green, straw, dry) * mix(0.3, 1.0, smoothstep(0.0, 0.65, vT));
+    alb = mix(alb, vec3(0.78, 0.74, 0.6) * mix(0.45, 1.0, vT), 0.75 * max(vWord, 0.0)) * (1.0 + min(vWord, 0.0));   // the word's blades bleached, what remains; mown around, in shadow
     // a canopy is lit from above as much as on its faces: a high sun still lights the tops
     float sd = max(dot(N, uLight), 0.0), canopy = 0.45 * max(uLight.y, 0.0) * smoothstep(0.2, 1.0, vT) + 0.55 * sd;
     vec3 rad = alb * (uSunCol * (0.06 + canopy) * vShade + uAmbCol * 1.0 * occ)
@@ -255,7 +287,7 @@ uniform float uTime; uniform int uSegs; uniform float uSpan; uniform float uSea;
 uniform vec4 uW1; uniform vec4 uW2; uniform vec4 uW3; uniform vec4 uW4; uniform vec4 uWo; uniform float uAmp;
 uniform float uWhite; uniform float uFoam; uniform float uGlassy;
 uniform int uGlitch; uniform float uG; uniform float uP;
-out float vCov; out float vSide;
+out float vCov; out float vSide; out float vWord;
 out float vT; out vec3 vN; out vec3 vTan; out vec3 vPos; out float vTone; out float vSilver; out float vFade; out float vShade;
 out float vId; out float vCluster; flat out uint vHash;
 vec3 waves(vec2 p) {                 // height and its gradient
@@ -294,7 +326,7 @@ void main() {
   vec3 across = normalize(vec3(-0.5 * w0.y, 1.0, -0.5 * w0.z) * 0.8 + vec3(-tan.z, 0.0, tan.x) * 0.2);   // upright, leaning with the slope
   float w = (0.003 + 0.004 * h01(hb ^ 0x6u)) * sin(3.14159 * clamp(t, 0.02, 0.98)) / sqrt(keep) * fadeK;
   float px = 2.0 * w * uPx / max(distance(pos, uEye), 0.05);
-  vCov = 1.0; if (px < 1.2 && px > 0.0) { vCov = px / 1.2; w *= 1.2 / px; }
+  vCov = 1.0; vWord = 0.0; if (px < 1.2 && px > 0.0) { vCov = px / 1.2; w *= 1.2 / px; }
   pos += across * side * w; vSide = side;
   if (uGlitch == 5 && uG > 0.01) { float q = 0.64 * pow(0.5, floor(uP * 7.0)) * uG; pos = floor(pos / q + 0.5) * q; }
   vT = 0.55 + 0.45 * crest; vTan = tan; vN = normalize(cross(across, tan)); vPos = pos; vTone = 0.8 + 0.4 * h01(hb ^ 0x7u);
@@ -624,9 +656,16 @@ void main() { vec2 p = vec2(float((gl_VertexID << 1) & 2), float(gl_VertexID & 2
   const homeReaders = HOMAGE && O.weather ? HOMES.map((h) => Wx.createReader({ track: () => ({ lat: h.lat, lon: h.lon }) })) : [];
   if (HOMAGE && !Q.has('look')) O.look = 1;
   O.where = Q.get('where') !== '0';
-  O.dedication = HOMAGE ? Q.get('dedication') !== '0' : Q.get('dedication') === '1';   // the homage carries it; ?dedication=0 hides it O.glimpses = Q.get('glimpses') !== '0';
+  O.dedication = HOMAGE ? Q.get('dedication') !== '0' : Q.get('dedication') === '1';   // the homage carries it; ?dedication=0 hides it
+  O.glimpses = Q.get('glimpses') !== '0';
   let seedNow = O.seed;
   const Geo = global.Geography;
+  // the lexicon of the journey (lexicon.js, data/lexicon.json): part of the homage; ?lexicon=0 leaves it out
+  O.lexicon = HOMAGE && !!global.Lexicon && Q.get('lexicon') !== '0';
+  let LEX = null;
+  if (O.lexicon) fetch(new URL('data/lexicon.json', document.currentScript ? document.currentScript.src : location.href).href)
+    .then((r) => r.json()).then((d) => { LEX = global.Lexicon.create(d, { Wx, cfg: TRACK.cfg }); }).catch((e) => console.log('nocturne: lexicon —', e.message));
+  const MOVES = { sink: 1, rise: 2, spiral: 3, leap: 4, line: 5, sway: 6, tremble: 7, beat: 8, extend: 9, fall: 10, circle: 11, still: 12 };
   if (O.geo) Geo.fetchData(new URL('data/', document.currentScript ? document.currentScript.src : location.href).href).catch((e) => console.log('nocturne: geography —', e.message));
   const J1 = (t) => TRACK(t); J1.START = TRACK ? TRACK.START : 0;
   let geoAt = -1, geo = null, geoEv = null;
@@ -654,6 +693,25 @@ void main() { vec2 p = vec2(float((gl_VertexID << 1) & 2), float(gl_VertexID & 2
   }
   const grass = program(GRASS_VS, GRASS_FS), groundP = program(GROUND_VS, GROUND_FS), seaP = program(SEA_VS, GRASS_FS), flowerP = program(FLOWER_VS, FLOWER_FS);
   const trees = program(TREES_VS, TREES_FS), sky = program(SKY_VS, SKY_FS), post = program(POST_VS, POST_FS);
+  // the word in the field: drawn in the single-stroke letters, thick and soft, into a small texture the blades read
+  const wordCv = document.createElement('canvas'); wordCv.width = 1024; wordCv.height = 256;
+  const wctx = wordCv.getContext('2d'), wordTex = gl.createTexture(); let wordKey = null;
+  gl.bindTexture(gl.TEXTURE_2D, wordTex); gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, 1, 1, 0, gl.RGBA, gl.UNSIGNED_BYTE, new Uint8Array(4));
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+  function setWord(w) {
+    if (w === wordKey) return; wordKey = w;
+    const Lx = global.Lexicon, cw = wordCv.width, ch = wordCv.height, size = Math.min(ch * 0.6, cw * 0.92 / Math.max(0.01, Lx.width(w, 1)));
+    wctx.filter = 'none'; wctx.fillStyle = '#000'; wctx.fillRect(0, 0, cw, ch);
+    // red: the letters; green: a halo around them, where the meadow is mown low so the letters stand out
+    wctx.lineCap = wctx.lineJoin = 'round'; wctx.beginPath();
+    for (const pl of Lx.text(w, (cw - Lx.width(w, size)) / 2, (ch - size) / 2, size)) { wctx.moveTo(pl[0].x, pl[0].y); for (const q of pl.slice(1)) wctx.lineTo(q.x, q.y); }
+    wctx.filter = 'blur(' + (size * 0.08).toFixed(1) + 'px)'; wctx.strokeStyle = '#0f0'; wctx.lineWidth = size * 0.55; wctx.stroke();
+    wctx.globalCompositeOperation = 'lighter';
+    wctx.filter = 'blur(' + (size * 0.035).toFixed(1) + 'px)'; wctx.strokeStyle = '#f00'; wctx.lineWidth = size * 0.17; wctx.stroke();
+    wctx.globalCompositeOperation = 'source-over'; wctx.filter = 'none';
+    gl.bindTexture(gl.TEXTURE_2D, wordTex); gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, wordCv);
+  }
   const TREE_M = 2400, TREE_R = 70, SHOW = { clouds: 1, gusts: 2 }[Q.get('show')] || 0;
   const vao = gl.createVertexArray();
   // the ground mesh: indices for a (RES+1)² grid
@@ -707,7 +765,7 @@ void main() { vec2 p = vec2(float((gl_VertexID << 1) & 2), float(gl_VertexID & 2
     filled = all ? 0 : Math.min(LAYERS - 1, filled + 1);
     gl.bindFramebuffer(gl.READ_FRAMEBUFFER, null); gl.bindFramebuffer(gl.DRAW_FRAMEBUFFER, null);
   }
-  let p90 = 0.5, gain = 1;
+  let p90 = 0.5, gain = 1, marginLum = 0;
   function brightness() {                         // the 90th percentile of the newest small frame's brightness
     gl.bindFramebuffer(gl.READ_FRAMEBUFFER, histFB);
     gl.framebufferTextureLayer(gl.READ_FRAMEBUFFER, gl.COLOR_ATTACHMENT0, histTex, 0, head);
@@ -715,6 +773,10 @@ void main() { vec2 p = vec2(float((gl_VertexID << 1) & 2), float(gl_VertexID & 2
     gl.bindFramebuffer(gl.READ_FRAMEBUFFER, null);
     const bins = new Uint32Array(256);
     for (let i = 0; i < px.length; i += 4) bins[(0.299 * px[i] + 0.587 * px[i + 1] + 0.114 * px[i + 2]) | 0]++;
+    // and the mean brightness behind the margin, where the lexicon is written (left 40 %, rows 15–65 % from the bottom)
+    let ms2 = 0, mn = 0;
+    for (let y = Math.floor(HIST_H * 0.15); y < HIST_H * 0.65; y++) for (let x = 0; x < HIST_W * 0.4; x++) { const i = (y * HIST_W + x) * 4; ms2 += 0.299 * px[i] + 0.587 * px[i + 1] + 0.114 * px[i + 2]; mn++; }
+    marginLum = mn ? ms2 / mn / 255 : 0;
     let n = 0; const want = HIST_W * HIST_H * 0.9;
     for (let b = 0; b < 256; b++) { n += bins[b]; if (n >= want) return b / 255; }
     return 1;
@@ -845,7 +907,20 @@ void main() { vec2 p = vec2(float((gl_VertexID << 1) & 2), float(gl_VertexID & 2
         stageK = 0.45 * Math.min(1, PH.since / 6e4);
       }
       if (GL) stageK = 0.45;
-      dance = { bpm: Math.round(bpm), count, tempo: bpm > 105 ? 'ALLEGRO' : bpm > 85 ? 'MODERATO' : 'ADAGIO', unison: unisonMin };
+      dance = { pulse: Math.exp(-frac * 4), bpm: Math.round(bpm), count, tempo: bpm > 105 ? 'ALLEGRO' : bpm > 85 ? 'MODERATO' : 'ADAGIO', unison: unisonMin };
+    }
+    // ── the lexicon: the term of these three minutes moves the field; its word grows in the grass and erodes
+    let LX = null, move = 0, moveS = 0, moveT = 0, wordS = 0, erode = 0, wordC = [0, 0], wordR = [1, 0];
+    if (LEX && PH) {
+      LX = LEX.at(ms);
+      const parts = LX.mode === 'etym' ? LX.etym.chain.length : LX.mode === 'canto' ? 8 : 2, qq = LX.p * parts, q = qq % 1;
+      wordS = smG(0, 0.12, q) * smG(1, 0.85, q);
+      erode = (LX.lost ? 0.15 + 0.8 * q : 0.04 + 0.3 * q) + (PH.state === 'travel' ? 0.12 : 0);
+      setWord(LEX.fieldWord(LX));
+      // the motion's centre: 11 m ahead of the eye; its direction across the view
+      wordC = [e.x + hx * 11, e.z + hz * 11]; wordR = [-hz, hx];
+      move = MOVES[LX.move] || 0; moveS = 0.7 * smG(0, 0.06, LX.p) * smG(1, 0.94, LX.p); moveT = LX.p * LEX.WIN / 1000;
+      if (move === 12) { W = { x: W.x, z: W.z, strength: W.strength * (1 - 0.7 * moveS) }; move = 0; }   // still: the wind holds its breath
     }
     const VP = mat(eye, look, 0.62, aspect);
     // the window of cells sits ahead of the eye, where the view is
@@ -858,7 +933,8 @@ void main() { vec2 p = vec2(float((gl_VertexID << 1) & 2), float(gl_VertexID & 2
     // the night is darker than the day: exposure follows the light's height (7° → 1.5, 38° → 3.0)
     const elev = Math.asin(L[1]) * 180 / Math.PI;
     const thin = geo && geo.land ? Math.exp(-geo.elev / 2500) : 1;   // thinner air higher up
-    const exposure = (1 + 0.15 * (1 - thin) + 0.3 * (biome ? biome.pale : 0) + (fx ? 1.6 * wx.cloud * wx.cloud : 0))   // overcast light is even, not dark * (1.5 + 1.5 * Math.min(1, Math.max(0, (elev - 7) / 31))) * (fx && !O.lightHere ? 1 - 0.3 * fx.night : 1) + (fx && !O.lightHere ? 0.45 * fx.night : 0);   // night: darker, never unreadable
+    const exposure = (1 + 0.15 * (1 - thin) + 0.3 * (biome ? biome.pale : 0) + (fx ? 1.6 * wx.cloud * wx.cloud : 0))   // overcast light is even, not dark
+      * (1.5 + 1.5 * Math.min(1, Math.max(0, (elev - 7) / 31))) * (fx && !O.lightHere ? 1 - 0.3 * fx.night : 1) + (fx && !O.lightHere ? 0.45 * fx.night : 0);   // night: darker, never unreadable
     const fog = (fx ? fx.fog : 0.04) * thin;
 
     // the day's atmosphere: mist at dawn and dusk, clouds drifting downwind, their cover changing
@@ -919,6 +995,9 @@ void main() { vec2 p = vec2(float((gl_VertexID << 1) & 2), float(gl_VertexID & 2
       gl.uniform4f(v.uWo, ...trains.map((t) => t[3] * still)); gl.uniform1f(v.uAmp, aw + as + 0.02); };
     gl.useProgram(grass.p); const u = grass.u; atmosU(u); colU(u); gl.uniform1f(u.uSpan, SPAN);
     gl.uniform3fv(u.uSway, sway); gl.uniform1f(u.uBow, bow);
+    gl.uniform1i(u.uMove, move); gl.uniform1f(u.uMoveS, moveS); gl.uniform1f(u.uMoveT, moveT); gl.uniform2fv(u.uMoveC, wordC); gl.uniform2fv(u.uMoveD, wordR); gl.uniform1f(u.uBeat, dance ? dance.pulse : 0);
+    gl.activeTexture(gl.TEXTURE2); gl.bindTexture(gl.TEXTURE_2D, wordTex); gl.uniform1i(u.uWord, 2); gl.activeTexture(gl.TEXTURE0);
+    gl.uniform1f(u.uWordS, wordS); gl.uniform4f(u.uWordBox, 0, 0.1, 1.3, 0.3); gl.uniform1f(u.uErode, erode);   // the word's place on the screen (NDC centre, size)
     setTrains(u); gl.uniform1f(u.uSeaMove, trains ? seaness * still : 0); gl.uniform1f(u.uSeaWhite, SS ? SS.whitecaps : 0); gl.uniform1f(u.uSeaT, sE % 86400);
     gl.uniform1f(u.uRelief, relief); gl.uniform1f(u.uDensity, density); gl.uniform1f(u.uHScale, hScale);
     gl.uniform1i(u.uShow, SHOW);
@@ -1009,7 +1088,7 @@ void main() { vec2 p = vec2(float((gl_VertexID << 1) & 2), float(gl_VertexID & 2
     gl.drawArrays(gl.TRIANGLES, 0, 3);
     gl.activeTexture(gl.TEXTURE0);
 
-    overlay(ms, sE, { eye, look, hx, hz, VP, ndc, W, G, C, origin, J, sun, wx, style, geo, bright: dayK > 0.6 && cloudK < 0.85, PH, GL, dance });
+    overlay(ms, sE, { eye, look, hx, hz, VP, ndc, W, G, C, origin, J, sun, wx, style, geo, bright: dayK > 0.6 && cloudK < 0.85, PH, GL, dance, LX });
 
     stage.style.opacity = String(dimAt(ms, O.dim));
     if (ov) ov.style.opacity = stage.style.opacity;
@@ -1017,7 +1096,7 @@ void main() { vec2 p = vec2(float((gl_VertexID << 1) & 2), float(gl_VertexID & 2
       const d = new Date(ms), hh = String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0');
       hud.textContent = 'GRASS NOCTURNE · ' + hh + ' · EYE ' + e.h.toFixed(2) + ' M · LIGHT ' + Math.round(Math.asin(L[1]) * 180 / Math.PI) + '° · WIND ' + W.strength.toFixed(2);
     }
-    if (!O.still || (Date.now() < stillUntil && (!(reader && reader.place) || (O.geo && !geo)))) requestAnimationFrame(frame);   // a held clock is drawn once (after waiting for weather)
+    if (!O.still || (Date.now() < stillUntil && (!(reader && reader.place) || (O.geo && !geo) || (O.lexicon && !LEX)))) requestAnimationFrame(frame);   // a held clock is drawn once (after waiting for weather)
     else canvas.dataset.drawn = '1';
   }
   // ───────────────────────── the measurements ─────────────────────────
@@ -1161,6 +1240,13 @@ void main() { vec2 p = vec2(float((gl_VertexID << 1) & 2), float(gl_VertexID & 2
     ox.stroke();
     const mx = X(f.J.lon), my = Y(f.J.lat);
     ox.beginPath(); ox.arc(mx, my, size * 0.32, 0, Math.PI * 2); ox.fill(); ox.beginPath(); ox.arc(mx, my, size * 0.85, 0, Math.PI * 2); ox.stroke();
+    // where the term of these minutes was first danced
+    const LT = f.LX && f.LX.mode !== 'etym' ? f.LX.term : null;
+    if (LT) { const tx = X(LT.lon), ty = Y(LT.lat), r = size * 0.5;
+      if (tx > x0 && tx < x0 + pw && ty > y0 && ty < y0 + ph) {
+        ox.beginPath(); ox.moveTo(tx, ty - r); ox.lineTo(tx + r, ty); ox.lineTo(tx, ty + r); ox.lineTo(tx - r, ty); ox.closePath();
+        const lw = global.Lexicon.width(LT.t, size * 0.7); lexText(LT.t, Math.min(x0 + pw - lw, Math.max(x0, tx - lw / 2)), ty + size * 0.9, size * 0.7); ox.stroke();
+      } }
     // the words
     ox.beginPath();
     const dist = (h) => Geo.haversine(f.J.lat, f.J.lon, h.lat, h.lon), there = (h) => dist(h) < 5 ? 'HERE' : grp(dist(h)) + ' KM';
@@ -1168,6 +1254,40 @@ void main() { vec2 p = vec2(float((gl_VertexID << 1) & 2), float(gl_VertexID & 2
       .concat(...HOMES.map((h) => h.inst ? [h.inst, '   ' + h.name + ' - ' + there(h)] : [h.name + ' - ' + there(h)]));
     lines.forEach((l, i) => strokeText(l, x0, y0 + ph + size * 1.2 + i * size * 1.75, size * 0.85));
     ox.stroke();
+  }
+  function lexText(str, x, y, size, drop) {
+    for (const pl of global.Lexicon.text(str, x, y, size, drop)) { ox.moveTo(pl[0].x, pl[0].y); for (let i = 1; i < pl.length; i++) ox.lineTo(pl[i].x, pl[i].y); }
+  }
+  // ── the lexicon in the margin: the entry, the canto of a trip, the etymology of a word
+  function drawLexicon(ms, f, size) {
+    const LX = f.LX, Lx = global.Lexicon, H = ov.height, t = LX.term;
+    const show = LX.mode === 'canto' || LX.mode === 'etym' ? smoothJS(0, 0.03, LX.p) * smoothJS(1, 0.97, LX.p) : smoothJS(0.01, 0.04, LX.p) * smoothJS(0.62, 0.56, LX.p);
+    if (show < 0.01) return;
+    const light = marginLum > 0.42;                          // ink against what is behind it, on a faint backing like the map's
+    ox.save(); ox.strokeStyle = light ? 'rgb(24, 26, 32)' : 'rgb(232, 229, 221)';
+    const lines = [];                                        // [text, scale, drop]
+    if (LX.mode === 'canto') {
+      lines.push(['CANTO ' + (LX.n + 1) + ' - ' + LX.from.name + ' TO ' + LX.to.name, 1], ['WHAT THE JOURNEY CARRIED', 0.8]);
+      LX.list.forEach((m, i) => lines.push([(i === LX.step ? '> ' : '  ') + (i + 1) + ' ' + m.term.t + ' - ' + m.term.gr, i === LX.step ? 1.05 : 0.9]));
+    } else if (LX.mode === 'etym') {
+      lines.push(['ETYMOLOGY - ' + LX.etym.word, 1]);
+      LX.etym.chain.forEach((c, i) => { if (i <= LX.step) lines.push([(i ? '> ' : '') + c[0], i === LX.step ? 1.35 : 1.05], ['  ' + c[1] + (c[2] ? ' - ' + c[2] : ''), 0.8]); });
+    } else {
+      // a lost word loses its letters while it is read
+      const drop = LX.lost ? (i) => h01((Math.imul(LX.k, 31) + i * 7919) >>> 0) < 0.15 + 0.55 * LX.p : null;
+      lines.push([LX.mode === 'refrain' ? 'REFRAIN - WHAT REMAINS' : 'LEXICON OF THE JOURNEY', 0.8], [t.t, 1.7, drop], [t.gr, 1.3, drop]);
+      Lx.wrap('LITERALLY: ' + t.lit, 50).forEach((l) => lines.push([l, 0.9]));
+      Lx.wrap(t.does, 46).forEach((l) => lines.push([l, 0.9]));
+      lines.push([(t.place || '') + ', ' + Lx.yearWords(t.year) + ' - ' + t.fam, 0.8]);
+      if (t.schools) Lx.wrap(t.schools, 56).forEach((l) => lines.push([l, 0.8]));
+      lines.push([Lx.STATUS[t.status] || '', 0.8]);
+    }
+    const x = ov.width * 0.035, y0 = H * 0.4; let y = y0, wMax = 0;
+    for (const [s2, sc] of lines) { wMax = Math.max(wMax, Lx.width(s2, size * sc)); y += size * 1.75 * Math.max(0.85, sc); }
+    ox.globalAlpha = 0.3 * show; ox.fillStyle = light ? 'rgb(255,255,255)' : 'rgb(0,0,0)'; ox.fillRect(x - size * 0.8, y0 - size * 0.8, wMax + size * 1.6, y - y0 + size * 0.3);
+    ox.beginPath(); y = y0;
+    for (const [s2, sc, drop] of lines) { lexText(s2, x, y, size * sc, drop); y += size * 1.75 * Math.max(0.85, sc); }
+    ox.globalAlpha = 0.9 * show; ox.stroke(); ox.restore();
   }
   function homageLines(ms, f) {
     if (!f.PH) return { lines: ['NOT IN THE HOMAGE', 'A ' + (f.J ? f.J.mode : 'FIXED').toUpperCase() + ' TRACK'] };
@@ -1214,6 +1334,7 @@ void main() { vec2 p = vec2(float((gl_VertexID << 1) & 2), float(gl_VertexID & 2
     ox.globalAlpha = 0.85; ox.stroke();
     // where: thirty seconds of every two minutes, and through every glimpse
     if (O.where && f.PH && ((ms / 1000) % 120 < 30 || f.GL)) { ox.fillStyle = ox.strokeStyle; drawWhere(ms, f, size); ox.globalAlpha = 0.85; }
+    if (f.LX && global.Lexicon) drawLexicon(ms, f, size);
     // the measurement of these 30 seconds
     const M = O.measure ? { kind: O.measure, k: Math.floor(sE / 30), e: 1 } : O.score ? Score.measureAt(ms) : null;
     if (!M || M.e <= 0.01) { ox.globalAlpha = 1; return; }
