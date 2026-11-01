@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Grass Nocturne — Generative Art</title>
+  <style>
+    html, body { margin: 0; height: 100%; background: #000; overflow: hidden; }
+    #stage { position: fixed; inset: 0; transition: opacity 2s linear; }
+    canvas#gl { display: block; width: 100%; height: 100%; }
+    canvas#ov { position: fixed; inset: 0; width: 100%; height: 100%; pointer-events: none; transition: opacity 2s linear; }
+    a.back {
+      position: fixed; top: 14px; left: 16px; z-index: 10; color: #d8b4fe;
+      font: 13px ui-sans-serif, system-ui, sans-serif; text-decoration: none; opacity: .5;
+    }
+    a.back:hover { opacity: 1; }
+    a.back { transition: opacity .6s; }
+    body.quiet a.back { opacity: 0; pointer-events: none; }   /* on a wall: no links, no cursor */
+    body.quiet { cursor: none; }
+    #hud {
+      position: fixed; right: 1.2vw; bottom: 1vh; color: #8d8a84; opacity: .55; pointer-events: none;
+      font: max(10px, 0.9vh)/1.3 ui-monospace, SFMono-Regular, Menlo, monospace; letter-spacing: .04em;
+    }
+  </style>
+</head>
+<body>
+  <a class="back" href="../../">← gallery</a>
+  <a class="back" style="left:96px" href="setup.html">where the meadow is →</a>
+  <div id="stage"><canvas id="gl" aria-label="Grass Nocturne: a live meadow under a single low light"></canvas></div>
+  <canvas id="ov" aria-hidden="true"></canvas>
+  <div id="hud" role="status"></div>
+  <script>
+    // the links and the cursor fade after 4 s without the mouse moving, so a wall shows only the piece
+    (function () { let t = 0; const quiet = () => document.body.classList.add('quiet');
+      const wake = () => { document.body.classList.remove('quiet'); clearTimeout(t); t = setTimeout(quiet, 4000); };
+      addEventListener('mousemove', wake); addEventListener('keydown', wake); t = setTimeout(quiet, 4000); })();
+  </script>
+  <script src="../../assets/strokefont.js?v=1"></script>
+  <script src="score.js?v=5"></script>
+  <script src="weather.js?v=3"></script>
+  <script src="geography.js?v=2"></script>
+  <script src="nocturne.js?v=9"></script>
+</body>
+</html>
