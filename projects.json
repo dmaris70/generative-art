@@ -3,6 +3,14 @@
   "author": "dmaris70",
   "projects": [
     {
+      "slug": "053-loop-engine",
+      "title": "Loop Engine",
+      "year": 2026,
+      "tools": ["canvas", "lil-gui", "gif"],
+      "description": "A seeded engine for seamless looping GIFs. Two-sided cards spin in 3D while metaball streams of ink orbit them and shed specks, rasterized on a coarse pixel grid with a shared depth buffer, in flat palettes of three or four inks. Every motion uses integer frequencies of the loop phase, so the last frame wraps exactly onto the first. Includes a GIF encoder with no dependencies (the scene is already palette indices, so nothing is quantized) and a Node CLI that renders the same bytes as the browser.",
+      "thumb": "preview.gif"
+    },
+    {
       "slug": "052-naza",
       "title": "NAZA",
       "year": 2026,
