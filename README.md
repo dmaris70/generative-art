@@ -22,6 +22,7 @@ same seed and params always reproduce the same artwork.
 │   ├── genart.js         # shared harness: seed + params + GUI + share links
 │   ├── marks.js          # plotter-native mark generators (used by the studio)
 │   ├── plotter.js        # optional: SVG export for pen plotters
+│   ├── led.js            # optional: WebGL2 harness for LED walls (native res, black floor, kiosk)
 │   └── strokefont.js     # optional: single-stroke font for plotter lettering
 ├── tools/
 │   └── plot.sh           # SVG → plotter-ready SVG via vpype, with before/after stats
@@ -403,6 +404,39 @@ near-black.
 - **Controls:** drag parts the grass · shift / right-drag / two fingers turn the view ·
   scroll zooms · **S** saves a PNG · **R** reseeds · **Space** pauses.
 - **URL:** `?seed=` sets the bed, `?n=` the blade count (default ~48k, ~26k on small screens).
+
+## Ruled Light — straight lines of light for an LED wall
+
+[`projects/055-ruled-light`](projects/055-ruled-light/) is the first piece made for an LED
+wall rather than a browser window. It carries over the rule of
+[Ruled Continuum](projects/031-ruled-continuum/) (031): only straight segments are drawn,
+anchored to pairs of rails, and the curves are the envelopes their crossings produce. On paper
+the overlaps were ink building up at low opacity. On the wall they are light adding up on true
+black. The crossing parameter now moves over a seamless loop: parallel band → fan → parabolic
+envelope and back. Bundles fade in and out, so the composition changes across the loop while
+no curve is ever drawn.
+
+- **Native resolution:** the piece renders into a framebuffer the size of the wall (one texel
+  per LED: presets for a 7680×1080 ribbon, 5760×2160, UHD, HD, a two-face corner, or a custom
+  size). Line width is set in LEDs, so the piece adapts to any pixel pitch.
+- **Exact loop:** every motion is an integer-frequency oscillator of the loop phase, so frame
+  N equals frame 0 bit for bit. Run `node tools/ruled-light-check.mjs` to check this, along
+  with determinism and seed identity, across seeds and wall sizes.
+- **Wall clock:** live playback takes its phase from the clock. Several players stay in step,
+  and a player that restarts resumes where the loop should be.
+- **Light handling** ([`assets/led.js`](assets/led.js), reusable by later wall pieces):
+  floating-point additive accumulation → soft clip in linear light → brightness ceiling →
+  seeded TPDF dither (only where there is light) → a **black floor** that keeps the lowest
+  8-bit codes, which LED processors reproduce badly, off the wall.
+- **Preview:** *fit*, or a *loupe* that draws each LED as a round emitter at the real grid
+  (double-click the wall, or press **L**; drag to pan, scroll to zoom). The overlay gives the
+  physical size and rule-of-thumb viewing distances for the chosen pitch.
+- **Output:** `?kiosk=1` maps one canvas pixel to one LED, top-left, with no panel or cursor,
+  for a PC feeding the LED controller. **S** saves a master PNG at native resolution. The
+  panel's *export* folder writes a deterministic PNG sequence plus a `manifest.json` that
+  holds the recipe and the ffmpeg lines for ProRes and HAP (Chromium only).
+- **Keys:** **L** loupe · **H** hide everything but the wall · **F** fullscreen · **Space**
+  pause · **R** reseed · **S** save master. `?t=0.25` holds a fixed phase.
 
 ## Contact sheet
 
