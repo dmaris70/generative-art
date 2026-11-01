@@ -229,6 +229,17 @@ shows the real look.
     of the field.
   - **Each place its own meadow:** each home has its own meadow, and the journey another. The
     change happens under the arrival's datamosh.
+- **Where:** for thirty seconds of every two minutes, and through every glimpse, a panel at the
+  top right shows where the meadow is:
+  - a small line-drawn map, its coastlines traced from the piece's own geography;
+  - the Centre for Dance Studies in Athens and the Royal Ballet School in London, each marked and
+    labelled;
+  - the route, solid when travelling and dashed for the next crossing when in residence;
+  - the meadow as a ringed dot;
+  - underneath: the coordinates, the place in words ("in Athens, Greece", "over the Adriatic
+    Sea", "near Trieste, Italy"), and each school with its city and its distance, or "here".
+  - The map frames both schools and the whole route, so an extreme trip zooms out to the world.
+    `?where=0` hides the panel.
 - **The homage measurement** (22 kinds now):
   - in residence: the home, the day of three, the count and tempo, unison or canon, the other
     home's distance, and time until leaving;

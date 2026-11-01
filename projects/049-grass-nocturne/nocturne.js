@@ -623,6 +623,7 @@ void main() { vec2 p = vec2(float((gl_VertexID << 1) & 2), float(gl_VertexID & 2
   const HOMAGE = TRACK && TRACK.cfg.mode === 'homage', HOMES = HOMAGE ? TRACK.cfg.homes : [];
   const homeReaders = HOMAGE && O.weather ? HOMES.map((h) => Wx.createReader({ track: () => ({ lat: h.lat, lon: h.lon }) })) : [];
   if (HOMAGE && !Q.has('look')) O.look = 1;
+  O.where = Q.get('where') !== '0';
   O.dedication = HOMAGE ? Q.get('dedication') !== '0' : Q.get('dedication') === '1';   // the homage carries it; ?dedication=0 hides it O.glimpses = Q.get('glimpses') !== '0';
   let seedNow = O.seed;
   const Geo = global.Geography;
@@ -1101,6 +1102,73 @@ void main() { vec2 p = vec2(float((gl_VertexID << 1) & 2), float(gl_VertexID & 2
         return { lines: ['THE ANTIPODE ' + deg(a.lat, 'N', 'S') + ' ' + deg(a.lon, 'E', 'W'), ga.land ? 'LAND - ' + up(ga.country) : 'SEA - ' + up('the ' + ga.sea)] }; }
     }
   }
+  // ── where: a small map of the two schools, the route and the meadow, with words for the place
+  let mapCache = { key: '', coast: [] };
+  function placeWords(lat, lon) {
+    const g = Geo.ready() ? Geo.at(lat, lon) : null;
+    if (!g) return '';
+    if (!g.land) return 'OVER ' + up('the ' + g.sea);
+    const home = HOMES.find((h) => Geo.haversine(lat, lon, h.lat, h.lon) < 5);   // at a school: its own city
+    if (home) return 'IN ' + home.name + ', ' + up(g.country);
+    const c = Geo.nearestPlace(lat, lon);
+    return c && c.km < 40 ? 'IN ' + up(c.name) + ', ' + up(g.country) : c && c.km < 150 ? 'NEAR ' + up(c.name) + ', ' + up(g.country) : 'IN ' + up(g.country);
+  }
+  function drawWhere(ms, f, size) {
+    if (!f.PH || !Geo.ready()) return;
+    const W = ov.width, H = ov.height, pw = Math.round(W * 0.24), ph = Math.round(pw * 0.62);
+    const x0 = W - pw - W * 0.03, y0 = H * 0.06;
+    // the frame of the map: both schools, the whole route when travelling, the glimpse; padded
+    const pts = HOMES.map((h) => [h.lat, h.lon]);
+    if (f.PH.state === 'travel') for (let i = 0; i <= 60; i++) { const q = Wx.alongPath(f.PH.path, i / 60); pts.push([q.lat, q.lon]); }
+    let la0 = Math.min(...pts.map((p) => p[0])), la1 = Math.max(...pts.map((p) => p[0]));
+    let lo0 = Math.min(...pts.map((p) => p[1])), lo1 = Math.max(...pts.map((p) => p[1]));
+    if (lo1 - lo0 > 180) { lo0 = -180; lo1 = 180; }
+    const k = Math.cos(((la0 + la1) / 2) * Math.PI / 180);
+    let wDeg = (lo1 - lo0) * k, hDeg = la1 - la0; const pad = 0.18;
+    wDeg *= 1 + 2 * pad; hDeg *= 1 + 2 * pad;
+    if (wDeg / hDeg < pw / ph) wDeg = hDeg * pw / ph; else hDeg = wDeg * ph / pw;
+    const cLat = (la0 + la1) / 2, cLon = (lo0 + lo1) / 2;
+    const X = (lon) => x0 + pw / 2 + ((lon - cLon) * k) / wDeg * pw, Y = (lat) => y0 + ph / 2 - (lat - cLat) / hDeg * ph;
+    // the backing, so the lines read on any sky
+    ox.save(); ox.globalAlpha = 0.28; ox.fillStyle = f.bright && O.look ? 'rgb(255,255,255)' : 'rgb(0,0,0)'; ox.fillRect(x0 - 8, y0 - 8, pw + 16, ph + size * 12.5); ox.restore();
+    // coastlines, from the piece's own map: marching squares on the land mask, cached per frame of map
+    const key = [cLat, cLon, wDeg, hDeg].map((v) => v.toFixed(2)).join(',');
+    if (key !== mapCache.key) {
+      const nx = 110, ny = Math.round(nx * ph / pw), segs = [], lonAt = (i) => cLon + (i / nx - 0.5) * wDeg / k, latAt = (j) => cLat + (0.5 - j / ny) * hDeg;
+      const L = []; for (let j = 0; j <= ny; j++) { L.push([]); for (let i = 0; i <= nx; i++) L[j].push(Geo.isLand(latAt(j), ((lonAt(i) + 540) % 360) - 180) ? 1 : 0); }
+      for (let j = 0; j < ny; j++) for (let i = 0; i < nx; i++) {
+        const a = L[j][i], b = L[j][i + 1], c = L[j + 1][i + 1], d = L[j + 1][i], e = [];
+        if (a !== b) e.push([i + 0.5, j]); if (b !== c) e.push([i + 1, j + 0.5]); if (c !== d) e.push([i + 0.5, j + 1]); if (d !== a) e.push([i, j + 0.5]);
+        if (e.length >= 2) segs.push([e[0], e[1]]); if (e.length === 4) segs.push([e[2], e[3]]);
+      }
+      mapCache = { key, coast: segs.map(([p, q]) => [x0 + p[0] / nx * pw, y0 + p[1] / ny * ph, x0 + q[0] / nx * pw, y0 + q[1] / ny * ph]) };
+    }
+    ox.beginPath(); for (const s2 of mapCache.coast) { ox.moveTo(s2[0], s2[1]); ox.lineTo(s2[2], s2[3]); }
+    ox.globalAlpha = 0.45; ox.stroke(); ox.globalAlpha = 0.9;
+    // the route (or the direct line, at a home), the two schools, and the meadow
+    ox.beginPath();
+    const path = f.PH.state === 'travel' ? f.PH.path : Wx.tripPath(f.PH.home === 0 ? 2 * f.PH.week : 2 * f.PH.week + 1, HOMES);
+    let px = null;
+    for (let i = 0; i <= 120; i++) { const q = Wx.alongPath(path, i / 120), x = X(q.lon), y = Y(q.lat);
+      if (px === null || Math.abs(x - px) > pw * 0.5) ox.moveTo(x, y); else ox.lineTo(x, y); px = x; }
+    ox.setLineDash(f.PH.state === 'travel' ? [] : [size * 0.4, size * 0.5]); ox.stroke(); ox.setLineDash([]);
+    ox.beginPath();
+    for (const h of HOMES) {
+      const hx = X(h.lon), hy = Y(h.lat); ox.moveTo(hx + size * 0.45, hy); ox.arc(hx, hy, size * 0.45, 0, Math.PI * 2);
+      const label = (h.short ? h.short + ' - ' : '') + h.name, lw = font ? font.width(label, size * 0.8) : 0;
+      strokeText(label, Math.min(x0 + pw - lw, Math.max(x0, hx - lw / 2)), hy + (hy < y0 + ph * 0.5 ? size * 0.9 : -size * 1.8), size * 0.8);
+    }
+    ox.stroke();
+    const mx = X(f.J.lon), my = Y(f.J.lat);
+    ox.beginPath(); ox.arc(mx, my, size * 0.32, 0, Math.PI * 2); ox.fill(); ox.beginPath(); ox.arc(mx, my, size * 0.85, 0, Math.PI * 2); ox.stroke();
+    // the words
+    ox.beginPath();
+    const dist = (h) => Geo.haversine(f.J.lat, f.J.lon, h.lat, h.lon), there = (h) => dist(h) < 5 ? 'HERE' : grp(dist(h)) + ' KM';
+    const lines = [deg(f.J.lat, 'N', 'S') + ' ' + deg(f.J.lon, 'E', 'W') + (f.GL ? ' - A GLIMPSE' : ''), placeWords(f.J.lat, f.J.lon)]
+      .concat(...HOMES.map((h) => h.inst ? [h.inst, '   ' + h.name + ' - ' + there(h)] : [h.name + ' - ' + there(h)]));
+    lines.forEach((l, i) => strokeText(l, x0, y0 + ph + size * 1.2 + i * size * 1.75, size * 0.85));
+    ox.stroke();
+  }
   function homageLines(ms, f) {
     if (!f.PH) return { lines: ['NOT IN THE HOMAGE', 'A ' + (f.J ? f.J.mode : 'FIXED').toUpperCase() + ' TRACK'] };
     const P = f.PH, d = f.dance, c = 'COUNT ' + d.count + ' OF 8 - ' + d.tempo + ' ' + d.bpm + (d.unison ? ' - UNISON' : ' - CANON');
@@ -1144,6 +1212,8 @@ void main() { vec2 p = vec2(float((gl_VertexID << 1) & 2), float(gl_VertexID & 2
     if (f.C && f.C.e > 0.02) causes.push('COLOUR ' + f.C.mode + ' - ' + Score.COLOURS[f.C.mode].toUpperCase() + (f.C.hhmm !== undefined ? ' - ' + f.C.hhmm + ' IS PRIME' : ''));
     causes.forEach((c, i) => strokeText(c, W * 0.035, H * 0.93 - (causes.length - 1 - i) * lh, size));
     ox.globalAlpha = 0.85; ox.stroke();
+    // where: thirty seconds of every two minutes, and through every glimpse
+    if (O.where && f.PH && ((ms / 1000) % 120 < 30 || f.GL)) { ox.fillStyle = ox.strokeStyle; drawWhere(ms, f, size); ox.globalAlpha = 0.85; }
     // the measurement of these 30 seconds
     const M = O.measure ? { kind: O.measure, k: Math.floor(sE / 30), e: 1 } : O.score ? Score.measureAt(ms) : null;
     if (!M || M.e <= 0.01) { ox.globalAlpha = 1; return; }

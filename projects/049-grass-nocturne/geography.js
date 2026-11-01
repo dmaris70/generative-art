@@ -52,6 +52,7 @@
     return { i, x, y, country: grid[i], sea: grid[L + i], elev: grid[2 * L + i], coast: grid[3 * L + i], kg: meta.layers > 4 ? grid[4 * L + i] : 0 };
   }
   const elevM = (b) => (b / 255) ** 2 * 6000;
+  const isLand = (lat, lon) => !!grid && cell(lat, lon).country > 0;   // cheap: one cell, for drawing maps
   // the ground at a place, with its neighbours for roughness
   function at(lat, lon) {
     if (!grid) return null;
@@ -124,7 +125,7 @@
   }
   const antipode = (lat, lon) => ({ lat: -lat, lon: lon > 0 ? lon - 180 : lon + 180 });
 
-  const api = { load, fetchData, ready, at, nearestPlace, travelled, nextChange, lastCrossing, events, antipode, haversine, BIOME, KG };
+  const api = { load, fetchData, ready, at, isLand, nearestPlace, travelled, nextChange, lastCrossing, events, antipode, haversine, BIOME, KG };
   global.Geography = api;
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
 })(typeof window !== 'undefined' ? window : globalThis);
