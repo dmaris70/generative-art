@@ -3,14 +3,6 @@
   "author": "dmaris70",
   "projects": [
     {
-      "slug": "049-naza",
-      "title": "NAZA",
-      "year": 2026,
-      "tools": ["webgl2", "canvas", "lil-gui"],
-      "description": "Titled by the artist after a documentary about collateral deaths. Guernica's proportion (776.6 × 349.3 cm) and grisaille, and the structure of its ground — dark wings, a pyramid of light, a jagged lamp, a band of newsprint, shards and a fallen diagonal — never its figures. Then salvos of dark drops cut across it and combs tear it, exactly: every gesture is an invertible marbling map computed per pixel on the GPU, so any moment renders directly. Two observers read the ink in one bit — a machined screen on the glass, or a hand-painted one carried by the ink — with Soto's moiré panel and Mellan's spiral among them. Each bath ends in a print, a score and a plotter drawing.",
-      "thumb": "preview.png"
-    },
-    {
       "slug": "048-isometric-strata-v2",
       "title": "Isometric Strata v2",
       "year": 2026,
