@@ -14,9 +14,15 @@
 //   drift   the fold constants travel a seeded closed path; the weather re-forms (60 s loop)
 //   sumi    ink on paper: density as ink load, sky as a dilute wash, paper grain
 //   strata  the depth field read as a topographic survey: contours with index lines
+//   slit    slit-scan: each column a different moment of the drift loop
+//   aurora  a moonlit deck under aurora curtains
+//   intaglio  engraved line work whose width carries tone, cross-hatch in deep shade
+//   cyanotype Prussian-blue exposure on brushed emulsion
+//   satellite simulated infrared enhancement with graticule
+//   tessera   hex mosaic, one march per tile
 //   atlas   nine seeds side by side; choose one to open it in drift
 //
-// URL: ?study=hours|drift|sumi|strata|atlas &seed=N &t=seconds (freezes) &q=lo|md|hi
+// URL: ?study=<key above> &seed=N &t=seconds (freezes) &q=lo|md|hi
 
 (function () {
   'use strict';
@@ -29,8 +35,14 @@ uniform vec2 r, uOrigin;
 uniform float uTC, uPhase, uHue, uScale, uZoom, uGrain;
 uniform vec4 uCam;                 // base, freq, amp, axis  (camera sway, as in the original)
 uniform vec3 uOff, uBox, uAniso;   // fold offset, fold box, inversion anisotropy
-uniform int uMode;                 // 0 original/drift/atlas, 1 hours, 2 sumi, 3 strata
+uniform int uMode;                 // 0 original, 1 hours, 2 sumi, 3 strata, 4 intaglio, 5 cyanotype, 6 satellite, 7 tessera, 8 aurora, 9 raw
+uniform float uTime;               // free-running seconds (aurora)
+uniform float uSlit, uU;           // slit-scan: loop span across the width, base loop phase
+uniform float uPK[5], uPP[5];      // drift path: integer frequencies and phases
+uniform float uCell;               // tessera: cell size in pixels (0 = off)
 out vec4 o;
+const float TAU = 6.2831853;
+const float DA[5] = float[5](.05, .07, .05, .05, .25);   // drift amplitudes (match DRIFT_AMP)
 
 vec3 hue3(float h){ return clamp(abs(fract(h + vec3(1., 2./3., 1./3.)) * 6. - 3.) - 1., 0., 1.); }
 mat3 rotate3D(float an, vec3 ax){
@@ -40,18 +52,29 @@ mat3 rotate3D(float an, vec3 ax){
               a.x*a.z*k + a.y*s, a.y*a.z*k - a.x*s, a.z*a.z*k + c);
 }
 float hash(vec2 p){ p = fract(p * vec2(123.34, 456.21)); p += dot(p, p + 45.32); return fract(p.x * p.y); }
+float vnoise(vec2 p){
+  vec2 i = floor(p), f = fract(p); f = f*f*(3. - 2.*f);
+  return mix(mix(hash(i), hash(i + vec2(1., 0.)), f.x), mix(hash(i + vec2(0., 1.)), hash(i + 1.), f.x), f.y);
+}
+// hex tiling: xy = offset from the cell centre (cell units), zw = cell id
+vec4 hexCell(vec2 p){
+  const vec2 k = vec2(1., 1.7320508);
+  vec4 c = floor(vec4(p, p - vec2(.5, 1.)) / k.xyxy) + .5;
+  vec4 h = vec4(p - c.xy*k, p - (c.zw + .5)*k);
+  return dot(h.xy, h.xy) < dot(h.zw, h.zw) ? vec4(h.xy, c.xy) : vec4(h.zw, c.zw + .5);
+}
 
 // The engine: returns W, S, g.
-vec3 fields(vec2 FC){
+vec3 fields(vec2 FC, vec3 OFF, vec3 BOX, float TC){
   float g = 0., e = 0., s = 0., W = 0., S = 0.;
-  mat3 R = rotate3D(-uCam.x - cos(uTC*uCam.y)*uCam.z, vec3(1., 11. + sin(uTC)*uCam.w, -1.5));
+  mat3 R = rotate3D(-uCam.x - cos(TC*uCam.y)*uCam.z, vec3(1., 11. + sin(TC)*uCam.w, -1.5));
   for (float i = 1.; i < 99.; i++) {
     vec3 p = vec3((FC - .5*r) / r.y * uZoom + vec2(0., 9.), g) * R;
     s = 2.;
     for (int j = 0; j < 19; j++) {
       e = uScale / dot(p, p*uAniso);
       s *= e;
-      p = uOff - abs(abs(p)*e - uBox);
+      p = OFF - abs(abs(p)*e - BOX);
     }
     g += p.y / s;
     s = log2(s) / exp(e);
@@ -63,7 +86,21 @@ vec3 fields(vec2 FC){
 
 void main(){
   vec2 FC = gl_FragCoord.xy - uOrigin;
-  vec3 f = fields(FC);
+  vec2 FE = FC;                                   // where the march is evaluated
+  vec4 hx = vec4(0.);
+  if (uCell > 0.) { hx = hexCell(FC / uCell); FE = (FC / uCell - hx.xy) * uCell; }
+  vec3 OFF = uOff, BOX = uBox; float TC = uTC;
+  if (uSlit > 0.) {
+    // slit-scan: each column sits at a different phase of the drift loop
+    float u = uU + FE.x / r.x * uSlit;
+    float v[5];
+    for (int i = 0; i < 5; i++) v[i] = sin(TAU * uPK[i] * u + uPP[i]) * DA[i];
+    float Y = max(3.7, uOff.y + v[4]);
+    OFF = vec3(uOff.x + v[0], Y, uOff.z + v[1]);
+    BOX = vec3(uBox.x + v[2], Y, uBox.z + v[3]);
+    TC = 10. * 3.14159265 * uU;                   // camera held for the whole frame
+  }
+  vec3 f = fields(FE, OFF, BOX, TC);
   float W = f.x, S = f.y, g = f.z;
   vec2 uv = (FC - .5*r) / r.y;
   vec3 col;
@@ -107,6 +144,84 @@ void main(){
     // pooled edge: ink gathers where the load changes fast
     float edge = clamp(length(vec2(dFdx(load), dFdy(load))) * 9., 0., 1.);
     col = mix(col, ink, edge * .35);
+
+  } else if (uMode == 4) {
+    // intaglio: engraved lines that follow the depth field; line width carries the tone,
+    // a second cross-hatch comes in for the darkest passages
+    vec3 paper = vec3(.952, .936, .89), ink = vec3(.085, .14, .13);
+    float D  = clamp(smoothstep(.04, .85, W) + S * .25, 0., 1.);
+    float L  = min(130., r.y / 3.2);                    // lines per height, never finer than ~3 px
+    float p1 = uv.y * L + g * .45 + W * 2.;
+    float a1 = abs(fract(p1) - .5) * 2., w1 = fwidth(p1) * 2.;
+    float i1 = 1. - smoothstep(D - w1, D + w1, a1);
+    float D2 = clamp((D - .55) * 2.2, 0., 1.);
+    float p2 = (uv.x * .55 + uv.y) * L * .88 + g * .3;
+    float a2 = abs(fract(p2) - .5) * 2., w2 = fwidth(p2) * 2.;
+    float i2 = 1. - smoothstep(D2 - w2, D2 + w2, a2);
+    col = mix(paper, ink, max(i1, i2 * step(.001, D2)));
+    col *= .975 + .025 * vnoise(FC * .015);            // plate tone left by the wipe
+
+  } else if (uMode == 5) {
+    // cyanotype: shadow and open sky expose to Prussian blue; lit cloud stays paper.
+    // Emulsion brushed on by hand: streaky density, ragged edges, bare paper margin.
+    vec3 paper = vec3(.945, .93, .885), prus = vec3(.035, .17, .39);
+    float ex = clamp(smoothstep(.03, .7, W) * .92 + S * .45, 0., 1.);
+    float streak = .8 + .2 * vnoise(uv * vec2(4., 46.));
+    vec2 hs = vec2(.5 * r.x / r.y - .07, .43);
+    float d = max(abs(uv.x) - hs.x, abs(uv.y) - hs.y);
+    d += (vnoise(uv * vec2(3., 26.)) - .5) * .06 + (vnoise(uv * vec2(34., 3.)) - .5) * .025;
+    float m = 1. - smoothstep(-.004, .004, d);
+    vec3 blue = mix(paper, prus * streak, ex);
+    col = mix(paper, blue, m);
+    col = mix(col, vec3(.86, .89, .86), (1. - m) * smoothstep(.03, .0, d) * .5);   // faint stain past the edge
+    col += (hash(floor(FC * uGrain)) - .5) * .03;
+
+  } else if (uMode == 6) {
+    // satellite: cloud-top coldness through an infrared enhancement table, with graticule and scan banding
+    float c = clamp((.95 - W) * 1.15 - S * .2, 0., 1.);
+    vec3 lut = mix(vec3(.06), vec3(.66), smoothstep(0., .45, c));
+    lut = mix(lut, vec3(.12, .58, .62), smoothstep(.43, .5, c));
+    lut = mix(lut, vec3(.1, .24, .82), smoothstep(.52, .58, c));
+    lut = mix(lut, vec3(.16, .74, .26), smoothstep(.61, .67, c));
+    lut = mix(lut, vec3(.96, .88, .2), smoothstep(.7, .75, c));
+    lut = mix(lut, vec3(.88, .18, .1), smoothstep(.78, .83, c));
+    lut = mix(lut, vec3(.04), smoothstep(.87, .9, c));
+    lut = mix(lut, vec3(.97), smoothstep(.93, .96, c));
+    col = lut;
+    vec2 gq = vec2(uv.x * (1. + .12 * uv.y), uv.y + .05 * uv.x * uv.x);   // a little projection curvature
+    vec2 gl = abs(fract(gq * 4. + .5) - .5) / fwidth(gq * 4.);
+    float grid = 1. - clamp(min(gl.x, gl.y) - .3, 0., 1.);
+    col = mix(col, vec3(.95, .95, .8), grid * .45);
+    col *= .95 + .05 * hash(vec2(floor(FC.y / 2.), 3.));
+    col += (hash(FC + uTC) - .5) * .04;
+
+  } else if (uMode == 7) {
+    // tessera: one march per tile, sampled at its centre; glass varies tile to tile; lead between
+    col = vec3(.98) - W + S * (1. - hue3(uHue));
+    col = pow(clamp(col, 0., 1.), vec3(1.25)) * (.88 + .24 * hash(hx.zw));
+    float hd = max(dot(abs(hx.xy), vec2(.5, .8660254)), abs(hx.x));   // .5 at the edge
+    float bevel = dot(normalize(hx.xy + 1e-4), vec2(-.55, .83)) * smoothstep(.3, .5, hd);
+    col *= 1. + .09 * bevel;
+    float lw = fwidth(hd) * 1.5;
+    col = mix(col, vec3(.07, .065, .07), smoothstep(.455 - lw, .455 + lw, hd));
+
+  } else if (uMode == 8) {
+    // aurora: a night deck under moving curtains; the curtains light the cloud tops
+    vec3 moon = vec3(.2, .24, .37), night = vec3(.01, .025, .08);
+    col = moon * (.98 - W) + S * night / .9;
+    float x = uv.x, T = uTime;
+    float band = .27 + .06 * sin(x * 2.1 + T * .13) + .03 * sin(x * 5.3 - T * .21);
+    float rays = .25 + .75 * pow(vnoise(vec2(x * 38. + sin(T * .17 + x * 3.) * 2., T * .15)), 2.);
+    float dy = uv.y - band;
+    float curtain = smoothstep(-.015, .02, dy) * exp(-max(dy, 0.) * 5.5) * rays;
+    vec3 aur = mix(vec3(.12, 1., .5), vec3(.7, .22, .95), smoothstep(.03, .26, dy));
+    float sky = smoothstep(40., 62., g);
+    col += aur * curtain * sky * 1.1;
+    float glow = .55 + .45 * sin(x * 2.1 + T * .13);
+    col += vec3(.08, .55, .3) * (.98 - W) * .4 * glow * (1. - smoothstep(-.3, .45, -uv.y + band - .2) * .6);
+    float gap = smoothstep(.12, .3, S) * (1. - smoothstep(.35, .7, W)) * (1. - curtain);
+    float st = step(.9975, hash(floor(FC))) * (.4 + .6 * hash(floor(FC) + 7.)) * gap;
+    col += st * vec3(.85, .9, 1.);
 
   } else {
     // strata: contours of march depth, index line every fifth, hypsometric tint from density
@@ -175,13 +290,21 @@ void main(){
   const KEPT = [/*KEPT*/8, 12, 17, 21, 30, 32, 75, 78, 89, 95, 109, 110, 111, 120, 136, 139, 166, 172, 173, 201, 202, 222, 235, 242, 245, 282, 310, 334, 344, 358, 365, 371, 379, 388, 389, 396, 399, 408, 417, 442, 472, 483, 495, 501, 543, 544, 545, 548];
   const rawSeed = (n) => (n === 0 || !KEPT.length ? n : KEPT[(n - 1) % KEPT.length]);
 
+  // Order sets the number keys 1–9 (atlas has no key; use the panel).
   const STUDIES = {
-    hours:  { label: 'Hours',  mode: 1, period: 96, note: 'A day over the deck in 96 s. Sun rises left and sets right; at night stars show through the gaps.' },
-    drift:  { label: 'Drift',  mode: 0, period: 60, note: 'The fold constants travel a closed path, so the weather re-forms. Loops exactly every 60 s.' },
-    sumi:   { label: 'Sumi',   mode: 2, period: 0,  note: 'Density read as ink load, open sky as a dilute wash, with paper grain and pooled edges.' },
-    strata: { label: 'Strata', mode: 3, period: 0,  note: 'The march depth read as terrain. Contour every 1.15 units, index line every fifth.' },
-    atlas:  { label: 'Atlas',  mode: 0, period: 0,  note: 'Nine seeds of the constants. Seed 0 is the original. Choose a tile to open it in Drift.' },
+    hours:     { family: 'light', mode: 1, period: 96, note: 'A day over the deck in 96 s. Sun rises left and sets right; at night stars show through the gaps.' },
+    drift:     { family: 'light', mode: 0, period: 60, note: 'The fold constants travel a closed path, so the weather re-forms. Loops exactly every 60 s.' },
+    slit:      { family: 'light', mode: 0, period: 60, note: 'Slit-scan: each column is a different moment of the drift loop, so left to right reads as 27 s of weather.' },
+    aurora:    { family: 'light', mode: 8, period: 0,  note: 'A moonlit deck under aurora curtains. The curtains hang over the horizon and tint the cloud tops green.' },
+    sumi:      { family: 'print', mode: 2, period: 0,  note: 'Density read as ink load, open sky as a dilute wash, with paper grain and pooled edges.' },
+    intaglio:  { family: 'print', mode: 4, period: 0,  note: 'Engraving: up to 130 lines per height follow the depth field and swell with tone; cross-hatch in the deepest shade.' },
+    cyanotype: { family: 'print', mode: 5, period: 0,  note: 'Shadow and open sky expose to Prussian blue; lit cloud stays paper. Brushed emulsion with ragged edges.' },
+    strata:    { family: 'survey', mode: 3, period: 0, note: 'The march depth read as terrain. Contour every 1.15 units, index line every fifth.' },
+    satellite: { family: 'survey', mode: 6, period: 0, note: 'Simulated infrared: cloud-top coldness through an enhancement table (grey, teal, blue, green, yellow, red, black, white), with graticule.' },
+    tessera:   { family: 'form', mode: 7, period: 0,   note: 'Mosaic: one march per hexagonal tile, read at its centre. Glass varies tile to tile; lead between.' },
+    atlas:     { family: 'form', mode: 0, period: 0,   note: 'Nine seeds of the constants. Seed 0 is the original. Choose a tile to open it in Drift.' },
   };
+  const SLIT_SPAN = 0.45;
   // twigl camera; drift uses camera time tc = 10πu so sin(tc) and cos(.2 tc) both close the loop
   const CAM = [1.15, 0.2, 0.05, 0.2];
 
@@ -220,7 +343,8 @@ void main(){
   gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 3, -1, -1, 3]), gl.STATIC_DRAW);
   gl.enableVertexAttribArray(0); gl.vertexAttribPointer(0, 2, gl.FLOAT, false, 0, 0);
   const U = {};
-  ['r', 'uOrigin', 'uTC', 'uPhase', 'uHue', 'uScale', 'uZoom', 'uGrain', 'uCam', 'uOff', 'uBox', 'uAniso', 'uMode']
+  ['r', 'uOrigin', 'uTC', 'uPhase', 'uHue', 'uScale', 'uZoom', 'uGrain', 'uCam', 'uOff', 'uBox', 'uAniso', 'uMode',
+    'uTime', 'uSlit', 'uU', 'uPK', 'uPP', 'uCell']
     .forEach((n) => (U[n] = gl.getUniformLocation(prog, n)));
 
   function setParams(P, mode, tc, phase, w, h, ox, oy, zoom) {
@@ -231,6 +355,12 @@ void main(){
     gl.uniform4f(U.uCam, CAM[0], CAM[1], CAM[2], CAM[3]);
     gl.uniform3fv(U.uOff, P.off); gl.uniform3fv(U.uBox, P.box); gl.uniform3fv(U.uAniso, P.aniso);
     gl.uniform1i(U.uMode, mode);
+    gl.uniform1f(U.uTime, state.t); gl.uniform1f(U.uSlit, 0); gl.uniform1f(U.uCell, 0);
+  }
+  function setPath(P, u) {
+    const path = P.path || [0, 1, 2, 3, 4].map((i) => ({ k: 1 + (i % 2), ph: i * 1.7 }));
+    gl.uniform1fv(U.uPK, path.map((x) => x.k)); gl.uniform1fv(U.uPP, path.map((x) => x.ph));
+    gl.uniform1f(U.uU, u); gl.uniform1f(U.uSlit, SLIT_SPAN);
   }
 
   let tiles = [];
@@ -262,8 +392,11 @@ void main(){
       let P = seedParams(rawSeed(state.seed)), tc = t, phase = 0;
       if (state.study === 'drift') { const u = (t / S.period) % 1; P = driftParams(P, u); tc = 10 * Math.PI * u; }
       if (state.study === 'hours') { phase = ((t / S.period) + 0.2) % 1; tc = 10 * Math.PI * ((t / S.period) % 1); }
-      if (state.study === 'sumi' || state.study === 'strata') tc = t * 0.6;
+      if (S.family === 'print' || S.family === 'survey' || state.study === 'tessera') tc = t * 0.6;
+      if (state.study === 'aurora') tc = t * 0.3;
       setParams(P, S.mode, tc, phase, W, H, 0, 0, 5);
+      if (state.study === 'slit') setPath(P, (t / S.period) % 1);
+      if (state.study === 'tessera') gl.uniform1f(U.uCell, Math.max(7, H / 34));
       gl.drawArrays(gl.TRIANGLES, 0, 3);
     }
     const clock = $('clock');
@@ -273,6 +406,7 @@ void main(){
         const ph = ((t / S.period) + 0.2) % 1, hh = Math.floor(ph * 24), mm = Math.floor((ph * 24 - hh) * 60);
         s = String(hh).padStart(2, '0') + ':' + String(mm).padStart(2, '0') + ' · ' + s;
       } else if (S.period) s = (t % S.period).toFixed(1) + ' / ' + S.period + ' s · ' + s;
+      if (state.study === 'satellite') s = 'IR, enhanced (simulated) · ' + s;
       clock.textContent = s;
     }
   }
@@ -319,7 +453,7 @@ void main(){
     else if (k === 'ArrowRight') setSeed(state.seed + 1);
     else if (k === 'ArrowLeft') setSeed(state.seed - 1);
     else if (k === '0') setSeed(0);
-    else if (k >= '1' && k <= '5') { state.study = Object.keys(STUDIES)[+k - 1]; sync(); }
+    else if (k >= '1' && k <= '9') { state.study = Object.keys(STUDIES)[+k - 1]; sync(); }
   });
   addEventListener('resize', () => (dirty = true));
 

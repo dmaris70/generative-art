@@ -32,19 +32,23 @@
     #seed { min-width: 3ch; text-align: center; font-size: 11px; }
     .clock { position: fixed; z-index: 2; right: 16px; top: 14px; font-size: 11px; color: var(--ink); text-shadow: 0 1px 6px rgba(0,0,0,.6); font-variant-numeric: tabular-nums; }
     body.bare .panel, body.bare a.back, body.bare .clock { display: none; }
+    .studies { display: grid; grid-template-columns: auto 1fr; gap: 6px 10px; align-items: center; }
+    .studies .seg { justify-self: start; }
+    .fam { font-size: 9.5px; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); opacity: .75; }
     .err { color: #ffb4a8; font-size: 11px; margin: 0; }
   </style>
 </head>
 <body>
   <a class="back" href="../../">← gallery</a>
-  <canvas id="c" aria-label="Folded Weather — five studies of a folded cloud field"></canvas>
+  <canvas id="c" aria-label="Folded Weather — eleven studies of a folded cloud field"></canvas>
   <div class="clock" id="clock"></div>
   <section class="panel">
     <h1>Folded Weather</h1>
-    <div class="row" role="group" aria-label="Study">
-      <div class="seg">
-        <button data-study="hours">hours</button><button data-study="drift">drift</button><button data-study="sumi">sumi</button><button data-study="strata">strata</button><button data-study="atlas">atlas</button>
-      </div>
+    <div class="studies" role="group" aria-label="Study">
+      <span class="fam">light</span><div class="seg"><button data-study="hours">hours</button><button data-study="drift">drift</button><button data-study="slit">slit</button><button data-study="aurora">aurora</button></div>
+      <span class="fam">print</span><div class="seg"><button data-study="sumi">sumi</button><button data-study="intaglio">intaglio</button><button data-study="cyanotype">cyanotype</button></div>
+      <span class="fam">survey</span><div class="seg"><button data-study="strata">strata</button><button data-study="satellite">satellite</button></div>
+      <span class="fam">form</span><div class="seg"><button data-study="tessera">tessera</button><button data-study="atlas">atlas</button></div>
     </div>
     <p class="note" id="note"></p>
     <div class="row">

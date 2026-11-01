@@ -1,6 +1,6 @@
 # Folded Weather
 
-*Five studies on one engine.* The engine is the fold-and-inversion density march from Yohei
+*Eleven studies on one engine, in four families: light, print, survey, form.* The engine is the fold-and-inversion density march from Yohei
 Nishitsuji's twigl cloud shader (transcribed in [057 After Nishitsuji](../057-after-nishitsuji/)).
 What is built on it here is new: a decomposition of the output into three fields, a screened seed
 space over the fold constants, four gradings and two exact loops.
@@ -27,16 +27,22 @@ Every study grades these three fields. None of them changes the march.
 
 ## Studies
 
-| key | study | grading of W, S, g | time |
-|---|---|---|---|
-| 1 | **Hours** | Sunlight × (0.98 − W), lit across from the sun's side at low sun; S × a sky colour that runs night → dusk violet → day blue; haze rising with g; stars through the gaps at night (high S, low W) | 96 s day, exact loop |
-| 2 | **Drift** | the original grading with a seeded hue; the fold constants travel a closed path | 60 s, exact loop |
-| 3 | **Sumi** | W as ink load on paper, S as a dilute grey-blue wash, paper grain, ink pooled where the load changes fast | free running |
-| 4 | **Strata** | contours of g + 5W every unit, index line every fifth; a fill tinted by S and W; steep ground merges into hatch | free running |
-| 5 | **Atlas** | nine seeds side by side; choose a tile to open it in Drift | still |
+| key | family | study | grading of W, S, g (and what else changes) | time |
+|---|---|---|---|---|
+| 1 | light | **Hours** | Sunlight × (0.98 − W), lit across from the sun's side at low sun; S × a sky colour that runs night → dusk violet → day blue; haze rising with g; stars through the gaps at night (high S, low W) | 96 s day, exact loop |
+| 2 | light | **Drift** | the original grading with a seeded hue; the fold constants travel a closed path | 60 s, exact loop |
+| 3 | light | **Slit** | as Drift, but each column is evaluated at its own phase of the loop (45% of it across the width), camera held per frame. Where a constant turns back mid-frame the weather mirrors into ridges and arches | 60 s, exact loop |
+| 4 | light | **Aurora** | moonlit deck; curtains drawn in screen space (two sine bands, ray texture from value noise, green base to violet crown), confined to the horizon band by g; cloud tops take a green reflection | free running |
+| 5 | print | **Sumi** | W as ink load on paper, S as a dilute grey-blue wash, paper grain, ink pooled where the load changes fast | free running |
+| 6 | print | **Intaglio** | engraved lines (up to 130 per height, never finer than ~3 px) bent by g and W; line width carries tone D = f(W, S); cross-hatch where D > 0.55; plate tone | free running |
+| 7 | print | **Cyanotype** | shadow and open sky expose to Prussian blue, lit cloud stays paper; streaky brushed emulsion, ragged edge, bare margin with faint stain | free running |
+| 8 | survey | **Strata** | contours of g + 5W every unit, index line every fifth; a fill tinted by S and W; steep ground merges into hatch | free running |
+| 9 | survey | **Satellite** | simulated infrared: coldness c = f(W, S) through an enhancement table (grey ramp, teal, blue, green, yellow, red, black, white), curved graticule, scan banding, sensor noise. Not real data | free running |
+| — | form | **Tessera** | hex mosaic, about 34 tiles per height: the march runs once per tile at its centre, so each tile is flat glass; per-tile value jitter, bevel, lead | free running |
+| — | form | **Atlas** | nine seeds side by side; choose a tile to open it in Drift | still |
 
 Seed 0 is always the original constants. Arrow keys step seeds, `0` returns to the original,
-space pauses, `H` hides the panel. URL: `?study=hours|drift|sumi|strata|atlas&seed=N&t=s&q=lo|md|hi`
+space pauses, `H` hides the panel, keys 1–9 pick studies in table order. URL: `?study=hours|drift|sumi|strata|atlas&seed=N&t=s&q=lo|md|hi`
 (`t` freezes the clock, used for the preview).
 
 ## The seed space, and why it is screened
@@ -74,7 +80,7 @@ clock over its 96 s day. Both loops are exact.
 | `sketch.js` | engine, gradings, seed space, loops, panel; exposes `window.FoldedWeather.probe` for screening |
 | `index.html` | page and panel |
 | `../../tools/folded-weather-screen.mjs` | seed screening (headless Chromium) |
-| `preview.png` | Hours at 16:33 (seed 7), Sumi (seed 3), Strata (seed 6), Drift (seed 5) |
+| `preview.png` | row by row: Hours at dusk (seed 7), Slit (5), Aurora (7); Sumi (3), Intaglio (3), Cyanotype (6); Strata (6), Satellite (5), Tessera (12) |
 
 ## Credit
 
