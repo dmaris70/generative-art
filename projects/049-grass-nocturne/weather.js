@@ -46,7 +46,8 @@
   // Three days at each home, half a day crossing each way. Every crossing takes its own route,
   // fixed by its number: some nearly direct, some detours of a few hundred to a few thousand km,
   // and about one in six extreme, by way of somewhere far off the line between the two.
-  const HOMES = [{ lat: 37.9704306, lon: 23.7010833, name: 'ATHENS' }, { lat: 51.5132488, lon: -0.1232255, name: 'LONDON' }];
+  const HOMES = [{ lat: 37.9704306, lon: 23.7010833, name: 'ATHENS', inst: 'THE CENTRE FOR DANCE STUDIES', short: 'CFDS' },
+    { lat: 51.5132488, lon: -0.1232255, name: 'LONDON', inst: 'THE ROYAL BALLET SCHOOL', short: 'RBS' }];
   const DAY = 864e5, WEEK = 7 * DAY, RES = 3 * DAY, TRIP = DAY / 2;
   const RE = 6371, rad = Math.PI / 180;
   function mulberry(a) { return () => { a |= 0; a = (a + 0x6d2b79f5) | 0; let t = Math.imul(a ^ (a >>> 15), 1 | a); t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t; return ((t ^ (t >>> 14)) >>> 0) / 4294967296; }; }
