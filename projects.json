@@ -3,6 +3,14 @@
   "author": "dmaris70",
   "projects": [
     {
+      "slug": "057-after-nishitsuji",
+      "title": "After Nishitsuji",
+      "year": 2026,
+      "tools": ["webgl2", "glsl", "lil-gui"],
+      "description": "A transcription, not an original work: Yohei Nishitsuji's one-line twigl shader, a cloud deck seen from above, expanded into readable GLSL with each stage annotated. A kaleidoscopic IFS with spherical inversion is marched as a density field; 98 samples add light and subtract a tint, leaving white cloud on blue. Defaults reproduce the original; the panel exposes its constants for study.",
+      "thumb": "preview.png"
+    },
+    {
       "slug": "056-luminous-field",
       "title": "Luminous Field",
       "year": 2026,
