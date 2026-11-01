@@ -391,6 +391,19 @@ different).
   outputs palette indices, so no colours are quantized. A 960×540 loop of 96 frames is
   about 150–300 KB.
 
+## Undertow — a seagrass meadow at depth
+
+[`projects/054-undertow`](projects/054-undertow/) is a WebGL2 seagrass bed at night-depth,
+after the idiom of Leander Herzog's *Field* (2026) moved under water. It is written from
+scratch. Tens of thousands of twisting ribbons are bent on the GPU by a current of calm water
+and long gusts, a back-and-forth surge, a travelling swell and the viewer's hand. Light
+circles slowly above the surface and arrives as caustics, light shafts and satin glints on
+near-black.
+
+- **Controls:** drag parts the grass · shift / right-drag / two fingers turn the view ·
+  scroll zooms · **S** saves a PNG · **R** reseeds · **Space** pauses.
+- **URL:** `?seed=` sets the bed, `?n=` the blade count (default ~48k, ~26k on small screens).
+
 ## Contact sheet
 
 `variations.html` renders one piece across many seeds as a grid of live tiles — the
