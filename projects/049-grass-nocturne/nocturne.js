@@ -623,7 +623,7 @@ void main() { vec2 p = vec2(float((gl_VertexID << 1) & 2), float(gl_VertexID & 2
   const HOMAGE = TRACK && TRACK.cfg.mode === 'homage', HOMES = HOMAGE ? TRACK.cfg.homes : [];
   const homeReaders = HOMAGE && O.weather ? HOMES.map((h) => Wx.createReader({ track: () => ({ lat: h.lat, lon: h.lon }) })) : [];
   if (HOMAGE && !Q.has('look')) O.look = 1;
-  O.dedication = Q.get('dedication') === '1'; O.glimpses = Q.get('glimpses') !== '0';
+  O.dedication = HOMAGE ? Q.get('dedication') !== '0' : Q.get('dedication') === '1';   // the homage carries it; ?dedication=0 hides it O.glimpses = Q.get('glimpses') !== '0';
   let seedNow = O.seed;
   const Geo = global.Geography;
   if (O.geo) Geo.fetchData(new URL('data/', document.currentScript ? document.currentScript.src : location.href).href).catch((e) => console.log('nocturne: geography —', e.message));
