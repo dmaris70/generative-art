@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>After Nishitsuji — Generative Art</title>
+  <style>
+    html, body { margin: 0; height: 100%; background: #000; overflow: hidden; }
+    canvas { display: block; width: 100vw; height: 100vh; }
+    a.back {
+      position: fixed; top: 14px; left: 16px; z-index: 10;
+      color: #e8d2b0; font: 13px ui-sans-serif, system-ui, sans-serif;
+      text-decoration: none; opacity: .5; transition: opacity .3s;
+    }
+    a.back:hover { opacity: 1; }
+    #hint {
+      position: fixed; right: 16px; bottom: 14px; z-index: 10;
+      color: #7d7466; font: 11px ui-sans-serif, system-ui, sans-serif; pointer-events: none;
+    }
+    #error { position: fixed; left: 16px; top: 44px; color: #f99; font: 12px ui-monospace, monospace; white-space: pre-wrap; }
+    body.bare a.back, body.bare #hint, body.bare .lil-gui { display: none; }
+    @media (max-width: 640px) { #hint { display: none; } }
+  </style>
+  <script src="https://cdn.jsdelivr.net/npm/lil-gui@0.19/dist/lil-gui.umd.min.js"></script>
+</head>
+<body>
+  <a class="back" href="../../">← gallery</a>
+  <canvas id="c" aria-label="After Nishitsuji — a raymarched fractal cloud"></canvas>
+  <div id="hint">F fullscreen · H hide · space pause · S save PNG</div>
+  <pre id="error" hidden></pre>
+  <script src="sketch.js"></script>
+</body>
+</html>
