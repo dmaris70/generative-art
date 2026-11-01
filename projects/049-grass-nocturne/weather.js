@@ -35,7 +35,86 @@
     if (q.has('route')) { const r = String(q.get('route')).split(';').map(pt).filter(Boolean); if (r.length >= 2) return { mode: 'route', route: r, days, start }; if (r.length === 1) return { mode: 'place', place: r[0], days, start }; }
     const from = q.get('from'), fp = pt(from), fl = fp ? fp.lon : (isFinite(+from) ? +from : 0);
     if (q.has('lat') && isFinite(+q.get('lat'))) return { mode: 'parallel', lat: Math.max(-89, Math.min(89, +q.get('lat'))), fromLon: fl, days, start };
-    return { mode: 'journey', from: fp, fromLon: fl, days, start };
+    if (q.get('journey') === '1' || q.has('from')) return { mode: 'journey', from: fp, fromLon: fl, days, start };
+    // the default: the homage — a week between two homes (?homes=lat,lon;lat,lon to change them)
+    const hs = q.has('homes') ? String(q.get('homes')).split(';').map(pt).filter(Boolean) : [];
+    const homes = hs.length === 2 ? [{ ...hs[0], name: 'HOME 1' }, { ...hs[1], name: 'HOME 2' }] : HOMES;
+    return { mode: 'homage', homes, start, days: 7 };
+  }
+
+  // ───────────────────────── the homage: a week between Athens and London ─────────────────────────
+  // Three days at each home, half a day crossing each way. Every crossing takes its own route,
+  // fixed by its number: some nearly direct, some detours of a few hundred to a few thousand km,
+  // and about one in six extreme, by way of somewhere far off the line between the two.
+  const HOMES = [{ lat: 37.9704306, lon: 23.7010833, name: 'ATHENS' }, { lat: 51.5132488, lon: -0.1232255, name: 'LONDON' }];
+  const DAY = 864e5, WEEK = 7 * DAY, RES = 3 * DAY, TRIP = DAY / 2;
+  const RE = 6371, rad = Math.PI / 180;
+  function mulberry(a) { return () => { a |= 0; a = (a + 0x6d2b79f5) | 0; let t = Math.imul(a ^ (a >>> 15), 1 | a); t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t; return ((t ^ (t >>> 14)) >>> 0) / 4294967296; }; }
+  function bearingTo(a, b) {
+    const y = Math.sin((b.lon - a.lon) * rad) * Math.cos(b.lat * rad), x = Math.cos(a.lat * rad) * Math.sin(b.lat * rad) - Math.sin(a.lat * rad) * Math.cos(b.lat * rad) * Math.cos((b.lon - a.lon) * rad);
+    return Math.atan2(y, x);
+  }
+  function destPoint(p, brg, km) {
+    const d = km / RE, la = p.lat * rad, lo = p.lon * rad;
+    const la2 = Math.asin(Math.sin(la) * Math.cos(d) + Math.cos(la) * Math.sin(d) * Math.cos(brg));
+    const lo2 = lo + Math.atan2(Math.sin(brg) * Math.sin(d) * Math.cos(la), Math.cos(d) - Math.sin(la) * Math.sin(la2));
+    return { lat: la2 / rad, lon: ((lo2 / rad + 540) % 360) - 180 };
+  }
+  function tripPath(n, homes = HOMES) {
+    const r = mulberry((n * 2654435761) ^ 0x7a5c3e1), from = homes[n % 2], to = homes[(n + 1) % 2];
+    const kind = r(), pts = [from];
+    let label = 'DIRECT';
+    if (kind < 0.3) {                                                    // nearly direct
+      if (r() < 0.6) { const m = slerp(from, to, 0.3 + 0.4 * r()); pts.push(destPoint(m, bearingTo(m, to) + (r() < 0.5 ? 1 : -1) * Math.PI / 2, 80 + 320 * r())); label = 'NEAR THE LINE'; }
+    } else if (kind < 0.84) {                                            // a detour
+      const k = 1 + Math.floor(r() * 3);
+      for (let i = 1; i <= k; i++) {
+        const m = slerp(from, to, i / (k + 1) + (r() - 0.5) * 0.15), side = r() < 0.5 ? 1 : -1;
+        pts.push(destPoint(m, bearingTo(m, to) + side * Math.PI / 2, 300 + 2200 * r() * r()));
+      }
+      label = 'A DETOUR';
+    } else {                                                             // extreme: somewhere far off
+      const k = 1 + Math.floor(r() * 2);
+      for (let i = 0; i < k; i++) {
+        let p, tries = 0;
+        do { p = { lat: -55 + 130 * r(), lon: -180 + 360 * r() }; tries++; }
+        while (tries < 30 && Math.min(slerp(from, p, 0.5).d, slerp(to, p, 0.5).d) * RE < 2500);
+        pts.push(p);
+      }
+      label = 'EXTREME';
+    }
+    pts.push(to);
+    const legs = pts.slice(1).map((p, i) => (slerp(pts[i], p, 0.5).d || 0) * RE);
+    return { n, pts, legs, km: legs.reduce((a, b) => a + b, 0), label, from, to };
+  }
+  function alongPath(path, f) {
+    let d = Math.max(0, Math.min(1, f)) * path.km;
+    for (let i = 0; i < path.legs.length; i++) {
+      if (d <= path.legs[i] || i === path.legs.length - 1) { const q = slerp(path.pts[i], path.pts[i + 1], path.legs[i] ? Math.min(1, d / path.legs[i]) : 0); return { lat: q.lat, lon: q.lon }; }
+      d -= path.legs[i];
+    }
+    return { lat: path.to.lat, lon: path.to.lon };
+  }
+  // where the homage is at a moment: at a home (and for how long) or on trip n (and how far along)
+  function homagePhase(ms, cfg) {
+    const t = ms - cfg.start, w = Math.floor(t / WEEK), u = t - w * WEEK, H = cfg.homes;
+    if (u < RES) return { state: 'home', home: 0, since: u, left: RES - u, week: w };
+    if (u < RES + TRIP) { const n = 2 * w; return { state: 'travel', n, f: (u - RES) / TRIP, left: RES + TRIP - u, week: w, path: tripPath(n, H) }; }
+    if (u < 2 * RES + TRIP) return { state: 'home', home: 1, since: u - RES - TRIP, left: 2 * RES + TRIP - u, week: w };
+    const n = 2 * w + 1; return { state: 'travel', n, f: (u - 2 * RES - TRIP) / TRIP, left: WEEK - u, week: w, path: tripPath(n, H) };
+  }
+  // glimpses: in about one five-minute slot in four, a cut of 2–7 s to the other home; while
+  // travelling, to both homes in turn. Fixed by the slot's number, so every screen cuts together.
+  function glimpseAt(ms, ph) {
+    const slot = Math.floor(ms / 3e5), r = mulberry((slot * 2246822519) ^ 0x61a5e);
+    if (r() > 0.27) return null;
+    const start = slot * 3e5 + (20 + Math.floor(r() * 240)) * 1e3, dur = (2 + r() * 5) * 1e3;
+    if (ms < start || ms >= start + dur) return null;
+    const p = (ms - start) / dur;
+    let home;
+    if (ph.state === 'home') home = 1 - ph.home;
+    else { const first = r() < 0.5 ? 0 : 1; home = p < 0.5 ? first : 1 - first; }
+    return { home, p, edge: Math.min(p, 1 - p) * dur / 1e3 };   // edge: seconds from the nearest cut
   }
   function slerp(a, b, f) {
     const R = Math.PI / 180, toV = (p) => [Math.cos(p.lat * R) * Math.cos(p.lon * R), Math.cos(p.lat * R) * Math.sin(p.lon * R), Math.sin(p.lat * R)];
@@ -46,7 +125,14 @@
   }
   const arc = (a, b) => slerp(a, b, 0.5).d || 0;
   function track(cfg = { mode: 'journey', fromLon: 0, days: 365.25, start: START }) {
-    const P = cfg.days, S = cfg.start;
+    const P = cfg.days || 7, S = cfg.start;
+    if (cfg.mode === 'homage') {
+      const T = (ms) => {
+        const ph = homagePhase(ms, cfg), p = ph.state === 'home' ? cfg.homes[ph.home] : alongPath(ph.path, 0.5 - 0.5 * Math.cos(Math.PI * ph.f));
+        return { lat: p.lat, lon: p.lon, day: Math.floor((ms - S) / DAY), days: (ms - S) / DAY, mode: 'homage', phase: ph };
+      };
+      T.START = S; T.cfg = cfg; return T;
+    }
     const wrap = (l) => ((l + 180) % 360 + 360) % 360 - 180;
     let fn;
     if (cfg.mode === 'place') fn = () => ({ lat: cfg.place.lat, lon: cfg.place.lon });
@@ -220,7 +306,7 @@
     return { poll, current, get place() { return place; } };
   }
 
-  const api = { seaState, marineUrl, parseMarine, DOUGLAS, journey, track, parseSettings, slerp, sunAt, solarClock, url, parse, builtIn, effects, pairFor, createReader, lerpState, WMO, START };
+  const api = { HOMES, tripPath, alongPath, homagePhase, glimpseAt, seaState, marineUrl, parseMarine, DOUGLAS, journey, track, parseSettings, slerp, sunAt, solarClock, url, parse, builtIn, effects, pairFor, createReader, lerpState, WMO, START };
   global.Weather = api;
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
 })(typeof window !== 'undefined' ? window : globalThis);
