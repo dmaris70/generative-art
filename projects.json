@@ -3,6 +3,14 @@
   "author": "dmaris70",
   "projects": [
     {
+      "slug": "056-luminous-field",
+      "title": "Luminous Field",
+      "year": 2026,
+      "tools": ["webgl2", "lil-gui", "led wall"],
+      "description": "Rothko's classic format translated from thin paint into light, on the LED-wall engine. A seed lays out one to three soft rectangles stacked on a ground; feathered, brushed edges, layered scumbled inks, a seam of light at the edge and a core of light inside. On wide walls, a row of related canvases in one register. The fields breathe over an exact loop: edges swell, feathers open, luminance rises and falls. Seven colour registers, none a copy of a painting. Kiosk, loupe, black floor and deterministic master frames from the harness.",
+      "thumb": "preview.png"
+    },
+    {
       "slug": "055-ruled-light",
       "title": "Ruled Light",
       "year": 2026,
