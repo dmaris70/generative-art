@@ -25,6 +25,11 @@
     #error { position: fixed; left: 16px; top: 44px; color: #f99; font: 12px ui-monospace, monospace; white-space: pre-wrap; }
     /* bare: H hides everything but the wall */
     body.bare a.back, body.bare #status, body.bare #hint { display: none; }
+    /* screen mode: the wall fills the window; details on I */
+    body.screen #status { display: none; }
+    body.screen.info #status { display: block; }
+    #hint { transition: opacity 1.2s; }
+    #hint.gone { opacity: 0; }
     /* kiosk: one canvas pixel per LED, top-left, nothing else, no cursor */
     body.kiosk { cursor: none; }
     body.kiosk canvas#wall { position: fixed; left: 0; top: 0; }
@@ -40,7 +45,7 @@
   <a class="back" href="../../">← gallery</a>
   <canvas id="wall" aria-label="Luminous Field — breathing fields of colour on an LED wall"></canvas>
   <pre id="status"></pre>
-  <div id="hint">L loupe · double-click to inspect · H hide · F fullscreen · space pause · S save master</div>
+  <div id="hint">F fullscreen · R new seed · I info · H hide · L loupe · space pause · S save master</div>
   <pre id="error" hidden></pre>
   <script>
     addEventListener('error', e => { const el = document.getElementById('error'); el.textContent = '⚠ ' + e.message; el.hidden = false; });

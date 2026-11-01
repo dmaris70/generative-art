@@ -9,7 +9,8 @@
 //   ?kiosk=1   one canvas pixel per LED, top-left, no panel or cursor: for output to a controller
 //   ?t=0.25    hold a fixed loop phase (screenshots, review)
 //   ?gui=0     contact-sheet tile: a reduced wall, rendered once
-// Keys: L loupe · H hide panel & overlay · F fullscreen · space pause · S save master PNG
+// Wall 'Screen' (the default) makes the wall the window: any size, edge to edge, rebuilt on resize.
+// Keys: L loupe · H hide panel & overlay · I info · F fullscreen · space pause · S save master PNG
 
 (function () {
   'use strict';
@@ -20,6 +21,8 @@
   const TILE = !KIOSK && url.searchParams.get('gui') === '0';
   const FIXED_T = url.searchParams.has('t') ? parseFloat(url.searchParams.get('t')) : null;
   const LIVE_FPS = 60;
+  const SCREEN_PRESET = 99;    // wall = the window, not a fixed LED size
+  const SCREEN_MAX = 2560;     // longest side rendered in screen mode; larger displays upscale
 
   if (KIOSK) document.body.classList.add('kiosk');
 
@@ -170,7 +173,7 @@
   G = GenArt.create({
     title: 'Luminous Field',
     params: {
-      preset: { value: 2, options: LEDWall.presetOptions(), label: 'wall', group: 'wall' },
+      preset: { value: SCREEN_PRESET, options: Object.assign({ 'Screen (fills the window)': SCREEN_PRESET }, LEDWall.presetOptions()), label: 'wall', group: 'wall' },
       customW: { value: 2160, min: 256, max: 16384, step: 16, label: 'custom width', group: 'wall' },
       customH: { value: 2160, min: 128, max: 8192, step: 16, label: 'custom height', group: 'wall' },
       pitch: { value: 2.5, min: 0.6, max: 10, step: 0.1, label: 'pixel pitch (mm)', group: 'wall' },
@@ -179,7 +182,7 @@
       register: { value: 0, options: regOpts, label: 'register', group: 'painting' },
       panels: { value: 0, min: 0, max: LF.MAX_PANELS, step: 1, label: 'canvases (0 = auto)', group: 'painting' },
       fields: { value: 0, min: 0, max: 3, step: 1, label: 'fields (0 = seed)', group: 'painting' },
-      hang: { value: 0.06, min: 0, max: 0.2, step: 0.005, label: 'hang (black wall)', group: 'painting' },
+      hang: { value: 0, min: 0, max: 0.2, step: 0.005, label: 'hang (black wall)', group: 'painting' },
       series: { value: 0.35, min: 0, max: 1, step: 0.01, label: 'series variation', group: 'painting' },
       feather: { value: 1, min: 0.1, max: 3, step: 0.01, label: 'feather', group: 'painting' },
       halo: { value: 1, min: 0, max: 2.5, step: 0.01, label: 'seam of light', group: 'painting' },
@@ -199,6 +202,16 @@
     onReset: rebuild,
   });
   if (KIOSK && G.gui) G.gui.hide();
+  if (G.gui && !KIOSK) G.gui.close();
+
+  // in screen mode the wall follows the window
+  let resizeTimer = 0;
+  addEventListener('resize', () => {
+    if (G.params.preset !== SCREEN_PRESET || TILE) return;
+    clearTimeout(resizeTimer);
+    resizeTimer = setTimeout(rebuild, 200);
+  });
+  setTimeout(() => document.getElementById('hint').classList.add('gone'), 5000);
 
   window.saveCanvas = () => saveMaster();
 
@@ -207,7 +220,18 @@
 
   function rebuild() {
     const P = G.params;
-    wallInfo = LEDWall.resolve(P.preset, P.customW, P.customH);
+    const screen = P.preset === SCREEN_PRESET && !KIOSK;
+    if (screen) {
+      // the wall is the window, in device pixels, capped so large displays stay smooth
+      const dpr = devicePixelRatio || 1;
+      const sw = Math.max(1, innerWidth * dpr), sh = Math.max(1, innerHeight * dpr);
+      const k = Math.min(1, SCREEN_MAX / Math.max(sw, sh));
+      wallInfo = { w: Math.round(sw * k), h: Math.round(sh * k), fold: -1, label: 'Screen' };
+    } else {
+      wallInfo = LEDWall.resolve(P.preset === SCREEN_PRESET ? 2 : P.preset, P.customW, P.customH);
+    }
+    wall.state.noPad = screen;
+    document.body.classList.toggle('screen', screen);
     let W = wallInfo.w, H = wallInfo.h;
     if (TILE) {
       const s = 360 / H;
@@ -269,7 +293,7 @@
     const dt = now - last; last = now;
     fpsAvg += (1000 / Math.max(1, dt) - fpsAvg) * 0.05;
     // keep the fitted wall clear of the panel
-    wall.state.insetRight = G.gui && !uiHidden && !KIOSK && innerWidth > 900
+    wall.state.insetRight = !wall.state.noPad && G.gui && !uiHidden && !KIOSK && innerWidth > 900
       ? Math.ceil(G.gui.domElement.getBoundingClientRect().width * devicePixelRatio) + 16 : 0;
     const t = currentT();
     const frames = Math.round(loopSeconds() * LIVE_FPS);
@@ -390,7 +414,8 @@
       e.preventDefault();
       if (!paused) pausedT = currentT();
       paused = !paused;
-    } else if (k === 'r') G.randomize();
+    } else if (k === 'i') document.body.classList.toggle('info');
+    else if (k === 'r') G.randomize();
     else if (k === 's') saveMaster();
   });
 
