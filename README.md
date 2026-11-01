@@ -450,6 +450,13 @@ edges swell by about 2%, feathers open and close, luminance rises and falls, and
 re-form. `node tools/luminous-field-check.mjs` checks the loop, determinism, seed identity and
 layout. Output, kiosk, loupe and export are as for Ruled Light.
 
+## After Nishitsuji — a transcription
+
+[`projects/057-after-nishitsuji`](projects/057-after-nishitsuji/) is a study, not an original
+piece: Yohei Nishitsuji's one-line twigl shader (a cloud deck seen from above) expanded into
+readable GLSL, with twigl's implicit inputs and helpers made explicit and each stage annotated.
+Defaults reproduce the original; the panel exposes its constants. Rights remain with the author.
+
 ## Contact sheet
 
 `variations.html` renders one piece across many seeds as a grid of live tiles — the
