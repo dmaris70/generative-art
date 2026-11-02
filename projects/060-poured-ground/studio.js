@@ -183,6 +183,18 @@
         srcLine.appendChild(btn);
       } else srcLine.textContent = 'In motion, its composition map rises in the paper. The work is in copyright (or not yet sourced), so no image of it is shown or used.';
       w.insertBefore(srcLine, w.querySelector('.basis'));
+      // where to view the painting itself (a link, for every work: nothing is copied)
+      const L = (window.WORK_LINKS || {})[S.palette.id];
+      if (L) {
+        const v = document.createElement('div'); v.className = 'readings view';
+        const a1 = document.createElement('a'); a1.href = L.url; a1.target = '_blank'; a1.rel = 'noopener';
+        a1.textContent = 'View the painting ↗'; a1.title = L.site + (L.note ? ' — ' + L.note : '');
+        const s1 = document.createElement('span'); s1.textContent = ' ' + L.site + '  ·  '; s1.style.color = 'var(--muted)';
+        const a2 = document.createElement('a'); a2.href = L.search; a2.target = '_blank'; a2.rel = 'noopener'; a2.textContent = 'image search ↗';
+        [a1, a2].forEach(function (a) { a.style.color = 'var(--accent)'; });
+        v.appendChild(a1); v.appendChild(s1); v.appendChild(a2);
+        w.insertBefore(v, w.querySelector('.basis'));
+      }
       w.querySelector('.basis').title = S.brief.k
         ? 'The fields follow the documented composition of the painting.'
         : 'The composition of this work is not documented in the brief\'s sources; the layout follows its title and the artist\'s typical structure.';
