@@ -430,6 +430,16 @@ void main(){
     dirty = true;
   }
   function setSeed(s) { state.seed = Math.max(0, s); sync(); }
+  // a new picture: any study but the atlas (a browser of seeds, not a picture), any screened seed
+  // (0 = the original), any moment of its loop or of a minute; quality and pause are left as they are
+  function generate() {
+    const studies = Object.keys(STUDIES).filter((k) => k !== 'atlas');
+    let next; do next = studies[Math.floor(Math.random() * studies.length)]; while (studies.length > 1 && next === state.study && Math.random() < 0.6);
+    state.study = next;
+    state.seed = Math.floor(Math.random() * (KEPT.length + 1));
+    state.t = Math.random() * (STUDIES[next].period || 60);
+    sync();
+  }
   document.querySelectorAll('[data-study]').forEach((b) => (b.onclick = () => { state.study = b.dataset.study; sync(); }));
   document.querySelectorAll('[data-q]').forEach((b) => (b.onclick = () => { state.q = b.dataset.q; sync(); }));
   const on = (id, f) => { const el = $(id); if (el) el.onclick = f; };
@@ -437,6 +447,7 @@ void main(){
   on('prev', () => setSeed(state.seed - (state.study === 'atlas' ? 9 : 1)));
   on('next', () => setSeed(state.seed + (state.study === 'atlas' ? 9 : 1)));
   on('orig', () => setSeed(0));
+  on('gen', generate);
   on('hide', () => document.body.classList.add('bare'));
   canvas.addEventListener('click', (e) => {
     if (document.body.classList.contains('bare')) { document.body.classList.remove('bare'); return; }
@@ -453,6 +464,7 @@ void main(){
     else if (k === 'ArrowRight') setSeed(state.seed + 1);
     else if (k === 'ArrowLeft') setSeed(state.seed - 1);
     else if (k === '0') setSeed(0);
+    else if (k === 'g' || k === 'G') generate();
     else if (k >= '1' && k <= '9') { state.study = Object.keys(STUDIES)[+k - 1]; sync(); }
   });
   addEventListener('resize', () => (dirty = true));
