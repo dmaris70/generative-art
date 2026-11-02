@@ -1,6 +1,6 @@
 // 059 — Plotted Sky: 048 Plotted Field with an engraved sky. The field is 048's field.js, unchanged
 // in what it draws; the sky is sky.js, attached through field.js's `extend` hook.
-// Keys: R new field · S save PNG · V save SVG · [ ] previous / next view · M the map / the view · W next weather.
+// Keys: R new field · G generate · S save PNG · V save SVG · [ ] previous / next view · M the map / the view · W next weather.
 
 let G, R = null, job = 0;
 const QS = new URLSearchParams(location.search);
@@ -47,6 +47,7 @@ const status = document.getElementById('status');
   });
   if (TILE && G.gui) G.gui.hide();
   if (TILE) status.hidden = true;
+  if (G.gui) G.gui.add({ generate }, 'generate').name('⟳ Generate (G)');
   if (G.gui) G.gui.add({ saveSVG }, 'saveSVG').name('Save SVG (V)');
   window.saveCanvas = () => savePNG();
   window.addEventListener('keydown', (e) => {
@@ -57,6 +58,7 @@ const status = document.getElementById('status');
     else if (e.key === 'v' || e.key === 'V') saveSVG();
     else if (e.key === '[' || e.key === ']') stepView(e.key === ']' ? 1 : -1);
     else if (e.key === 'm' || e.key === 'M') { G.params.kind = +G.param('kind') ? 0 : 1; refreshPanel(); G.reset(); }
+    else if (e.key === 'g' || e.key === 'G') generate();
     else if (e.key === 'w' || e.key === 'W') { G.params.weather = (+G.param('weather') + 1) % 49; refreshPanel(); G.reset(); }
   });
   window.addEventListener('resize', draw);
@@ -70,6 +72,18 @@ function options() {
   return PlottedSky.withSky(field, {
     weather: p('weather'), height: p('deck'), scale: p('scale'), drift: p('drift'), ruling: p('ruling'), tone: p('tone'), cross: p('cross'),
   });
+}
+// a new seed and a new draw of everything that shapes the picture (generate.js); the sheet's
+// settings (paper, pen, second ink, grain) and the sheet kind stay as they are
+function generate() {
+  // the field number is drawn first, so the view can be chosen among those that see sky
+  const field = (Math.random() * 4294967296) >>> 0;
+  const g = PlottedSkyGenerate.draw(Math.random, field);
+  G.params.kind = 0; G.params.sky = 1;
+  for (const k of ['view', 'fov', 'instant', 'wind', 'windTurn', 'light', 'moon', 'moonHeight', 'weather', 'deck', 'scale', 'drift', 'ruling', 'tone', 'cross',
+    'density', 'body', 'haze', 'hazeLength', 'cutoff', 'heads']) G.params[k] = g[k];
+  refreshPanel();
+  G.setSeed(field);   // one build; paper, pen, second ink and grain are untouched
 }
 function fieldOptions(p) {
   return {
