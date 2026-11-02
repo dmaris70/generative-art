@@ -159,14 +159,16 @@
       <div id="motionCtl">
         <div class="row" style="margin:6px 0">
           <button class="icon" id="playPause" title="Play / pause (space)">⏸</button>
-          <input type="range" id="phase" class="grow" min="0" max="1" step="0.001" aria-label="Loop phase" style="accent-color: var(--accent); background:none; border:0; padding:0" />
-          <span class="val" id="phaseVal" style="color:var(--muted);font-size:11px;min-width:64px;text-align:right;font-variant-numeric:tabular-nums"></span>
+          <button class="icon" id="restart" title="Begin the pour again (backspace)">↺</button>
+          <div class="grow" style="height:4px;background:var(--border);border-radius:2px;overflow:hidden"><div id="cycleBar" style="height:100%;width:0;background:var(--accent)"></div></div>
+          <span class="val" id="phaseVal" style="color:var(--muted);font-size:11px;min-width:76px;text-align:right;font-variant-numeric:tabular-nums"></span>
         </div>
         <p class="hint" id="phaseName"></p>
-        <div class="ctl"><label for="gusts">loop (gusts)</label><input type="range" id="gusts" min="3" max="16" step="1" /><span class="val"></span></div>
-        <div class="ctl"><label for="sway">sway</label><input type="range" id="sway" min="0" max="2.5" step="0.05" /><span class="val"></span></div>
-        <button class="grow" id="recordLoop" style="width:100%;margin-top:6px">🎞 Record loop (WebM, 1080 px)</button>
-        <p class="hint">Created in the order the paint arrived, breathing in gusts every 5.03 s, then absorbed by the paper a little at a time. The loop closes exactly. Exporting a print while animated saves that instant.</p>
+        <div class="ctl"><label for="gusts">living (gusts)</label><input type="range" id="gusts" min="2" max="24" step="1" /><span class="val"></span></div>
+        <div class="ctl"><label for="wind">wind</label><input type="range" id="wind" min="0.3" max="2.5" step="0.05" /><span class="val"></span></div>
+        <div class="ctl"><label for="memory">memory</label><input type="range" id="memory" min="0" max="3" step="0.05" /><span class="val"></span></div>
+        <button class="grow" id="recordLoop" style="width:100%;margin-top:6px">🎞 Record cycle (WebM, 1080 px)</button>
+        <p class="hint">The liquid itself moves, as in mofu's method: the pour, then 048's gusts mixing and reshaping it inside the canvas (memory pulls it back toward the painting), then the paper absorbs it. A recorded cycle starts and ends on the empty sheet, so it loops. Exporting a print while animated saves that instant.</p>
       </div>
 
       <h2>Label <small>Cedarville Cursive, bottom right</small></h2>
