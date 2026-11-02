@@ -137,6 +137,25 @@
       // living phase: the traces remember too, so washes left by passing liquid recede
       o = mix(o, texelFetch(uHist0, c, 0), uMem);
     }`,
+    // the source rising in the paper: a public-domain original fitted whole inside the image
+    // area (uFit = its rect in sim uv), or the work's composition map; alpha marks where it lies
+    dyeInit: HEAD + `
+    uniform sampler2D uOrig; uniform vec4 uFit;
+    void main(){
+      vec2 q = (vUv - uFit.xy) / uFit.zw;
+      float inside = step(0., q.x) * step(0., q.y) * step(q.x, 1.) * step(q.y, 1.);
+      o = vec4(texture(uOrig, vec2(q.x, 1. - q.y)).rgb, inside);
+    }`,
+    // the source liquefies: carried by the same velocity field as the paint, through mofu's
+    // threshold (it moves only where the liquid moves)
+    dyeAdvect: HEAD + `
+    uniform sampler2D uDye, uVel; uniform vec2 uTh;
+    void main(){
+      vec2 v = texture(uVel, vUv).xy;
+      float s = smoothstep(uTh.x, uTh.y, length(v));
+      vec4 here = texture(uDye, vUv), src = texture(uDye, vUv - v * DT / uAspect);
+      o = mix(here, src, s);
+    }`,
     // a laid field (rectangle or ellipse): covers whatever paint lies beneath, then lays its own
     // pigment as a flat slab with a bevelled shoulder (the shoulder is what catches the light).
     // uMask = 0 clears to the ground (a cut-out).
@@ -181,7 +200,8 @@
   uniform float uRelief, uGloss, uTooth, uLinearOut;
   // the animated version's ending: absorption into the paper (uEnd 0→1). The movement itself is
   // the simulation; nothing here displaces the paint.
-  uniform float uAnim, uEnd;
+  uniform float uAnim, uEnd, uReveal;
+  uniform sampler2D uDye;      // the source in the paper (sRGB, alpha = where it lies)
   uniform vec4 uAbsorb;        // each pigment's absorbency (seeded, 0.75–1.25)
   uniform float uSeed;
   uniform sampler2D uLabel;   // the caption, drawn in Cedarville Cursive at output resolution
@@ -236,11 +256,12 @@
       // point drinks: holes open in the open pores first and spread along ragged lines.
       vec2 uvS = uv; vec4 k4 = vec4(1.);
       float pore = 0., soak = 0., drinkBase = 0., edgeW = 0.07, endGate = 1., soakMix = 0.;
-      if (uAnim > 0.5) {
+      float poreT = 0.;
+      if (uAnim > 0.5 || uReveal > 0.) {
         vec2 p = (uv - 0.5) * uAspect;
         pore = 0.55 * vnoise(p * 22. + 3.1) + 0.3 * vnoise(p * 7.5 + 11.7) + 0.15 * vnoise(p * 2.6 + 5.3);
         // summed noise bunches near its middle (10–90% within 0.36–0.74, measured): spread it
-        float poreT = smoothstep(0.36, 0.76, pore);
+        poreT = smoothstep(0.36, 0.76, pore);
         soak = uEnd;
         drinkBase = 0.02 + 0.66 * poreT;
         endGate = 1. - smoothstep(0.985, 1.0, uEnd);
@@ -287,6 +308,18 @@
       float hide = 1. - exp(-total*40.);
       float cover = A * mix(0.9, 1., hide);
       vec3 ground = uGround * (1. + tooth(mm));
+      // the source rises through the paper's pores beneath the paint (open pores first), the
+      // paint thinning to a veil so both are seen; in the ending the paper drinks it too
+      if (uReveal > 0.) {
+        vec4 dy = texture(uDye, uvS);
+        float rise = smoothstep(0.75 * poreT, 0.75 * poreT + 0.25, uReveal);
+        float rt = 0.05 + 0.75 * poreT;
+        float gone = smoothstep(rt, rt + 0.12, soak) + (1. - endGate);
+        float show = clamp(dy.a * rise * (1. - gone), 0., 1.);
+        vec3 lin = pow(max(dy.rgb, vec3(0.)), vec3(2.2));
+        ground = mix(ground, lin * (1. + tooth(mm)), show);
+        cover *= 1. - 0.55 * show;
+      }
       paint = mix(paint, ground, 0.35 * soakMix);       // soaked into the paper: lighter, sunk
       vec3 base = mix(ground, paint, cover);
       // light: flat paint renders as its palette colour exactly; relief adds key light and gloss
@@ -400,7 +433,7 @@
     const long = G.param('simres');
     const a = sh.aspect, big = Math.max(a[0], a[1]);
     const w = Math.max(64, Math.round(long * a[0] / big)), h = Math.max(64, Math.round(long * a[1] / big));
-    if (S) { S.vel.free(); S.p.free(); S.hgt.free(); S.hist.free(); [S.h0, S.hist0].forEach(function (x) { if (x) { gl.deleteTexture(x.t); gl.deleteFramebuffer(x.f); } }); gl.deleteTexture(S.div.t); gl.deleteFramebuffer(S.div.f); }
+    if (S) { S.vel.free(); S.p.free(); S.hgt.free(); S.hist.free(); [S.h0, S.hist0].forEach(function (x) { if (x) { gl.deleteTexture(x.t); gl.deleteFramebuffer(x.f); } }); if (S.dye) S.dye.free(); gl.deleteTexture(S.div.t); gl.deleteFramebuffer(S.div.f); }
     // a fresh generator from the seed: the same sequence G.rng gives after a reset, so the
     // animated cycle can rebuild the identical composition each time it begins again
     const rng = GenArt._mulberry32(G.seed);
@@ -577,6 +610,9 @@
     gl.uniform1f(u.uLinearOut, linearOut ? 1 : 0);
     gl.uniform1f(u.uSeed, G.seed % 100000);
     const ending = motion.on && motion.phase === 'ending';
+    gl.activeTexture(gl.TEXTURE4); gl.bindTexture(gl.TEXTURE_2D, S.dye ? S.dye.a.t : S.hgt.a.t); gl.uniform1i(u.uDye, 4);
+    gl.activeTexture(gl.TEXTURE0);
+    gl.uniform1f(u.uReveal, motion.on && S.dye ? revealAmount() : 0);
     gl.uniform1f(u.uAnim, ending ? 1 : 0);
     gl.uniform1f(u.uEnd, ending ? motion.et / motion.endSteps() : 0);
     const ar = GenArt._mulberry32((G.seed ^ 0x2545f491) >>> 0);
@@ -667,6 +703,84 @@
     gl.uniform1f(P.wind.u.uAmt, 0.06);
     run(S.vel.b); S.vel.swap();
   }
+  // ---- the source: the original (public domain) or the composition map (in copyright)
+  // An image of a work is used only when originals.json lists it as public domain, the artist
+  // died in or before 1955 (EU: life + 70) and the work dates from 1930 or earlier (US). The
+  // rule is checked here again, not only in the manifest. Every other work gets its composition
+  // map: the brief's own fields, uninterpreted, in the work's five colours: our description of
+  // its layout, never its image.
+  const sources = {};
+  function originalOK(m) { return !!(m && m.public_domain === true && m.artist_died <= 1955 && m.work_year <= 1930 && m.file); }
+  function sourceFor(id) {
+    if (sources[id]) return sources[id];
+    const m = (window.ORIGINALS || {})[id];
+    const src = sources[id] = { ready: false, kind: originalOK(m) ? 'original' : 'map', meta: m || null, canvas: null, aspect: 1 };
+    if (src.kind === 'original') {
+      const img = new Image();
+      img.onload = function () {
+        const c = document.createElement('canvas'); c.width = img.naturalWidth; c.height = img.naturalHeight;
+        c.getContext('2d').drawImage(img, 0, 0);
+        src.canvas = c; src.aspect = img.naturalWidth / img.naturalHeight; src.ready = true;
+      };
+      img.onerror = function () { src.kind = 'map'; drawMap(src, id); };  // missing file: fall back
+      img.src = 'originals/' + m.file;
+    } else drawMap(src, id);
+    return src;
+  }
+  function drawMap(src, id) {
+    // the brief laid exactly as written (interpretation 0, fixed seed), on a square-ish sheet
+    const pal = PALS[id], brief = window.BRIEFS[id], W = 512, H = 512;
+    const score = PG.composeBrief(GenArt._mulberry32(1), brief, { energy: 1, aspect: [1, 1], interp: 0 });
+    const cols = PG.briefColours(pal.colors, { g: brief.g });
+    const c = document.createElement('canvas'); c.width = W; c.height = H;
+    const x = c.getContext('2d');
+    x.fillStyle = cols.ground; x.fillRect(0, 0, W, H);
+    x.filter = 'blur(' + Math.round(W * 0.012) + 'px)';
+    score.events.forEach(function (e) {
+      if (e.type === 'drag') return;
+      const hex = e.type === 'pour' ? cols.pigments[e.pig] : (e.chan < 0 ? cols.ground : cols.pigments[e.chan]);
+      x.fillStyle = hex; x.save();
+      if (e.type === 'pour') { x.beginPath(); x.arc(e.x * W, (1 - e.y) * H, e.r * W, 0, Math.PI * 2); x.fill(); x.restore(); return; }
+      x.translate(e.cx * W, (1 - e.cy) * H); x.rotate(-e.ang);
+      if (e.shape === 1) { x.beginPath(); x.ellipse(0, 0, e.hx * W, e.hy * H, 0, 0, Math.PI * 2); x.fill(); }
+      else x.fillRect(-e.hx * W, -e.hy * H, 2 * e.hx * W, 2 * e.hy * H);
+      x.restore();
+    });
+    src.canvas = c; src.aspect = 1; src.ready = true;
+  }
+  // Revealed over the last 45% of the living phase; it stays through the ending, where the
+  // paper drinks it with the paint.
+  function revealAmount() {
+    if (motion.phase === 'ending') return 1;
+    if (motion.phase !== 'living') return 0;
+    const f = motion.lt / motion.livingSteps();
+    return Math.max(0, Math.min(1, (f - 0.55) / 0.4));
+  }
+  function initDye() {
+    const src = sourceFor(S.palette.id);
+    if (!src.ready) return false;                    // image still loading: try next step
+    if (!S.dye) S.dye = pair(S.w, S.h, gl.RGBA16F, gl.LINEAR);
+    const tex = gl.createTexture();
+    gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D, tex);
+    gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, false);
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, src.canvas);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+    // fit the source whole inside the image area, centred ("contain"): nothing of it is cropped
+    const ia = S.aspect[0] / S.aspect[1], sa = src.aspect;
+    const fw = sa > ia ? 1 : sa / ia, fh = sa > ia ? ia / sa : 1;
+    bind(P.dyeInit, { uOrig: tex });
+    gl.uniform4f(P.dyeInit.u.uFit, (1 - fw) / 2, (1 - fh) / 2, fw, fh);
+    run(S.dye.a); run(S.dye.b);
+    gl.deleteTexture(tex);
+    S.dyeReady = true;
+    return true;
+  }
+  function advectDye() {
+    bind(P.dyeAdvect, { uDye: S.dye.a.t, uVel: S.vel.a.t });
+    gl.uniform2f(P.dyeAdvect.u.uTh, 0.02, 0.22);
+    run(S.dye.b); S.dye.swap();
+  }
   function motionStep() {
     if (motion.phase === 'creation') {
       step();
@@ -681,9 +795,11 @@
     } else if (motion.phase === 'living') {
       S.mem = 0.003 * G.param('memory');             // ~5 s pull back toward the painting
       wind(); step(); motion.lt++;
+      if (revealAmount() > 0) { if (!S.dyeReady) initDye(); if (S.dyeReady) advectDye(); }
       if (motion.lt >= motion.livingSteps()) motion.phase = 'ending';
     } else {
       wind(); step(); motion.et++;                       // it keeps moving while it is drunk
+      if (!S.dyeReady) initDye(); if (S.dyeReady) advectDye();
       if (motion.et >= motion.endSteps()) restartMotion();
     }
   }
@@ -777,6 +893,9 @@
         'Ground ' + S.colours.ground + '; pigments ' + S.colours.pigments.join(' ') + '. Sheet ' + S.sheet.name +
         (G.param('landscape') ? ' landscape' : ' portrait') + ', border ' + S.sheet.borderMM.toFixed(1) + ' mm, ' + W + '×' + H + ' px at ' + dpi + ' dpi, ' + bits + '-bit sRGB.' +
         (G.param('label') === 1 ? ' Label: "' + S.palette.painting + '", ' + S.palette.artist + ' (Cedarville Cursive, ' + (G.param('labelPos') === 1 ? 'border' : 'image') + ').' : ' No label.') +
+        (motion.on && S.dyeReady ? (sourceFor(S.palette.id).kind === 'original'
+          ? ' The original rises in the paper: ' + S.palette.painting + ' (' + sourceFor(S.palette.id).meta.work_year + '), ' + S.palette.artist + ', public domain, image from Wikimedia Commons: ' + sourceFor(S.palette.id).meta.file + '.'
+          : ' Its composition map rises in the paper (the work is in copyright: no image of it is used).') : '') +
         (motion.on ? ' An instant of the animated version: ' + motionInfo().phase + ', ' + motionInfo().seconds.toFixed(2) + ' s into a ' + loopSeconds().toFixed(2) + ' s cycle (living ' + G.param('gusts') + ' gusts of 048 Plotted Field\'s wind).' : '') +
         (handTouched ? ' Hand-touched: contains marks made by pointer, not reproducible from the URL.' : ' Reproducible from the URL below.'),
       Comment: location.href,
@@ -967,6 +1086,7 @@
     state: function () { return S; },
     motion: motion, setMotion: setMotion, setPlaying: setPlaying, restartMotion: restartMotion, advance: advance, motionInfo: motionInfo, recordLoop: recordLoop, loopSeconds: loopSeconds,
     after: function () { return S ? after() : null; },
+    source: function () { return S ? sourceFor(S.palette.id) : null; }, revealAmount: function () { return revealAmount(); },
     exporting: function () { return exporting; },
     handTouched: function () { return handTouched; },
     get pigment() { return pigment; },
