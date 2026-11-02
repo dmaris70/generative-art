@@ -13,6 +13,7 @@
 //      and maps each field to a valid pigment channel (or a clear back to the ground).
 //   7. Interpretation (0, 0.65, 1): readings keep all five colours, geometry stays finite, and
 //      interpretation 0 applies no readings.
+//   8. Containment: every laid field lies wholly on the sheet (nothing cut off by the edge).
 // Usage: node tools/poured-ground-check.mjs
 import { createRequire } from 'node:module';
 const require = createRequire(import.meta.url);
@@ -101,6 +102,13 @@ BRIEFS.forEach((b, i) => {
     const firstDrag = Math.min(...a.events.filter((e) => e.type === 'drag').map((e) => e.t0));
     ok(fieldsEnd < firstDrag, 'fields before gestures ' + i);
     ok(a.events.filter((e) => e.type === 'zone').every((e) => e.chan >= -1 && e.chan <= 3 && e.hx > 0 && e.hy > 0), 'zone channels ' + i);
+    // nothing is cut off by the canvas: every field lies wholly on the sheet
+    ok(a.events.filter((e) => e.type === 'zone').every((e) => {
+      const c = Math.abs(Math.cos(e.ang)), sn = Math.abs(Math.sin(e.ang)), A = o.aspect;
+      const ex = e.shape === 1 ? Math.hypot(e.hx * c, e.hy * sn) : e.hx * c + e.hy * sn;
+      const ey = e.shape === 1 ? Math.hypot(e.hx * sn, e.hy * c) : e.hx * sn + e.hy * c;
+      return e.cx - ex / A[0] > -1e-9 && e.cx + ex / A[0] < 1 + 1e-9 && e.cy - ey / A[1] > -1e-9 && e.cy + ey / A[1] < 1 + 1e-9;
+    }), 'fields stay on the sheet ' + i + ' @' + interp);
     ok(a.events.filter((e) => e.type === 'pour').every((e) => e.pig >= 0 && e.pig <= 3), 'drop channels ' + i);
     ok(a.events.filter((e) => e.type === 'drag').every((e) => e.pts.every((p) => p[0] >= 0 && p[0] <= 1 && p[1] >= 0 && p[1] <= 1)), 'gestures inside ' + i);
   }
