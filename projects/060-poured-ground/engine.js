@@ -211,20 +211,29 @@
   const FORMAT_KEYS = Object.keys(FORMATS);
 
   // sheet & image geometry in mm and print pixels
-  function sheet(formatIdx, landscape, borderMM, dpi) {
+  // Sheet geometry. `imgAspect` (width / height of the original work, optional) keeps the
+  // proportions of the original: the image area takes that aspect, fitted whole inside the
+  // paper minus the border, so the border grows on one axis only; nothing is cropped and the
+  // paper keeps its size. Without it, the image area fills the paper minus an even border.
+  // `landscape` may be true/false, or 'auto' to orient the paper like the original.
+  function sheet(formatIdx, landscape, borderMM, dpi, imgAspect) {
     let wh = FORMATS[FORMAT_KEYS[formatIdx]] || FORMATS[FORMAT_KEYS[0]];
+    if (landscape === 'auto') landscape = !!(imgAspect && imgAspect > 1);
     if (landscape) wh = [wh[1], wh[0]];
     const b = Math.max(0, Math.min(borderMM, Math.min(wh[0], wh[1]) * 0.3));
-    const img = [wh[0] - 2 * b, wh[1] - 2 * b];
+    let img = [wh[0] - 2 * b, wh[1] - 2 * b];
+    if (imgAspect && isFinite(imgAspect) && imgAspect > 0) {
+      img = img[0] / img[1] > imgAspect ? [img[1] * imgAspect, img[1]] : [img[0], img[0] / imgAspect];
+    }
+    const bx = (wh[0] - img[0]) / 2, by = (wh[1] - img[1]) / 2;
     const m = Math.min(img[0], img[1]);
     return {
-      name: FORMAT_KEYS[formatIdx],
-      mm: wh, borderMM: b, imageMM: img,
+      name: FORMAT_KEYS[formatIdx], landscape: !!landscape,
+      mm: wh, borderMM: b, bx: bx, by: by, imageMM: img, imgAspect: imgAspect || null,
       aspect: [img[0] / m, img[1] / m],
       px: [Math.round((wh[0] / 25.4) * dpi), Math.round((wh[1] / 25.4) * dpi)],
     };
   }
-
 
   // ---- "after the work": a brief (briefs.js) compiled into a score -------------------------
   // The ground is the brief's colour; the other four palette colours become the pigment
