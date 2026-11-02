@@ -478,7 +478,9 @@ views share one sky, as they share the grass. The deck's pattern is the folded c
 horizontal lines, lines between them where the tone deepens, a cross-ruling in the darkest cloud,
 and broken, flicked ends where the tone changes. Lit cloud is where the pen lifts, the grass and
 the rise of the ground hide the sky, and the moon clears it. 048 gained an optional `extend` hook;
-its own sheets are byte-identical.
+its own sheets are byte-identical. `motion.html` runs both loops together, 048's gusts (every 5.03 s) and 058's drift, as a
+flip-book of plotted sheets that closes exactly over 3 gusts, built by a pool of workers; a
+chronograph mode overlays three instants of one gust in three pens for the plotter.
 
 ## Contact sheet
 

@@ -33,7 +33,19 @@
     const R = mulberry32(KEPT[(n - 1) % KEPT.length] * 7919 + 13);
     const j = (c, a) => c + (R() * 2 - 1) * a;
     const Y = 3.7 + R() * 1.1;
-    return { off: [j(0.08, 0.25), Y, j(-1, 0.35)], box: [j(3, 0.3), Y, j(3, 0.3)], aniso: [j(0.51, 0.03), 0.51, j(0.51, 0.03)], scale: j(7.1, 0.3) };
+    const P = { off: [j(0.08, 0.25), Y, j(-1, 0.35)], box: [j(3, 0.3), Y, j(3, 0.3)], aniso: [j(0.51, 0.03), 0.51, j(0.51, 0.03)], scale: j(7.1, 0.3) };
+    R();                                                           // 058 draws a hue here
+    P.path = [0, 1, 2, 3, 4].map(() => ({ k: 1 + Math.floor(R() * 2), ph: R() * TAU }));   // 058's drift path
+    return P;
+  }
+  // 058's Drift: off.x, off.z, box.x, box.z and the tied y pair circle their values on a closed path.
+  // u in [0, 1) loops exactly (integer frequencies).
+  const DRIFT_AMP = [0.05, 0.07, 0.05, 0.05, 0.25];
+  function drifted(P, u) {
+    const path = P.path || [0, 1, 2, 3, 4].map((i) => ({ k: 1 + (i % 2), ph: i * 1.7 }));
+    const v = path.map((q, i) => Math.sin(TAU * q.k * u + q.ph) * DRIFT_AMP[i]);
+    const Y = Math.max(3.7, P.off[1] + v[4]);
+    return Object.assign({}, P, { off: [P.off[0] + v[0], Y, P.off[2] + v[1]], box: [P.box[0] + v[2], Y, P.box[2] + v[3]] });
   }
 
   // ───────────────────────── the engine, on the CPU ─────────────────────────
@@ -106,6 +118,7 @@
     dither: 0.14,      // spread of each line's threshold along its length (broken, flicked transitions)
     cross: 1,          // 1 = cross-ruling in the darkest passages
     sample: 1.2,       // mm, the grid the engine is evaluated on (interpolated between)
+    loop: null,        // motion: a phase in [0, 1) of 058's closed drift path; null for a still sheet
   };
   const THRESH = [0.16, 0.46, 0.76];   // tone at which the main lines, the lines between, the cross-ruling start
 
@@ -114,13 +127,19 @@
     const t0 = Date.now();
     const { frame, F, basis: B, eye: E, grain, mask, world, moon: M } = ctx;
     const inst = ctx.options.instant;
-    const P = weather(o.weather);
-    const C = cameraColumns(inst * 0.01);                            // a slow sway, set by the instant
-    const gain = levelGain(o.weather, P, C) * o.tone;
+    const P0 = weather(o.weather);
+    const C0 = cameraColumns(inst * 0.01);                           // a slow sway, set by the instant
+    // a moving deck is levelled once, at the start of its loop, so it keeps one exposure throughout
+    const moving = typeof o.loop === 'number';
+    const gain = (moving ? levelGain(o.weather, drifted(P0, 0), cameraColumns(0)) : levelGain(o.weather, P0, C0)) * o.tone;
+    const P = moving ? drifted(P0, o.loop) : P0;
+    // in motion the engine's camera is held: its sway closes a loop only after 5 cycles, which on a
+    // loop of a few gusts is a lurch every 2–3 s. The deck moves by its fold constants alone.
+    const C = moving ? cameraColumns(0) : C0;
     const L = o.scale * 1000, H = o.height;
     // the deck drifts downwind; the engine's plane is turned so the wind runs along its x
     const wa = world.windAz + (ctx.options.windTurn || 0) * Math.PI / 180, cw = Math.cos(wa), sw = Math.sin(wa);
-    const shift = o.drift * inst;
+    const shift = o.drift * (moving ? (o.loopInstant || 0) : inst);   // in motion the deck re-forms in place
 
     // tone at a point on the frame (mm), or -1 where there is no sky (below the horizon)
     function rayTone(x, y, out) {
@@ -256,7 +275,7 @@
     return Object.assign({}, fieldOptions, { extend: (ctx) => sky(ctx, skyOptions) });
   }
 
-  const api = { sky, withSky, weather, fields, cameraColumns, DEFAULTS, KEPT };
+  const api = { sky, withSky, weather, drifted, fields, cameraColumns, DEFAULTS, KEPT };
   global.PlottedSky = api;
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
 })(typeof window !== 'undefined' ? window : globalThis);

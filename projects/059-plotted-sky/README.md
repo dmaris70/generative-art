@@ -85,6 +85,52 @@ eye, the lens, the frame, the occlusion map and the moon direction. It may retur
 (placed before the caption), a caption line and a title. When it is absent, nothing in the
 output changes. 048's panel and wall do not use it.
 
+## In motion (`motion.html`)
+
+The still sheet freezes one instant. Both halves of the piece already had a loop in them, and the
+motion page runs them together, as a flip-book of complete plotted sheets.
+
+- **The grass:** 048's wind is a train of gusts, `sin(along · 0.33 − 1.25 t + warp)`, so it repeats
+  exactly every 2π / 1.25 = 5.03 s. A loop of a whole number of gusts closes: 2, 3 (default) or
+  4 gusts, 10.05, 15.08 or 20.11 s.
+- **The sky:** 058's Drift. The fold constants (offset x and z, box x and z, the tied y pair) move
+  on a closed path with integer frequencies, once or twice per loop, with 058's amplitudes. The
+  deck re-forms in place. The engine's own camera sway is held still in motion: its loop closes
+  only after 5 cycles, which on a 15 s loop is a lurch every 3 s.
+- **One exposure:** a moving deck is levelled once, at the start of its loop, so clouds gather and
+  clear (the sky's ink runs from about 9 m to 88 m over the loop) without the whole sky brightening
+  and dimming.
+- **No flicker in the distance:** 048 thins distant blades and dithers hair-thin ones with a random
+  sequence seeded by the instant, which would make far grass boil from frame to frame. 048's
+  `stable` option (added for this) draws those choices from each blade's own hash instead, so a
+  blade is kept or dropped the same way in every frame.
+- **Every frame is a plottable sheet:** hidden lines, light and sky are worked out per frame.
+  *Save SVG* writes the frame on screen.
+- **Building:** a frame takes about 1.5–2.8 s, so a pool of Web Workers (up to 6) builds them,
+  and the loop starts playing with the frames that are ready. The default, 3 gusts at 6 frames a
+  second, is 90 frames: about a minute and a half on 3 workers. Frames are kept as 16-bit
+  coordinates in 0.01 mm steps (about 0.6 MB a frame).
+
+![six frames of the 90-frame loop, field 7, view 12](motion-frames.png)
+
+### On paper: the chronograph
+
+Motion on a single sheet, as a chronophotograph: three instants a third of a gust apart
+(1.68 s), each instant's grass in its own pen (black, sepia, blue-grey), each planted at half
+density so the sheet carries about 1.5 × the grass of a still. The sky is ruled once, from the
+first instant, so it is cut away only where that instant's grass stands: the first instant also
+appears as white stalks against the sky. *Save SVG* writes it with one layer per pen.
+
+### Checks
+
+| Claim | How it was checked |
+|---|---|
+| The loop closes | Frame 0 and frame *n* (one loop later) of field 7, view 12 have the same strokes in grass, seed heads and sky; the largest coordinate difference is 1.2 × 10⁻¹¹ mm. Only the caption's clock differs |
+| 048 and the still sheets are unchanged | `stable` and `loop` are off by default; the committed and modified files give identical SVGs for 048 (field 7, views 1, 5, 12, 24) and 059 (three view/weather pairs) |
+| The page works | Served locally in headless Chromium: 60 frames built on 3 workers and played with no console errors; consecutive screenshots 0.83 s apart differ in 23% of pixels; the chronograph built in 1.9 s |
+
+Not done: a plot of the chronograph on a real machine.
+
 ## Using it
 
 - **URL:** `?seed=7&p_view=12&p_weather=0` plus every 048 setting. The sky's settings are
@@ -92,11 +138,13 @@ output changes. 048's panel and wall do not use it.
   `p_cross`.
 - **Keys:** as 048, plus `W` for the next weather.
 - **SVG layers:** `1 grass`, `2 seed heads (pen 2)`, `3 sky`, `4 caption and map`.
+- **Motion:** `motion.html?mode=loop&seed=7&view=12&weather=0&gusts=3&fps=6` (or `mode=chronograph`). Keys: space pause, H hide, B rebuild. It needs to be served over http (workers do not load from `file://`).
 
 ## Files
 
 - `sky.js`: the deck, the CPU engine, the ruling and the moon. Runs in a browser or in Node.
 - `sketch.js`: 048's panel with a *sky* group.
+- `motion.js`, `motion-worker.js`, `motion.html`, `motion-page.js`: the loop, the worker pool and the chronograph; `motion-frames.png`.
 - `index.html`, `preview.png` (field 7, view 12), `views.png` (field 7, all 25 views).
 - Uses `../048-plotted-field/field.js` and `../../assets/strokefont.js`.
 

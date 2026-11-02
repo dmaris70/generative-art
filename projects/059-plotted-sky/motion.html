@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Plotted Sky in Motion — Generative Art</title>
+  <style>
+    html, body { margin: 0; height: 100%; background: #16161a; color: #c9c5bb; overflow: hidden; font: 12px ui-monospace, SFMono-Regular, Menlo, monospace; }
+    canvas#view { display: block; width: 100vw; height: 100vh; }
+    a.back { position: fixed; top: 14px; left: 16px; z-index: 10; color: #d8b4fe; font: 13px ui-sans-serif, system-ui, sans-serif; text-decoration: none; opacity: .6; }
+    a.back:hover { opacity: 1; }
+    #bar { position: fixed; left: 0; right: 0; bottom: 8px; display: flex; flex-wrap: wrap; gap: 8px 14px; justify-content: center; align-items: center; padding: 0 16px; }
+    #bar label { display: inline-flex; gap: 6px; align-items: center; color: #a8a6b3; }
+    #bar input[type=number] { width: 4.5em; background: #222128; color: #e8e4da; border: 1px solid #3a3740; border-radius: 3px; padding: 3px 4px; font: inherit; }
+    #bar select, #bar button { background: #222128; color: #e8e4da; border: 1px solid #3a3740; border-radius: 3px; padding: 4px 8px; font: inherit; cursor: pointer; }
+    #bar button:hover { border-color: #e8e4da; }
+    #status { width: 100%; text-align: center; color: #8d8a97; }
+    body.bare #bar, body.bare a.back { display: none; }
+  </style>
+</head>
+<body>
+  <a class="back" href="./">← the still sheets</a>
+  <canvas id="view" aria-label="Plotted Sky in motion: plotted grass swaying in gusts under a ruled sky that re-forms"></canvas>
+  <div id="bar">
+    <label>mode <select id="mode"><option value="loop">loop (screen)</option><option value="chronograph">chronograph (paper)</option></select></label>
+    <label>field <input id="seed" type="number" min="1" value="7"></label>
+    <label>view <input id="view-n" type="number" min="1" max="25" value="12"></label>
+    <label>weather <input id="weather" type="number" min="0" max="48" value="0"></label>
+    <label>gusts <select id="gusts"><option>2</option><option selected>3</option><option>4</option></select></label>
+    <label>fps <select id="fps"><option selected>6</option><option>8</option><option>12</option></select></label>
+    <button id="go">Build</button>
+    <button id="pause">Pause</button>
+    <button id="svg">Save SVG</button>
+    <div id="status" role="status"></div>
+  </div>
+  <script src="../../assets/strokefont.js?v=1"></script>
+  <script src="../048-plotted-field/field.js?v=5"></script>
+  <script src="sky.js?v=2"></script>
+  <script src="motion.js?v=1"></script>
+  <script src="motion-page.js?v=1"></script>
+</body>
+</html>
