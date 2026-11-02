@@ -8,11 +8,11 @@
   const $ = (id) => document.getElementById(id);
 
   const SIM = ['interp', 'pours', 'energy', 'flow', 'levelling', 'border'];
-  const LIVE = ['relief', 'gloss', 'tooth', 'labelSize'];
+  const LIVE = ['relief', 'gloss', 'tooth', 'labelSize', 'gusts', 'sway'];
   const fmt = {
     interp: (v) => v.toFixed(2), pours: (v) => String(v), energy: (v) => v.toFixed(2) + '×', flow: (v) => v.toFixed(3),
     levelling: (v) => v.toFixed(3), border: (v) => v + ' mm',
-    relief: (v) => v.toFixed(2), labelSize: (v) => v.toFixed(2) + '×', gloss: (v) => v.toFixed(2), tooth: (v) => v.toFixed(3),
+    relief: (v) => v.toFixed(2), gusts: (v) => v + ' · ' + (v * 2 * Math.PI / 1.25).toFixed(1) + ' s', sway: (v) => v.toFixed(2), labelSize: (v) => v.toFixed(2) + '×', gloss: (v) => v.toFixed(2), tooth: (v) => v.toFixed(3),
   };
   const set = (k, v) => G.setParams({ [k]: v });
 
@@ -89,6 +89,16 @@
     if (navigator.clipboard) navigator.clipboard.writeText(location.href).then(done, done); else done();
   };
   $('pieceLink').addEventListener('click', function () { this.href = './' + location.search; });
+  // motion
+  $('motionOn').addEventListener('click', function (e) { const b = e.target.closest('button'); if (b) app.setMotion(b.dataset.v === '1'); refresh(); });
+  $('playPause').onclick = function () { app.setPlaying(!app.motion.playing); };
+  $('phase').addEventListener('input', function () { app.setPhase(+this.value); });
+  $('recordLoop').onclick = function () { app.recordLoop(1080, 30); };
+  function phaseName(u) {
+    if (u < 0.42) return 'creation — the paint arrives in the order it was poured';
+    if (u < 0.58) return 'the sheet breathes in the wind';
+    return 'dissolution — the wind carries the paint away';
+  }
   $('chips').addEventListener('click', function (e) {
     const c = e.target.closest('.chip[data-pig]');
     if (c) app.pigment = +c.dataset.pig;
@@ -188,7 +198,15 @@
         (app.handTouched() ? ' · hand-touched' : '');
       $('finish').disabled = done;
     }
-    const busy = app.exporting();
+    const m = app.motion;
+    if (document.activeElement !== $('phase')) $('phase').value = m.u;
+    $('phaseVal').textContent = (m.u * app.loopSeconds()).toFixed(1) + ' / ' + app.loopSeconds().toFixed(1) + ' s';
+    $('phaseName').textContent = m.on ? phaseName(m.u) : '';
+    $('playPause').textContent = m.playing ? '⏸' : '▶';
+    $('motionCtl').classList.toggle('dim', !m.on);
+    seg('motionOn', m.on ? 1 : 0);
+    $('recordLoop').disabled = m.recording || app.exporting();
+    const busy = app.exporting() || m.recording;
     $('exportPrint').disabled = busy; $('exportPreview').disabled = busy;
     requestAnimationFrame(tick);
   }
