@@ -149,12 +149,14 @@
     // the source liquefies: carried by the same velocity field as the paint, through mofu's
     // threshold (it moves only where the liquid moves)
     dyeAdvect: HEAD + `
-    uniform sampler2D uDye, uVel; uniform vec2 uTh;
+    uniform sampler2D uDye, uVel, uDye0; uniform vec2 uTh; uniform float uFollow, uMem;
     void main(){
       vec2 v = texture(uVel, vUv).xy;
-      float s = smoothstep(uTh.x, uTh.y, length(v));
+      float s = smoothstep(uTh.x, uTh.y, length(v)) * uFollow;
       vec4 here = texture(uDye, vUv), src = texture(uDye, vUv - v * DT / uAspect);
-      o = mix(here, src, s);
+      // an elastic memory of the source, like the paint's: it ripples and liquefies with the
+      // gusts but stays legible; released in the ending, when it is carried and drunk
+      o = mix(mix(here, src, s), texture(uDye0, vUv), uMem);
     }`,
     // a laid field (rectangle or ellipse): covers whatever paint lies beneath, then lays its own
     // pigment as a flat slab with a bevelled shoulder (the shoulder is what catches the light).
@@ -318,7 +320,10 @@
         float show = clamp(dy.a * rise * (1. - gone), 0., 1.);
         vec3 lin = pow(max(dy.rgb, vec3(0.)), vec3(2.2));
         ground = mix(ground, lin * (1. + tooth(mm)), show);
-        cover *= 1. - 0.55 * show;
+        // the paint becomes a thin veil and takes on the source's colour where they meet, so the
+        // two read as one liquid rather than a picture under a cover
+        cover *= 1. - 0.8 * show;
+        paint = mix(paint, lin, 0.45 * show);
       }
       paint = mix(paint, ground, 0.35 * soakMix);       // soaked into the paper: lighter, sunk
       vec3 base = mix(ground, paint, cover);
@@ -433,7 +438,7 @@
     const long = G.param('simres');
     const a = sh.aspect, big = Math.max(a[0], a[1]);
     const w = Math.max(64, Math.round(long * a[0] / big)), h = Math.max(64, Math.round(long * a[1] / big));
-    if (S) { S.vel.free(); S.p.free(); S.hgt.free(); S.hist.free(); [S.h0, S.hist0].forEach(function (x) { if (x) { gl.deleteTexture(x.t); gl.deleteFramebuffer(x.f); } }); if (S.dye) S.dye.free(); gl.deleteTexture(S.div.t); gl.deleteFramebuffer(S.div.f); }
+    if (S) { S.vel.free(); S.p.free(); S.hgt.free(); S.hist.free(); [S.h0, S.hist0, S.dye0].forEach(function (x) { if (x) { gl.deleteTexture(x.t); gl.deleteFramebuffer(x.f); } }); if (S.dye) S.dye.free(); gl.deleteTexture(S.div.t); gl.deleteFramebuffer(S.div.f); }
     // a fresh generator from the seed: the same sequence G.rng gives after a reset, so the
     // animated cycle can rebuild the identical composition each time it begins again
     const rng = GenArt._mulberry32(G.seed);
@@ -457,6 +462,7 @@
       pours: {},
     };
     for (const e of score.events) if (e.type === 'pour' || e.type === 'zone') (S.pours[e.t] = S.pours[e.t] || []).push(e);
+    if (brief) sourceFor(pal.id);   // fetch the source now, long before the animated version reveals it
     handTouched = false;
     updateCaption();
     dirty = true;
@@ -760,6 +766,8 @@
     const src = sourceFor(S.palette.id);
     if (!src.ready) return false;                    // image still loading: try next step
     if (!S.dye) S.dye = pair(S.w, S.h, gl.RGBA16F, gl.LINEAR);
+    // created before the source is bound: making a target binds it on unit 0
+    if (!S.dye0) S.dye0 = target(S.w, S.h, gl.RGBA16F, gl.LINEAR);
     const tex = gl.createTexture();
     gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D, tex);
     gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, false);
@@ -772,13 +780,16 @@
     bind(P.dyeInit, { uOrig: tex });
     gl.uniform4f(P.dyeInit.u.uFit, (1 - fw) / 2, (1 - fh) / 2, fw, fh);
     run(S.dye.a); run(S.dye.b);
+    run(S.dye0);                                     // the source as it first rises: its memory
     gl.deleteTexture(tex);
     S.dyeReady = true;
     return true;
   }
   function advectDye() {
-    bind(P.dyeAdvect, { uDye: S.dye.a.t, uVel: S.vel.a.t });
+    bind(P.dyeAdvect, { uDye: S.dye.a.t, uVel: S.vel.a.t, uDye0: S.dye0.t });
     gl.uniform2f(P.dyeAdvect.u.uTh, 0.02, 0.22);
+    gl.uniform1f(P.dyeAdvect.u.uFollow, 0.6);
+    gl.uniform1f(P.dyeAdvect.u.uMem, motion.phase === 'ending' ? 0 : 0.02);
     run(S.dye.b); S.dye.swap();
   }
   function motionStep() {
@@ -894,7 +905,7 @@
         (G.param('landscape') ? ' landscape' : ' portrait') + ', border ' + S.sheet.borderMM.toFixed(1) + ' mm, ' + W + '×' + H + ' px at ' + dpi + ' dpi, ' + bits + '-bit sRGB.' +
         (G.param('label') === 1 ? ' Label: "' + S.palette.painting + '", ' + S.palette.artist + ' (Cedarville Cursive, ' + (G.param('labelPos') === 1 ? 'border' : 'image') + ').' : ' No label.') +
         (motion.on && S.dyeReady ? (sourceFor(S.palette.id).kind === 'original'
-          ? ' The original rises in the paper: ' + S.palette.painting + ' (' + sourceFor(S.palette.id).meta.work_year + '), ' + S.palette.artist + ', public domain, image from Wikimedia Commons: ' + sourceFor(S.palette.id).meta.file + '.'
+          ? ' The original rises in the paper: ' + S.palette.painting + ' (' + sourceFor(S.palette.id).meta.work_year + '), ' + S.palette.artist + ', public domain, image: ' + sourceFor(S.palette.id).meta.source + ', ' + sourceFor(S.palette.id).meta.source_url + ' (' + sourceFor(S.palette.id).meta.license + ').'
           : ' Its composition map rises in the paper (the work is in copyright: no image of it is used).') : '') +
         (motion.on ? ' An instant of the animated version: ' + motionInfo().phase + ', ' + motionInfo().seconds.toFixed(2) + ' s into a ' + loopSeconds().toFixed(2) + ' s cycle (living ' + G.param('gusts') + ' gusts of 048 Plotted Field\'s wind).' : '') +
         (handTouched ? ' Hand-touched: contains marks made by pointer, not reproducible from the URL.' : ' Reproducible from the URL below.'),
