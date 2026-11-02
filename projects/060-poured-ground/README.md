@@ -135,10 +135,18 @@ liquid does not actually do, and the canvas walls keep everything on the sheet.
   interpretation mix in one liquid. In the ending the paper drinks both.
   - **Public-domain works** show the **original itself**, fitted whole inside the canvas, never
     cropped. A work qualifies only if the artist died in or before 1955 (EU: life + 70) **and**
-    the work dates from 1930 or earlier (US), and its Wikimedia Commons file is reported public
-    domain.
-  - **Traceable sources:** each image is the canonical file of an exact Wikidata item, recorded
-    in `originals.js` with the item, the Commons page and the licence.
+    the work dates from 1930 or earlier (US), **and** the holding museum's open-access record
+    marks it public domain.
+  - **Traceable sources:** each image comes from the museum's open-access collection (The Met,
+    Art Institute of Chicago) and was checked visually against its title. It is recorded in
+    `originals.js` with the museum, object number, source URL and licence. There are currently
+    8: Gauguin *The Siesta*, Manet *Boating*, Degas *At the Milliner's*, Quidor
+    *Leatherstocking's Rescue*, Homer *A Basket of Clams*, Hokusai *The Great Wave*, Monet
+    *Water Lilies* (1906) and Seurat *A Sunday on La Grande Jatte*. *American Gothic* stays a
+    map because its museum does not mark it public domain.
+  - **Movement:** the original has its own elastic memory (about 1 s), so it ripples and
+    liquefies with the gusts but stays legible. The memory releases in the ending, when the
+    original is carried and absorbed with the paint.
   - **Unresolved works:** where the specific work cannot be identified unambiguously (a series,
     several versions, no exact item), no image is used.
   - **Works in copyright** (Hockney, Warhol, Rothko, Basquiat and the rest) and the unresolved
