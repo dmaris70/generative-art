@@ -152,6 +152,13 @@ liquid does not actually do, and the canvas walls keep everything on the sheet.
     - For a work in copyright the toggle is unavailable and says so, and no image is requested.
     - **Original in motion** (*rises before the absorption* or *off*) controls whether the
       source rises in the animated version.
+  - **View the painting, for every work:** the studio card and the piece's caption link to a
+    page showing the painting itself, plus an image search for artist and title. Linking copies
+    nothing, so it covers works in copyright too. The links (`links.js`, 133 of 133, all
+    https) are colorlisa's own link for each painting (MoMA, WikiArt, Wikipedia, Google Arts &
+    Culture, the Met, Tate and others). The 8 hosted originals use their museum record instead.
+    Checked 2026-11-02: 63 open, 54 refuse automated checks but open in a browser, and 8 dead
+    links were replaced (Wikipedia for the Mona Lisa, an image search for the other 7).
   - **Movement:** the original has its own elastic memory (about 1 s), so it ripples and
     liquefies with the gusts but stays legible. The memory releases in the ending, when the
     original is carried and absorbed with the paint.

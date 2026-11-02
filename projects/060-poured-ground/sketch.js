@@ -1027,6 +1027,7 @@
     cap.innerHTML =
       '<b>Poured Ground</b>' + (S.brief ? ' — <em>' + after() + '</em>' : '') + ' · seed ' + G.seed + '<br>' +
       (S.brief ? '<span class="src">' + (S.score.readings.length ? S.score.readings.join(' · ') : 'close to the work') + '</span><br>' : '') +
+      ((window.WORK_LINKS || {})[S.palette.id] ? '<a class="view" target="_blank" rel="noopener" href="' + WORK_LINKS[S.palette.id].url + '">view the painting ↗</a> <span class="src">' + WORK_LINKS[S.palette.id].site + '</span> · <a class="view" target="_blank" rel="noopener" href="' + WORK_LINKS[S.palette.id].search + '">image search ↗</a><br>' : '') +
       'palette: ' + p.artist + ', <em>' + p.painting + '</em> <span class="src">(colorlisa.com)</span><br>' +
       '<span class="sw">ground ' + swatch(c.ground) + ' paint ' + c.pigments.map(function (h, i) { return '<span class="pig' + (i === pigment ? ' on' : '') + '">' + (i + 1) + swatch(h) + '</span>'; }).join('') + '</span><br>' +
       '<span class="src">print ' + sh.name + ' · ' + sh.px[0] + '×' + sh.px[1] + ' px @ ' + G.param('dpi') + ' dpi · ' + G.param('bits') + '-bit · sim ' + S.w + '×' + S.h + '</span>';
