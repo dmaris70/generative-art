@@ -87,9 +87,9 @@ the bottom right, like a signature line.
   CDN, and export waits for the font to load.
 - **Sharpness:** the text is drawn at the output's own resolution and composited in the render
   pass, so it is as sharp at 360 dpi as on screen.
-- **Settings:** `label` (*work and artist* or *off*); `label position` (*on the image*, inset from
-  the corner, or *in the border*, right-aligned under the image and centred in the bottom
-  margin, falling back to the image when the border is too shallow); and `label size`, which is
+- **Settings:** `label` (*work and artist* or *off*); `label position` (*in the border* by default,
+  right-aligned under the image and centred in the bottom margin, falling back to the image
+  when the border is too shallow; or *on the image*, inset from the corner); and `label size`, which is
   relative to the sheet's short side, so the label keeps its proportion on every format.
 - **Ink:** on the image, the palette colour that contrasts most with the ground. In the border,
   a warm black.

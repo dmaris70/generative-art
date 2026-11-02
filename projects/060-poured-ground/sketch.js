@@ -715,7 +715,7 @@
       simres: { value: 1024, options: { '512': 512, '768': 768, '1024': 1024, '1536': 1536, '2048': 2048 }, label: 'sim long side', group: 'simulation' },
       speed: { value: 4, min: 1, max: 24, step: 1, label: 'steps / frame', group: 'simulation' },
       label: { value: 1, options: { 'work and artist': 1, off: 0 }, label: 'label', group: 'label' },
-      labelPos: { value: 0, options: { 'on the image': 0, 'in the border': 1 }, label: 'label position', group: 'label' },
+      labelPos: { value: 1, options: { 'on the image': 0, 'in the border': 1 }, label: 'label position', group: 'label' },
       labelSize: { value: 1, min: 0.5, max: 2.5, step: 0.05, label: 'label size', group: 'label' },
       relief: { value: 0.22, min: 0, max: 0.8, step: 0.01, label: 'relief', group: 'surface' },
       gloss: { value: 0.25, min: 0, max: 1, step: 0.01, label: 'gloss', group: 'surface' },
