@@ -41,6 +41,9 @@ Every study grades these three fields. None of them changes the march.
 | — | form | **Tessera** | hex mosaic, about 34 tiles per height: the march runs once per tile at its centre, so each tile is flat glass; per-tile value jitter, bevel, lead | free running |
 | — | form | **Atlas** | nine seeds side by side; choose a tile to open it in Drift | still |
 
+**Generate** (key `G`) picks a study (any but Atlas, which is a browser of seeds), a screened seed
+(0 is the original) and a moment of its loop; render quality and pause are left as they are.
+
 Seed 0 is always the original constants. Arrow keys step seeds, `0` returns to the original,
 space pauses, `H` hides the panel, keys 1–9 pick studies in table order. URL: `?study=hours|drift|sumi|strata|atlas&seed=N&t=s&q=lo|md|hi`
 (`t` freezes the clock, used for the preview).

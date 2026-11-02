@@ -35,6 +35,9 @@
     .studies { display: grid; grid-template-columns: auto 1fr; gap: 6px 10px; align-items: center; }
     .studies .seg { justify-self: start; }
     .fam { font-size: 9.5px; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); opacity: .75; }
+    .titlerow { display: flex; gap: 12px; align-items: center; justify-content: space-between; flex-wrap: wrap; }
+    button.gen { color: var(--bg); background: var(--accent); border-radius: 4px; padding: 8px 12px; }
+    button.gen:hover { color: var(--bg); background: var(--ink); }
     .err { color: #ffb4a8; font-size: 11px; margin: 0; }
   </style>
 </head>
@@ -43,7 +46,7 @@
   <canvas id="c" aria-label="Folded Weather — eleven studies of a folded cloud field"></canvas>
   <div class="clock" id="clock"></div>
   <section class="panel">
-    <h1>Folded Weather</h1>
+    <div class="titlerow"><h1>Folded Weather</h1><button class="gen" id="gen" title="A random study, seed and moment (G)">generate</button></div>
     <div class="studies" role="group" aria-label="Study">
       <span class="fam">light</span><div class="seg"><button data-study="hours">hours</button><button data-study="drift">drift</button><button data-study="slit">slit</button><button data-study="aurora">aurora</button></div>
       <span class="fam">print</span><div class="seg"><button data-study="sumi">sumi</button><button data-study="intaglio">intaglio</button><button data-study="cyanotype">cyanotype</button></div>
