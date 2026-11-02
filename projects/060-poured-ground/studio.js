@@ -97,7 +97,7 @@
   function phaseName(u) {
     if (u < 0.42) return 'creation — the paint arrives in the order it was poured';
     if (u < 0.58) return 'the sheet breathes in the wind';
-    return 'dissolution — the wind carries the paint away';
+    return 'absorption — the paper drinks the paint, a little at a time';
   }
   $('chips').addEventListener('click', function (e) {
     const c = e.target.closest('.chip[data-pig]');
