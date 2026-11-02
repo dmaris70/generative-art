@@ -81,7 +81,9 @@
       const gust = 0.5 + 0.5 * Math.sin(along * 0.33 - t * 1.25 + warp);
       return { x: wx, z: wz, amount: strength * (0.25 + 0.75 * gust * gust) };
     }
-    return { seed: s, ground, meadow, tuft, wind, windAz };
+    // the gust's warp at a point, as `wind` uses it (for renderers that move the grass themselves)
+    const warp = (x, z) => 2.2 * vnoise(x * 0.07, z * 0.07, sN ^ 0x3c6ef372);
+    return { seed: s, ground, meadow, tuft, wind, windAz, warp };
   }
 
   // ───────────────────────── the 25 views of a field ─────────────────────────
@@ -215,8 +217,12 @@
         const cxp = x + dx * L * Math.sin(th) * 0.12, czp = z + dz * L * Math.sin(th) * 0.12, cyp = y + L * 0.62;
         const dep = (x - E[0]) * B.f[0] + (y - E[1]) * B.f[1] + (z - E[2]) * B.f[2];
         if (dep < NEAR) continue;
-        blades.push([dep, x, y, z, cxp, cyp, czp, tipX, tipY, tipZ, head ? 0.003 : 0.004 + 0.004 * r4, head,
-          ihash((hc ^ Math.imul(b + 1, 0x85ebca6b)) >>> 0)]);   // the blade's own key, for `stable`
+        const key = ihash((hc ^ Math.imul(b + 1, 0x85ebca6b)) >>> 0);   // the blade's own key, for `stable`
+        // `collect` (059's live view): the blade before the wind bends it, so a renderer can apply
+        // the same wind at any instant. Off by default; nothing drawn depends on it.
+        let ci;
+        if (o.collect) { ci = o.collect.length; o.collect.push({ x, y, z, L, lx: ax * lean, lz: az * lean, r4, head, width: head ? 0.003 : 0.004 + 0.004 * r4, key, kept: 0 }); }
+        blades.push([dep, x, y, z, cxp, cyp, czp, tipX, tipY, tipZ, head ? 0.003 : 0.004 + 0.004 * r4, head, key, ci]);
       }
     }
     blades.sort((a, b) => a[0] - b[0]);
@@ -305,6 +311,7 @@
       const keep = smoothstep(o.cutoff * 0.5, o.cutoff * 1.5, size)
         * (zc > o.haze ? (o.haze / zc) ** 2 * Math.exp(-(zc - o.haze) / o.hazeLength) : 1);
       if (keep <= 0 || (o.stable ? u01(bl[12]) : rnd()) > keep) { culled++; continue; }
+      if (o.collect && bl[13] !== undefined) o.collect[bl[13]].kept = 1;
       if (Math.max(ax, P[0]) < -2 || Math.min(ax, P[0]) > frame.w + 2 || Math.max(ay, P[1]) < -2 || Math.min(ay, P[1]) > frame.h + 2) {
         // maybe the curve enters the frame through its middle; the control point bounds it
         if (!project(bl[4], bl[5], bl[6])) continue;

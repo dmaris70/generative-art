@@ -8,7 +8,7 @@
   const q = new URLSearchParams(location.search);
   for (const [k, id] of [['seed', 'seed'], ['view', 'view-n'], ['weather', 'weather'], ['gusts', 'gusts'], ['fps', 'fps'], ['mode', 'mode']]) if (q.has(k)) $(id).value = q.get(k);
 
-  const scripts = ['../../assets/strokefont.js?v=1', '../048-plotted-field/field.js?v=5', 'sky.js?v=2', 'motion.js?v=1'].map((s) => new URL(s, location.href).href);
+  const scripts = ['../../assets/strokefont.js?v=1', '../048-plotted-field/field.js?v=6', 'sky.js?v=3', 'motion.js?v=1'].map((s) => new URL(s, location.href).href);
   const POOL = Math.max(1, Math.min(6, (navigator.hardwareConcurrency || 2) - 1));
   let workers = [], job = 0, frames = [], n = 0, ready = 0, sheet = null, caption = null, paused = false, still = null, t0 = 0, fps = 8, built = 0, msSum = 0;
 
