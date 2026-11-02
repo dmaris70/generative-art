@@ -14,7 +14,8 @@
 //   7. Interpretation (0, 0.65, 1): readings keep all five colours, geometry stays finite, and
 //      interpretation 0 applies no readings.
 //   8. Containment: every laid field lies wholly on the sheet (nothing cut off by the edge).
-//   9. Originals: only public-domain works (EU + US rule, Commons licence) ship an image; traceable.
+//   9. Originals: only public-domain works (EU + US rule, museum's public-domain flag) ship an image;
+//      each is traceable to the holding museum's open-access record.
 // Usage: node tools/poured-ground-check.mjs
 import { createRequire } from 'node:module';
 const require = createRequire(import.meta.url);
@@ -130,9 +131,9 @@ BRIEFS.forEach((b, i) => {
   for (const id of ids) {
     const m = O[id];
     ok(m.public_domain === true && m.artist_died <= 1955 && m.work_year <= 1930, 'original is public domain (EU + US) ' + id + ' ' + PALS[id].painting);
-    ok(/public domain|^pd/i.test(m.license), 'Commons licence says public domain ' + id + ': ' + m.license);
+    ok(/public domain|^pd/i.test(m.license), 'source licence says public domain ' + id + ': ' + m.license);
     ok(m.file && fs.existsSync(path.join(dir, 'originals', m.file)), 'original file present ' + id);
-    ok(/^Q\d+$/.test(m.wikidata) && /^https:\/\/commons\.wikimedia\.org\//.test(m.commons_page), 'original traceable (Wikidata + Commons) ' + id);
+    ok(typeof m.source === 'string' && m.source.length > 3 && /^https:\/\//.test(m.source_url) && m.source_object !== undefined, 'original traceable (holding museum, object, URL) ' + id);
   }
 }
 

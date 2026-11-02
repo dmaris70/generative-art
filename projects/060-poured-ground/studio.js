@@ -171,9 +171,10 @@
       const src = app.source(), srcLine = document.createElement('div');
       srcLine.className = 'readings';
       if (src && src.kind === 'original') {
-        srcLine.textContent = 'In motion, the original rises in the paper (' + src.meta.work_year + ', public domain): ';
-        const a = document.createElement('a'); a.href = src.meta.commons_page; a.target = '_blank'; a.rel = 'noopener';
-        a.textContent = 'source'; a.style.color = 'var(--accent)'; srcLine.appendChild(a);
+        srcLine.textContent = 'In motion, the original rises in the paper (' + src.meta.work_year + ', public domain, ';
+        const a = document.createElement('a'); a.href = src.meta.source_url; a.target = '_blank'; a.rel = 'noopener';
+        a.textContent = src.meta.source; a.style.color = 'var(--accent)'; srcLine.appendChild(a);
+        srcLine.appendChild(document.createTextNode(').'));
       } else srcLine.textContent = 'In motion, its composition map rises in the paper. The work is in copyright, so no image of it is used.';
       w.insertBefore(srcLine, w.querySelector('.basis'));
       w.querySelector('.basis').title = S.brief.k
