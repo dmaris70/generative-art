@@ -176,6 +176,10 @@ blades and dithering hair-thin ones, from each blade's own hash instead of a seq
 the instant, so the same blades are kept in every frame of an animation. Off by default, with the
 same byte-identical check.
 
+`collect: []` (for 059's live view) fills the array with every planted blade before the wind bends
+it (root, length, lean, seed head, key, and whether the build kept it), and `world.warp(x, z)` gives
+the gust's warp, so another renderer can apply the same wind. Output unchanged, same check.
+
 ## Files
 
 - `field.js`: the engine. It is pure geometry with no drawing library, runs in a browser or
