@@ -119,6 +119,7 @@
     cross: 1,          // 1 = cross-ruling in the darkest passages
     sample: 1.2,       // mm, the grid the engine is evaluated on (interpolated between)
     loop: null,        // motion: a phase in [0, 1) of 058's closed drift path; null for a still sheet
+    ditherSmooth: false, // live view: the threshold wavers smoothly along a line (ends slide, not jump)
   };
   const THRESH = [0.16, 0.46, 0.76];   // tone at which the main lines, the lines between, the cross-ruling start
 
@@ -195,7 +196,12 @@
       for (let k = 0; k <= n; k++) {
         const x = x0 + dx * k * step, y = y0 + dy * k * step;
         const inFrame = x >= 0 && y >= 0 && x <= frame.w && y <= frame.h;
-        const th = thr + (h01(id, Math.floor(k * step / cell)) - 0.5) * o.dither;
+        let dv;
+        if (o.ditherSmooth) {
+          const sc = k * step / cell, c0 = Math.floor(sc), f = sc - c0, sm = f * f * (3 - 2 * f);
+          dv = h01(id, c0) * (1 - sm) + h01(id, c0 + 1) * sm;
+        } else dv = h01(id, Math.floor(k * step / cell));
+        const th = thr + (dv - 0.5) * o.dither;
         const on = inFrame && tone(x, y) > th && mask.seen(x / grain, y / grain);
         if (on) {
           if (!run) run = [x, y];
@@ -275,7 +281,7 @@
     return Object.assign({}, fieldOptions, { extend: (ctx) => sky(ctx, skyOptions) });
   }
 
-  const api = { sky, withSky, weather, drifted, fields, cameraColumns, DEFAULTS, KEPT };
+  const api = { sky, withSky, weather, drifted, fields, cameraColumns, levelGain, h01, DEFAULTS, KEPT, THRESH };
   global.PlottedSky = api;
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
 })(typeof window !== 'undefined' ? window : globalThis);

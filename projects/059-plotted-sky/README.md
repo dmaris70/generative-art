@@ -131,6 +131,52 @@ appears as white stalks against the sky. *Save SVG* writes it with one layer per
 
 Not done: a plot of the chronograph on a real machine.
 
+## Live (`live.html`)
+
+The flip-book above is plotted sheets in sequence: each takes 1.5–2.8 s to build, so it plays at
+6 frames a second, and every frame re-decides which lines are hidden and which ruled dashes are on.
+Lines jump. The live view works the way the shader pieces (057, 058) do, and the way a live grass
+field on the graphics card (such as Leander Herzog's *Field*, read for analysis only, no code
+taken) works: it recomputes the sheet at screen rate from continuous functions.
+
+- **The blades:** 048's engine plants the view once (`collect`, a new optional hook: each blade's
+  root, length, lean and seed head before the wind bends it). The vertex shader then applies 048's
+  wind formula to every blade at the current instant, so the gusts are 048's, at full frame rate.
+- **Hidden lines:** each blade also gets a paper-coloured body, and the ground is a paper-coloured
+  surface; the depth buffer hides what lies behind them. Bodies are sized as 048's occlusion map
+  stamps them (rounded out to whole 0.2 mm cells, at least two cells wide).
+- **Light:** 048's moon sheen per vertex; where it passes the limit the pen lifts.
+- **Seed heads:** 048's head geometry (spine, nod, 5–10 alternating spikelets), with each head's
+  random numbers drawn from its own sequence, as 048 draws them.
+- **The sky:** the folded engine fills sky.js's 1.2 mm tone grid on the GPU (every other frame),
+  and a ruling pass draws the three line families from it. Each line's threshold wavers smoothly
+  along its length (sky.js `ditherSmooth`, also new), so as the deck re-forms the ends of the
+  lines slide instead of jumping. The deck goes round 058's drift path once a minute.
+- **Pause and Save SVG** rebuilds that exact instant on the CPU (`stable`, the same deck phase,
+  `ditherSmooth`) as a plottable sheet.
+
+The screen is a close likeness of the plot, not the plot. Measured at one instant (field 7, view
+12, t = 7.3 s), as the share of dark pixels in each band, live against the exported sheet: sky
+4.3% / 5.1%, far grass 39.7% / 32.4%, middle 33.7% / 28.5%, near 17.7% / 19.0%. The far grass is
+denser live because the CPU's occlusion map also drops runs shorter than 0.35 mm and dithers
+sub-cell bodies. Cloud positions, blade shapes and seed heads match.
+
+Not measured: the frame rate on real graphics hardware. The tests here ran on a software
+renderer (about 1 frame a second for 15,261 blades); the status line shows the live rate.
+
+## Generate
+
+**Generate** (key `G`, on the still sheet, the live view and the flip-book) draws a new picture:
+the field, the view, the lens, the instant, the wind and its turn, the moonlight and the moon's
+place, the weather, the cloud deck's height, scale and drift, the ruling, the sky's tone and
+cross-ruling, and the grass (density, body, recession, seed heads). It leaves alone the sheet's
+plotter settings (paper, pen, second ink, occlusion grain), the mode and the motion settings
+(gusts, frame rate, speed). The ranges (`generate.js`) are narrower than the panel's where the
+extremes are slow to build or rarely work, and the view is always one that sees sky: 8 of a
+field's 25 views look down without a horizon, so a raw draw has sky only about 69% of the time
+(138 of 200). The test, the top of the frame at least 2° above the horizon, agrees with the built
+sheets on all 25 views of field 7.
+
 ## Using it
 
 - **URL:** `?seed=7&p_view=12&p_weather=0` plus every 048 setting. The sky's settings are
@@ -138,12 +184,15 @@ Not done: a plot of the chronograph on a real machine.
   `p_cross`.
 - **Keys:** as 048, plus `W` for the next weather.
 - **SVG layers:** `1 grass`, `2 seed heads (pen 2)`, `3 sky`, `4 caption and map`.
+- **Live:** `live.html?seed=7&view=12&weather=0&wind=0.6&speed=1` (`t=…` starts paused at that many seconds). Keys: space pause, H hide, S save SVG of this instant.
 - **Motion:** `motion.html?mode=loop&seed=7&view=12&weather=0&gusts=3&fps=6` (or `mode=chronograph`). Keys: space pause, H hide, B rebuild. It needs to be served over http (workers do not load from `file://`).
 
 ## Files
 
 - `sky.js`: the deck, the CPU engine, the ruling and the moon. Runs in a browser or in Node.
 - `sketch.js`: 048's panel with a *sky* group.
+- `generate.js`: what a generation draws, and the sky test.
+- `live.js`, `live.html`, `live-page.js`: the live view (WebGL2).
 - `motion.js`, `motion-worker.js`, `motion.html`, `motion-page.js`: the loop, the worker pool and the chronograph; `motion-frames.png`.
 - `index.html`, `preview.png` (field 7, view 12), `views.png` (field 7, all 25 views).
 - Uses `../048-plotted-field/field.js` and `../../assets/strokefont.js`.
