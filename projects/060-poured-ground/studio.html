@@ -152,6 +152,23 @@
       <div class="ctl"><label for="tooth">paper tooth</label><input type="range" id="tooth" min="0" max="0.15" step="0.005" /><span class="val"></span></div>
       <div class="ctl"><label for="levelling">levelling</label><input type="range" id="levelling" min="0" max="0.2" step="0.005" /><span class="val"></span></div>
 
+      <h2>Motion <small>after 048 Plotted Field's wind</small></h2>
+      <div class="ctl"><label>version</label>
+        <div class="seg" id="motionOn" style="grid-column: 2 / span 2"><button data-v="0">Still</button><button data-v="1">Animated</button></div>
+      </div>
+      <div id="motionCtl">
+        <div class="row" style="margin:6px 0">
+          <button class="icon" id="playPause" title="Play / pause (space)">⏸</button>
+          <input type="range" id="phase" class="grow" min="0" max="1" step="0.001" aria-label="Loop phase" style="accent-color: var(--accent); background:none; border:0; padding:0" />
+          <span class="val" id="phaseVal" style="color:var(--muted);font-size:11px;min-width:64px;text-align:right;font-variant-numeric:tabular-nums"></span>
+        </div>
+        <p class="hint" id="phaseName"></p>
+        <div class="ctl"><label for="gusts">loop (gusts)</label><input type="range" id="gusts" min="3" max="16" step="1" /><span class="val"></span></div>
+        <div class="ctl"><label for="sway">sway</label><input type="range" id="sway" min="0" max="2.5" step="0.05" /><span class="val"></span></div>
+        <button class="grow" id="recordLoop" style="width:100%;margin-top:6px">🎞 Record loop (WebM, 1080 px)</button>
+        <p class="hint">Created in the order the paint arrived, breathing in gusts every 5.03 s, then carried off by the wind. The loop closes exactly. Exporting a print while animated saves that instant.</p>
+      </div>
+
       <h2>Label <small>Cedarville Cursive, bottom right</small></h2>
       <div class="ctl"><label>label</label>
         <div class="seg" id="label" style="grid-column: 2 / span 2"><button data-v="1">Work &amp; artist</button><button data-v="0">Off</button></div>
