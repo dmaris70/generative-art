@@ -75,6 +75,13 @@
     setTimeout(() => URL.revokeObjectURL(a.href), 2000);
   }
   $('go').onclick = rebuild;
+  // a new draw of the field, view, weather and wind (generate.js); speed is left as it is
+  function generate() {
+    const g = PlottedSkyGenerate.draw();
+    $('seed').value = g.field; $('view-n').value = g.view; $('weather').value = g.weather; $('wind').value = g.wind;
+    clock = 0; rebuild();
+  }
+  $('gen').onclick = generate;
   $('wind').oninput = () => { if (opts) opts.wind = +$('wind').value; dirty = true; };
   $('pause').onclick = () => { paused = !paused; $('pause').textContent = paused ? 'Play' : 'Pause'; };
   $('svg').onclick = saveSVG;
@@ -83,6 +90,7 @@
     if (e.key === ' ') { $('pause').click(); e.preventDefault(); }
     else if (e.key === 'h' || e.key === 'H') { document.body.classList.toggle('bare'); size(); }
     else if (e.key === 's' || e.key === 'S') saveSVG();
+    else if (e.key === 'g' || e.key === 'G') generate();
   });
   addEventListener('resize', size);
   rebuild();

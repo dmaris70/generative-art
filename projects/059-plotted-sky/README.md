@@ -164,6 +164,19 @@ sub-cell bodies. Cloud positions, blade shapes and seed heads match.
 Not measured: the frame rate on real graphics hardware. The tests here ran on a software
 renderer (about 1 frame a second for 15,261 blades); the status line shows the live rate.
 
+## Generate
+
+**Generate** (key `G`, on the still sheet, the live view and the flip-book) draws a new picture:
+the field, the view, the lens, the instant, the wind and its turn, the moonlight and the moon's
+place, the weather, the cloud deck's height, scale and drift, the ruling, the sky's tone and
+cross-ruling, and the grass (density, body, recession, seed heads). It leaves alone the sheet's
+plotter settings (paper, pen, second ink, occlusion grain), the mode and the motion settings
+(gusts, frame rate, speed). The ranges (`generate.js`) are narrower than the panel's where the
+extremes are slow to build or rarely work, and the view is always one that sees sky: 8 of a
+field's 25 views look down without a horizon, so a raw draw has sky only about 69% of the time
+(138 of 200). The test, the top of the frame at least 2° above the horizon, agrees with the built
+sheets on all 25 views of field 7.
+
 ## Using it
 
 - **URL:** `?seed=7&p_view=12&p_weather=0` plus every 048 setting. The sky's settings are
@@ -178,6 +191,7 @@ renderer (about 1 frame a second for 15,261 blades); the status line shows the l
 
 - `sky.js`: the deck, the CPU engine, the ruling and the moon. Runs in a browser or in Node.
 - `sketch.js`: 048's panel with a *sky* group.
+- `generate.js`: what a generation draws, and the sky test.
 - `live.js`, `live.html`, `live-page.js`: the live view (WebGL2).
 - `motion.js`, `motion-worker.js`, `motion.html`, `motion-page.js`: the loop, the worker pool and the chronograph; `motion-frames.png`.
 - `index.html`, `preview.png` (field 7, view 12), `views.png` (field 7, all 25 views).
