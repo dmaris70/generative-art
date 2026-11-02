@@ -11,6 +11,8 @@
 //      colours (ground + four paints), has at least one gesture, keeps its geometry near the
 //      sheet; its compiled score is deterministic, lays every field before the first gesture,
 //      and maps each field to a valid pigment channel (or a clear back to the ground).
+//   7. Interpretation (0, 0.65, 1): readings keep all five colours, geometry stays finite, and
+//      interpretation 0 applies no readings.
 // Usage: node tools/poured-ground-check.mjs
 import { createRequire } from 'node:module';
 const require = createRequire(import.meta.url);
@@ -85,8 +87,14 @@ BRIEFS.forEach((b, i) => {
   // all five colours of the work appear (a duplicate hex on colorlisa counts as used)
   ok([0, 1, 2, 3, 4].every((c) => used.has(c) || cols[c] === cols[b.g]), 'all five colours used ' + i + ' ' + PALS[i].painting);
   ok(b.m.length > 0 && b.m.every((m) => m.length === MOVE[m[0]]), 'gestures ' + i);
-  for (let seed = 1; seed <= 4; seed++) {
-    const o = { energy: 1, aspect: aspects[seed % aspects.length] };
+  for (let seed = 1; seed <= 6; seed++) for (const interp of [0, 0.65, 1]) {
+    const o = { energy: 1, aspect: aspects[seed % aspects.length], interp };
+    // interpretation keeps the whole palette: ground + a visible field for each other colour
+    const plan = PG.interpret(mulberry32(seed * 977 + i), b, interp);
+    const cs = new Set([plan.g]); plan.z.forEach((f) => cs.add(f[1]));
+    ok([0, 1, 2, 3, 4].every((c) => cs.has(c) || cols[c] === cols[plan.g]), 'interpretation keeps all colours ' + i + ' @' + interp);
+    ok(interp > 0 || plan.readings.length === 0, 'interp 0 applies no readings ' + i);
+    ok(plan.z.every((f) => f.slice(2).every(Number.isFinite)) && plan.m.every((q) => q.slice(1).every(Number.isFinite)), 'finite geometry ' + i + ' @' + interp);
     const a = PG.composeBrief(mulberry32(seed * 131 + i), b, o), c = PG.composeBrief(mulberry32(seed * 131 + i), b, o);
     ok(JSON.stringify(a) === JSON.stringify(c), 'brief determinism ' + i);
     const fieldsEnd = Math.max(0, ...a.events.filter((e) => e.type !== 'drag').map((e) => e.t));
