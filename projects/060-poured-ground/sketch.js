@@ -463,6 +463,7 @@
     };
     for (const e of score.events) if (e.type === 'pour' || e.type === 'zone') (S.pours[e.t] = S.pours[e.t] || []).push(e);
     if (brief) sourceFor(pal.id);   // fetch the source now, long before the animated version reveals it
+    if (origView) setTimeout(placeOriginal, 0);
     handTouched = false;
     updateCaption();
     dirty = true;
@@ -646,6 +647,7 @@
     gl.uniform2f(P.render.u.uOrigin, -view.x, 0);
     gl.uniform1f(P.render.u.uTileH, canvas.height - view.y);
     gl.drawArrays(gl.TRIANGLES, 0, 3);
+    if (origView) placeOriginal();
   }
 
   // ---------------------------------------------------------------- loop
@@ -756,7 +758,39 @@
   }
   // Revealed over the last 45% of the living phase; it stays through the ending, where the
   // paper drinks it with the paint.
+  // ---- show the original (key O): the public-domain original over the canvas, fitted whole
+  // inside the image area, to compare with the interpretation at any moment. Only for works
+  // listed in originals.js; for a work in copyright it is unavailable and nothing is loaded.
+  // It is a view only: prints and recordings never include it.
+  let origView = false, origEl = null;
+  function canShowOriginal() { return !!(S && S.brief !== undefined && sourceFor(S.palette.id).kind === 'original'); }
+  function setOriginalView(on) {
+    origView = !!on && canShowOriginal();
+    placeOriginal(); updateCaption();
+    return origView;
+  }
+  function placeOriginal() {
+    if (!origView || !S || !canShowOriginal()) { origView = origView && canShowOriginal(); if (origEl) origEl.hidden = true; return; }
+    const src = sourceFor(S.palette.id);
+    if (!src.ready) { setTimeout(placeOriginal, 150); return; }
+    if (!origEl) {
+      origEl = document.createElement('img');
+      origEl.style.cssText = 'position:absolute;pointer-events:none;z-index:5;box-shadow:0 10px 34px rgba(0,0,0,.4)';
+      document.body.appendChild(origEl);
+    }
+    const url = 'originals/' + src.meta.file;
+    if (origEl.getAttribute('src') !== url) origEl.setAttribute('src', url);
+    origEl.alt = S.palette.painting + ', ' + S.palette.artist + ' (public domain, ' + src.meta.source + ')';
+    const box = canvas.getBoundingClientRect(), dpr = canvas.width / box.width, sh = S.sheet;
+    const vx = box.left + window.scrollX + view.x / dpr, vy = box.top + window.scrollY + view.y / dpr, vw = view.w / dpr, vh = view.h / dpr;
+    const bx = sh.borderMM / sh.mm[0] * vw, by = sh.borderMM / sh.mm[1] * vh, iw = vw - 2 * bx, ih = vh - 2 * by;
+    const w = src.aspect > iw / ih ? iw : ih * src.aspect, h = src.aspect > iw / ih ? iw / src.aspect : ih;
+    origEl.style.left = (vx + bx + (iw - w) / 2) + 'px'; origEl.style.top = (vy + by + (ih - h) / 2) + 'px';
+    origEl.style.width = w + 'px'; origEl.style.height = h + 'px';
+    origEl.hidden = false;
+  }
   function revealAmount() {
+    if (G.param('original') === 0) return 0;         // the option: the source does not rise
     if (motion.phase === 'ending') return 1;
     if (motion.phase !== 'living') return 0;
     const f = motion.lt / motion.livingSteps();
@@ -1029,6 +1063,7 @@
     else if (k === 'p') exportPrint();
     else if (k === 's') exportPreview();
     else if (k === 'm') setMotion(!motion.on);
+    else if (k === 'o') setOriginalView(!origView);
     else if (k === ' ' && motion.on) { e.preventDefault(); setPlaying(!motion.playing); }
     else if (k === 'backspace' && motion.on) { e.preventDefault(); restartMotion(); }
     else if (k.length === 1 && '1234'.indexOf(k) >= 0) { pigment = +k - 1; updateCaption(); }
@@ -1065,6 +1100,7 @@
       simres: { value: 1024, options: { '512': 512, '768': 768, '1024': 1024, '1536': 1536, '2048': 2048 }, label: 'sim long side', group: 'simulation' },
       speed: { value: 4, min: 1, max: 24, step: 1, label: 'steps / frame', group: 'simulation' },
       gusts: { value: 6, min: 2, max: 24, step: 1, label: 'living (gusts of 5.03 s)', group: 'motion' },
+      original: { value: 1, options: { 'rises before the absorption': 1, off: 0 }, label: 'original in motion', group: 'motion' },
       wind: { value: 1, min: 0.3, max: 2.5, step: 0.05, label: 'wind', group: 'motion' },
       memory: { value: 1, min: 0, max: 3, step: 0.05, label: 'memory of the painting', group: 'motion' },
       label: { value: 1, options: { 'work and artist': 1, off: 0 }, label: 'label', group: 'label' },
@@ -1090,6 +1126,7 @@
     G.gui.add({ p: exportPrint }, 'p').name('🖨 Export print PNG (P)');
     G.gui.add({ f: function () { finishSim(); } }, 'f').name('⏭ Finish pour');
     G.gui.add({ m: function () { setMotion(!motion.on); } }, 'm').name('〰 Motion on/off (M)');
+    G.gui.add({ o: function () { if (!setOriginalView(!origView) && !canShowOriginal()) say('No original to show: the work is in copyright (or not yet sourced). Its composition map is used instead.'), setTimeout(function () { say(''); }, 3500); } }, 'o').name('🖼 Show the original (O)');
     G.gui.add({ v: function () { recordLoop(1080, 30); } }, 'v').name('🎞 Record cycle (WebM)');
   }
   window.PouredGroundApp = {
@@ -1098,6 +1135,7 @@
     motion: motion, setMotion: setMotion, setPlaying: setPlaying, restartMotion: restartMotion, advance: advance, motionInfo: motionInfo, recordLoop: recordLoop, loopSeconds: loopSeconds,
     after: function () { return S ? after() : null; },
     source: function () { return S ? sourceFor(S.palette.id) : null; }, revealAmount: function () { return revealAmount(); },
+    canShowOriginal: function () { return canShowOriginal(); }, setOriginalView: setOriginalView, originalView: function () { return origView; },
     exporting: function () { return exporting; },
     handTouched: function () { return handTouched; },
     get pigment() { return pigment; },
