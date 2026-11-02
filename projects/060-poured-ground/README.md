@@ -106,26 +106,30 @@ exported file then records that it is *hand-touched* and cannot be reproduced fr
 ## Motion: the animated version
 
 Every sheet also has an animated version (**M**, the studio's *Motion* section, or
-`?motion=1`). Its movement is the wind from **048 Plotted Field**: bands of gust crossing the
-sheet along a seeded wind direction, bent by a slow warp, using 048's own law
-`gust = ½ + ½·sin(along − t·1.25 + warp)`, `force = 0.25 + 0.75·gust²`. That is one gust every
-2π/1.25 = 5.03 s.
+`?motion=1`). Its movement is the simulation itself, as in mofu's method. One velocity field
+moves every pigment, and paint moves only where the flow passes the speed threshold. Pigments
+mix by thickness, and colour stays where liquid has passed. Nothing appears to move that the
+liquid does not actually do, and the canvas walls keep everything on the sheet.
 
-| phase of the loop | what happens |
+| phase | what happens |
 |---|---|
-| creation (0–0.42) | the painting is made again **in the order the paint actually arrived**. During the pour, each pigment's first-arrival time is recorded per cell; on replay, paint swells into place in that order, the front shimmering as gusts pass |
-| breathing (0.42–0.58) | the paint surface sways with each gust, and its sheen leans like light over a field in wind |
-| absorption (0.58–1) | the paper drinks the paint **a little at a time**. Every point of the sheet has its own moment to drink, set by the paper's pores and fibres (noise at three scales), later where the paint lies thick, sooner upwind, and quickened under each passing gust. Holes open in the open pores and spread along ragged edges. Each pigment soaks in at its own seeded rate, and thick cores linger as islands. As it sinks, the paint flattens and loses its sheen, leaving a soaked stain in its own hue that is drunk in turn, until the ground is empty again |
+| creation | the pour itself, live, from the empty sheet: the seed's fields and hands |
+| living | **048 Plotted Field's gusts** flow through the same velocity field as a gentle force. They follow 048's law: bands of gust bent by a slow warp, one gust every 5.03 s, force 0.25 + 0.75·gust². The gusts straddle mofu's threshold, so paint moves in the gusts and rests in the lulls, **mixing and reshaping**. The flow curls with a slow noise, dies near the walls so paint turns along them, and the wind veers through a full turn each cycle so nothing piles against one side. An elastic **memory** of the painting as poured (paint and traces, about 5 s) draws it gently back, so it breathes instead of collapsing into one colour |
+| ending | the paper absorbs the paint where it lies, a little at a time. Pores at three scales set when each point drinks, thick paint lasts longest, each pigment soaks in at its own rate, and the sinking paint flattens and leaves a stain in its own hue that is drunk in turn. The liquid keeps moving as it is drunk |
 
-- **Exact loop:** the animation is a pure function of the loop phase, rendered over the
-  finished painting, so it costs no simulation and closes exactly. The empty sheet at the end is
-  bit-identical to the first frame. The loop is a whole number of gusts (*loop*, default
-  6 = 30.2 s), and *sway* scales the movement.
-- **Prints of an instant:** pause anywhere and *Export print PNG* to print that instant at full
-  resolution. The file's provenance records the loop phase.
-- **Video:** *Record loop* saves one exact loop as WebM (1080 px). Frames are drawn at exact
-  phases, but the browser timestamps them in real time, so the machine must draw faster than the
-  frame rate. If it cannot, the recorder says so.
+- **Seamless cycle:** a cycle starts and ends on the empty sheet, so a recording loops
+  seamlessly. It is deterministic: the same seed gives the same motion, step for step, on a
+  given machine.
+- **Controls:** *living* sets the length of the living phase in gusts (default 6 ≈ 30 s), *wind*
+  its strength, and *memory* how firmly the liquid holds the painting's form.
+- **Prints of an instant:** pause anywhere and *Export print PNG* to print that instant. The
+  file's provenance records the phase and the time.
+- **Video:** *Record cycle* saves one whole cycle as WebM (1080 px). The simulation advances a
+  fixed 60 steps per second of video, so the content never depends on timing, but the browser
+  timestamps frames in real time. If the machine draws more slowly than the frame rate, the
+  recorder says so.
+- **Containment:** every laid field lies wholly on the sheet, whatever the interpretation.
+  Nothing is cut off by the canvas edge, and the check script verifies it.
 
 ## Label
 
@@ -180,7 +184,7 @@ cotton-rag gamuts. Use perceptual intent for those and relative colorimetric for
 - **Composition:** the gesture, number of pours, hand speed and momentum. Seed controls step back, forward or to a random seed. **Generate** makes a new composition and keeps your print setup.
 - **Surface:** relief, gloss and paper tooth re-render live, and levelling re-runs the pour.
 - **Print setup:** format, orientation, border, dpi, bit depth and simulation detail. A live spec shows sheet and image size, output pixels, raw data size and simulation cells per inch, and warns when the grid is too coarse for the print size.
-- **Motion:** still or animated, play/pause, a loop-phase scrubber naming the phase, loop length in gusts, sway, and *Record loop*.
+- **Motion:** still or animated, play/pause, restart, a cycle bar naming the phase, living length in gusts, wind, memory, and *Record cycle*.
 - **Label:** on or off, on the image or in the border, and its size (applied live).
 - **Export:** a print PNG, a preview PNG, or a copy of the link. The URL always holds the full recipe, and *open as piece* opens the same recipe full screen.
 
@@ -198,7 +202,7 @@ cotton-rag gamuts. Use perceptual intent for those and relative colorimetric for
 
 Needs WebGL2 with `EXT_color_buffer_float`, which any current desktop GPU supports.
 Keys: **R** new seed · **G** new composition (keeps print setup) · **P** print · **S** preview PNG ·
-**M** motion · **space** play/pause · **1–4** pigment.
+**M** motion · **space** play/pause · **backspace** restart the cycle · **1–4** pigment.
 
 Palettes © their compiler at colorlisa.com. Paintings belong to their artists and estates. No image
 from a painting is used, only five colours from each. If prints are sold, do not use an artist's
