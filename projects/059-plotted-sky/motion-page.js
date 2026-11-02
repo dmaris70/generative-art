@@ -6,9 +6,9 @@
   const PM = window.PlottedMotion, PF = window.PlottedField;
   const canvas = $('view'), ctx = canvas.getContext('2d');
   const q = new URLSearchParams(location.search);
-  for (const [k, id] of [['seed', 'seed'], ['view', 'view-n'], ['weather', 'weather'], ['gusts', 'gusts'], ['fps', 'fps'], ['mode', 'mode']]) if (q.has(k)) $(id).value = q.get(k);
+  for (const [k, id] of [['seed', 'seed'], ['view', 'view-n'], ['weather', 'weather'], ['gusts', 'gusts'], ['fps', 'fps'], ['mode', 'mode'], ['look', 'look']]) if (q.has(k)) $(id).value = q.get(k);
 
-  const scripts = ['../../assets/strokefont.js?v=1', '../048-plotted-field/field.js?v=6', 'sky.js?v=3', 'motion.js?v=1'].map((s) => new URL(s, location.href).href);
+  const scripts = ['../../assets/strokefont.js?v=1', '../048-plotted-field/field.js?v=6', 'sky.js?v=4', 'motion.js?v=1'].map((s) => new URL(s, location.href).href);
   const POOL = Math.max(1, Math.min(6, (navigator.hardwareConcurrency || 2) - 1));
   let workers = [], job = 0, frames = [], n = 0, ready = 0, sheet = null, caption = null, paused = false, still = null, t0 = 0, fps = 8, built = 0, msSum = 0;
 
@@ -21,11 +21,11 @@
   }
   function settings() {
     return { base: { seed: Math.max(1, +$('seed').value | 0), view: Math.min(25, Math.max(1, +$('view-n').value | 0)), instant: 1200 },
-      sky: { weather: Math.min(48, Math.max(0, +$('weather').value | 0)) }, gusts: +$('gusts').value, fps: +$('fps').value };
+      sky: { weather: Math.min(48, Math.max(0, +$('weather').value | 0)), invert: $('look').value !== 'positive' }, look: $('look').value, gusts: +$('gusts').value, fps: +$('fps').value };
   }
   function syncURL() {
     const S = settings(), u = new URL(location.href);
-    u.search = new URLSearchParams({ mode: $('mode').value, seed: S.base.seed, view: S.base.view, weather: S.sky.weather, gusts: S.gusts, fps: S.fps }).toString();
+    u.search = new URLSearchParams({ mode: $('mode').value, seed: S.base.seed, view: S.base.view, weather: S.sky.weather, gusts: S.gusts, fps: S.fps, look: S.look }).toString();
     history.replaceState(null, '', u);
   }
 
@@ -77,7 +77,7 @@
   function frame(layers, k, ox, oy, scale) {
     for (const l of layers) {
       if (l.id === 'caption') continue;
-      ctx.strokeStyle = l.pen === 2 ? PF.INKS.sepia : PF.INKS.black;
+      const L = PlottedSky.look($('look').value); ctx.strokeStyle = l.pen === 2 ? L.ink2 : L.ink;
       ctx.beginPath();
       let s = 0;
       for (const e of l.ends) {
@@ -94,11 +94,12 @@
     ctx.fillStyle = '#16161a'; ctx.fillRect(0, 0, W, H);
     if (!sheet) return;
     const k = Math.min((W - 40) / sheet.w, (H - 110) / sheet.h), ox = (W - sheet.w * k) / 2, oy = (H - 80 - sheet.h * k) / 2;
-    ctx.fillStyle = '#f3efe6'; ctx.fillRect(ox, oy, sheet.w * k, sheet.h * k);
+    ctx.fillStyle = PlottedSky.look($('look').value).paper; ctx.fillRect(ox, oy, sheet.w * k, sheet.h * k);
+    if ($('look').value === 'dark') { ctx.strokeStyle = '#3d3b45'; ctx.lineWidth = 1; ctx.strokeRect(ox - 0.5, oy - 0.5, sheet.w * k + 1, sheet.h * k + 1); }
     ctx.lineWidth = Math.max(0.5, 0.3 * k); ctx.lineCap = 'round'; ctx.lineJoin = 'round';
     if (still) {
       for (const l of still.layers) {
-        ctx.strokeStyle = PM.PEN_INKS[(l.pen - 1) % PM.PEN_INKS.length]; ctx.beginPath();
+        const pens = PlottedSky.look($('look').value).pens; ctx.strokeStyle = pens[(l.pen - 1) % pens.length]; ctx.beginPath();
         for (const s of l.strokes) { ctx.moveTo(ox + s[0] * k, oy + s[1] * k); for (let i = 2; i < s.length; i += 2) ctx.lineTo(ox + s[i] * k, oy + s[i + 1] * k); }
         ctx.stroke();
       }
@@ -114,12 +115,12 @@
   function saveSVG() {
     let text, name;
     const S = settings();
-    if (still) { text = PM.chronographSVG(still); name = 'plotted-sky-' + S.base.seed + '-view-' + S.base.view + '-chronograph.svg'; }
+    if (still) { text = PlottedSky.svgLook(PM.chronographSVG(still), S.look); name = 'plotted-sky-' + S.base.seed + '-view-' + S.base.view + '-chronograph.svg'; }
     else {
       // the frame on screen, as a plottable sheet (rebuilt on the main thread)
       const idx = ready ? Math.floor(((performance.now() - t0) / 1000) * fps) % ready : 0;
       const r = PF.build(PM.frameOptions(S.base, S.sky, idx, n || 1, S.gusts));
-      text = PF.svg(r); name = 'plotted-sky-' + S.base.seed + '-view-' + S.base.view + '-frame-' + idx + '-of-' + n + '.svg';
+      text = PlottedSky.svgLook(PF.svg(r), S.look); name = 'plotted-sky-' + S.base.seed + '-view-' + S.base.view + '-frame-' + idx + '-of-' + n + '.svg';
     }
     const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([text], { type: 'image/svg+xml' })); a.download = name; a.click();
     setTimeout(() => URL.revokeObjectURL(a.href), 2000);
@@ -129,6 +130,7 @@
   // a new draw of the field, view and weather (generate.js); mode, gusts and frame rate are left as they are
   $('gen').onclick = () => { const g = PlottedSkyGenerate.draw(); $('seed').value = g.field; $('view-n').value = g.view; $('weather').value = g.weather; build(); };
   $('mode').onchange = build;
+  $('look').onchange = build;
   $('pause').onclick = () => { paused = !paused; $('pause').textContent = paused ? 'Play' : 'Pause'; };
   $('svg').onclick = saveSVG;
   addEventListener('keydown', (e) => {

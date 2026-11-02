@@ -5,7 +5,7 @@
   const fail = (m) => { $('err').textContent = '⚠ ' + m; $('err').hidden = false; };
   addEventListener('error', (e) => fail(e.message));
   const q = new URLSearchParams(location.search);
-  for (const [k, id] of [['seed', 'seed'], ['view', 'view-n'], ['weather', 'weather'], ['wind', 'wind'], ['speed', 'speed']]) if (q.has(k)) $(id).value = q.get(k);
+  for (const [k, id] of [['seed', 'seed'], ['view', 'view-n'], ['weather', 'weather'], ['wind', 'wind'], ['speed', 'speed'], ['look', 'look']]) if (q.has(k)) $(id).value = q.get(k);
   const gl = $('gl'), ov = $('ov'), octx = ov.getContext('2d');
   let L;
   try { L = PlottedLive.create(gl); } catch (e) { fail(e.message); return; }
@@ -16,14 +16,15 @@
 
   function settings() {
     return { seed: Math.max(1, +$('seed').value | 0), view: Math.min(25, Math.max(1, +$('view-n').value | 0)), instant: 1200,
-      wind: +$('wind').value, body: q.has('body') ? +q.get('body') : 1.6, light: q.has('light') ? +q.get('light') : 0.35, sky: true, skyOpts: { weather: Math.min(48, Math.max(0, +$('weather').value | 0)) } };
+      look: $('look').value, wind: +$('wind').value, body: q.has('body') ? +q.get('body') : 1.6, light: q.has('light') ? +q.get('light') : 0.35, sky: true, skyOpts: { weather: Math.min(48, Math.max(0, +$('weather').value | 0)), invert: $('look').value !== 'positive' } };
   }
   function rebuild() {
     opts = settings();
+    document.body.classList.toggle('dark', opts.look === 'dark');
     $('status').textContent = 'planting field ' + opts.seed + ', view ' + opts.view + '…';
     setTimeout(() => {
       try { info = L.setup(opts); } catch (e) { fail(e.message); return; }
-      const u = new URL(location.href); u.search = new URLSearchParams({ seed: opts.seed, view: opts.view, weather: opts.skyOpts.weather, wind: opts.wind, speed: $('speed').value }).toString(); history.replaceState(null, '', u);
+      const u = new URL(location.href); u.search = new URLSearchParams({ seed: opts.seed, view: opts.view, weather: opts.skyOpts.weather, wind: opts.wind, speed: $('speed').value, look: opts.look }).toString(); history.replaceState(null, '', u);
       size();
     }, 20);
   }
@@ -39,7 +40,7 @@
     layout = { pxmm, px: Math.round(f.x * pxmm), py: Math.round((info.sheet.h - f.y - f.h) * pxmm), pw: Math.round(f.w * pxmm), ph: Math.round(f.h * pxmm) };
     // the caption and inset map: static, drawn once on the overlay
     octx.setTransform(1, 0, 0, 1, 0, 0); octx.clearRect(0, 0, ov.width, ov.height);
-    octx.strokeStyle = '#1b1a1f'; octx.lineWidth = Math.max(0.6, 0.3 * pxmm); octx.lineCap = 'round'; octx.beginPath();
+    octx.strokeStyle = PlottedSky.look(opts.look).ink; octx.lineWidth = Math.max(0.6, 0.3 * pxmm); octx.lineCap = 'round'; octx.beginPath();
     // keep the title line and the inset map; the other caption lines give the numbers of one frozen
     // instant, which the live sheet does not have (the status line shows the live ones)
     const top = f.y + f.h, fs = Math.max(2.4, info.sheet.w * 0.0075), line1 = top + fs * 2.2 + fs * 1.45, insetX = f.x + f.w - 0.08 * info.sheet.w;
@@ -70,8 +71,8 @@
     const { t, u } = now();
     const r = L.exportSheet(t, u);
     const a = document.createElement('a');
-    a.href = URL.createObjectURL(new Blob([PlottedField.svg(r)], { type: 'image/svg+xml' }));
-    a.download = 'plotted-sky-' + opts.seed + '-view-' + opts.view + '-live-t' + t.toFixed(2) + '-deck' + u.toFixed(3) + '.svg'; a.click();
+    a.href = URL.createObjectURL(new Blob([PlottedSky.svgLook(PlottedField.svg(r), opts.look)], { type: 'image/svg+xml' }));
+    a.download = 'plotted-sky-' + opts.seed + '-view-' + opts.view + (opts.look === 'positive' ? '' : '-' + opts.look) + '-live-t' + t.toFixed(2) + '-deck' + u.toFixed(3) + '.svg'; a.click();
     setTimeout(() => URL.revokeObjectURL(a.href), 2000);
   }
   $('go').onclick = rebuild;
@@ -82,6 +83,7 @@
     clock = 0; rebuild();
   }
   $('gen').onclick = generate;
+  $('look').onchange = rebuild;
   $('wind').oninput = () => { if (opts) opts.wind = +$('wind').value; dirty = true; };
   $('pause').onclick = () => { paused = !paused; $('pause').textContent = paused ? 'Play' : 'Pause'; };
   $('svg').onclick = saveSVG;
