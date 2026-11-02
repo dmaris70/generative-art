@@ -109,15 +109,31 @@
       ivec2 c = ivec2(gl_FragCoord.xy);
       o = max(texelFetch(uHist,c,0), smoothstep(vec4(0), vec4(0.01/0.7), texelFetch(uH,c,0)));
     }`,
+    // a laid field (rectangle or ellipse): covers whatever paint lies beneath, then lays its own
+    // pigment as a flat slab with a bevelled shoulder (the shoulder is what catches the light).
+    // uMask = 0 clears to the ground (a cut-out).
+    zone: HEAD + `
+    uniform sampler2D uH; uniform vec2 uC, uHalf; uniform float uAng, uShape, uTh; uniform vec4 uMask;
+    void main(){
+      vec2 p = (vUv - uC)*uAspect;
+      float c = cos(uAng), s = sin(uAng);
+      vec2 q = vec2(c*p.x + s*p.y, -s*p.x + c*p.y);
+      float d;
+      if (uShape < 0.5) { vec2 dd = abs(q) - uHalf; d = length(max(dd, 0.)) + min(max(dd.x, dd.y), 0.); }
+      else d = (length(q/uHalf) - 1.) * min(uHalf.x, uHalf.y);
+      float m = 1. - smoothstep(-0.0015, 0.0015, d);
+      float hh = uTh * smoothstep(0., 0.01, -d);
+      o = texelFetch(uH, ivec2(gl_FragCoord.xy), 0)*(1. - m) + uMask*hh;
+    }`,
     // mofu initialHeight.frag profile, added into one pigment channel
     pour: HEAD + `
-    uniform sampler2D uH; uniform vec2 uC; uniform float uR; uniform vec4 uMask;
+    uniform sampler2D uH; uniform vec2 uC; uniform float uR, uK; uniform vec4 uMask;
     void main(){
       float d = length((vUv-uC)*uAspect)/uR;
       float s = smoothstep(0., 1., d);
       float hh = sqrt(max(0., (1. - s*s)/12.));
       hh = smoothstep(0., 0.025, hh) * hh * 0.66;
-      o = texelFetch(uH, ivec2(gl_FragCoord.xy), 0) + uMask*hh;
+      o = texelFetch(uH, ivec2(gl_FragCoord.xy), 0) + uMask*hh*uK;   // uK < 1: a flatter dab
     }`,
   };
 
@@ -310,10 +326,15 @@
     if (S) { S.vel.free(); S.p.free(); S.hgt.free(); S.hist.free(); gl.deleteTexture(S.div.t); gl.deleteFramebuffer(S.div.f); }
     const rng = G.rng;
     const pal = paletteFor(G.seed);
-    const cols = PG.assignColours(pal.colors, G.param('ground'), rng);
-    const score = PG.compose(rng, { style: G.param('style'), pours: G.param('pours'), energy: G.param('energy'), aspect: a });
+    // mode 0, after the work: the palette's brief sets the ground, the fields and the gestures.
+    // mode 1, free gestures: the palette's colours with the seeded gesture styles.
+    const brief = G.param('mode') === 0 ? window.BRIEFS[pal.id] : null;
+    const cols = brief ? PG.briefColours(pal.colors, brief) : PG.assignColours(pal.colors, G.param('ground'), rng);
+    const score = brief
+      ? PG.composeBrief(rng, brief, { energy: G.param('energy'), aspect: a })
+      : PG.compose(rng, { style: G.param('style'), pours: G.param('pours'), energy: G.param('energy'), aspect: a });
     S = {
-      w: w, h: h, aspect: a, sheet: sh, palette: pal, colours: cols, score: score,
+      w: w, h: h, aspect: a, sheet: sh, palette: pal, colours: cols, score: score, brief: brief,
       t: 0, live: 0,
       vel: pair(w, h, gl.RGBA16F, gl.LINEAR),
       p: pair(w, h, gl.RGBA16F, gl.NEAREST),
@@ -322,15 +343,27 @@
       hist: pair(w, h, gl.RGBA16F, gl.NEAREST),
       pours: {},
     };
-    for (const e of score.events) if (e.type === 'pour') (S.pours[e.t] = S.pours[e.t] || []).push(e);
+    for (const e of score.events) if (e.type === 'pour' || e.type === 'zone') (S.pours[e.t] = S.pours[e.t] || []).push(e);
     handTouched = false;
     updateCaption();
     dirty = true;
   }
 
-  function pour(x, y, r, pig) {
+  function zone(e) {
+    const u = P.zone.u;
+    bind(P.zone, { uH: S.hgt.a.t });
+    gl.uniform2f(u.uC, e.cx, e.cy); gl.uniform2f(u.uHalf, Math.max(1e-4, e.hx), Math.max(1e-4, e.hy));
+    gl.uniform1f(u.uAng, e.ang); gl.uniform1f(u.uShape, e.shape); gl.uniform1f(u.uTh, e.th);
+    gl.uniform4f(u.uMask, e.chan === 0 ? 1 : 0, e.chan === 1 ? 1 : 0, e.chan === 2 ? 1 : 0, e.chan === 3 ? 1 : 0);
+    run(S.hgt.b); S.hgt.swap();
+  }
+  function after() { // "after A Bigger Splash, David Hockney" — the work this generation follows
+    return S.brief ? 'after ' + S.palette.painting + ', ' + S.palette.artist : null;
+  }
+
+  function pour(x, y, r, pig, k) {
     bind(P.pour, { uH: S.hgt.a.t });
-    gl.uniform2f(P.pour.u.uC, x, y); gl.uniform1f(P.pour.u.uR, r);
+    gl.uniform2f(P.pour.u.uC, x, y); gl.uniform1f(P.pour.u.uR, r); gl.uniform1f(P.pour.u.uK, k === undefined ? 1 : k);
     gl.uniform4f(P.pour.u.uMask, pig === 0 ? 1 : 0, pig === 1 ? 1 : 0, pig === 2 ? 1 : 0, pig === 3 ? 1 : 0);
     run(S.hgt.b); S.hgt.swap();
   }
@@ -347,7 +380,7 @@
   const handQueue = [];
   function step() {
     const t = S.t;
-    if (S.pours[t]) for (const e of S.pours[t]) pour(e.x, e.y, e.r, e.pig);
+    if (S.pours[t]) for (const e of S.pours[t]) { if (e.type === 'zone') zone(e); else pour(e.x, e.y, e.r, e.pig, e.k); }
     for (const e of S.score.events) {
       if (e.type !== 'drag' || t < e.t0 || t > e.t1) continue;
       const p1 = PG.dragAt(e, t), p0 = PG.dragAt(e, Math.max(e.t0, t - 1));
@@ -450,11 +483,12 @@
   function provenance(dpi, bits, W, H) {
     const p = S.palette;
     return {
-      Title: 'Poured Ground, seed ' + G.seed,
+      Title: 'Poured Ground' + (S.brief ? ' — ' + after() : '') + ', seed ' + G.seed,
       Author: 'dmaris70 / generative-art',
       Software: 'Poured Ground (projects/060-poured-ground), WebGL2',
       Source: 'Palette: colorlisa.com - ' + p.artist + ', ' + p.painting + ' [' + p.colors.join(' ') + ']',
-      Description: 'Ground ' + S.colours.ground + '; pigments ' + S.colours.pigments.join(' ') + '. Sheet ' + S.sheet.name +
+      Description: (S.brief ? 'Composition after the work: ' + S.brief.note + ' (' + (S.brief.k ? 'layout follows the documented composition' : 'layout inferred from the title and the artist\'s typical structure') + '). No image of the work is used; only its five colorlisa colours and a description of its layout. ' : 'Free gestures. ') +
+        'Ground ' + S.colours.ground + '; pigments ' + S.colours.pigments.join(' ') + '. Sheet ' + S.sheet.name +
         (G.param('landscape') ? ' landscape' : ' portrait') + ', border ' + S.sheet.borderMM.toFixed(1) + ' mm, ' + W + '×' + H + ' px at ' + dpi + ' dpi, ' + bits + '-bit sRGB.' +
         (handTouched ? ' Hand-touched: contains marks made by pointer, not reproducible from the URL.' : ' Reproducible from the URL below.'),
       Comment: location.href,
@@ -538,7 +572,8 @@
     const p = S.palette, c = S.colours;
     const sh = PG.sheet(G.param('format'), G.param('landscape') === 1, G.param('border'), G.param('dpi'));
     cap.innerHTML =
-      '<b>Poured Ground</b> · seed ' + G.seed + '<br>' +
+      '<b>Poured Ground</b>' + (S.brief ? ' — <em>' + after() + '</em>' : '') + ' · seed ' + G.seed + '<br>' +
+      (S.brief ? '<span class="src">' + S.brief.note + (S.brief.k ? '' : ' (layout inferred)') + '</span><br>' : '') +
       'palette: ' + p.artist + ', <em>' + p.painting + '</em> <span class="src">(colorlisa.com)</span><br>' +
       '<span class="sw">ground ' + swatch(c.ground) + ' paint ' + c.pigments.map(function (h, i) { return '<span class="pig' + (i === pigment ? ' on' : '') + '">' + (i + 1) + swatch(h) + '</span>'; }).join('') + '</span><br>' +
       '<span class="src">print ' + sh.name + ' · ' + sh.px[0] + '×' + sh.px[1] + ' px @ ' + G.param('dpi') + ' dpi · ' + G.param('bits') + '-bit · sim ' + S.w + '×' + S.h + '</span>';
@@ -581,18 +616,20 @@
       // a new composition; the print setup (format, border, dpi, bits) and quality settings stay
       if (['format', 'landscape', 'border', 'dpi', 'bits', 'simres', 'iterations', 'speed'].indexOf(key) >= 0) return G.param(key);
       if (key === 'palette') return -1;
+      if (key === 'mode') return G.param('mode');
       if (key === 'flow') return 0.97 + Math.random() * 0.025;
       return undefined;
     });
   }
 
   // ---------------------------------------------------------------- harness
-  const SIM_KEYS = ['palette', 'ground', 'style', 'pours', 'energy', 'flow', 'levelling', 'iterations', 'simres', 'format', 'landscape', 'border'];
+  const SIM_KEYS = ['mode', 'palette', 'ground', 'style', 'pours', 'energy', 'flow', 'levelling', 'iterations', 'simres', 'format', 'landscape', 'border'];
   G = GenArt.create({
     title: 'Poured Ground',
     resetOnFinish: true,
     closedGroups: ['simulation', 'surface'],
     params: {
+      mode: { value: 0, options: { 'after the work': 0, 'free gestures': 1 }, label: 'composition', group: 'colour' },
       palette: { value: -1, options: PAL_OPTIONS, label: 'palette', group: 'colour' },
       ground: { value: 0, options: { 'lightest colour': 0, 'darkest colour': 1, 'paper white': 2 }, label: 'ground', group: 'colour' },
       style: { value: 4, options: PG.STYLES, label: 'gesture', group: 'composition' },
@@ -626,6 +663,7 @@
   window.PouredGroundApp = {
     G: G, finish: finishSim, exportPrint: exportPrint, exportPreview: exportPreview, exportImage: exportImage, generate: generate,
     state: function () { return S; },
+    after: function () { return S ? after() : null; },
     exporting: function () { return exporting; },
     handTouched: function () { return handTouched; },
     get pigment() { return pigment; },
