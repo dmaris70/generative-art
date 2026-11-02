@@ -14,6 +14,7 @@
 //   7. Interpretation (0, 0.65, 1): readings keep all five colours, geometry stays finite, and
 //      interpretation 0 applies no readings.
 //   8. Containment: every laid field lies wholly on the sheet (nothing cut off by the edge).
+//   9. Originals: only public-domain works (EU + US rule, Commons licence) ship an image; traceable.
 // Usage: node tools/poured-ground-check.mjs
 import { createRequire } from 'node:module';
 const require = createRequire(import.meta.url);
@@ -115,6 +116,25 @@ BRIEFS.forEach((b, i) => {
   const bc = PG.briefColours(PALS[i].colors, b);
   ok(bc.ground === PALS[i].colors[b.g] && bc.pigments.length === 4, 'brief colours ' + i);
 });
+
+// 9. Originals: an image of a work ships only if it is public domain in both the EU (artist died
+//    in or before 1955) and the US (work dated 1930 or earlier), Commons reports it public domain,
+//    and its file is present. Every other work rises as its composition map: no image.
+{
+  const fs = require('fs'), path = require('path');
+  const dir = path.join(path.dirname(new URL(import.meta.url).pathname), '../projects/060-poured-ground');
+  require(path.join(dir, 'originals.js'));
+  const O = globalThis.ORIGINALS || {};
+  const ids = Object.keys(O);
+  ok(typeof O === 'object', 'originals manifest present (may be empty: then every work rises as its map)');
+  for (const id of ids) {
+    const m = O[id];
+    ok(m.public_domain === true && m.artist_died <= 1955 && m.work_year <= 1930, 'original is public domain (EU + US) ' + id + ' ' + PALS[id].painting);
+    ok(/public domain|^pd/i.test(m.license), 'Commons licence says public domain ' + id + ': ' + m.license);
+    ok(m.file && fs.existsSync(path.join(dir, 'originals', m.file)), 'original file present ' + id);
+    ok(/^Q\d+$/.test(m.wikidata) && /^https:\/\/commons\.wikimedia\.org\//.test(m.commons_page), 'original traceable (Wikidata + Commons) ' + id);
+  }
+}
 
 console.log(failures ? `${failures} of ${checks} checks failed` : `all ${checks} checks pass`);
 process.exit(failures ? 1 : 0);
