@@ -77,6 +77,24 @@ centre) and **Scatter** (many small pours, short flicks). **Mixed** picks one pe
 add your own marks: drag to push paint, shift-click to pour, and 1–4 choose the pigment. The
 exported file then records that it is *hand-touched* and cannot be reproduced from its URL.
 
+## Label
+
+The work's title, with the artist's name beneath it, is written in **Cedarville Cursive** at
+the bottom right, like a signature line.
+
+- **Font:** Kimberly Geswein's Cedarville Cursive, under the SIL Open Font License. It is served
+  from `assets/fonts/cedarville-cursive/` with its licence, so exports never depend on a font
+  CDN, and export waits for the font to load.
+- **Sharpness:** the text is drawn at the output's own resolution and composited in the render
+  pass, so it is as sharp at 360 dpi as on screen.
+- **Settings:** `label` (*work and artist* or *off*); `label position` (*on the image*, inset from
+  the corner, or *in the border*, right-aligned under the image and centred in the bottom
+  margin, falling back to the image when the border is too shallow); and `label size`, which is
+  relative to the sheet's short side, so the label keeps its proportion on every format.
+- **Ink:** on the image, the palette colour that contrasts most with the ground. In the border,
+  a warm black.
+- **Provenance:** the label's text and position are written into the PNG's provenance.
+
 ## Giclée output
 
 **🖨 Export print PNG (P)** renders the finished state at the chosen format and dpi. Formats run
@@ -112,6 +130,7 @@ cotton-rag gamuts. Use perceptual intent for those and relative colorimetric for
 - **Composition:** the gesture, number of pours, hand speed and momentum. Seed controls step back, forward or to a random seed. **Generate** makes a new composition and keeps your print setup.
 - **Surface:** relief, gloss and paper tooth re-render live, and levelling re-runs the pour.
 - **Print setup:** format, orientation, border, dpi, bit depth and simulation detail. A live spec shows sheet and image size, output pixels, raw data size and simulation cells per inch, and warns when the grid is too coarse for the print size.
+- **Label:** on or off, on the image or in the border, and its size (applied live).
 - **Export:** a print PNG, a preview PNG, or a copy of the link. The URL always holds the full recipe, and *open as piece* opens the same recipe full screen.
 
 ## Files
