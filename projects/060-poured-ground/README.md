@@ -144,6 +144,14 @@ liquid does not actually do, and the canvas walls keep everything on the sheet.
     *Leatherstocking's Rescue*, Homer *A Basket of Clams*, Hokusai *The Great Wave*, Monet
     *Water Lilies* (1906) and Seurat *A Sunday on La Grande Jatte*. *American Gothic* stays a
     map because its museum does not mark it public domain.
+  - **Options:**
+    - **Show the original** (key **O**, the studio card's button, or the panel) lays the
+      public-domain original over the canvas, fitted whole inside the image area, to compare
+      with the interpretation at any moment, still or animated. It is a view only: prints and
+      recordings never include it.
+    - For a work in copyright the toggle is unavailable and says so, and no image is requested.
+    - **Original in motion** (*rises before the absorption* or *off*) controls whether the
+      source rises in the animated version.
   - **Movement:** the original has its own elastic memory (about 1 s), so it ripples and
     liquefies with the gusts but stays legible. The memory releases in the ending, when the
     original is carried and absorbed with the paint.
@@ -228,7 +236,7 @@ cotton-rag gamuts. Use perceptual intent for those and relative colorimetric for
 
 Needs WebGL2 with `EXT_color_buffer_float`, which any current desktop GPU supports.
 Keys: **R** new seed · **G** new composition (keeps print setup) · **P** print · **S** preview PNG ·
-**M** motion · **space** play/pause · **backspace** restart the cycle · **1–4** pigment.
+**M** motion · **O** show the original (public-domain works) · **space** play/pause · **backspace** restart the cycle · **1–4** pigment.
 
 Palettes © their compiler at colorlisa.com. Paintings belong to their artists and estates. No image
 from a painting is used, only five colours from each. If prints are sold, do not use an artist's
