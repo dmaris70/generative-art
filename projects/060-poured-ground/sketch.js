@@ -164,6 +164,7 @@
   uniform sampler2D uArr;
   uniform float uAnim, uU, uTsec, uSway;
   uniform vec2 uWdir;
+  uniform vec4 uAbsorb;        // each pigment's absorbency (seeded, 0.75–1.25)
   uniform float uSeed;
   uniform sampler2D uLabel;   // the caption, drawn in Cedarville Cursive at output resolution
   uniform vec4 uLabelRect;    // its box in output px (x, y, w, h), y down
@@ -215,6 +216,7 @@
       // ---- motion: creation, breathing, dissolution. A pure function of the loop phase uU, so
       // the loop closes exactly: empty at uU = 0, empty again as uU reaches 1.
       vec2 uvS = uv; vec4 k4 = vec4(1.); float gustA = 0.;
+      float pore = 0., soak = 0., drinkBase = 0., edgeW = 0.06, endGate = 1., soakMix = 0.;
       if (uAnim > 0.5) {
         vec2 p = (uv - 0.5) * uAspect;                       // short-side units, y up
         float along = dot(p, uWdir);
@@ -226,17 +228,45 @@
         float uc = smoothstep(0.0, 0.42, uU);                // creation
         float ud = smoothstep(0.58, 1.0, uU);                // dissolution
         float r = clamp(0.5 + along / length(uAspect) + 0.15 * (vnoise(p * 3.1 + 7.3) - 0.5), 0., 1.); // 0 upwind, 1 downwind
-        float gone = smoothstep(0., 1., clamp(ud * 1.4 - r * 0.4, 0., 1.));
-        // the paint sways with the gusts and, as it dissolves, streams downwind
-        uvS = uv - (uWdir * (uSway * 0.012 * gustA + 0.25 * gone * gone)) / uAspect;
+        // the paint sways with the gusts; it is absorbed where it lies, not carried off
+        uvS = uv - (uWdir * (uSway * 0.012 * gustA)) / uAspect;
         vec4 a4 = min(texture(uArr, uvS), vec4(1.));
         vec4 st = max(a4 * 0.8 + 0.05 * (gust - 0.5), vec4(0.001));
-        // paint carried past the sheet's edge leaves it (no smear of the edge texels)
         vec2 inS = smoothstep(vec2(0.), vec2(0.015), uvS) * smoothstep(vec2(0.), vec2(0.015), 1. - uvS);
-        k4 = smoothstep(st, st + 0.18, vec4(uc)) * (1. - gone) * inS.x * inS.y;
+        k4 = smoothstep(st, st + 0.18, vec4(uc)) * inS.x * inS.y;
+        // ---- absorption: the paper drinks the paint a little at a time.
+        // The paper's pores and fibres (noise at three scales, fixed to the sheet) decide when
+        // each point drinks: holes open in the open pores first and spread along ragged lines.
+        pore = 0.55 * vnoise(p * 22. + 3.1) + 0.3 * vnoise(p * 7.5 + 11.7) + 0.15 * vnoise(p * 2.6 + 5.3);
+        // progress, quickened a little under each passing gust (048's rhythm)
+        float udl = clamp((uU - 0.58) / 0.42, 0., 1.);     // linear: even pacing to the end
+        soak = udl + 0.015 * (gust - 0.5) * step(0.001, udl);
+        // summed noise bunches near its middle (10–90% within 0.36–0.74, measured): spread it
+        // so the drinking spans the whole phase
+        float poreT = smoothstep(0.36, 0.76, pore);
+        drinkBase = 0.02 + 0.62 * poreT + 0.06 * r;         // upwind drinks a little sooner
+        edgeW = 0.06 + 0.03 * gust;
+        endGate = 1. - smoothstep(0.985, 1.0, udl);
       }
       vec4 H, Hx, Hy, Q; sampleCubic(uvS, H, Hx, Hy, Q);
       H *= k4; Hx *= k4; Hy *= k4; Q *= k4;
+      vec4 Hc = H;                                   // the paint as laid: its colour weights
+      if (uAnim > 0.5 && soak > 0.) {
+        // when each pigment here is drunk: the paper's pore timing, later where the paint is
+        // thick, and each pigment at its own absorbency. All times fall at or before 0.82, so paint
+        // (+0.09) and stain (+0.16) are gone by the end of the loop, which closes exactly.
+        vec4 thick = clamp(Hc / 0.2, 0., 1.);
+        vec4 drink = (vec4(drinkBase) + 0.12 * thick) * (1.3 - 0.4 * uAbsorb);  // ≤ 0.82
+        vec4 film = 1. - smoothstep(drink, drink + edgeW, vec4(soak));   // paint still on top
+        float sink = 1. - 0.7 * smoothstep(0., 0.8, soak);               // flattens as it sinks
+        H = Hc * film * endGate;
+        Hx *= film * sink; Hy *= film * sink;
+        // the stain it leaves in the paper lingers, then is drunk in turn
+        vec4 stain = 1. - smoothstep(drink + 0.08, drink + 0.16, vec4(soak));
+        Q *= stain * endGate;
+        float tot = dot(Hc, vec4(1.));
+        soakMix = tot > 1e-5 ? 1. - dot(film, Hc) / tot : 0.;
+      }
       float total = H.x+H.y+H.z+H.w;
       // gradient of total thickness per short-side unit
       float minS = min(uSize.x, uSize.y);
@@ -253,7 +283,7 @@
       vec4 a4 = 0.5*max(stain, film) + 0.5*film;
       float A = max(max(a4.x,a4.y), max(a4.z,a4.w));
       // Kubelka–Munk: mix absorption/scatter weighted by thickness; stains weigh in where thin
-      vec4 w = max(H, vec4(0)) + 0.015*a4;
+      vec4 w = max(Hc, vec4(0)) + 0.015*a4;          // hue of the paint as laid, even once soaked in
       float ws = w.x+w.y+w.z+w.w;
       vec3 ks = ws > 1e-6 ? (uKS[0]*w.x + uKS[1]*w.y + uKS[2]*w.z + uKS[3]*w.w)/ws : uKS[0];
       vec3 paint = ks2r(ks);
@@ -261,6 +291,7 @@
       float hide = 1. - exp(-total*40.);
       float cover = A * mix(0.9, 1., hide);
       vec3 ground = uGround * (1. + tooth(mm));
+      paint = mix(paint, ground, 0.35 * soakMix);       // soaked into the paper: lighter, sunk
       vec3 base = mix(ground, paint, cover);
       // light: flat paint renders as its palette colour exactly; relief adds key light and gloss
       vec3 L = normalize(vec3(-0.45, 0.55, 0.70)), Hh = normalize(L + vec3(0,0,1));
@@ -556,6 +587,8 @@
       gl.uniform1f(u.uU, motion.u); gl.uniform1f(u.uTsec, motion.u * L);
       gl.uniform1f(u.uSway, G.param('sway'));
       const a = windAngle(); gl.uniform2f(u.uWdir, Math.cos(a), Math.sin(a));
+      const ar = GenArt._mulberry32((G.seed ^ 0x2545f491) >>> 0);
+      gl.uniform4f(u.uAbsorb, 0.75 + 0.5 * ar(), 0.75 + 0.5 * ar(), 0.75 + 0.5 * ar(), 0.75 + 0.5 * ar());
     }
   }
 
@@ -605,7 +638,7 @@
 
   // ---------------------------------------------------------------- motion
   // The animated version of a sheet: it is created (replaying the order the paint arrived),
-  // breathes in 048 Plotted Field's wind, and is carried away, in a loop of whole gusts that
+  // breathes in 048 Plotted Field's wind, and is absorbed by the paper, in a loop of whole gusts that
   // closes exactly. Everything is a function of the loop phase u, rendered over the finished
   // painting, so any instant can also be exported as a print.
   const GUST = 2 * Math.PI / 1.25;                       // s: one gust of 048's wind

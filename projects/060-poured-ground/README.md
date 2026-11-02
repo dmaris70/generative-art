@@ -115,7 +115,7 @@ sheet along a seeded wind direction, bent by a slow warp, using 048's own law
 |---|---|
 | creation (0–0.42) | the painting is made again **in the order the paint actually arrived**. During the pour, each pigment's first-arrival time is recorded per cell; on replay, paint swells into place in that order, the front shimmering as gusts pass |
 | breathing (0.42–0.58) | the paint surface sways with each gust, and its sheen leans like light over a field in wind |
-| dissolution (0.58–1) | the wind takes the paint, upwind first: it thins, streams downwind and leaves the sheet, until the ground is empty again |
+| absorption (0.58–1) | the paper drinks the paint **a little at a time**. Every point of the sheet has its own moment to drink, set by the paper's pores and fibres (noise at three scales), later where the paint lies thick, sooner upwind, and quickened under each passing gust. Holes open in the open pores and spread along ragged edges. Each pigment soaks in at its own seeded rate, and thick cores linger as islands. As it sinks, the paint flattens and loses its sheen, leaving a soaked stain in its own hue that is drunk in turn, until the ground is empty again |
 
 - **Exact loop:** the animation is a pure function of the loop phase, rendered over the
   finished painting, so it costs no simulation and closes exactly. The empty sheet at the end is
