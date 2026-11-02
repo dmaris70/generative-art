@@ -8,11 +8,11 @@
   const $ = (id) => document.getElementById(id);
 
   const SIM = ['pours', 'energy', 'flow', 'levelling', 'border'];
-  const LIVE = ['relief', 'gloss', 'tooth'];
+  const LIVE = ['relief', 'gloss', 'tooth', 'labelSize'];
   const fmt = {
     pours: (v) => String(v), energy: (v) => v.toFixed(2) + '×', flow: (v) => v.toFixed(3),
     levelling: (v) => v.toFixed(3), border: (v) => v + ' mm',
-    relief: (v) => v.toFixed(2), gloss: (v) => v.toFixed(2), tooth: (v) => v.toFixed(3),
+    relief: (v) => v.toFixed(2), labelSize: (v) => v.toFixed(2) + '×', gloss: (v) => v.toFixed(2), tooth: (v) => v.toFixed(3),
   };
   const set = (k, v) => G.setParams({ [k]: v });
 
@@ -49,7 +49,7 @@
   });
 
   // ---------------------------------------------------------------- segmented controls
-  ['mode', 'ground', 'style', 'landscape', 'dpi', 'bits'].forEach(function (k) {
+  ['mode', 'ground', 'style', 'label', 'labelPos', 'landscape', 'dpi', 'bits'].forEach(function (k) {
     $(k).addEventListener('click', function (e) {
       const b = e.target.closest('button');
       if (b) set(k, +b.dataset.v);
@@ -139,7 +139,9 @@
     // the seed row previews which palette the seed draws
     seedRow.querySelector('.strip').innerHTML = pid < 0 ? S.palette.colors.map((c) => '<i style="background:' + c + '"></i>').join('') : '';
     seedRow.querySelector('span').textContent = pid < 0 ? S.palette.artist + ' · ' + S.palette.painting : 'a different palette for every seed';
-    ['mode', 'ground', 'style', 'landscape', 'dpi', 'bits'].forEach((k) => seg(k, G.param(k)));
+    ['mode', 'ground', 'style', 'label', 'labelPos', 'landscape', 'dpi', 'bits'].forEach((k) => seg(k, G.param(k)));
+    $('labelPos').classList.toggle('dim', G.param('label') !== 1);
+    $('labelSize').parentNode.classList.toggle('dim', G.param('label') !== 1);
     const inspired = G.param('mode') === 0;
     $('freeOnly').classList.toggle('dim', inspired);
     $('freeOnly2').classList.toggle('dim', inspired);

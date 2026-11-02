@@ -152,6 +152,10 @@
   uniform vec3 uKS[4];        // Kubelka–Munk K/S per pigment (linear RGB)
   uniform float uRelief, uGloss, uTooth, uLinearOut;
   uniform float uSeed;
+  uniform sampler2D uLabel;   // the caption, drawn in Cedarville Cursive at output resolution
+  uniform vec4 uLabelRect;    // its box in output px (x, y, w, h), y down
+  uniform float uLabelOn;
+  uniform vec3 uInk;
 
   float hash(vec2 p){ p = fract(p*vec2(443.897, 441.423) + uSeed*0.0001); p += dot(p, p.yx+19.19); return fract((p.x+p.y)*p.x); }
   float vnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f*f*(3.-2.*f);
@@ -224,6 +228,10 @@
       float sh = 70.;
       float spec = max(0., pow(max(dot(N,Hh),0.), sh) - pow(Hh.z, sh));
       col = base*mix(1., shade, cover) + uGloss*spec*cover*vec3(1.);
+    }
+    if (uLabelOn > 0.5) {
+      vec2 lu = (px - uLabelRect.xy) / uLabelRect.zw;
+      if (lu.x >= 0. && lu.y >= 0. && lu.x <= 1. && lu.y <= 1.) col = mix(col, uInk, 0.92 * texture(uLabel, lu).a);
     }
     if (uLinearOut > 0.5) { o = vec4(srgb(col), 1.); return; }
     vec3 s = srgb(col);
@@ -409,10 +417,74 @@
 
   // ---------------------------------------------------------------- render
   function linRGB(hex) { return PG.hexToSRGB(hex).map(PG.toLinear); }
+
+  // ---------------------------------------------------------------- label
+  // The work's title over the artist's name, bottom right, in Cedarville Cursive (OFL, served
+  // from assets/fonts so a print never depends on a font CDN). The text is drawn on a 2D canvas
+  // at the output's own resolution and composited in the render pass, so it is as sharp at
+  // 360 dpi as on screen. Sizes are fractions of the sheet's short side, so the label keeps its
+  // proportion on every format.
+  const FONT = 'Cedarville Cursive';
+  const fontReady = (function () {
+    try {
+      const f = new FontFace(FONT, 'url(../../assets/fonts/cedarville-cursive/Cedarville-Cursive.ttf)');
+      return f.load().then(function (ff) { document.fonts.add(ff); labelKey = ''; dirty = true; }, function () {});
+    } catch (e) { return Promise.resolve(); }
+  })();
+  const labelTex = gl.createTexture();
+  gl.bindTexture(gl.TEXTURE_2D, labelTex);
+  gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, 1, 1, 0, gl.RGBA, gl.UNSIGNED_BYTE, new Uint8Array(4));
+  let labelKey = '', labelBox = null;
+  function labelFor(outW, outH, pxPerMM) {
+    if (!S || G.param('label') !== 1) return null;
+    const sh = S.sheet, short = Math.min(sh.mm[0], sh.mm[1]);
+    const fs = Math.max(6, short * 0.016 * G.param('labelSize') * pxPerMM); // title size, px
+    const fs2 = fs * 0.74;
+    const lines = [S.palette.painting, S.palette.artist];
+    const key = lines.join('|') + '|' + fs.toFixed(2) + '|' + document.fonts.check('12px "' + FONT + '"');
+    if (key !== labelKey) {
+      const c = document.createElement('canvas'), x = c.getContext('2d');
+      const f1 = fs + 'px "' + FONT + '", cursive', f2 = fs2 + 'px "' + FONT + '", cursive';
+      x.font = f1; const w1 = x.measureText(lines[0]).width;
+      x.font = f2; const w2 = x.measureText(lines[1]).width;
+      const pad = fs * 0.4;
+      c.width = Math.ceil(Math.max(w1, w2) + 2 * pad); c.height = Math.ceil(fs * 1.2 + fs2 * 1.3 + 2 * pad);
+      x.fillStyle = '#fff'; x.textAlign = 'right'; x.textBaseline = 'alphabetic';
+      x.font = f1; x.fillText(lines[0], c.width - pad, pad + fs * 0.95);
+      x.font = f2; x.fillText(lines[1], c.width - pad, pad + fs * 1.2 + fs2 * 0.95);
+      gl.bindTexture(gl.TEXTURE_2D, labelTex);
+      gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, false);
+      gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, c);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+      labelKey = key; labelBox = { w: c.width, h: c.height, pad: pad };
+    }
+    // position: bottom right of the image, or centred in the bottom border when it is deep enough
+    const kx = outW / sh.mm[0], ky = outH / sh.mm[1];
+    const imgR = (sh.mm[0] - sh.borderMM) * kx, imgB = (sh.mm[1] - sh.borderMM) * ky;
+    const inset = short * 0.02 * pxPerMM - labelBox.pad;
+    let inBorder = G.param('labelPos') === 1 && sh.borderMM * ky >= labelBox.h * 0.9;
+    let x0 = imgR - inset - labelBox.w, y0 = imgB - inset - labelBox.h;
+    if (inBorder) { x0 = imgR + labelBox.pad - labelBox.w; y0 = imgB + (sh.borderMM * ky - labelBox.h) / 2; }
+    // ink: on paper a warm black; on the image the palette colour that contrasts most with the ground
+    let ink = '#2B2926';
+    if (!inBorder) {
+      const gl0 = PG.luminance(S.colours.ground);
+      let best = -1;
+      S.palette.colors.forEach(function (h) { const d = Math.abs(PG.luminance(h) - gl0); if (d > best) { best = d; ink = h; } });
+      if (best < 0.25) ink = gl0 > 0.3 ? '#1E1C1A' : '#F4F1EA';
+    }
+    return { x: x0, y: y0, w: labelBox.w, h: labelBox.h, ink: linRGB(ink), inBorder: inBorder, text: lines.join(', ') };
+  }
   function setRenderUniforms(outW, outH, pxPerMM, linearOut) {
     const u = P.render.u, sh = S.sheet;
-    bind(P.render, { uH: S.hgt.a.t, uHist: S.hist.a.t });
+    const lab = labelFor(outW, outH, pxPerMM);
+    bind(P.render, { uH: S.hgt.a.t, uHist: S.hist.a.t, uLabel: labelTex });
     gl.uniform2f(u.uOut, outW, outH);
+    gl.uniform1f(u.uLabelOn, lab ? 1 : 0);
+    if (lab) { gl.uniform4f(u.uLabelRect, lab.x, lab.y, lab.w, lab.h); gl.uniform3f(u.uInk, lab.ink[0], lab.ink[1], lab.ink[2]); }
     gl.uniform4f(u.uImg, sh.borderMM / sh.mm[0], sh.borderMM / sh.mm[1], 1 - sh.borderMM / sh.mm[0], 1 - sh.borderMM / sh.mm[1]);
     gl.uniform1f(u.uPxPerMM, pxPerMM);
     const g = linRGB(S.colours.ground);
@@ -490,6 +562,7 @@
       Description: (S.brief ? 'Composition after the work: ' + S.brief.note + ' (' + (S.brief.k ? 'layout follows the documented composition' : 'layout inferred from the title and the artist\'s typical structure') + '). No image of the work is used; only its five colorlisa colours and a description of its layout. ' : 'Free gestures. ') +
         'Ground ' + S.colours.ground + '; pigments ' + S.colours.pigments.join(' ') + '. Sheet ' + S.sheet.name +
         (G.param('landscape') ? ' landscape' : ' portrait') + ', border ' + S.sheet.borderMM.toFixed(1) + ' mm, ' + W + '×' + H + ' px at ' + dpi + ' dpi, ' + bits + '-bit sRGB.' +
+        (G.param('label') === 1 ? ' Label: "' + S.palette.painting + '", ' + S.palette.artist + ' (Cedarville Cursive, ' + (G.param('labelPos') === 1 ? 'border' : 'image') + ').' : ' No label.') +
         (handTouched ? ' Hand-touched: contains marks made by pointer, not reproducible from the URL.' : ' Reproducible from the URL below.'),
       Comment: location.href,
     };
@@ -499,6 +572,7 @@
     if (exporting) return;
     exporting = true;
     try {
+      await fontReady;
       finishSim();
       const sh = PG.sheet(G.param('format'), G.param('landscape') === 1, G.param('border'), dpi);
       const W = sh.px[0], H = sh.px[1];
@@ -640,6 +714,9 @@
       iterations: { value: 30, min: 8, max: 80, step: 1, label: 'pressure iterations', group: 'simulation' },
       simres: { value: 1024, options: { '512': 512, '768': 768, '1024': 1024, '1536': 1536, '2048': 2048 }, label: 'sim long side', group: 'simulation' },
       speed: { value: 4, min: 1, max: 24, step: 1, label: 'steps / frame', group: 'simulation' },
+      label: { value: 1, options: { 'work and artist': 1, off: 0 }, label: 'label', group: 'label' },
+      labelPos: { value: 0, options: { 'on the image': 0, 'in the border': 1 }, label: 'label position', group: 'label' },
+      labelSize: { value: 1, min: 0.5, max: 2.5, step: 0.05, label: 'label size', group: 'label' },
       relief: { value: 0.22, min: 0, max: 0.8, step: 0.01, label: 'relief', group: 'surface' },
       gloss: { value: 0.25, min: 0, max: 1, step: 0.01, label: 'gloss', group: 'surface' },
       tooth: { value: 0.035, min: 0, max: 0.15, step: 0.005, label: 'paper tooth', group: 'surface' },
