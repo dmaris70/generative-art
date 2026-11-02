@@ -409,10 +409,63 @@
   PALS.forEach(function (p) { PAL_OPTIONS[p.artist + ' · ' + p.painting] = p.id; });
   const FMT_OPTIONS = {}; PG.FORMAT_KEYS.forEach(function (k, i) { FMT_OPTIONS[k] = i; });
 
+  // ---- the works: colorlisa's 133 (ids 0–132, each with a hand-written brief) and the Colorist
+  // Archive from meditationsincolor.com (ids 1000 + n; 20,367 works by 367 artists, loaded per
+  // artist on demand). An archive work has a palette, title, date, source link and, when known,
+  // the proportions of the original; it composes from its palette (no layout brief), and an image
+  // is referenced only when it is public domain by our rule.
+  const ARCHIVE_BASE = 1000;
+  const archive = { index: null, files: {}, pending: {}, loading: null };
+  function loadArchiveIndex() {
+    if (archive.index || archive.loading) return archive.loading;
+    archive.loading = fetch('archive/index.json').then(function (r) { return r.json(); })
+      .then(function (j) { archive.index = j; return j; }).catch(function () { archive.index = { artists: [], total: 0 }; });
+    return archive.loading;
+  }
+  function artistAt(n) {           // the artist record holding flat archive index n
+    const A = archive.index && archive.index.artists; if (!A) return null;
+    let lo = 0, hi = A.length - 1;
+    while (lo < hi) { const mid = (lo + hi + 1) >> 1; if (A[mid].o <= n) lo = mid; else hi = mid - 1; }
+    return A[lo];
+  }
+  function loadArtist(id) {
+    if (archive.files[id]) return Promise.resolve(archive.files[id]);
+    if (!archive.pending[id]) archive.pending[id] = fetch('archive/' + id + '.json').then(function (r) { return r.json(); })
+      .then(function (w) { archive.files[id] = w; return w; });
+    return archive.pending[id];
+  }
+  function archiveWork(n) {        // a loaded archive work as a palette-like record, or null
+    const a = artistAt(n); if (!a) return null;
+    const w = (archive.files[a.id] || [])[n - a.o]; if (!w) return null;
+    return { id: ARCHIVE_BASE + n, archive: true, artist: a.name, painting: w.t, date: w.d, year: w.y, colors: w.c,
+             aspect: w.a, link: w.u, img: w.pd ? w.i : null, pd: w.pd, source: w.src, artistId: a.id, artistDied: a.died };
+  }
+  function workFor(id, cb) {       // resolve any work id; cb(work) once its data is loaded
+    if (id < ARCHIVE_BASE) { cb(PALS[id]); return; }
+    loadArchiveIndex().then(function () {
+      const n = id - ARCHIVE_BASE, a = artistAt(n);
+      if (!a || n >= archive.index.total) { cb(PALS[0]); return; }
+      loadArtist(a.id).then(function () { cb(archiveWork(n)); });
+    });
+  }
+  // the work for this seed (or the chosen one). Returns null while archive data is still loading;
+  // build() then waits and runs again when it arrives.
   function paletteFor(seed) {
     const id = G.param('palette');
-    if (id >= 0) return PALS[id];
-    return PALS[GenArt._mulberry32(seed ^ 0x9e3779b9)() * PALS.length | 0];
+    if (id >= 0 && id < ARCHIVE_BASE) return PALS[id];
+    let target = id;
+    if (id < 0) {
+      const r = GenArt._mulberry32(seed ^ 0x9e3779b9), c = G.param('collection');
+      const fromArchive = c === 1 || (c === 2 && r() >= 0.25);
+      if (!fromArchive) return PALS[r() * PALS.length | 0];
+      if (!archive.index) { loadArchiveIndex().then(function () { simKey = ''; G.reset(); }); return null; }
+      const A = archive.index.artists, a = A[r() * A.length | 0];
+      target = ARCHIVE_BASE + a.o + (r() * a.n | 0);
+    }
+    const n = target - ARCHIVE_BASE;
+    if (archive.index) { const a = artistAt(n); if (a && archive.files[a.id]) return archiveWork(n); }
+    workFor(target, function () { simKey = ''; G.reset(); });
+    return null;
   }
 
   function bind(prog, tex) {
@@ -433,8 +486,21 @@
   }
 
   // ---------------------------------------------------------------- build
+  // The sheet for the current work: proportions of the original kept when known (and asked).
+  function workAspect(pal) {
+    if (G.param('proportions') !== 1 || !pal) return null;
+    return pal.aspect && isFinite(pal.aspect) && pal.aspect > 0 ? pal.aspect : null;
+  }
+  function orientation(pal) { const o = G.param('landscape'); return o === 2 ? 'auto' : o === 1; }
+  function sheetFor(dpi, pal) {
+    pal = pal || (S && S.palette);
+    return PG.sheet(G.param('format'), orientation(pal), G.param('border'), dpi, workAspect(pal));
+  }
   function build() {
-    const sh = PG.sheet(G.param('format'), G.param('landscape') === 1, G.param('border'), 300);
+    const pal0 = paletteFor(G.seed);
+    if (!pal0) { say('Loading the Colorist Archive…'); return; }   // runs again when the data arrives
+    say('');
+    const sh = sheetFor(300, pal0);
     const long = G.param('simres');
     const a = sh.aspect, big = Math.max(a[0], a[1]);
     const w = Math.max(64, Math.round(long * a[0] / big)), h = Math.max(64, Math.round(long * a[1] / big));
@@ -445,7 +511,7 @@
     const pal = paletteFor(G.seed);
     // mode 0, after the work: the palette's brief sets the ground, the fields and the gestures.
     // mode 1, free gestures: the palette's colours with the seeded gesture styles.
-    const brief = G.param('mode') === 0 ? window.BRIEFS[pal.id] : null;
+    const brief = G.param('mode') === 0 && !pal.archive ? window.BRIEFS[pal.id] : null;  // archive works: from the palette
     const score = brief
       ? PG.composeBrief(rng, brief, { energy: G.param('energy'), aspect: a, interp: G.param('interp') })
       : PG.compose(rng, { style: G.param('style'), pours: G.param('pours'), energy: G.param('energy'), aspect: a });
@@ -578,11 +644,11 @@
     }
     // position: bottom right of the image, or centred in the bottom border when it is deep enough
     const kx = outW / sh.mm[0], ky = outH / sh.mm[1];
-    const imgR = (sh.mm[0] - sh.borderMM) * kx, imgB = (sh.mm[1] - sh.borderMM) * ky;
+    const imgR = (sh.mm[0] - sh.bx) * kx, imgB = (sh.mm[1] - sh.by) * ky;
     const inset = short * 0.02 * pxPerMM - labelBox.pad;
-    let inBorder = G.param('labelPos') === 1 && sh.borderMM * ky >= labelBox.h * 0.9;
+    let inBorder = G.param('labelPos') === 1 && sh.by * ky >= labelBox.h * 0.9;
     let x0 = imgR - inset - labelBox.w, y0 = imgB - inset - labelBox.h;
-    if (inBorder) { x0 = imgR + labelBox.pad - labelBox.w; y0 = imgB + (sh.borderMM * ky - labelBox.h) / 2; }
+    if (inBorder) { x0 = imgR + labelBox.pad - labelBox.w; y0 = imgB + (sh.by * ky - labelBox.h) / 2; }
     // ink: on paper a warm black; on the image the palette colour that contrasts most with the ground
     let ink = '#2B2926';
     if (!inBorder) {
@@ -600,7 +666,7 @@
     gl.uniform2f(u.uOut, outW, outH);
     gl.uniform1f(u.uLabelOn, lab ? 1 : 0);
     if (lab) { gl.uniform4f(u.uLabelRect, lab.x, lab.y, lab.w, lab.h); gl.uniform3f(u.uInk, lab.ink[0], lab.ink[1], lab.ink[2]); }
-    gl.uniform4f(u.uImg, sh.borderMM / sh.mm[0], sh.borderMM / sh.mm[1], 1 - sh.borderMM / sh.mm[0], 1 - sh.borderMM / sh.mm[1]);
+    gl.uniform4f(u.uImg, sh.bx / sh.mm[0], sh.by / sh.mm[1], 1 - sh.bx / sh.mm[0], 1 - sh.by / sh.mm[1]);
     gl.uniform1f(u.uPxPerMM, pxPerMM);
     const g = linRGB(S.colours.ground);
     gl.uniform3f(u.uGround, g[0], g[1], g[2]);
@@ -721,6 +787,7 @@
   function originalOK(m) { return !!(m && m.public_domain === true && m.artist_died <= 1955 && m.work_year <= 1930 && m.file); }
   function sourceFor(id) {
     if (sources[id]) return sources[id];
+    if (id >= ARCHIVE_BASE) return archiveSource(id);
     const m = (window.ORIGINALS || {})[id];
     const src = sources[id] = { ready: false, kind: originalOK(m) ? 'original' : 'map', meta: m || null, canvas: null, aspect: 1 };
     if (src.kind === 'original') {
@@ -733,6 +800,25 @@
       img.onerror = function () { src.kind = 'map'; drawMap(src, id); };  // missing file: fall back
       img.src = 'originals/' + m.file;
     } else drawMap(src, id);
+    src.url = src.kind === 'original' ? 'originals/' + m.file : null;
+    return src;
+  }
+  function archiveSource(id) {
+    const w = S && S.palette && S.palette.id === id ? S.palette : archiveWork(id - ARCHIVE_BASE);
+    const ok = !!(w && w.pd && w.img && w.artistDied && w.artistDied <= 1955 && w.year && w.year <= 1930);
+    const src = sources[id] = { ready: false, kind: ok ? 'original' : 'none', canvas: null, aspect: 1, url: ok ? w.img : null,
+      meta: ok ? { work_year: w.year, source: w.source, source_url: w.link, license: 'Public domain (artist died ' + w.artistDied + ', work ' + w.year + ')', file: w.img } : null };
+    if (ok) {
+      const img = new Image();
+      img.crossOrigin = 'anonymous';                 // needed to carry it into the paint (WebGL)
+      img.onload = function () {
+        const c = document.createElement('canvas'); c.width = img.naturalWidth; c.height = img.naturalHeight;
+        c.getContext('2d').drawImage(img, 0, 0);
+        src.canvas = c; src.aspect = img.naturalWidth / img.naturalHeight; src.ready = true;
+      };
+      img.onerror = function () { src.kind = 'view-only'; };  // the source's server refuses: it can still be viewed
+      img.src = w.img;
+    }
     return src;
   }
   function drawMap(src, id) {
@@ -763,7 +849,7 @@
   // listed in originals.js; for a work in copyright it is unavailable and nothing is loaded.
   // It is a view only: prints and recordings never include it.
   let origView = false, origEl = null;
-  function canShowOriginal() { return !!(S && S.brief !== undefined && sourceFor(S.palette.id).kind === 'original'); }
+  function canShowOriginal() { const k = S ? sourceFor(S.palette.id).kind : ''; return k === 'original' || k === 'view-only'; }
   function setOriginalView(on) {
     origView = !!on && canShowOriginal();
     placeOriginal(); updateCaption();
@@ -772,18 +858,19 @@
   function placeOriginal() {
     if (!origView || !S || !canShowOriginal()) { origView = origView && canShowOriginal(); if (origEl) origEl.hidden = true; return; }
     const src = sourceFor(S.palette.id);
-    if (!src.ready) { setTimeout(placeOriginal, 150); return; }
+    if (!src.ready && src.kind !== 'view-only') { setTimeout(placeOriginal, 150); return; }
+    if (src.kind === 'view-only' && !src.aspect2) { const t = new Image(); t.onload = function () { src.aspect = src.aspect2 = t.naturalWidth / t.naturalHeight; placeOriginal(); }; t.src = src.url; return; }
     if (!origEl) {
       origEl = document.createElement('img');
       origEl.style.cssText = 'position:absolute;pointer-events:none;z-index:5;box-shadow:0 10px 34px rgba(0,0,0,.4)';
       document.body.appendChild(origEl);
     }
-    const url = 'originals/' + src.meta.file;
+    const url = src.url;
     if (origEl.getAttribute('src') !== url) origEl.setAttribute('src', url);
     origEl.alt = S.palette.painting + ', ' + S.palette.artist + ' (public domain, ' + src.meta.source + ')';
     const box = canvas.getBoundingClientRect(), dpr = canvas.width / box.width, sh = S.sheet;
     const vx = box.left + window.scrollX + view.x / dpr, vy = box.top + window.scrollY + view.y / dpr, vw = view.w / dpr, vh = view.h / dpr;
-    const bx = sh.borderMM / sh.mm[0] * vw, by = sh.borderMM / sh.mm[1] * vh, iw = vw - 2 * bx, ih = vh - 2 * by;
+    const bx = sh.bx / sh.mm[0] * vw, by = sh.by / sh.mm[1] * vh, iw = vw - 2 * bx, ih = vh - 2 * by;
     const w = src.aspect > iw / ih ? iw : ih * src.aspect, h = src.aspect > iw / ih ? iw / src.aspect : ih;
     origEl.style.left = (vx + bx + (iw - w) / 2) + 'px'; origEl.style.top = (vy + by + (ih - h) / 2) + 'px';
     origEl.style.width = w + 'px'; origEl.style.height = h + 'px';
@@ -798,6 +885,7 @@
   }
   function initDye() {
     const src = sourceFor(S.palette.id);
+    if (src.kind !== 'original' && src.kind !== 'map') return false;   // nothing to raise for this work
     if (!src.ready) return false;                    // image still loading: try next step
     if (!S.dye) S.dye = pair(S.w, S.h, gl.RGBA16F, gl.LINEAR);
     // created before the source is bound: making a target binds it on unit 0
@@ -936,7 +1024,7 @@
       Source: 'Palette: colorlisa.com - ' + p.artist + ', ' + p.painting + ' [' + p.colors.join(' ') + ']',
       Description: (S.brief ? 'Starting point: ' + S.brief.note + ' (' + (S.brief.k ? 'layout follows the documented composition' : 'layout inferred from the title and the artist\'s typical structure') + '). Interpretation ' + S.score.interp.toFixed(2) + (S.score.readings.length ? ': ' + S.score.readings.join('; ') : ': close to the starting layout') + '. No image of the work is used; only its five colorlisa colours and a description of its layout. ' : 'Free gestures. ') +
         'Ground ' + S.colours.ground + '; pigments ' + S.colours.pigments.join(' ') + '. Sheet ' + S.sheet.name +
-        (G.param('landscape') ? ' landscape' : ' portrait') + ', border ' + S.sheet.borderMM.toFixed(1) + ' mm, ' + W + '×' + H + ' px at ' + dpi + ' dpi, ' + bits + '-bit sRGB.' +
+        (S.sheet.landscape ? ' landscape' : ' portrait') + ', image ' + S.sheet.imageMM[0].toFixed(0) + '×' + S.sheet.imageMM[1].toFixed(0) + ' mm' + (S.sheet.imgAspect ? ' in the proportions of the original (' + S.sheet.imgAspect.toFixed(3) + ' : 1)' : '') + ', borders ' + S.sheet.bx.toFixed(1) + '/' + S.sheet.by.toFixed(1) + ' mm, ' + W + '×' + H + ' px at ' + dpi + ' dpi, ' + bits + '-bit sRGB.' +
         (G.param('label') === 1 ? ' Label: "' + S.palette.painting + '", ' + S.palette.artist + ' (Cedarville Cursive, ' + (G.param('labelPos') === 1 ? 'border' : 'image') + ').' : ' No label.') +
         (motion.on && S.dyeReady ? (sourceFor(S.palette.id).kind === 'original'
           ? ' The original rises in the paper: ' + S.palette.painting + ' (' + sourceFor(S.palette.id).meta.work_year + '), ' + S.palette.artist + ', public domain, image: ' + sourceFor(S.palette.id).meta.source + ', ' + sourceFor(S.palette.id).meta.source_url + ' (' + sourceFor(S.palette.id).meta.license + ').'
@@ -953,7 +1041,7 @@
     try {
       await fontReady;
       if (!motion.on) finishSim();                 // animated: export this very instant
-      const sh = PG.sheet(G.param('format'), G.param('landscape') === 1, G.param('border'), dpi);
+      const sh = sheetFor(dpi);
       const W = sh.px[0], H = sh.px[1];
       const pxPerMM = dpi / 25.4;
       const writer = PNGStream.createWriter({ width: W, height: H, bitDepth: bits, dpi: dpi, text: provenance(dpi, bits, W, H) });
@@ -1010,7 +1098,7 @@
   function exportPrint() { return exportImage(G.param('dpi'), G.param('bits'), 'Print'); }
   function exportPreview() {
     // ~2400 px on the long side, 8-bit
-    const sh = PG.sheet(G.param('format'), G.param('landscape') === 1, G.param('border'), 1);
+    const sh = sheetFor(1);
     const dpi = Math.max(20, Math.round(2400 / (Math.max(sh.mm[0], sh.mm[1]) / 25.4)));
     return exportImage(dpi, 8, 'Preview');
   }
@@ -1019,15 +1107,22 @@
   // ---------------------------------------------------------------- caption
   const cap = document.getElementById('caption');
   function swatch(hex) { return '<i style="background:' + hex + '" title="' + hex + '"></i>'; }
+  function viewLink(p) {
+    if (!p) return null;
+    if (!p.archive) return (window.WORK_LINKS || {})[p.id] || null;
+    const q = encodeURIComponent(p.artist + ' ' + p.painting + ' painting').replace(/%20/g, '+');
+    return { url: p.link || ('https://www.google.com/search?tbm=isch&q=' + q), site: (p.link || '').replace(/^https?:\/\/(www\.)?([^/]+).*$/, '$2') || 'image search',
+             search: 'https://www.google.com/search?tbm=isch&q=' + q, note: 'Colorist Archive source page' };
+  }
   function updateCaption() {
     window.dispatchEvent(new CustomEvent('pouredground:update'));
     if (!cap) return;
     const p = S.palette, c = S.colours;
-    const sh = PG.sheet(G.param('format'), G.param('landscape') === 1, G.param('border'), G.param('dpi'));
+    const sh = sheetFor(G.param('dpi'));
     cap.innerHTML =
       '<b>Poured Ground</b>' + (S.brief ? ' — <em>' + after() + '</em>' : '') + ' · seed ' + G.seed + '<br>' +
       (S.brief ? '<span class="src">' + (S.score.readings.length ? S.score.readings.join(' · ') : 'close to the work') + '</span><br>' : '') +
-      ((window.WORK_LINKS || {})[S.palette.id] ? '<a class="view" target="_blank" rel="noopener" href="' + WORK_LINKS[S.palette.id].url + '">view the painting ↗</a> <span class="src">' + WORK_LINKS[S.palette.id].site + '</span> · <a class="view" target="_blank" rel="noopener" href="' + WORK_LINKS[S.palette.id].search + '">image search ↗</a><br>' : '') +
+      (viewLink(S.palette) ? '<a class="view" target="_blank" rel="noopener" href="' + viewLink(S.palette).url + '">view the painting ↗</a> <span class="src">' + viewLink(S.palette).site + '</span> · <a class="view" target="_blank" rel="noopener" href="' + viewLink(S.palette).search + '">image search ↗</a><br>' : '') +
       'palette: ' + p.artist + ', <em>' + p.painting + '</em> <span class="src">(colorlisa.com)</span><br>' +
       '<span class="sw">ground ' + swatch(c.ground) + ' paint ' + c.pigments.map(function (h, i) { return '<span class="pig' + (i === pigment ? ' on' : '') + '">' + (i + 1) + swatch(h) + '</span>'; }).join('') + '</span><br>' +
       '<span class="src">print ' + sh.name + ' · ' + sh.px[0] + '×' + sh.px[1] + ' px @ ' + G.param('dpi') + ' dpi · ' + G.param('bits') + '-bit · sim ' + S.w + '×' + S.h + '</span>';
@@ -1038,7 +1133,7 @@
   function toUV(e) {
     const box = canvas.getBoundingClientRect(), dpr = canvas.width / box.width, sh = S.sheet;
     const sx = ((e.clientX - box.left) * dpr - view.x) / view.w, sy = ((e.clientY - box.top) * dpr - view.y) / view.h;
-    const b0 = sh.borderMM / sh.mm[0], b1 = sh.borderMM / sh.mm[1];
+    const b0 = sh.bx / sh.mm[0], b1 = sh.by / sh.mm[1];
     return [(sx - b0) / (1 - 2 * b0), 1 - (sy - b1) / (1 - 2 * b1)];
   }
   canvas.addEventListener('pointerdown', function (e) {
@@ -1074,6 +1169,7 @@
       // a new composition; the print setup (format, border, dpi, bits) and quality settings stay
       if (['format', 'landscape', 'border', 'dpi', 'bits', 'simres', 'iterations', 'speed'].indexOf(key) >= 0) return G.param(key);
       if (key === 'palette') return -1;
+      if (key === 'collection') return G.param('collection');
       if (key === 'mode') return G.param('mode');
       if (key === 'interp') return G.param('interp');
       if (key === 'flow') return 0.97 + Math.random() * 0.025;
@@ -1082,7 +1178,7 @@
   }
 
   // ---------------------------------------------------------------- harness
-  const SIM_KEYS = ['mode', 'interp', 'palette', 'ground', 'style', 'pours', 'energy', 'flow', 'levelling', 'iterations', 'simres', 'format', 'landscape', 'border'];
+  const SIM_KEYS = ['mode', 'interp', 'proportions', 'collection', 'palette', 'ground', 'style', 'pours', 'energy', 'flow', 'levelling', 'iterations', 'simres', 'format', 'landscape', 'border'];
   G = GenArt.create({
     title: 'Poured Ground',
     resetOnFinish: true,
@@ -1090,6 +1186,7 @@
     params: {
       mode: { value: 0, options: { 'after the work': 0, 'free gestures': 1 }, label: 'composition', group: 'colour' },
       interp: { value: 0.65, min: 0, max: 1, step: 0.05, label: 'interpretation', group: 'colour' },
+      collection: { value: 2, options: { 'colorlisa + Colorist Archive': 2, colorlisa: 0, 'Colorist Archive': 1 }, label: 'collection', group: 'colour' },
       palette: { value: -1, options: PAL_OPTIONS, label: 'palette', group: 'colour' },
       ground: { value: 0, options: { 'lightest colour': 0, 'darkest colour': 1, 'paper white': 2 }, label: 'ground', group: 'colour' },
       style: { value: 4, options: PG.STYLES, label: 'gesture', group: 'composition' },
@@ -1111,7 +1208,8 @@
       gloss: { value: 0.25, min: 0, max: 1, step: 0.01, label: 'gloss', group: 'surface' },
       tooth: { value: 0.035, min: 0, max: 0.15, step: 0.005, label: 'paper tooth', group: 'surface' },
       format: { value: 5, options: FMT_OPTIONS, label: 'format', group: 'print' },
-      landscape: { value: 0, options: { portrait: 0, landscape: 1 }, label: 'orientation', group: 'print' },
+      landscape: { value: 2, options: { 'as the original': 2, portrait: 0, landscape: 1 }, label: 'orientation', group: 'print' },
+      proportions: { value: 1, options: { 'as the original': 1, 'fill the format': 0 }, label: 'proportions', group: 'print' },
       border: { value: 40, min: 0, max: 120, step: 1, label: 'border (mm)', group: 'print' },
       dpi: { value: 300, options: { '150': 150, '200': 200, '240': 240, '300': 300, '360': 360 }, label: 'dpi', group: 'print' },
       bits: { value: 16, options: { '16-bit': 16, '8-bit': 8 }, label: 'bit depth', group: 'print' },
@@ -1133,6 +1231,9 @@
   window.PouredGroundApp = {
     G: G, finish: finishSim, exportPrint: exportPrint, exportPreview: exportPreview, exportImage: exportImage, generate: generate,
     state: function () { return S; },
+    sheet: function (dpi) { return sheetFor(dpi); },
+    archive: { index: function () { return loadArchiveIndex(); }, artist: function (id) { return loadArtist(id); }, BASE: ARCHIVE_BASE },
+    viewLink: function () { return S ? viewLink(S.palette) : null; },
     motion: motion, setMotion: setMotion, setPlaying: setPlaying, restartMotion: restartMotion, advance: advance, motionInfo: motionInfo, recordLoop: recordLoop, loopSeconds: loopSeconds,
     after: function () { return S ? after() : null; },
     source: function () { return S ? sourceFor(S.palette.id) : null; }, revealAmount: function () { return revealAmount(); },
