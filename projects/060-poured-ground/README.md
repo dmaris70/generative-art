@@ -103,6 +103,42 @@ centre) and **Scatter** (many small pours, short flicks). **Mixed** picks one pe
 add your own marks: drag to push paint, shift-click to pour, and 1–4 choose the pigment. The
 exported file then records that it is *hand-touched* and cannot be reproduced from its URL.
 
+## The Colorist Archive
+
+Alongside colorlisa's 133 works, the piece draws on the **Colorist Archive** of
+[meditationsincolor.com/colorists](https://meditationsincolor.com/colorists): 367 artists and
+20,367 works.
+
+- **What is taken:** facts only. Each work has its title, date and source link, plus a
+  palette: the dominant colour and the four most distinct of up to eight. The archive's
+  prose (artist biographies) is not copied.
+- **Files:** `archive/index.json` lists the artists, and each artist's works are a small file
+  loaded only when needed (7.8 MB in all).
+- **Composition:** archive works compose from their palette, because they have no hand-written
+  layout brief. The studio card says so and links to the work's source page, so the painting
+  itself can always be viewed.
+- **Images:** an image is referenced only for works that are public domain by our rule (artist
+  died ≤ 1955 and work dated ≤ 1930). Such a work can be shown with **O** and can rise in the
+  animated version, loaded from its source; if the source refuses cross-origin use, it can
+  still be viewed. For every other work no image is referenced, shown or requested. The check
+  script verifies this across all 20,367 works.
+- **Collection:** *both* (the seed picks colorlisa 1 time in 4), *colorlisa* or
+  *Colorist Archive*. The studio browses the archive by artist, with search.
+
+## Proportions of the original
+
+When the physical size of a work is known, every generation keeps its **proportions**.
+
+- **Source:** Wikidata's recorded height × width, for archive works with a Wikidata entry and
+  for colorlisa works (`proportions.js`).
+- **Fit:** the image area takes the original's width-to-height ratio and is fitted whole inside
+  the chosen paper. The border grows on one axis only, so nothing is cropped and the paper keeps
+  its size.
+- **Orientation:** defaults to *as the original*.
+- **Unknown size:** the work fills the format, and the studio says so.
+- **Turning it off:** *proportions: fill the format*.
+- **Provenance:** records the image size, the aspect and the borders.
+
 ## Motion: the animated version
 
 Every sheet also has an animated version (**M**, the studio's *Motion* section, or

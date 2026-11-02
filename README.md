@@ -496,7 +496,10 @@ interpretation of the work, not a copy of it.
 Each sheet also has an animated version that moves with 048 Plotted Field's wind (a gust every
 5.03 s). The motion is the liquid simulation itself:
 the pour, then the gusts mixing and reshaping the paint inside the canvas, then the paper
-absorbing it, in a cycle that loops seamlessly. It can be recorded as WebM, or any instant printed. Prints export as streamed, tiled 16-bit sRGB PNGs
+absorbing it, in a cycle that loops seamlessly. It can be recorded as WebM, or any instant printed.
+Its sources now include the Colorist Archive of meditationsincolor.com (367 artists, 20,367
+works: palettes, titles and links), and every generation keeps the proportions of the original
+when its size is known. Prints export as streamed, tiled 16-bit sRGB PNGs
 with the true dpi and the full recipe embedded, from A3 to 40×50 in.
 `node tools/poured-ground-check.mjs` checks the palettes, the scores and the print geometry.
 A dedicated [print studio](projects/060-poured-ground/studio.html) offers a palette browser, print setup with a live spec, and export.
