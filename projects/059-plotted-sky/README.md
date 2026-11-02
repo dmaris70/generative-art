@@ -164,6 +164,24 @@ sub-cell bodies. Cloud positions, blade shapes and seed heads match.
 Not measured: the frame rate on real graphics hardware. The tests here ran on a software
 renderer (about 1 frame a second for 15,261 blades); the status line shows the live rate.
 
+## Versions: positive, negative, dark negative
+
+- **Positive:** the sky as described above. Lit cloud is where the pen lifts; shadow and open sky
+  are ruled.
+- **Negative** (`invert`, a sky.js option): the sky's tone reversed. Lit cloud is ruled and shadow and
+  open sky are left bare, so the clouds become the drawn forms. The reversed tone is levelled again to
+  the same mean (0.3) on the same patch, so a negative sky carries a similar amount of line: on field
+  7, 12–41 m against 27–70 m for the positives of the same four view/weather pairs.
+- **Dark negative:** the negative in light inks on dark paper, as a white and an ochre gel pen on
+  black stock (the inks of 048's wall). Lit cloud reads as light again, as on a moonlit night.
+
+The grass and seed heads are the same lines in every version: a negative of a line drawing is not a
+drawing a plotter can make. The distance fade to bare paper at the horizon is kept in all three.
+The SVG of a dark negative keeps its strokes in the light inks and gives the paper colour as a
+background style, not a shape, so a plotter does not try to draw it; its title names the pens.
+Every page has the choice (`p_version` on the still sheet, `look=positive|negative|dark` on the
+live view and the flip-book), and **Generate** leaves it as it is.
+
 ## Generate
 
 **Generate** (key `G`, on the still sheet, the live view and the flip-book) draws a new picture:
