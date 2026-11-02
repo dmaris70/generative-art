@@ -109,6 +109,15 @@
       ivec2 c = ivec2(gl_FragCoord.xy);
       o = max(texelFetch(uHist,c,0), smoothstep(vec4(0), vec4(0.01/0.7), texelFetch(uH,c,0)));
     }`,
+    // arrival: when each pigment first covered this cell, as a fraction of the pour (0 = not yet).
+    // The animated version replays the painting's making in this order.
+    arrive: HEAD + `
+    uniform sampler2D uArr, uH; uniform float uNow;
+    void main(){
+      ivec2 c = ivec2(gl_FragCoord.xy);
+      vec4 a = texelFetch(uArr, c, 0), h = texelFetch(uH, c, 0);
+      o = mix(step(vec4(0.004), h) * uNow, a, step(vec4(1e-6), a));
+    }`,
     // a laid field (rectangle or ellipse): covers whatever paint lies beneath, then lays its own
     // pigment as a flat slab with a bevelled shoulder (the shoulder is what catches the light).
     // uMask = 0 clears to the ground (a cut-out).
@@ -151,6 +160,10 @@
   uniform vec3 uGround, uPaper;
   uniform vec3 uKS[4];        // Kubelka–Munk K/S per pigment (linear RGB)
   uniform float uRelief, uGloss, uTooth, uLinearOut;
+  // motion (after 048 Plotted Field's wind): loop phase, wind clock, wind direction, sway
+  uniform sampler2D uArr;
+  uniform float uAnim, uU, uTsec, uSway;
+  uniform vec2 uWdir;
   uniform float uSeed;
   uniform sampler2D uLabel;   // the caption, drawn in Cedarville Cursive at output resolution
   uniform vec4 uLabelRect;    // its box in output px (x, y, w, h), y down
@@ -193,17 +206,44 @@
     vec2 su = px / uOut;                         // sheet uv, y down
     vec2 mm = px / uPxPerMM;
     vec3 col;
-    if (su.x < uImg.x || su.y < uImg.y || su.x > uImg.z || su.y > uImg.w) {
-      col = uPaper * (1. + tooth(mm));
-    } else {
-      vec2 iu = (su - uImg.xy) / (uImg.zw - uImg.xy);
+    // Everything below runs for every pixel (uniform control flow), so fwidth() is defined at
+    // the border edge too; the border/image choice is made only at the end.
+    bool inImage = !(su.x < uImg.x || su.y < uImg.y || su.x > uImg.z || su.y > uImg.w);
+    {
+      vec2 iu = clamp((su - uImg.xy) / (uImg.zw - uImg.xy), 0., 1.);
       vec2 uv = vec2(iu.x, 1. - iu.y);            // sim textures: y up
-      vec4 H, Hx, Hy, Q; sampleCubic(uv, H, Hx, Hy, Q);
+      // ---- motion: creation, breathing, dissolution. A pure function of the loop phase uU, so
+      // the loop closes exactly: empty at uU = 0, empty again as uU reaches 1.
+      vec2 uvS = uv; vec4 k4 = vec4(1.); float gustA = 0.;
+      if (uAnim > 0.5) {
+        vec2 p = (uv - 0.5) * uAspect;                       // short-side units, y up
+        float along = dot(p, uWdir);
+        // 048's wind: bands of gust crossing along the wind, bent by a slow warp; 1.25 rad/s,
+        // so one gust every 5.03 s
+        float warp = 2.2 * vnoise(p * 1.4 + 31.7);
+        float gust = 0.5 + 0.5 * sin(along * 4.0 - uTsec * 1.25 + warp);
+        gustA = 0.25 + 0.75 * gust * gust;
+        float uc = smoothstep(0.0, 0.42, uU);                // creation
+        float ud = smoothstep(0.58, 1.0, uU);                // dissolution
+        float r = clamp(0.5 + along / length(uAspect) + 0.15 * (vnoise(p * 3.1 + 7.3) - 0.5), 0., 1.); // 0 upwind, 1 downwind
+        float gone = smoothstep(0., 1., clamp(ud * 1.4 - r * 0.4, 0., 1.));
+        // the paint sways with the gusts and, as it dissolves, streams downwind
+        uvS = uv - (uWdir * (uSway * 0.012 * gustA + 0.25 * gone * gone)) / uAspect;
+        vec4 a4 = min(texture(uArr, uvS), vec4(1.));
+        vec4 st = max(a4 * 0.8 + 0.05 * (gust - 0.5), vec4(0.001));
+        // paint carried past the sheet's edge leaves it (no smear of the edge texels)
+        vec2 inS = smoothstep(vec2(0.), vec2(0.015), uvS) * smoothstep(vec2(0.), vec2(0.015), 1. - uvS);
+        k4 = smoothstep(st, st + 0.18, vec4(uc)) * (1. - gone) * inS.x * inS.y;
+      }
+      vec4 H, Hx, Hy, Q; sampleCubic(uvS, H, Hx, Hy, Q);
+      H *= k4; Hx *= k4; Hy *= k4; Q *= k4;
       float total = H.x+H.y+H.z+H.w;
       // gradient of total thickness per short-side unit
       float minS = min(uSize.x, uSize.y);
       vec2 g = vec2(Hx.x+Hx.y+Hx.z+Hx.w, Hy.x+Hy.y+Hy.z+Hy.w) * minS;
       vec3 N = normalize(vec3(-g*uRelief, 1.));
+      // like light over a field in wind: the sheen leans with each gust as it passes
+      if (uAnim > 0.5) N = normalize(N + vec3(uWdir * (gustA - 0.55) * 0.35 * uSway * step(1e-4, H.x+H.y+H.z+H.w), 0.));
       // coverage, per pigment: mofu's alpha = 0.5·(trace history) + 0.5·(present film), both
       // near-binary at sim scale. Here each is thresholded on the smooth cubic field and
       // anti-aliased over one *output* pixel (fwidth), so edges stay crisp at any dpi.
@@ -229,6 +269,7 @@
       float spec = max(0., pow(max(dot(N,Hh),0.), sh) - pow(Hh.z, sh));
       col = base*mix(1., shade, cover) + uGloss*spec*cover*vec3(1.);
     }
+    if (!inImage) col = uPaper * (1. + tooth(mm));
     if (uLabelOn > 0.5) {
       vec2 lu = (px - uLabelRect.xy) / uLabelRect.zw;
       if (lu.x >= 0. && lu.y >= 0. && lu.x <= 1. && lu.y <= 1.) col = mix(col, uInk, 0.92 * texture(uLabel, lu).a);
@@ -269,6 +310,7 @@
   gl.vertexAttribPointer(0, 2, gl.FLOAT, false, 0, 0);
 
   function target(w, h, fmt, filter) {
+    gl.activeTexture(gl.TEXTURE0);
     const t = gl.createTexture();
     gl.bindTexture(gl.TEXTURE_2D, t);
     gl.texStorage2D(gl.TEXTURE_2D, 1, fmt, w, h);
@@ -331,7 +373,7 @@
     const long = G.param('simres');
     const a = sh.aspect, big = Math.max(a[0], a[1]);
     const w = Math.max(64, Math.round(long * a[0] / big)), h = Math.max(64, Math.round(long * a[1] / big));
-    if (S) { S.vel.free(); S.p.free(); S.hgt.free(); S.hist.free(); gl.deleteTexture(S.div.t); gl.deleteFramebuffer(S.div.f); }
+    if (S) { S.vel.free(); S.p.free(); S.hgt.free(); S.hist.free(); S.arr.free(); gl.deleteTexture(S.div.t); gl.deleteFramebuffer(S.div.f); }
     const rng = G.rng;
     const pal = paletteFor(G.seed);
     // mode 0, after the work: the palette's brief sets the ground, the fields and the gestures.
@@ -350,6 +392,7 @@
       div: target(w, h, gl.RGBA16F, gl.NEAREST),
       hgt: pair(w, h, gl.RGBA32F, gl.NEAREST),
       hist: pair(w, h, gl.RGBA16F, gl.NEAREST),
+      arr: pair(w, h, gl.RGBA16F, gl.LINEAR),
       pours: {},
     };
     for (const e of score.events) if (e.type === 'pour' || e.type === 'zone') (S.pours[e.t] = S.pours[e.t] || []).push(e);
@@ -413,6 +456,7 @@
     gl.uniform1f(P.height.u.uLevel, G.param('levelling'));
     run(S.hgt.b); S.hgt.swap();
     bind(P.history, { uHist: S.hist.a.t, uH: S.hgt.a.t }); run(S.hist.b); S.hist.swap();
+    bind(P.arrive, { uArr: S.arr.a.t, uH: S.hgt.a.t }); gl.uniform1f(P.arrive.u.uNow, Math.max(1e-3, Math.min(1, (S.t + 1) / S.score.steps))); run(S.arr.b); S.arr.swap();
     S.t++;
   }
 
@@ -502,6 +546,17 @@
     gl.uniform1f(u.uTooth, G.param('tooth'));
     gl.uniform1f(u.uLinearOut, linearOut ? 1 : 0);
     gl.uniform1f(u.uSeed, G.seed % 100000);
+    gl.uniform1f(u.uAnim, motion.on ? 1 : 0);
+    // the arrival map is always bound (to its own unit), so no other texture — e.g. an export's
+    // render target — can ever sit on the unit this sampler reads
+    gl.activeTexture(gl.TEXTURE3); gl.bindTexture(gl.TEXTURE_2D, S.arr.a.t); gl.uniform1i(u.uArr, 3);
+    gl.activeTexture(gl.TEXTURE0);
+    if (motion.on) {
+      const L = loopSeconds();
+      gl.uniform1f(u.uU, motion.u); gl.uniform1f(u.uTsec, motion.u * L);
+      gl.uniform1f(u.uSway, G.param('sway'));
+      const a = windAngle(); gl.uniform2f(u.uWdir, Math.cos(a), Math.sin(a));
+    }
   }
 
   let view = { x: 0, y: 0, w: 1, h: 1 };
@@ -529,13 +584,17 @@
 
   // ---------------------------------------------------------------- loop
   function frame() {
-    if (!exporting && S) {
+    if (!exporting && S && !(typeof motion !== 'undefined' && motion.recording)) {
       const spf = G.param('speed');
       let stepped = false;
       for (let i = 0; i < spf; i++) {
         if (S.t < S.score.steps || S.live > 0 || handQueue.length) { step(); stepped = true; if (S.live > 0) S.live--; }
       }
       if (stepped) dirty = true;
+      if (motion.on) {
+        if (motion.playing && !motion.recording) motion.u = ((performance.now() - motion.t0) / 1000 / loopSeconds()) % 1;
+        dirty = true;
+      }
       if (dirty) { drawScreen(); dirty = false; }
       progress.style.width = (100 * Math.min(1, S.t / S.score.steps)) + '%';
       progress.parentNode.classList.toggle('done', S.t >= S.score.steps);
@@ -543,6 +602,83 @@
     requestAnimationFrame(frame);
   }
   function finishSim() { while (S.t < S.score.steps) step(); dirty = true; }
+
+  // ---------------------------------------------------------------- motion
+  // The animated version of a sheet: it is created (replaying the order the paint arrived),
+  // breathes in 048 Plotted Field's wind, and is carried away, in a loop of whole gusts that
+  // closes exactly. Everything is a function of the loop phase u, rendered over the finished
+  // painting, so any instant can also be exported as a print.
+  const GUST = 2 * Math.PI / 1.25;                       // s: one gust of 048's wind
+  const motion = { on: false, playing: true, u: 0.5, t0: performance.now(), recording: false };
+  function loopSeconds() { return G.param('gusts') * GUST; }
+  function windAngle() { return GenArt._mulberry32((G.seed ^ 0x3c6ef372) >>> 0)() * Math.PI * 2; }
+  function setMotion(on) {
+    motion.on = !!on;
+    if (motion.on) { finishSim(); motion.t0 = performance.now() - motion.u * loopSeconds() * 1000; }
+    dirty = true; updateCaption();
+  }
+  function setPlaying(p) {
+    motion.playing = !!p;
+    if (p) motion.t0 = performance.now() - motion.u * loopSeconds() * 1000;
+    updateCaption();
+  }
+  function setPhase(u) { motion.u = ((u % 1) + 1) % 1; motion.playing = false; dirty = true; updateCaption(); }
+
+  // Record one exact loop as WebM. Frames are rendered at fixed phases k/n (the content does not
+  // depend on timing); they are paced in real time only because MediaRecorder timestamps that way.
+  async function recordLoop(longSide, fps) {
+    if (motion.recording || exporting) return;
+    if (!window.MediaRecorder || !canvas.captureStream) { say('This browser cannot record video.'); return; }
+    longSide = longSide || 1080; fps = fps || 30;
+    finishSim();
+    const wasOn = motion.on, wasPlaying = motion.playing, wasU = motion.u;
+    motion.on = true; motion.recording = true;
+    const sh = S.sheet, k = longSide / Math.max(sh.mm[0], sh.mm[1]);
+    const W = Math.round(sh.mm[0] * k / 2) * 2, H = Math.round(sh.mm[1] * k / 2) * 2;
+    const keep = [canvas.width, canvas.height];
+    canvas.width = W; canvas.height = H;
+    const stream = canvas.captureStream(0), track = stream.getVideoTracks()[0];
+    const type = ['video/webm;codecs=vp9', 'video/webm;codecs=vp8', 'video/webm'].find(function (t) { return MediaRecorder.isTypeSupported(t); });
+    const rec = new MediaRecorder(stream, { mimeType: type, videoBitsPerSecond: 16e6 });
+    const chunks = [];
+    rec.ondataavailable = function (e) { if (e.data.size) chunks.push(e.data); };
+    const done = new Promise(function (r) { rec.onstop = r; });
+    rec.start();
+    const n = Math.round(loopSeconds() * fps);
+    const tStart = performance.now();
+    try {
+      for (let i = 0; i < n; i++) {
+        motion.u = i / n;
+        gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+        setRenderUniforms(W, H, k, false);
+        gl.uniform2f(P.render.u.uOrigin, 0, 0); gl.uniform1f(P.render.u.uTileH, H);
+        gl.viewport(0, 0, W, H); gl.drawArrays(gl.TRIANGLES, 0, 3);
+        if (track.requestFrame) track.requestFrame();
+        say('Recording loop — ' + Math.round(100 * i / n) + '%');
+        await new Promise(function (r) { setTimeout(r, 1000 / fps); });
+      }
+    } finally {
+      rec.stop(); await done;
+      motion.lag = (performance.now() - tStart) / (n * 1000 / fps);
+      canvas.width = keep[0]; canvas.height = keep[1];
+      motion.recording = false; motion.on = wasOn; motion.playing = wasPlaying; motion.u = wasU;
+      if (wasPlaying) motion.t0 = performance.now() - wasU * loopSeconds() * 1000;
+      dirty = true;
+    }
+    const blob = new Blob(chunks, { type: 'video/webm' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob); a.download = filename('-loop-' + G.param('gusts') + 'gusts.webm');
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(function () { URL.revokeObjectURL(a.href); }, 60000);
+    window.__lastVideo = { width: W, height: H, frames: n, seconds: loopSeconds(), bytes: blob.size, type: type };
+    window.__lastVideo.lag = motion.lag;
+    // MediaRecorder stamps frames in real time: if this machine drew frames slower than the
+    // frame rate, the file plays slower than the loop. Say so rather than ship a wrong tempo.
+    say(motion.lag > 1.1
+      ? 'Saved, but this machine drew frames ' + motion.lag.toFixed(1) + '× slower than real time, so the video runs slow. Record at a smaller size.'
+      : 'Saved loop — ' + W + '×' + H + ', ' + loopSeconds().toFixed(1) + ' s, ' + (blob.size / 1048576).toFixed(1) + ' MB');
+    setTimeout(function () { say(''); }, motion.lag > 1.1 ? 9000 : 4000);
+  }
 
   // ---------------------------------------------------------------- export
   const status = document.getElementById('status');
@@ -564,6 +700,7 @@
         'Ground ' + S.colours.ground + '; pigments ' + S.colours.pigments.join(' ') + '. Sheet ' + S.sheet.name +
         (G.param('landscape') ? ' landscape' : ' portrait') + ', border ' + S.sheet.borderMM.toFixed(1) + ' mm, ' + W + '×' + H + ' px at ' + dpi + ' dpi, ' + bits + '-bit sRGB.' +
         (G.param('label') === 1 ? ' Label: "' + S.palette.painting + '", ' + S.palette.artist + ' (Cedarville Cursive, ' + (G.param('labelPos') === 1 ? 'border' : 'image') + ').' : ' No label.') +
+        (motion.on ? ' An instant of the animated version: loop phase ' + motion.u.toFixed(4) + ' of ' + G.param('gusts') + ' gusts (' + loopSeconds().toFixed(2) + ' s), wind after 048 Plotted Field.' : '') +
         (handTouched ? ' Hand-touched: contains marks made by pointer, not reproducible from the URL.' : ' Reproducible from the URL below.'),
       Comment: location.href,
     };
@@ -684,6 +821,8 @@
     else if (k === 'g') generate();
     else if (k === 'p') exportPrint();
     else if (k === 's') exportPreview();
+    else if (k === 'm') setMotion(!motion.on);
+    else if (k === ' ' && motion.on) { e.preventDefault(); setPlaying(!motion.playing); }
     else if (k.length === 1 && '1234'.indexOf(k) >= 0) { pigment = +k - 1; updateCaption(); }
   });
   function generate() {
@@ -717,6 +856,8 @@
       iterations: { value: 30, min: 8, max: 80, step: 1, label: 'pressure iterations', group: 'simulation' },
       simres: { value: 1024, options: { '512': 512, '768': 768, '1024': 1024, '1536': 1536, '2048': 2048 }, label: 'sim long side', group: 'simulation' },
       speed: { value: 4, min: 1, max: 24, step: 1, label: 'steps / frame', group: 'simulation' },
+      gusts: { value: 6, min: 3, max: 16, step: 1, label: 'loop (gusts of 5.03 s)', group: 'motion' },
+      sway: { value: 1, min: 0, max: 2.5, step: 0.05, label: 'sway', group: 'motion' },
       label: { value: 1, options: { 'work and artist': 1, off: 0 }, label: 'label', group: 'label' },
       labelPos: { value: 1, options: { 'on the image': 0, 'in the border': 1 }, label: 'label position', group: 'label' },
       labelSize: { value: 1, min: 0.5, max: 2.5, step: 0.05, label: 'label size', group: 'label' },
@@ -739,10 +880,13 @@
     G.gui.add({ g: generate }, 'g').name('✨ Generate (G)');
     G.gui.add({ p: exportPrint }, 'p').name('🖨 Export print PNG (P)');
     G.gui.add({ f: function () { finishSim(); } }, 'f').name('⏭ Finish pour');
+    G.gui.add({ m: function () { setMotion(!motion.on); } }, 'm').name('〰 Motion on/off (M)');
+    G.gui.add({ v: function () { recordLoop(1080, 30); } }, 'v').name('🎞 Record loop (WebM)');
   }
   window.PouredGroundApp = {
     G: G, finish: finishSim, exportPrint: exportPrint, exportPreview: exportPreview, exportImage: exportImage, generate: generate,
     state: function () { return S; },
+    motion: motion, setMotion: setMotion, setPlaying: setPlaying, setPhase: setPhase, recordLoop: recordLoop, loopSeconds: loopSeconds,
     after: function () { return S ? after() : null; },
     exporting: function () { return exporting; },
     handTouched: function () { return handTouched; },
@@ -755,5 +899,6 @@
   resize();
   G.reset();
   if (new URLSearchParams(location.search).get('still') === '1') finishSim();
+  if (new URLSearchParams(location.search).get('motion') === '1') setMotion(true);
   requestAnimationFrame(frame);
 })();

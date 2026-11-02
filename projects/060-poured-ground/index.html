@@ -27,7 +27,9 @@
 <body>
   <a class="back" href="../../">← gallery</a>
   <a class="back" id="studioLink" href="studio.html" style="left:100px">print studio →</a>
-  <script>{ const l = document.getElementById('studioLink'); l.addEventListener('click', () => { l.href = 'studio.html' + location.search; }); }</script>
+  <a class="back" id="motionLink" href="?motion=1" style="left:215px">motion →</a>
+  <script>{ const l = document.getElementById('studioLink'); l.addEventListener('click', () => { l.href = 'studio.html' + location.search; });
+    const m = document.getElementById('motionLink'); m.addEventListener('click', (e) => { e.preventDefault(); window.PouredGroundApp && PouredGroundApp.setMotion(!PouredGroundApp.motion.on); }); }</script>
   <canvas id="gl" aria-label="Poured Ground"></canvas>
   <div id="caption"></div>
   <div id="track"><div id="bar"></div></div>

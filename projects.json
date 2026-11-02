@@ -7,7 +7,7 @@
       "title": "Poured Ground",
       "year": 2026,
       "tools": ["webgl2", "glsl", "giclée"],
-      "description": "Liquid paint poured and spread by a hand, after mofu-dev's foundation method: a Stable Fluids solver drives four pigment height maps with trace history, cubic-spline normals and a Kubelka–Munk mix. Each generation picks one of the 133 colorlisa.com works and composes after it: its five colours, laid in a brief of the painting's layout (fields, then gestures echoing its marks), seeded so each generation of a work differs. The finished sheet exports as a 16-bit, true-dpi, sRGB giclée PNG from A3 to 40×50 in, streamed in tiles, with the recipe embedded.",
+      "description": "Liquid paint poured and spread by a hand, after mofu-dev's foundation method: a Stable Fluids solver drives four pigment height maps with trace history, cubic-spline normals and a Kubelka–Munk mix. Each generation picks one of the 133 colorlisa.com works and composes after it: its five colours, laid in a brief of the painting's layout (fields, then gestures echoing its marks), seeded so each generation of a work differs. An animated version moves with 048 Plotted Field's wind (a gust every 5.03 s): the painting is created in the order its paint arrived, breathes, and is carried away, in an exact loop. The finished sheet exports as a 16-bit, true-dpi, sRGB giclée PNG from A3 to 40×50 in, streamed in tiles, with the recipe embedded.",
       "thumb": "preview.png"
     },
     {

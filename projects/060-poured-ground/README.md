@@ -103,6 +103,30 @@ centre) and **Scatter** (many small pours, short flicks). **Mixed** picks one pe
 add your own marks: drag to push paint, shift-click to pour, and 1–4 choose the pigment. The
 exported file then records that it is *hand-touched* and cannot be reproduced from its URL.
 
+## Motion: the animated version
+
+Every sheet also has an animated version (**M**, the studio's *Motion* section, or
+`?motion=1`). Its movement is the wind from **048 Plotted Field**: bands of gust crossing the
+sheet along a seeded wind direction, bent by a slow warp, using 048's own law
+`gust = ½ + ½·sin(along − t·1.25 + warp)`, `force = 0.25 + 0.75·gust²`. That is one gust every
+2π/1.25 = 5.03 s.
+
+| phase of the loop | what happens |
+|---|---|
+| creation (0–0.42) | the painting is made again **in the order the paint actually arrived**. During the pour, each pigment's first-arrival time is recorded per cell; on replay, paint swells into place in that order, the front shimmering as gusts pass |
+| breathing (0.42–0.58) | the paint surface sways with each gust, and its sheen leans like light over a field in wind |
+| dissolution (0.58–1) | the wind takes the paint, upwind first: it thins, streams downwind and leaves the sheet, until the ground is empty again |
+
+- **Exact loop:** the animation is a pure function of the loop phase, rendered over the
+  finished painting, so it costs no simulation and closes exactly. The empty sheet at the end is
+  bit-identical to the first frame. The loop is a whole number of gusts (*loop*, default
+  6 = 30.2 s), and *sway* scales the movement.
+- **Prints of an instant:** pause anywhere and *Export print PNG* to print that instant at full
+  resolution. The file's provenance records the loop phase.
+- **Video:** *Record loop* saves one exact loop as WebM (1080 px). Frames are drawn at exact
+  phases, but the browser timestamps them in real time, so the machine must draw faster than the
+  frame rate. If it cannot, the recorder says so.
+
 ## Label
 
 The work's title, with the artist's name beneath it, is written in **Cedarville Cursive** at
@@ -156,6 +180,7 @@ cotton-rag gamuts. Use perceptual intent for those and relative colorimetric for
 - **Composition:** the gesture, number of pours, hand speed and momentum. Seed controls step back, forward or to a random seed. **Generate** makes a new composition and keeps your print setup.
 - **Surface:** relief, gloss and paper tooth re-render live, and levelling re-runs the pour.
 - **Print setup:** format, orientation, border, dpi, bit depth and simulation detail. A live spec shows sheet and image size, output pixels, raw data size and simulation cells per inch, and warns when the grid is too coarse for the print size.
+- **Motion:** still or animated, play/pause, a loop-phase scrubber naming the phase, loop length in gusts, sway, and *Record loop*.
 - **Label:** on or off, on the image or in the border, and its size (applied live).
 - **Export:** a print PNG, a preview PNG, or a copy of the link. The URL always holds the full recipe, and *open as piece* opens the same recipe full screen.
 
@@ -173,7 +198,7 @@ cotton-rag gamuts. Use perceptual intent for those and relative colorimetric for
 
 Needs WebGL2 with `EXT_color_buffer_float`, which any current desktop GPU supports.
 Keys: **R** new seed · **G** new composition (keeps print setup) · **P** print · **S** preview PNG ·
-**1–4** pigment.
+**M** motion · **space** play/pause · **1–4** pigment.
 
 Palettes © their compiler at colorlisa.com. Paintings belong to their artists and estates. No image
 from a painting is used, only five colours from each. If prints are sold, do not use an artist's
