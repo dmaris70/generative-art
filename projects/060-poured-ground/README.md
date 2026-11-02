@@ -128,6 +128,24 @@ liquid does not actually do, and the canvas walls keep everything on the sheet.
   fixed 60 steps per second of video, so the content never depends on timing, but the browser
   timestamps frames in real time. If the machine draws more slowly than the frame rate, the
   recorder says so.
+- **The original, before the absorption.** Over the last part of the living phase, the work
+  this generation starts from rises in the paper beneath the paint. It surfaces through the
+  pores, open pores first, and the paint thins to a veil so the two are seen together. From then
+  on the same gusts that move the paint liquefy it, through mofu's threshold, so source and
+  interpretation mix in one liquid. In the ending the paper drinks both.
+  - **Public-domain works** show the **original itself**, fitted whole inside the canvas, never
+    cropped. A work qualifies only if the artist died in or before 1955 (EU: life + 70) **and**
+    the work dates from 1930 or earlier (US), and its Wikimedia Commons file is reported public
+    domain.
+  - **Traceable sources:** each image is the canonical file of an exact Wikidata item, recorded
+    in `originals.js` with the item, the Commons page and the licence.
+  - **Unresolved works:** where the specific work cannot be identified unambiguously (a series,
+    several versions, no exact item), no image is used.
+  - **Works in copyright** (Hockney, Warhol, Rothko, Basquiat and the rest) and the unresolved
+    ones rise as their **composition map**: the brief's own fields as written, softened, in the
+    work's five colours. This is our description of the layout, never an image of the work.
+  - The check script enforces the rule for every entry. The studio card and each exported
+    file's provenance say which of the two rises.
 - **Containment:** every laid field lies wholly on the sheet, whatever the interpretation.
   Nothing is cut off by the canvas edge, and the check script verifies it.
 

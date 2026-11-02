@@ -167,6 +167,15 @@
         ? 'Our reading: ' + S.score.readings.join(' · ') + '.'
         : 'Our reading: kept close to the work.';
       w.querySelector('.basis').textContent = S.brief.k ? 'layout from the work' : 'layout inferred from title';
+      // what rises in the paper before the paint is absorbed
+      const src = app.source(), srcLine = document.createElement('div');
+      srcLine.className = 'readings';
+      if (src && src.kind === 'original') {
+        srcLine.textContent = 'In motion, the original rises in the paper (' + src.meta.work_year + ', public domain): ';
+        const a = document.createElement('a'); a.href = src.meta.commons_page; a.target = '_blank'; a.rel = 'noopener';
+        a.textContent = 'source'; a.style.color = 'var(--accent)'; srcLine.appendChild(a);
+      } else srcLine.textContent = 'In motion, its composition map rises in the paper. The work is in copyright, so no image of it is used.';
+      w.insertBefore(srcLine, w.querySelector('.basis'));
       w.querySelector('.basis').title = S.brief.k
         ? 'The fields follow the documented composition of the painting.'
         : 'The composition of this work is not documented in the brief\'s sources; the layout follows its title and the artist\'s typical structure.';
