@@ -12,6 +12,8 @@
 (function () {
   'use strict';
   const PG = window.PouredGround, PALS = window.PALETTES;
+  // proportions of colorlisa's works (width / height of the original, from Wikidata), when known
+  PALS.forEach(function (p) { const r = (window.PROPORTIONS || {})[p.id]; if (r && r.aspect) p.aspect = r.aspect; });
 
   // ---------------------------------------------------------------- GL setup
   const canvas = document.getElementById('gl');
