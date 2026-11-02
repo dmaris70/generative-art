@@ -7,10 +7,10 @@
   const app = window.PouredGroundApp, G = app.G, PG = window.PouredGround, PALS = window.PALETTES;
   const $ = (id) => document.getElementById(id);
 
-  const SIM = ['pours', 'energy', 'flow', 'levelling', 'border'];
+  const SIM = ['interp', 'pours', 'energy', 'flow', 'levelling', 'border'];
   const LIVE = ['relief', 'gloss', 'tooth', 'labelSize'];
   const fmt = {
-    pours: (v) => String(v), energy: (v) => v.toFixed(2) + '×', flow: (v) => v.toFixed(3),
+    interp: (v) => v.toFixed(2), pours: (v) => String(v), energy: (v) => v.toFixed(2) + '×', flow: (v) => v.toFixed(3),
     levelling: (v) => v.toFixed(3), border: (v) => v + ' mm',
     relief: (v) => v.toFixed(2), labelSize: (v) => v.toFixed(2) + '×', gloss: (v) => v.toFixed(2), tooth: (v) => v.toFixed(3),
   };
@@ -145,12 +145,17 @@
     const inspired = G.param('mode') === 0;
     $('freeOnly').classList.toggle('dim', inspired);
     $('freeOnly2').classList.toggle('dim', inspired);
+    $('interpRow').classList.toggle('dim', !inspired);
+    $('interpHint').classList.toggle('dim', !inspired);
     const w = $('work');
     if (S.brief) {
       w.hidden = false;
-      w.innerHTML = '<b></b><span class="note"></span><br><span class="basis"></span>';
+      w.innerHTML = '<b></b><span class="note"></span><div class="readings"></div><span class="basis"></span>';
       w.querySelector('b').textContent = 'After ' + S.palette.painting + ' — ' + S.palette.artist;
-      w.querySelector('.note').textContent = S.brief.note.charAt(0).toUpperCase() + S.brief.note.slice(1) + '.';
+      w.querySelector('.note').textContent = 'Starting point: ' + S.brief.note + '.';
+      w.querySelector('.readings').textContent = S.score.readings.length
+        ? 'Our reading: ' + S.score.readings.join(' · ') + '.'
+        : 'Our reading: kept close to the work.';
       w.querySelector('.basis').textContent = S.brief.k ? 'layout from the work' : 'layout inferred from title';
       w.querySelector('.basis').title = S.brief.k
         ? 'The fields follow the documented composition of the painting.'
