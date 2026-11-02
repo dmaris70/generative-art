@@ -25,6 +25,7 @@ const status = document.getElementById('status');
       moon: { value: 40, min: -180, max: 180, step: 1, label: 'moon, from behind (°)', group: MO },
       moonHeight: { value: 25, min: 2, max: 80, step: 1, label: 'moon height (°)', group: MO },
       sky: { value: 1, options: { 'ruled sky': 1, 'no sky (048 as it was)': 0 }, label: 'sky', group: SK },
+      version: { value: 0, options: { positive: 0, 'negative (lit cloud ruled)': 1, 'dark negative (light inks, dark paper)': 2 }, label: 'version', group: SK },
       weather: { value: 0, min: 0, max: 48, step: 1, label: 'weather (0 = the original shader)', group: SK },
       deck: { value: 600, min: 200, max: 2000, step: 50, label: 'cloud deck height (m)', group: SK },
       scale: { value: 3.5, min: 1.5, max: 8, step: 0.1, label: 'cloud scale (km per unit)', group: SK },
@@ -70,6 +71,7 @@ function options() {
   const field = fieldOptions(p);
   if (!p('sky')) return field;
   return PlottedSky.withSky(field, {
+    invert: lookKey() !== 'positive',
     weather: p('weather'), height: p('deck'), scale: p('scale'), drift: p('drift'), ruling: p('ruling'), tone: p('tone'), cross: p('cross'),
   });
 }
@@ -85,6 +87,7 @@ function generate() {
   refreshPanel();
   G.setSeed(field);   // one build; paper, pen, second ink and grain are untouched
 }
+function lookKey() { return ['positive', 'negative', 'dark'][+G.param('version')] || 'positive'; }
 function fieldOptions(p) {
   return {
     seed: G.seed, view: p('view'), fov: p('fov'), instant: p('instant'), wind: p('wind'), windTurn: p('windTurn'),
@@ -123,16 +126,19 @@ function draw() {
   ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
   ctx.fillStyle = '#16161a'; ctx.fillRect(0, 0, W, H);
   if (!R) return;
+  const L = PlottedSky.look(lookKey());
   const pad = TILE ? 0 : 28, k = Math.min((W - 2 * pad) / R.sheet.w, (H - 2 * pad - (TILE ? 0 : 18)) / R.sheet.h);
   const ox = (W - R.sheet.w * k) / 2, oy = (H - R.sheet.h * k) / 2 - (TILE ? 0 : 9);
-  ctx.fillStyle = '#f3efe6'; ctx.fillRect(ox, oy, R.sheet.w * k, R.sheet.h * k);
+  ctx.fillStyle = L.paper; ctx.fillRect(ox, oy, R.sheet.w * k, R.sheet.h * k);
+  if (lookKey() === 'dark') { ctx.strokeStyle = '#3d3b45'; ctx.lineWidth = 1; ctx.strokeRect(ox - 0.5, oy - 0.5, R.sheet.w * k + 1, R.sheet.h * k + 1); }
   paint(ctx, R, k, ox, oy);
 }
 // each layer in its pen's ink, in plotting order
 function paint(c, r, k, ox, oy) {
   c.lineWidth = Math.max(0.5, +G.param('pen') * k); c.lineCap = 'round'; c.lineJoin = 'round';
   for (const layer of r.layers) {
-    c.strokeStyle = layer.pen === 2 ? PlottedField.INKS[ink2()] : PlottedField.INKS.black;
+    const L = PlottedSky.look(lookKey());
+    c.strokeStyle = lookKey() === 'dark' ? (layer.pen === 2 ? L.ink2 : L.ink) : (layer.pen === 2 ? PlottedField.INKS[ink2()] : PlottedField.INKS.black);
     c.beginPath();
     for (const s of layer.strokes) {
       c.moveTo(ox + s[0] * k, oy + s[1] * k);
@@ -143,7 +149,7 @@ function paint(c, r, k, ox, oy) {
 }
 
 // ───────────────────────── exports ─────────────────────────
-const fileBase = () => 'plotted-sky-' + G.seed + (R.kind === 'map' ? '-map' : '-view-' + R.camera.view + '-weather-' + G.param('weather'));
+const fileBase = () => 'plotted-sky-' + G.seed + (R.kind === 'map' ? '-map' : '-view-' + R.camera.view + '-weather-' + G.param('weather') + (lookKey() === 'positive' ? '' : '-' + lookKey()));
 function download(blob, name) {
   const a = document.createElement('a');
   a.href = URL.createObjectURL(blob); a.download = name; a.click();
@@ -151,13 +157,13 @@ function download(blob, name) {
 }
 function saveSVG() {
   if (!R) return;
-  download(new Blob([PlottedField.svg(R, { pen: +G.param('pen'), ink2: ink2() })], { type: 'image/svg+xml' }), fileBase() + '.svg');
+  download(new Blob([PlottedSky.svgLook(PlottedField.svg(R, { pen: +G.param('pen'), ink2: ink2() }), lookKey())], { type: 'image/svg+xml' }), fileBase() + '.svg');
 }
 function savePNG() {
   if (!R) return;
   const k = 3000 / R.sheet.w, c = document.createElement('canvas');     // 3000 px across the sheet
   c.width = Math.round(R.sheet.w * k); c.height = Math.round(R.sheet.h * k);
-  const x = c.getContext('2d'); x.fillStyle = '#f3efe6'; x.fillRect(0, 0, c.width, c.height);
+  const x = c.getContext('2d'); x.fillStyle = PlottedSky.look(lookKey()).paper; x.fillRect(0, 0, c.width, c.height);
   paint(x, R, k, 0, 0);
   c.toBlob((b) => download(b, fileBase() + '.png'));
 }

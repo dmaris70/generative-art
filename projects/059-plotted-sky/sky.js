@@ -105,6 +105,22 @@
     return g;
   }
 
+  // The negative's tone is 1 − (the positive's tone), levelled again to the same mean, TARGET, on
+  // the same patch, so a negative sky carries about as much ink as a positive one.
+  const gainsInv = new Map();
+  function levelGainInv(n, P, C, g) {
+    const key = n + ':' + C[0][0].toFixed(6) + ':' + g.toFixed(6);
+    if (gainsInv.has(key)) return gainsInv.get(key);
+    let sum = 0, k = 0;
+    for (let j = 0; j < 16; j++) for (let i = 0; i < 16; i++) {
+      const [W, S] = fields(-4 + 8 * (i + 0.5) / 16, -5 + 8 * (j + 0.5) / 16, P, C);
+      sum += 1 - clamp(rawTone(W, S) * g, 0, 1); k++;
+    }
+    const gi = clamp(TARGET / Math.max(0.05, sum / k), 0.3, 1.6);
+    gainsInv.set(key, gi);
+    return gi;
+  }
+
   // ───────────────────────── the sky of one view ─────────────────────────
   const DEFAULTS = {
     weather: 0,        // 0 = the original constants; 1…48 = 058's screened seeds
@@ -120,6 +136,7 @@
     sample: 1.2,       // mm, the grid the engine is evaluated on (interpolated between)
     loop: null,        // motion: a phase in [0, 1) of 058's closed drift path; null for a still sheet
     ditherSmooth: false, // live view: the threshold wavers smoothly along a line (ends slide, not jump)
+    invert: false,     // the negative: lit cloud is ruled, shadow and open sky are left bare
   };
   const THRESH = [0.16, 0.46, 0.76];   // tone at which the main lines, the lines between, the cross-ruling start
 
@@ -132,7 +149,9 @@
     const C0 = cameraColumns(inst * 0.01);                           // a slow sway, set by the instant
     // a moving deck is levelled once, at the start of its loop, so it keeps one exposure throughout
     const moving = typeof o.loop === 'number';
-    const gain = (moving ? levelGain(o.weather, drifted(P0, 0), cameraColumns(0)) : levelGain(o.weather, P0, C0)) * o.tone;
+    const Pl = moving ? drifted(P0, 0) : P0, Cl = moving ? cameraColumns(0) : C0;
+    const gain = levelGain(o.weather, Pl, Cl) * (o.invert ? 1 : o.tone);
+    const gainInv = o.invert ? levelGainInv(o.weather, Pl, Cl, gain) * o.tone : 0;
     const P = moving ? drifted(P0, o.loop) : P0;
     // in motion the engine's camera is held: its sway closes a loop only after 5 cycles, which on a
     // loop of a few gusts is a lurch every 2–3 s. The deck moves by its fold constants alone.
@@ -156,7 +175,8 @@
       // beyond, the deck is mirrored back, which far off reads only as more of the same weather
       const u = (wx * cw + wz * sw - shift) / L, v = mirror((-wx * sw + wz * cw) / L - 1, -5.5, 3.5);
       const [W, S] = fields(u, v, P, C);
-      let D = clamp(rawTone(W, S) * gain, 0, 1) * fade;
+      let D = o.invert ? clamp((1 - clamp(rawTone(W, S) * gain, 0, 1)) * gainInv, 0, 1) * fade
+        : clamp(rawTone(W, S) * gain, 0, 1) * fade;
       // the moon clears the deck around it
       const ang = Math.acos(clamp(dx * M[0] + dy * M[1] + dz * M[2], -1, 1));
       D *= 0.3 + 0.7 * smoothstep(0.03, 0.35, ang);
@@ -254,7 +274,7 @@
       title: 'PLOTTED SKY',
       layers: [{ id: 'sky', label: '3 sky', pen: 1, strokes: all }],
       stats: { skyGain: +gain.toFixed(3), skyStrokes: all.length, skyInk: ink / 1000, skySamples: evaluated, skyMs: Date.now() - t0, moon: moonStrokes.length > 0 },
-      caption: ['SKY: WEATHER ' + o.weather + ' - DECK ' + o.height + ' M UP - ' + all.length + ' RULED STROKES - ' + (ink / 1000).toFixed(0) + ' M OF LINE'],
+      caption: [(o.invert ? 'SKY, NEGATIVE: WEATHER ' : 'SKY: WEATHER ') + o.weather + ' - DECK ' + o.height + ' M UP - ' + all.length + ' RULED STROKES - ' + (ink / 1000).toFixed(0) + ' M OF LINE'],
     };
   }
   function mirror(v, lo, hi) {
@@ -281,7 +301,28 @@
     return Object.assign({}, fieldOptions, { extend: (ctx) => sky(ctx, skyOptions) });
   }
 
-  const api = { sky, withSky, weather, drifted, fields, cameraColumns, levelGain, h01, DEFAULTS, KEPT, THRESH };
+  // ───────────────────────── versions ─────────────────────────
+  // positive: the sky as drawn so far. negative: the sky's tone reversed (lit cloud ruled, shadow and
+  // open sky bare). dark negative: the negative in light inks on dark paper (white and ochre gel pens on
+  // black stock, as 048's wall). The grass and seed heads are the same lines in every version.
+  const LOOKS = {
+    positive: { invert: false, paper: '#f3efe6', ink: '#1b1a1f', ink2: '#7a4b2c', pens: ['#1b1a1f', '#7a4b2c', '#4f6f8f', '#6a6e78'], label: 'positive' },
+    negative: { invert: true, paper: '#f3efe6', ink: '#1b1a1f', ink2: '#7a4b2c', pens: ['#1b1a1f', '#7a4b2c', '#4f6f8f', '#6a6e78'], label: 'negative' },
+    dark: { invert: true, paper: '#141317', ink: '#e6e0d2', ink2: '#c9925c', pens: ['#e6e0d2', '#c9925c', '#8fb0d0', '#a8acb6'], label: 'dark negative' },
+  };
+  const look = (k) => LOOKS[k] || LOOKS.positive;
+  // an SVG (from PlottedField.svg or the chronograph) in a version's inks; on dark paper the paper is
+  // a CSS background (not a shape, so a plotter does not draw it) and the title says which pens
+  function svgLook(svg, k) {
+    const L = look(k);
+    if (L === LOOKS.positive || L === LOOKS.negative) return svg;
+    const map = { '#1b1a1f': L.pens[0], black: L.ink, '#7a4b2c': L.ink2, '#4f6f8f': L.pens[2], '#6a6e78': L.pens[3], '#3f5a3c': L.ink2 };
+    return svg.replace('<svg ', '<svg style="background:' + L.paper + '" ')
+      .replace(/stroke="([^"]+)"/g, (m, c) => 'stroke="' + (map[c] || c) + '"')
+      .replace(/<title>/, '<title>DARK NEGATIVE, LIGHT INKS ON DARK PAPER / ');
+  }
+
+  const api = { LOOKS, look, svgLook, sky, withSky, weather, drifted, fields, cameraColumns, levelGain, levelGainInv, h01, DEFAULTS, KEPT, THRESH };
   global.PlottedSky = api;
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
 })(typeof window !== 'undefined' ? window : globalThis);

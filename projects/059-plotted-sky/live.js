@@ -124,7 +124,7 @@ layout(location = 0) in vec2 a; void main(){ gl_Position = vec4(a, 0., 1.); }`;
   const TONE_FS = `#version 300 es
 precision highp float; precision highp int;
 uniform vec3 uE, uF, uRt, uUp; uniform float uFoc; uniform vec2 uFrame;
-uniform float uH, uDeck, uL, uShift, uCw, uSw, uReach0, uReach1, uGain;
+uniform float uH, uDeck, uL, uShift, uCw, uSw, uReach0, uReach1, uGain, uGainInv;   // uGainInv > 0: the negative
 uniform vec3 uOff, uBox, uAniso; uniform float uScale;
 uniform vec3 uC0, uC1, uC2;
 uniform vec3 uMoon;
@@ -151,7 +151,8 @@ void main(){
     g += p.y / s; s = log2(s) / exp(e);
     float v = s / 200.; W += v; S += v * (g * .016 - e * .3);
   }
-  float D = clamp((sstep(.04, .85, W) + S * .25) * uGain, 0., 1.) * fade;
+  float Dp = clamp((sstep(.04, .85, W) + S * .25) * uGain, 0., 1.);
+  float D = (uGainInv > 0. ? clamp((1. - Dp) * uGainInv, 0., 1.) : Dp) * fade;
   float ang = acos(clamp(dot(d, uMoon), -1., 1.));
   D *= .3 + .7 * sstep(.03, .35, ang);
   o = vec4(D, 1., 0., 1.);
@@ -300,7 +301,8 @@ void main(){
       if (o.sky) {
         const so = Object.assign({}, PS.DEFAULTS, o.skyOpts);
         const P0 = PS.weather(so.weather), C = PS.cameraColumns(0);
-        const gain = PS.levelGain(so.weather, PS.drifted(P0, 0), C) * so.tone;
+        const gain = PS.levelGain(so.weather, PS.drifted(P0, 0), C) * (so.invert ? 1 : so.tone);
+        const gainInv = so.invert ? PS.levelGainInv(so.weather, PS.drifted(P0, 0), C, gain) * so.tone : 0;
         const wa = world.windAz + 0;
         const h = so.sample, GW = Math.ceil(frame.w / h) + 1, GH = Math.ceil(frame.h / h) + 1;
         const tex = gl.createTexture(); gl.bindTexture(gl.TEXTURE_2D, tex);
@@ -310,7 +312,7 @@ void main(){
         gl.bindFramebuffer(gl.FRAMEBUFFER, null);
         let n1 = 0, n2 = 0; for (let y = so.ruling / 2; y < frame.h; y += so.ruling) n1++; for (let y = so.ruling; y < frame.h; y += so.ruling) n2++;
         // the moon on the sheet, as sky.js places it (shown only if in the frame and above the horizon)
-        sky = { so, P0, C, gain, cw: Math.cos(wa), sw: Math.sin(wa), shift: so.drift * o.instant, h, GW, GH, tex, fb, n1, n2 };
+        sky = { so, P0, C, gain, gainInv, cw: Math.cos(wa), sw: Math.sin(wa), shift: so.drift * o.instant, h, GW, GH, tex, fb, n1, n2 };
       }
       // moon direction, as 048 computes it
       const ma = cam.heading + Math.PI + (o.moonAhead ? 175 : 40) * Math.PI / 180, me = (o.moonAhead ? 9 : 25) * Math.PI / 180;
@@ -344,7 +346,7 @@ void main(){
         gl.bindFramebuffer(gl.FRAMEBUFFER, k.fb); gl.viewport(0, 0, k.GW, k.GH); gl.disable(gl.DEPTH_TEST); gl.disable(gl.BLEND);
         setCam(U);
         gl.uniform1f(U.uH, k.h); gl.uniform1f(U.uDeck, k.so.height); gl.uniform1f(U.uL, k.so.scale * 1000); gl.uniform1f(U.uShift, k.shift);
-        gl.uniform1f(U.uCw, k.cw); gl.uniform1f(U.uSw, k.sw); gl.uniform1f(U.uReach0, k.so.reach); gl.uniform1f(U.uReach1, k.so.reachEnd); gl.uniform1f(U.uGain, k.gain);
+        gl.uniform1f(U.uCw, k.cw); gl.uniform1f(U.uSw, k.sw); gl.uniform1f(U.uReach0, k.so.reach); gl.uniform1f(U.uReach1, k.so.reachEnd); gl.uniform1f(U.uGain, k.gain); gl.uniform1f(U.uGainInv, k.gainInv);
         gl.uniform3fv(U.uOff, Pd.off); gl.uniform3fv(U.uBox, Pd.box); gl.uniform3fv(U.uAniso, Pd.aniso); gl.uniform1f(U.uScale, Pd.scale);
         gl.uniform3fv(U.uC0, k.C[0]); gl.uniform3fv(U.uC1, k.C[1]); gl.uniform3fv(U.uC2, k.C[2]); gl.uniform3fv(U.uMoon, S.moon);
         gl.bindVertexArray(quad); gl.drawArrays(gl.TRIANGLES, 0, 3);
@@ -353,9 +355,10 @@ void main(){
       // ── the sheet
       gl.viewport(0, 0, canvas.width, canvas.height);
       gl.disable(gl.SCISSOR_TEST);
-      gl.clearColor(0.953, 0.937, 0.902, 1); gl.clearDepth(1); gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+      const L = PS.look(o.look), rgb = (h) => [1, 3, 5].map((i) => parseInt(h.slice(i, i + 2), 16) / 255);
+      const INK = rgb(L.ink), SEPIA = rgb(L.ink2), PAPER = rgb(L.paper);
+      gl.clearColor(PAPER[0], PAPER[1], PAPER[2], 1); gl.clearDepth(1); gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
       gl.enable(gl.SCISSOR_TEST); gl.scissor(px, py, pw, ph); gl.viewport(px, py, pw, ph);
-      const INK = [0.106, 0.102, 0.122], SEPIA = [0.478, 0.294, 0.173], PAPER = [0.953, 0.937, 0.902];
       // sky ruling, first: anything nearer is drawn over it in paper
       if (S.sky) {
         const k = S.sky; gl.useProgram(P.rule.p); const U = P.rule.U;
