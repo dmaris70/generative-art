@@ -400,12 +400,13 @@
 
   let view = { x: 0, y: 0, w: 1, h: 1 };
   function resize() {
+    // the canvas fills its container: the whole window on the piece, the stage in the studio
     const dpr = Math.min(2, window.devicePixelRatio || 1);
-    canvas.width = Math.round(innerWidth * dpr); canvas.height = Math.round(innerHeight * dpr);
+    canvas.width = Math.max(1, Math.round(canvas.clientWidth * dpr)); canvas.height = Math.max(1, Math.round(canvas.clientHeight * dpr));
     dirty = true;
   }
   function drawScreen() {
-    const sh = S.sheet, pad = 28 * (canvas.width / innerWidth);
+    const sh = S.sheet, pad = 28 * (canvas.width / Math.max(1, canvas.clientWidth));
     const k = Math.min((canvas.width - 2 * pad) / sh.mm[0], (canvas.height - 2 * pad) / sh.mm[1]);
     const w = Math.round(sh.mm[0] * k), h = Math.round(sh.mm[1] * k);
     view = { x: Math.round((canvas.width - w) / 2), y: Math.round((canvas.height - h) / 2), w: w, h: h };
@@ -532,6 +533,8 @@
   const cap = document.getElementById('caption');
   function swatch(hex) { return '<i style="background:' + hex + '" title="' + hex + '"></i>'; }
   function updateCaption() {
+    window.dispatchEvent(new CustomEvent('pouredground:update'));
+    if (!cap) return;
     const p = S.palette, c = S.colours;
     const sh = PG.sheet(G.param('format'), G.param('landscape') === 1, G.param('border'), G.param('dpi'));
     cap.innerHTML =
@@ -544,8 +547,8 @@
   // ---------------------------------------------------------------- pointer
   let last = null;
   function toUV(e) {
-    const dpr = canvas.width / innerWidth, sh = S.sheet;
-    const sx = (e.clientX * dpr - view.x) / view.w, sy = (e.clientY * dpr - view.y) / view.h;
+    const box = canvas.getBoundingClientRect(), dpr = canvas.width / box.width, sh = S.sheet;
+    const sx = ((e.clientX - box.left) * dpr - view.x) / view.w, sy = ((e.clientY - box.top) * dpr - view.y) / view.h;
     const b0 = sh.borderMM / sh.mm[0], b1 = sh.borderMM / sh.mm[1];
     return [(sx - b0) / (1 - 2 * b0), 1 - (sy - b1) / (1 - 2 * b1)];
   }
@@ -571,7 +574,7 @@
     else if (k === 'g') generate();
     else if (k === 'p') exportPrint();
     else if (k === 's') exportPreview();
-    else if ('1234'.indexOf(k) >= 0) { pigment = +k - 1; updateCaption(); }
+    else if (k.length === 1 && '1234'.indexOf(k) >= 0) { pigment = +k - 1; updateCaption(); }
   });
   function generate() {
     G.shuffle(function (key) {
@@ -620,9 +623,17 @@
     G.gui.add({ p: exportPrint }, 'p').name('🖨 Export print PNG (P)');
     G.gui.add({ f: function () { finishSim(); } }, 'f').name('⏭ Finish pour');
   }
-  window.PouredGroundApp = { G: G, finish: finishSim, exportPrint: exportPrint, exportImage: exportImage, state: function () { return S; } };
+  window.PouredGroundApp = {
+    G: G, finish: finishSim, exportPrint: exportPrint, exportPreview: exportPreview, exportImage: exportImage, generate: generate,
+    state: function () { return S; },
+    exporting: function () { return exporting; },
+    handTouched: function () { return handTouched; },
+    get pigment() { return pigment; },
+    set pigment(i) { pigment = i; updateCaption(); },
+  };
 
   addEventListener('resize', resize);
+  if (window.ResizeObserver) new ResizeObserver(resize).observe(canvas);
   resize();
   G.reset();
   if (new URLSearchParams(location.search).get('still') === '1') finishSim();

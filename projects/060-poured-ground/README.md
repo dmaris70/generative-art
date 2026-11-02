@@ -64,6 +64,17 @@ detail to large prints.
 Saturated palettes such as Warhol, Geiger and Klee's *Fire Evening* can fall outside matte
 cotton-rag gamuts. Use perceptual intent for those and relative colorimetric for the rest.
 
+## Print studio
+
+`studio.html` is a dedicated interface for making prints, running the same engine as the piece.
+
+- **Palette browser:** all 133 colorlisa palettes as swatch strips, searchable by artist or painting. The first row, *Chosen by seed*, shows which palette the seed picks.
+- **Colours in use:** the resolved ground and four paints with their hex codes. Click a paint to draw with it.
+- **Composition:** the gesture, number of pours, hand speed and momentum. Seed controls step back, forward or to a random seed. **Generate** makes a new composition and keeps your print setup.
+- **Surface:** relief, gloss and paper tooth re-render live, and levelling re-runs the pour.
+- **Print setup:** format, orientation, border, dpi, bit depth and simulation detail. A live spec shows sheet and image size, output pixels, raw data size and simulation cells per inch, and warns when the grid is too coarse for the print size.
+- **Export:** a print PNG, a preview PNG, or a copy of the link. The URL always holds the full recipe, and *open as piece* opens the same recipe full screen.
+
 ## Files
 
 | file | role |
@@ -72,6 +83,7 @@ cotton-rag gamuts. Use perceptual intent for those and relative colorimetric for
 | `engine.js` | Colour assignment, the seeded score, print formats and geometry. Runs in browser and Node |
 | `sketch.js` | WebGL2 solver, paint layers, renderer, panel, pointer and print export |
 | `png.js` | Streaming PNG writer (8/16-bit, sRGB, pHYs, tEXt) |
+| `studio.html`, `studio.js` | Print studio: palette browser, composition, print setup and export, over the same engine |
 | `../../tools/poured-ground-check.mjs` | Palette, colour assignment, determinism, score bounds and print geometry checks |
 
 Needs WebGL2 with `EXT_color_buffer_float`, which any current desktop GPU supports.
