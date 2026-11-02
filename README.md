@@ -490,7 +490,9 @@ velocity field moves four pigment height maps, and a trace history keeps where p
 The paint is shaded from cubic-spline normals and mixed by Kubelka–Munk. Each generation picks one of the 133
 [colorlisa.com](https://colorlisa.com/) works and composes after it, using its five colours and a brief
 of its layout (`briefs.js`): A Bigger Splash's house, palms, pool and splash, or Starry Night's
-cypress and swirls. Prints export as streamed, tiled 16-bit sRGB PNGs
+cypress and swirls. That layout is the starting point. An interpretation setting then applies seeded
+readings (detail, turn, fragment, drift, distil, echo, exchange), so each print is an
+interpretation of the work, not a copy of it. Prints export as streamed, tiled 16-bit sRGB PNGs
 with the true dpi and the full recipe embedded, from A3 to 40×50 in.
 `node tools/poured-ground-check.mjs` checks the palettes, the scores and the print geometry.
 A dedicated [print studio](projects/060-poured-ground/studio.html) offers a palette browser, print setup with a live spec, and export.

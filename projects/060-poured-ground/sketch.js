@@ -337,10 +337,11 @@
     // mode 0, after the work: the palette's brief sets the ground, the fields and the gestures.
     // mode 1, free gestures: the palette's colours with the seeded gesture styles.
     const brief = G.param('mode') === 0 ? window.BRIEFS[pal.id] : null;
-    const cols = brief ? PG.briefColours(pal.colors, brief) : PG.assignColours(pal.colors, G.param('ground'), rng);
     const score = brief
-      ? PG.composeBrief(rng, brief, { energy: G.param('energy'), aspect: a })
+      ? PG.composeBrief(rng, brief, { energy: G.param('energy'), aspect: a, interp: G.param('interp') })
       : PG.compose(rng, { style: G.param('style'), pours: G.param('pours'), energy: G.param('energy'), aspect: a });
+    // the interpretation may exchange ground and figure, so colours follow the score
+    const cols = brief ? PG.briefColours(pal.colors, { g: score.g }) : PG.assignColours(pal.colors, G.param('ground'), rng);
     S = {
       w: w, h: h, aspect: a, sheet: sh, palette: pal, colours: cols, score: score, brief: brief,
       t: 0, live: 0,
@@ -365,7 +366,7 @@
     gl.uniform4f(u.uMask, e.chan === 0 ? 1 : 0, e.chan === 1 ? 1 : 0, e.chan === 2 ? 1 : 0, e.chan === 3 ? 1 : 0);
     run(S.hgt.b); S.hgt.swap();
   }
-  function after() { // "after A Bigger Splash, David Hockney" — the work this generation follows
+  function after() { // "after A Bigger Splash, David Hockney" — the work this generation starts from
     return S.brief ? 'after ' + S.palette.painting + ', ' + S.palette.artist : null;
   }
 
@@ -559,7 +560,7 @@
       Author: 'dmaris70 / generative-art',
       Software: 'Poured Ground (projects/060-poured-ground), WebGL2',
       Source: 'Palette: colorlisa.com - ' + p.artist + ', ' + p.painting + ' [' + p.colors.join(' ') + ']',
-      Description: (S.brief ? 'Composition after the work: ' + S.brief.note + ' (' + (S.brief.k ? 'layout follows the documented composition' : 'layout inferred from the title and the artist\'s typical structure') + '). No image of the work is used; only its five colorlisa colours and a description of its layout. ' : 'Free gestures. ') +
+      Description: (S.brief ? 'Starting point: ' + S.brief.note + ' (' + (S.brief.k ? 'layout follows the documented composition' : 'layout inferred from the title and the artist\'s typical structure') + '). Interpretation ' + S.score.interp.toFixed(2) + (S.score.readings.length ? ': ' + S.score.readings.join('; ') : ': close to the starting layout') + '. No image of the work is used; only its five colorlisa colours and a description of its layout. ' : 'Free gestures. ') +
         'Ground ' + S.colours.ground + '; pigments ' + S.colours.pigments.join(' ') + '. Sheet ' + S.sheet.name +
         (G.param('landscape') ? ' landscape' : ' portrait') + ', border ' + S.sheet.borderMM.toFixed(1) + ' mm, ' + W + '×' + H + ' px at ' + dpi + ' dpi, ' + bits + '-bit sRGB.' +
         (G.param('label') === 1 ? ' Label: "' + S.palette.painting + '", ' + S.palette.artist + ' (Cedarville Cursive, ' + (G.param('labelPos') === 1 ? 'border' : 'image') + ').' : ' No label.') +
@@ -647,7 +648,7 @@
     const sh = PG.sheet(G.param('format'), G.param('landscape') === 1, G.param('border'), G.param('dpi'));
     cap.innerHTML =
       '<b>Poured Ground</b>' + (S.brief ? ' — <em>' + after() + '</em>' : '') + ' · seed ' + G.seed + '<br>' +
-      (S.brief ? '<span class="src">' + S.brief.note + (S.brief.k ? '' : ' (layout inferred)') + '</span><br>' : '') +
+      (S.brief ? '<span class="src">' + (S.score.readings.length ? S.score.readings.join(' · ') : 'close to the work') + '</span><br>' : '') +
       'palette: ' + p.artist + ', <em>' + p.painting + '</em> <span class="src">(colorlisa.com)</span><br>' +
       '<span class="sw">ground ' + swatch(c.ground) + ' paint ' + c.pigments.map(function (h, i) { return '<span class="pig' + (i === pigment ? ' on' : '') + '">' + (i + 1) + swatch(h) + '</span>'; }).join('') + '</span><br>' +
       '<span class="src">print ' + sh.name + ' · ' + sh.px[0] + '×' + sh.px[1] + ' px @ ' + G.param('dpi') + ' dpi · ' + G.param('bits') + '-bit · sim ' + S.w + '×' + S.h + '</span>';
@@ -691,19 +692,21 @@
       if (['format', 'landscape', 'border', 'dpi', 'bits', 'simres', 'iterations', 'speed'].indexOf(key) >= 0) return G.param(key);
       if (key === 'palette') return -1;
       if (key === 'mode') return G.param('mode');
+      if (key === 'interp') return G.param('interp');
       if (key === 'flow') return 0.97 + Math.random() * 0.025;
       return undefined;
     });
   }
 
   // ---------------------------------------------------------------- harness
-  const SIM_KEYS = ['mode', 'palette', 'ground', 'style', 'pours', 'energy', 'flow', 'levelling', 'iterations', 'simres', 'format', 'landscape', 'border'];
+  const SIM_KEYS = ['mode', 'interp', 'palette', 'ground', 'style', 'pours', 'energy', 'flow', 'levelling', 'iterations', 'simres', 'format', 'landscape', 'border'];
   G = GenArt.create({
     title: 'Poured Ground',
     resetOnFinish: true,
     closedGroups: ['simulation', 'surface'],
     params: {
       mode: { value: 0, options: { 'after the work': 0, 'free gestures': 1 }, label: 'composition', group: 'colour' },
+      interp: { value: 0.65, min: 0, max: 1, step: 0.05, label: 'interpretation', group: 'colour' },
       palette: { value: -1, options: PAL_OPTIONS, label: 'palette', group: 'colour' },
       ground: { value: 0, options: { 'lightest colour': 0, 'darkest colour': 1, 'paper white': 2 }, label: 'ground', group: 'colour' },
       style: { value: 4, options: PG.STYLES, label: 'gesture', group: 'composition' },

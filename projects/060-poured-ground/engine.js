@@ -241,10 +241,197 @@
 
   const FIELD_TH = 0.055; // thickness of a laid field; a poured drop peaks near 0.19
 
+
+  // ---- interpretation: the work as a starting point ------------------------------------------
+  // A brief is the work's layout. `interp` (0..1) says how far a generation travels from it.
+  // The seed picks readings, each a named, reversible-in-principle operation on the layout, so
+  // every print can say what was done to its source:
+  //   detail    zoom into one region of the work (a fragment becomes the whole)
+  //   turn      the composition rotated
+  //   fragment  fields cut into strips and shards, pieces displaced
+  //   drift     every field carried by a slow current, stretched and turned
+  //   distil    only the main mass of each colour kept, enlarged
+  //   echo      the work's own gestures repeated elsewhere, turned and rescaled
+  //   exchange  ground and figure swap: the largest field's colour becomes the ground
+  // Independently of the readings, the hand goes further with interp: longer, stronger, more
+  // gestures, and freer placement. All five colours are always kept: a colour that a reading
+  // pushes off the sheet returns as traces.
+  const READINGS = [['detail', 1.2], ['turn', 0.6], ['fragment', 1], ['drift', 1], ['distil', 0.7], ['echo', 1], ['exchange', 0.6]];
+
+  function interpret(rng, brief, interp) {
+    const R = function (a, b) { return a + (b - a) * rng(); };
+    const g0 = brief.g;
+    let g = g0;
+    let z = brief.z.map(function (f) { return f.slice(); });
+    let m = brief.m.map(function (f) { return f.slice(); });
+    const said = [];
+    if (interp <= 0) return { g: g, z: z, m: m, readings: said };
+
+    // pick readings without replacement
+    const count = interp < 0.15 ? 0 : interp < 0.45 ? 1 : interp < 0.8 ? 2 : 3;
+    const pool = READINGS.slice(), picked = [];
+    for (let i = 0; i < count && pool.length; i++) {
+      let tot = 0; pool.forEach(function (r) { tot += r[1]; });
+      let x = rng() * tot, j = 0;
+      for (; j < pool.length - 1; j++) { if ((x -= pool[j][1]) <= 0) break; }
+      picked.push(pool[j][0]); pool.splice(j, 1);
+    }
+    const has = function (k) { return picked.indexOf(k) >= 0; };
+
+    const area = function (f) {
+      if (f[0] === 'R') return Math.abs((f[4] - f[2]) * (f[5] - f[3]));
+      if (f[0] === 'E') return Math.PI * f[4] * f[5];
+      if (f[0] === 'L') return Math.hypot(f[4] - f[2], f[5] - f[3]) * f[6];
+      return f[6] * Math.PI * f[7] * f[7];
+    };
+    const centre = function (f) {
+      if (f[0] === 'E') return [f[2], f[3]];
+      return [(f[2] + f[4]) / 2, (f[3] + f[5]) / 2];
+    };
+    // apply a similarity map T (point → point) with length factor k and turn dθ (degrees, CCW)
+    const mapAll = function (T, k, dth, fields, moves) {
+      const box = function (f, i) { const a = T(f[i], f[i + 1]), b = T(f[i + 2], f[i + 3]); f[i] = Math.min(a[0], b[0]); f[i + 1] = Math.min(a[1], b[1]); f[i + 2] = Math.max(a[0], b[0]); f[i + 3] = Math.max(a[1], b[1]); };
+      const fieldMap = function (f) {
+        if (f[0] === 'R') {
+          const c = T((f[2] + f[4]) / 2, (f[3] + f[5]) / 2), hx = Math.abs(f[4] - f[2]) / 2 * k, hy = Math.abs(f[5] - f[3]) / 2 * k;
+          f[2] = c[0] - hx; f[3] = c[1] - hy; f[4] = c[0] + hx; f[5] = c[1] + hy; f[6] += dth;
+        } else if (f[0] === 'E') { const c = T(f[2], f[3]); f[2] = c[0]; f[3] = c[1]; f[4] *= k; f[5] *= k; f[6] += dth; }
+        else if (f[0] === 'L') { const a = T(f[2], f[3]), b = T(f[4], f[5]); f[2] = a[0]; f[3] = a[1]; f[4] = b[0]; f[5] = b[1]; f[6] *= k; }
+        else { box(f, 2); f[7] *= k; }
+      };
+      const moveMap = function (q) {
+        if (q[0] === 'P') { const a = T(q[1], q[2]), b = T(q[3], q[4]); q[1] = a[0]; q[2] = a[1]; q[3] = b[0]; q[4] = b[1]; q[5] *= k; }
+        else if (q[0] === 'B') { const c = T(q[1], q[2]); q[1] = c[0]; q[2] = c[1]; q[3] += dth; q[4] += dth; q[5] *= k; q[7] *= k; }
+        else if (q[0] === 'C') { box(q, 1); q[5] += dth; q[7] *= k; }
+        else if (q[0] === 'S') { const c = T(q[1], q[2]); q[1] = c[0]; q[2] = c[1]; q[3] *= k; q[5] *= k; }
+        else { box(q, 1); q[6] *= k; }
+      };
+      (fields || z).forEach(fieldMap);
+      (moves || m).forEach(moveMap);
+    };
+    const rot = function (cx, cy, th) {
+      const c = Math.cos(th * Math.PI / 180), s = Math.sin(th * Math.PI / 180);
+      return function (x, y) { const dx = x - cx, dy = y - cy; return [cx + dx * c + dy * s, cy - dx * s + dy * c]; };
+    };
+
+    if (has('exchange')) {
+      // the largest field's colour becomes the ground; the old ground takes its place as paint
+      let best = null;
+      z.forEach(function (f) { if (f[1] !== g && f[0] !== 'D' && (!best || area(f) > area(best))) best = f; });
+      if (best) {
+        const ng = best[1];
+        z.forEach(function (f) { if (f[1] === ng) f[1] = g; else if (f[1] === g) f[1] = ng; });
+        g = ng;
+        said.push('ground and figure exchanged');
+      } else picked.splice(picked.indexOf('exchange'), 1);
+    }
+    if (has('distil')) {
+      // the largest mass of each colour, enlarged; everything else let go
+      const keep = {};
+      z.forEach(function (f) { if (!keep[f[1]] || area(f) > area(keep[f[1]])) keep[f[1]] = f; });
+      z = Object.keys(keep).map(function (k) { return keep[k]; }).sort(function (a, b) { return area(b) - area(a); });
+      const grow = 1 + 0.6 * interp;
+      z.forEach(function (f) { const c = centre(f); mapAll(function (x, y) { return [c[0] + (x - c[0]) * grow, c[1] + (y - c[1]) * grow]; }, grow, 0, [f], []); });
+      said.push('distilled to the main mass of each colour');
+    }
+    if (has('fragment')) {
+      const out = [];
+      z.forEach(function (f) {
+        if (f[0] === 'D' || rng() > 0.35 + 0.5 * interp) { out.push(f); return; }
+        const n = 2 + Math.floor(rng() * (2 + 3 * interp)), shift = 0.08 * interp;
+        if (f[0] === 'R') {
+          const vert = rng() < 0.5;
+          for (let i = 0; i < n; i++) {
+            const a = i / n, b = (i + 0.85) / n, o = R(-shift, shift);
+            out.push(vert ? ['R', f[1], f[2] + (f[4] - f[2]) * a, f[3] + o, f[2] + (f[4] - f[2]) * b, f[5] + o, f[6] + R(-6, 6) * interp]
+                          : ['R', f[1], f[2] + o, f[3] + (f[5] - f[3]) * a, f[4] + o, f[3] + (f[5] - f[3]) * b, f[6] + R(-6, 6) * interp]);
+          }
+        } else if (f[0] === 'E') {
+          for (let i = 0; i < n; i++) out.push(['E', f[1], f[2] + R(-1, 1) * f[4] * 0.8, f[3] + R(-1, 1) * f[5] * 0.8, f[4] * R(0.35, 0.7), f[5] * R(0.35, 0.7), f[6] + R(-40, 40)]);
+        } else {
+          for (let i = 0; i < n; i++) {
+            const a = i / n, b = (i + 0.7) / n, o = R(-shift, shift);
+            out.push(['L', f[1], f[2] + (f[4] - f[2]) * a + o, f[3] + (f[5] - f[3]) * a, f[2] + (f[4] - f[2]) * b + o, f[3] + (f[5] - f[3]) * b, f[6]]);
+          }
+        }
+      });
+      z = out;
+      said.push('fragmented');
+    }
+    if (has('drift')) {
+      const A = 0.14 * interp, fx = R(2, 5), fy = R(2, 5), p1 = R(0, 6.3), p2 = R(0, 6.3);
+      z.forEach(function (f) {
+        const c = centre(f), d = [A * Math.sin(fy * c[1] + p1), A * Math.cos(fx * c[0] + p2)];
+        const k = 1 + R(-0.3, 0.4) * interp, th = R(-25, 25) * interp;
+        const T0 = rot(c[0], c[1], th);
+        mapAll(function (x, y) { const q = T0(c[0] + (x - c[0]) * k, c[1] + (y - c[1]) * k); return [q[0] + d[0], q[1] + d[1]]; }, k, th, [f], []);
+      });
+      said.push('drifted');
+    }
+    if (has('detail')) {
+      // a region of the work, enlarged to fill the sheet; centred on one of its larger fields
+      const big = z.filter(function (f) { return f[0] !== 'D'; }).sort(function (a, b) { return area(b) - area(a); }).slice(0, 4);
+      const f = big.length ? big[Math.floor(rng() * big.length)] : null;
+      const c = f ? centre(f) : [0.5, 0.5];
+      const cx = Math.min(0.8, Math.max(0.2, c[0] + R(-0.12, 0.12))), cy = Math.min(0.8, Math.max(0.2, c[1] + R(-0.12, 0.12)));
+      const k = 1.4 + R(0.4, 1.6) * interp;
+      mapAll(function (x, y) { return [0.5 + (x - cx) * k, 0.5 + (y - cy) * k]; }, k, 0);
+      said.push('a detail, enlarged ' + k.toFixed(1) + '×');
+    }
+    if (has('turn')) {
+      const th = (rng() < 0.5 ? -1 : 1) * R(15, 25 + 65 * interp);
+      mapAll(rot(0.5, 0.5, th), 1, th);
+      said.push('turned ' + Math.round(Math.abs(th)) + '°');
+    }
+    if (has('echo') && m.length) {
+      const src = m.slice(), n = 2 + Math.floor(rng() * (1 + 3 * interp));
+      for (let i = 0; i < n; i++) {
+        const q = src[Math.floor(rng() * src.length)].slice(), k = R(0.6, 1.4), th = R(-60, 60);
+        const dx = R(-0.3, 0.3), dy = R(-0.3, 0.3);
+        const T0 = rot(0.5, 0.5, th);
+        mapAll(function (x, y) { const p = T0(0.5 + (x - 0.5) * k, 0.5 + (y - 0.5) * k); return [p[0] + dx, p[1] + dy]; }, k, th, [], [q]);
+        m.push(q);
+      }
+      said.push('its gestures echoed');
+    }
+
+    // the hand goes further: longer, stronger, more gestures; extra pulls through the fields
+    const reach = 1 + 0.9 * interp;
+    m.forEach(function (q) {
+      if (q[0] === 'P') { const cx = (q[1] + q[3]) / 2, cy = (q[2] + q[4]) / 2; q[1] = cx + (q[1] - cx) * reach; q[3] = cx + (q[3] - cx) * reach; q[2] = cy + (q[2] - cy) * reach; q[4] = cy + (q[4] - cy) * reach; q[5] *= 1 + 0.5 * interp; }
+      else if (q[0] === 'B') { q[5] *= reach; q[6] = Math.round(q[6] * (1 + interp)); q[7] *= 1 + 0.5 * interp; }
+      else if (q[0] === 'C') { q[6] = Math.round(q[6] * (1 + interp)); q[7] *= 1 + 0.5 * interp; }
+      else if (q[0] === 'S') { q[3] *= 1 + 0.5 * interp; q[4] *= reach; q[5] *= 1 + 0.5 * interp; }
+      else { q[5] = Math.round(q[5] * (1 + interp)); q[6] *= 1 + 0.5 * interp; }
+    });
+    const extra = Math.round(4 * interp * interp);
+    const solids = z.filter(function (f) { return f[0] !== 'D'; });
+    for (let i = 0; i < extra && solids.length; i++) {
+      const c = centre(solids[Math.floor(rng() * solids.length)]), a = R(0, Math.PI * 2), L = R(0.2, 0.6);
+      m.push(['P', c[0] - Math.cos(a) * L / 2, c[1] - Math.sin(a) * L / 2, c[0] + Math.cos(a) * L / 2, c[1] + Math.sin(a) * L / 2, R(0.03, 0.07)]);
+    }
+    if (interp >= 0.3) said.push('the hand pushed further');
+
+    // every colour stays: one pushed off the sheet comes back as traces
+    const visible = function (f) {
+      let x0, y0, x1, y1;
+      if (f[0] === 'E') { x0 = f[2] - f[4]; x1 = f[2] + f[4]; y0 = f[3] - f[5]; y1 = f[3] + f[5]; }
+      else { x0 = Math.min(f[2], f[4]); x1 = Math.max(f[2], f[4]); y0 = Math.min(f[3], f[5]); y1 = Math.max(f[3], f[5]); }
+      return x1 > 0.04 && x0 < 0.96 && y1 > 0.04 && y0 < 0.96;
+    };
+    for (let c = 0; c < 5; c++) {
+      if (c === g) continue;
+      if (!z.some(function (f) { return f[1] === c && visible(f); })) z.push(['D', c, 0.1, 0.1, 0.9, 0.9, 3, 0.03]);
+    }
+    return { g: g, z: z, m: m, readings: said };
+  }
+
   function composeBrief(rng, brief, o) {
-    const A = o.aspect, energy = o.energy;
+    const A = o.aspect, energy = o.energy, interp = o.interp || 0;
     const R = function (a, b) { return a + (b - a) * rng(); };
     const J = function (v, j) { return v + R(-j, j); };
+    const plan = interpret(rng, brief, interp);
+    brief = { g: plan.g, z: plan.z, m: plan.m };
     const chan = briefColours(['', '', '', '', ''], brief).chan;
     const scr = function (x, y) { return [x, 1 - y]; };                      // y-down → sim uv
     const sh = function (u) { return [(u[0] - 0.5) * A[0], (u[1] - 0.5) * A[1]]; }; // uv → short units
@@ -252,7 +439,8 @@
     const clampUV = function (q) { return [Math.max(0.03, Math.min(0.97, q[0])), Math.max(0.03, Math.min(0.97, q[1]))]; };
     const events = [];
     let t = 1;
-    const jit = 0.012, sj = 0.06, aj = 3 * Math.PI / 180;
+    // placement loosens with interpretation
+    const jit = 0.012 + 0.04 * interp, sj = 0.06 + 0.2 * interp, aj = (3 + 15 * interp) * Math.PI / 180;
 
     const fieldOf = function (f) {
       const c = f[1], ch = c === brief.g ? -1 : chan[c];
@@ -365,12 +553,12 @@
     }
     let last = 0;
     for (const e of events) last = Math.max(last, e.type === 'drag' ? e.t1 : e.t);
-    return { events: events, steps: last + SETTLE };
+    return { events: events, steps: last + SETTLE, g: plan.g, readings: plan.readings, interp: interp };
   }
 
   global.PouredGround = {
     STYLES: STYLES, FPS: FPS, FORMATS: FORMATS, FORMAT_KEYS: FORMAT_KEYS, PAPER: PAPER,
-    compose: compose, composeBrief: composeBrief, briefColours: briefColours, dragAt: dragAt, assignColours: assignColours, sheet: sheet,
+    compose: compose, composeBrief: composeBrief, interpret: interpret, READINGS: READINGS, briefColours: briefColours, dragAt: dragAt, assignColours: assignColours, sheet: sheet,
     hexToSRGB: hexToSRGB, toLinear: toLinear, luminance: luminance, fromUV: fromUV,
   };
 })(typeof window !== 'undefined' ? window : globalThis);

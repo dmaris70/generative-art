@@ -65,6 +65,32 @@ Correct or refine any brief in `briefs.js`; the check script validates it.
 No image of any painting is used: only its five colorlisa hex codes and a description of its
 layout. The output is an abstracted interpretation, not a reproduction.
 
+### From starting point to interpretation
+
+The brief is only the **starting point**. The `interpretation` setting (0–1, default 0.65) sets
+how far each generation travels from it. As it rises, the seed applies one to three
+**readings** to the layout:
+
+| reading | what it does |
+|---|---|
+| detail | zooms into one region of the work, enlarged 1.4–3×, so a fragment becomes the whole |
+| turn | rotates the composition |
+| fragment | cuts fields into strips and shards and displaces the pieces |
+| drift | carries each field on a slow current, stretched and turned |
+| distil | keeps only the main mass of each colour, enlarged |
+| echo | repeats the work's own gestures elsewhere, turned and rescaled |
+| exchange | swaps ground and figure: the largest field's colour becomes the ground |
+
+Separately, the hand goes further: longer, stronger and more numerous gestures, extra pulls
+through the fields, and looser placement.
+
+Fixed at every level:
+- **All five colours are kept.** A colour that a reading pushes off the sheet returns as traces.
+- **Readings are stated.** Those applied are named in the studio card, the caption and the
+  PNG's provenance (for example, *starting point: …; interpretation 0.65: fragmented; drifted;
+  the hand pushed further*).
+- **Interpretation 0** reproduces the close version.
+
 `composition: free gestures` keeps the earlier behaviour: palette colours with the seeded
 gesture styles below.
 
@@ -124,7 +150,7 @@ cotton-rag gamuts. Use perceptual intent for those and relative colorimetric for
 
 `studio.html` is a dedicated interface for making prints, running the same engine as the piece.
 
-- **Composition:** *after the work* or *free gestures*, plus a card naming the work the current generation follows, its layout note and its basis.
+- **Composition:** *after the work* or *free gestures*, an **interpretation** slider, and a card naming the starting work, its layout note, the readings applied and the basis.
 - **Palette browser:** all 133 colorlisa palettes as swatch strips, searchable by artist or painting. The first row, *Chosen by seed*, shows which palette the seed picks.
 - **Colours in use:** the resolved ground and four paints with their hex codes. Click a paint to draw with it.
 - **Composition:** the gesture, number of pours, hand speed and momentum. Seed controls step back, forward or to a random seed. **Generate** makes a new composition and keeps your print setup.
