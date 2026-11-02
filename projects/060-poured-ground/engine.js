@@ -442,7 +442,21 @@
     // placement loosens with interpretation
     const jit = 0.012 + 0.04 * interp, sj = 0.06 + 0.2 * interp, aj = (3 + 15 * interp) * Math.PI / 180;
 
-    const fieldOf = function (f) {
+    // every field stays on the sheet: one that would cross an edge is moved in, and one larger
+    // than the sheet is scaled down to fit (nothing is cut off by the canvas's edge)
+    const contain = function (e) {
+      const c = Math.abs(Math.cos(e.ang)), s = Math.abs(Math.sin(e.ang));
+      let ex = e.shape === 1 ? Math.hypot(e.hx * c, e.hy * s) : e.hx * c + e.hy * s;   // half extents,
+      let ey = e.shape === 1 ? Math.hypot(e.hx * s, e.hy * c) : e.hx * s + e.hy * c;   // short units
+      const fit = Math.min(1, 0.5 * A[0] / ex, 0.5 * A[1] / ey);
+      if (fit < 1) { e.hx *= fit; e.hy *= fit; ex *= fit; ey *= fit; }
+      const mx = ex / A[0], my = ey / A[1];                     // in uv
+      e.cx = Math.min(1 - mx, Math.max(mx, e.cx));
+      e.cy = Math.min(1 - my, Math.max(my, e.cy));
+      return e;
+    };
+    const fieldOf = function (f) { return contain(fieldRaw(f)); };
+    const fieldRaw = function (f) {
       const c = f[1], ch = c === brief.g ? -1 : chan[c];
       if (f[0] === 'R') {
         const x0 = J(f[2], jit), y0 = J(f[3], jit), x1 = J(f[4], jit), y1 = J(f[5], jit);
