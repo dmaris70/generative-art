@@ -49,7 +49,7 @@
   });
 
   // ---------------------------------------------------------------- segmented controls
-  ['ground', 'style', 'landscape', 'dpi', 'bits'].forEach(function (k) {
+  ['mode', 'ground', 'style', 'landscape', 'dpi', 'bits'].forEach(function (k) {
     $(k).addEventListener('click', function (e) {
       const b = e.target.closest('button');
       if (b) set(k, +b.dataset.v);
@@ -139,7 +139,21 @@
     // the seed row previews which palette the seed draws
     seedRow.querySelector('.strip').innerHTML = pid < 0 ? S.palette.colors.map((c) => '<i style="background:' + c + '"></i>').join('') : '';
     seedRow.querySelector('span').textContent = pid < 0 ? S.palette.artist + ' · ' + S.palette.painting : 'a different palette for every seed';
-    ['ground', 'style', 'landscape', 'dpi', 'bits'].forEach((k) => seg(k, G.param(k)));
+    ['mode', 'ground', 'style', 'landscape', 'dpi', 'bits'].forEach((k) => seg(k, G.param(k)));
+    const inspired = G.param('mode') === 0;
+    $('freeOnly').classList.toggle('dim', inspired);
+    $('freeOnly2').classList.toggle('dim', inspired);
+    const w = $('work');
+    if (S.brief) {
+      w.hidden = false;
+      w.innerHTML = '<b></b><span class="note"></span><br><span class="basis"></span>';
+      w.querySelector('b').textContent = 'After ' + S.palette.painting + ' — ' + S.palette.artist;
+      w.querySelector('.note').textContent = S.brief.note.charAt(0).toUpperCase() + S.brief.note.slice(1) + '.';
+      w.querySelector('.basis').textContent = S.brief.k ? 'layout from the work' : 'layout inferred from title';
+      w.querySelector('.basis').title = S.brief.k
+        ? 'The fields follow the documented composition of the painting.'
+        : 'The composition of this work is not documented in the brief\'s sources; the layout follows its title and the artist\'s typical structure.';
+    } else w.hidden = true;
     SIM.concat(LIVE).forEach(function (k) {
       const input = $(k);
       if (document.activeElement !== input) input.value = G.param(k);
@@ -162,7 +176,7 @@
     const S = app.state();
     if (S) {
       const done = S.t >= S.score.steps;
-      $('badge').textContent = S.palette.artist + ' · ' + S.palette.painting + ' · seed ' + G.seed + ' · ' +
+      $('badge').textContent = (S.brief ? 'after ' : '') + S.palette.painting + ' · ' + S.palette.artist + ' · seed ' + G.seed + ' · ' +
         (done ? 'settled' : 'pouring ' + Math.round(100 * S.t / S.score.steps) + '%') +
         (app.handTouched() ? ' · hand-touched' : '');
       $('finish').disabled = done;

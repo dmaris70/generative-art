@@ -1,7 +1,8 @@
 # Poured Ground
 
 *Liquid paint poured onto a sheet and spread by a hand, simulated on the GPU and rendered as a
-giclée-ready file. The colours come from the 133 painting palettes on [colorlisa.com](https://colorlisa.com/).*
+giclée-ready file. Each generation follows one of the 133 works on [colorlisa.com](https://colorlisa.com/),
+in both its colours and its composition.*
 
 ## Method
 
@@ -29,6 +30,43 @@ painting and hex codes). `ground` picks one colour as the sheet: the lightest, t
 neutral paper white. With paper white, the seed chooses which four of the five colours become
 paint. The other four are pigments in a seeded order and with seeded weights, so one or two
 colours lead. Palette `— chosen by seed —` draws one of the 133 from the seed.
+
+## After the work
+
+By default (`composition: after the work`) each generation chooses one of the 133 colorlisa
+palettes at random. It takes that work's five colours, and also its **composition**. Every
+palette has a brief in `briefs.js`, which is a short description of the painting's layout as
+data:
+
+- **Fields:** rectangles, ellipses and bands in that work's palette colours, placed as the
+  painting places them. They are laid first, each covering what lies beneath, the way a painter
+  blocks in. The brief's ground colour is the sheet.
+- **Gestures:** pulls, bursts, combs, swirls and scribbles that echo the painting's own marks.
+  The poured paint then moves under the hand.
+
+For example, *A Bigger Splash* lays the sky as the ground, then the flat house with dark windows
+and a pale roof line, two thin palms, the pink terrace, the dark pool edge and the tilted diving
+board. A burst of pale strokes rises from the water where the splash is. *The Starry Night* gets
+a dark cypress, a village under hills, a moon and stars, and swirls through bands of paint in the
+sky. *Broadway Boogie Woogie* gets a yellow street grid studded with red and blue blocks.
+
+The seed varies the geometry slightly, where drops land, and the hand: each gesture's angle,
+reach and count, and whether it is made at all. Every generation of the same work therefore
+differs but keeps that work's layout.
+
+**Basis, stated per work:**
+- 71 briefs follow a well-documented composition (`k: 1`).
+- 62 are *inferred* from the title and the artist's typical structure (`k: 0`), mostly
+  lesser-known works whose layout could not be confirmed.
+
+The studio shows which basis applies, and the exported file records it in its provenance.
+Correct or refine any brief in `briefs.js`; the check script validates it.
+
+No image of any painting is used: only its five colorlisa hex codes and a description of its
+layout. The output is an abstracted interpretation, not a reproduction.
+
+`composition: free gestures` keeps the earlier behaviour: palette colours with the seeded
+gesture styles below.
 
 ## Composition
 
@@ -68,6 +106,7 @@ cotton-rag gamuts. Use perceptual intent for those and relative colorimetric for
 
 `studio.html` is a dedicated interface for making prints, running the same engine as the piece.
 
+- **Composition:** *after the work* or *free gestures*, plus a card naming the work the current generation follows, its layout note and its basis.
 - **Palette browser:** all 133 colorlisa palettes as swatch strips, searchable by artist or painting. The first row, *Chosen by seed*, shows which palette the seed picks.
 - **Colours in use:** the resolved ground and four paints with their hex codes. Click a paint to draw with it.
 - **Composition:** the gesture, number of pours, hand speed and momentum. Seed controls step back, forward or to a random seed. **Generate** makes a new composition and keeps your print setup.
@@ -80,11 +119,12 @@ cotton-rag gamuts. Use perceptual intent for those and relative colorimetric for
 | file | role |
 |---|---|
 | `palettes.js` | 133 colorlisa palettes (artist, painting, 5 hex) |
+| `briefs.js` | One composition brief per palette: fields, gestures, basis flag |
 | `engine.js` | Colour assignment, the seeded score, print formats and geometry. Runs in browser and Node |
 | `sketch.js` | WebGL2 solver, paint layers, renderer, panel, pointer and print export |
 | `png.js` | Streaming PNG writer (8/16-bit, sRGB, pHYs, tEXt) |
 | `studio.html`, `studio.js` | Print studio: palette browser, composition, print setup and export, over the same engine |
-| `../../tools/poured-ground-check.mjs` | Palette, colour assignment, determinism, score bounds and print geometry checks |
+| `../../tools/poured-ground-check.mjs` | Palette, colour assignment, determinism, score bounds, print geometry and brief checks (every brief uses all five colours) |
 
 Needs WebGL2 with `EXT_color_buffer_float`, which any current desktop GPU supports.
 Keys: **R** new seed · **G** new composition (keeps print setup) · **P** print · **S** preview PNG ·

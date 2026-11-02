@@ -225,9 +225,152 @@
     };
   }
 
+
+  // ---- "after the work": a brief (briefs.js) compiled into a score -------------------------
+  // The ground is the brief's colour; the other four palette colours become the pigment
+  // channels in palette order. Fields are laid first (each covers what lies beneath, as a
+  // painter blocks in), then the drops, then the gestures. The seed varies geometry slightly,
+  // drops' placement, and the hand: which gestures, their angles, reach and count. The layout
+  // stays the work's.
+  function briefColours(colors, brief) {
+    const idx = [0, 1, 2, 3, 4].filter(function (i) { return i !== brief.g; });
+    const chan = {};
+    idx.forEach(function (i, c) { chan[i] = c; });
+    return { ground: colors[brief.g], pigments: idx.map(function (i) { return colors[i]; }), sourceIndex: idx, chan: chan };
+  }
+
+  const FIELD_TH = 0.055; // thickness of a laid field; a poured drop peaks near 0.19
+
+  function composeBrief(rng, brief, o) {
+    const A = o.aspect, energy = o.energy;
+    const R = function (a, b) { return a + (b - a) * rng(); };
+    const J = function (v, j) { return v + R(-j, j); };
+    const chan = briefColours(['', '', '', '', ''], brief).chan;
+    const scr = function (x, y) { return [x, 1 - y]; };                      // y-down → sim uv
+    const sh = function (u) { return [(u[0] - 0.5) * A[0], (u[1] - 0.5) * A[1]]; }; // uv → short units
+    const un = function (p) { return [0.5 + p[0] / A[0], 0.5 + p[1] / A[1]]; };
+    const clampUV = function (q) { return [Math.max(0.03, Math.min(0.97, q[0])), Math.max(0.03, Math.min(0.97, q[1]))]; };
+    const events = [];
+    let t = 1;
+    const jit = 0.012, sj = 0.06, aj = 3 * Math.PI / 180;
+
+    const fieldOf = function (f) {
+      const c = f[1], ch = c === brief.g ? -1 : chan[c];
+      if (f[0] === 'R') {
+        const x0 = J(f[2], jit), y0 = J(f[3], jit), x1 = J(f[4], jit), y1 = J(f[5], jit);
+        const ctr = scr((x0 + x1) / 2, (y0 + y1) / 2);
+        return { type: 'zone', shape: 0, cx: ctr[0], cy: ctr[1], hx: Math.abs(x1 - x0) / 2 * A[0], hy: Math.abs(y1 - y0) / 2 * A[1], ang: f[6] * Math.PI / 180 + R(-aj, aj), chan: ch, th: FIELD_TH };
+      }
+      if (f[0] === 'E') {
+        const k = 1 + R(-sj, sj), ctr = scr(J(f[2], jit), J(f[3], jit));
+        return { type: 'zone', shape: 1, cx: ctr[0], cy: ctr[1], hx: f[4] * k, hy: f[5] * k, ang: f[6] * Math.PI / 180 + R(-aj, aj), chan: ch, th: FIELD_TH };
+      }
+      // L: a band between two points
+      const a = sh(scr(J(f[2], jit), J(f[3], jit))), b = sh(scr(J(f[4], jit), J(f[5], jit)));
+      const dx = b[0] - a[0], dy = b[1] - a[1], len = Math.hypot(dx, dy);
+      const ctr = un([(a[0] + b[0]) / 2, (a[1] + b[1]) / 2]);
+      return { type: 'zone', shape: 0, cx: ctr[0], cy: ctr[1], hx: len / 2, hy: f[6] / 2 * (1 + R(-sj, sj)), ang: Math.atan2(dy, dx), chan: ch, th: FIELD_TH };
+    };
+    const drops = [];
+    for (const f of brief.z) {
+      if (f[0] === 'D') {
+        const n = Math.max(1, Math.round(f[6] * R(0.8, 1.25)));
+        for (let i = 0; i < n; i++) {
+          const u = scr(R(f[2], f[4]), R(f[3], f[5]));
+          drops.push({ type: 'pour', x: Math.max(0.02, Math.min(0.98, u[0])), y: Math.max(0.02, Math.min(0.98, u[1])), r: f[7] * R(0.7, 1.4), pig: chan[f[1]], k: 0.4 });
+        }
+      } else {
+        const e = fieldOf(f); e.t = t++; events.push(e);
+      }
+    }
+    for (const d of drops) { d.t = t++; events.push(d); }
+    t += 8;
+
+    const speed = function () { return R(0.35, 0.8) * energy; };
+    const drag = function (pts, r, start) {
+      pts = pts.map(clampUV);
+      let len = 0;
+      for (let i = 1; i < pts.length; i++) len += Math.hypot((pts[i][0] - pts[i - 1][0]) * A[0], (pts[i][1] - pts[i - 1][1]) * A[1]);
+      const dur = Math.max(10, Math.round(len / speed() * FPS));
+      events.push({ type: 'drag', t0: start, t1: start + dur, pts: pts, r: r, amt: 0.9 });
+      return start + dur;
+    };
+    const line = function (a, b, bend, n) { // a, b in short units → uv polyline with a bend
+      n = n || 32;
+      const dx = b[0] - a[0], dy = b[1] - a[1], L = Math.hypot(dx, dy) || 1, nx = -dy / L, ny = dx / L, out = [];
+      for (let i = 0; i < n; i++) {
+        const u = i / (n - 1), off = bend * 4 * u * (1 - u) * L;
+        out.push(un([a[0] + dx * u + nx * off, a[1] + dy * u + ny * off]));
+      }
+      return out;
+    };
+    const strokes = []; // [pts, r] in order
+    brief.m.forEach(function (m) {
+      const k = m[0];
+      if (k === 'P') {
+        const a = sh(scr(J(m[1], .03), J(m[2], .03))), b = sh(scr(J(m[3], .03), J(m[4], .03)));
+        strokes.push([line(a, b, R(-0.15, 0.15)), m[5] * R(0.8, 1.25)]);
+      } else if (k === 'B') {
+        const c = sh(scr(J(m[1], .02), J(m[2], .02)));
+        const n = Math.max(2, m[6] + Math.round(R(-1, 1)));
+        for (let i = 0; i < n; i++) {
+          const ang = (m[3] + (m[4] - m[3]) * (i + 0.5) / n + R(-12, 12)) * Math.PI / 180;
+          const len = m[5] * R(0.7, 1.15);
+          strokes.push([line(c, [c[0] + Math.cos(ang) * len, c[1] + Math.sin(ang) * len], R(-0.2, 0.2)), m[7] * R(0.8, 1.25)]);
+        }
+      } else if (k === 'C') {
+        const ang = (m[5] + R(-10, 10)) * Math.PI / 180, d = [Math.cos(ang), Math.sin(ang)], nrm = [-d[1], d[0]];
+        const a = sh(scr(m[1], m[2])), b = sh(scr(m[3], m[4]));
+        const lo = [Math.min(a[0], b[0]), Math.min(a[1], b[1])], hi = [Math.max(a[0], b[0]), Math.max(a[1], b[1])];
+        const ctr = [(lo[0] + hi[0]) / 2, (lo[1] + hi[1]) / 2], ext = Math.hypot(hi[0] - lo[0], hi[1] - lo[1]) / 2;
+        const n = Math.max(1, m[6] + Math.round(R(-1, 1)));
+        for (let i = 0; i < n; i++) {
+          const off = (n === 1 ? 0 : (i / (n - 1) - 0.5)) * ext * 1.2 + R(-0.02, 0.02);
+          const mid = [ctr[0] + nrm[0] * off, ctr[1] + nrm[1] * off];
+          const half = ext * R(0.6, 0.95);
+          const box = function (p) { return [Math.max(lo[0], Math.min(hi[0], p[0])), Math.max(lo[1], Math.min(hi[1], p[1]))]; };
+          strokes.push([line(box([mid[0] - d[0] * half, mid[1] - d[1] * half]), box([mid[0] + d[0] * half, mid[1] + d[1] * half]), R(-0.1, 0.1)), m[7] * R(0.8, 1.25)]);
+        }
+      } else if (k === 'S') {
+        const c = sh(scr(J(m[1], .02), J(m[2], .02))), rad = m[3] * R(0.85, 1.15), turns = m[4] * R(0.8, 1.2);
+        const a0 = R(0, Math.PI * 2), dir = rng() < 0.8 ? 1 : -1, n = 64, pts = [];
+        for (let i = 0; i < n; i++) {
+          const u = i / (n - 1), a = a0 + dir * turns * Math.PI * 2 * u, rr = rad * (1 - 0.35 * u);
+          pts.push(un([c[0] + Math.cos(a) * rr, c[1] + Math.sin(a) * rr]));
+        }
+        strokes.push([pts, m[5] * R(0.8, 1.25)]);
+      } else if (k === 'W') {
+        const a = sh(scr(m[1], m[2])), b = sh(scr(m[3], m[4]));
+        const lo = [Math.min(a[0], b[0]), Math.min(a[1], b[1])], hi = [Math.max(a[0], b[0]), Math.max(a[1], b[1])];
+        const n = Math.max(1, m[5] + Math.round(R(-2, 2)));
+        for (let i = 0; i < n; i++) {
+          let p = [R(lo[0], hi[0]), R(lo[1], hi[1])], h = R(0, Math.PI * 2);
+          const pts = [un(p)], steps = 6 + Math.floor(rng() * 8);
+          for (let s = 0; s < steps; s++) {
+            h += R(-1.6, 1.6);
+            const st = R(0.04, 0.1);
+            p = [Math.max(lo[0], Math.min(hi[0], p[0] + Math.cos(h) * st)), Math.max(lo[1], Math.min(hi[1], p[1] + Math.sin(h) * st))];
+            pts.push(un(p));
+          }
+          strokes.push([pts, m[6] * R(0.8, 1.25)]);
+        }
+      }
+    });
+    // the hand chooses: most gestures are kept, occasionally one is left out
+    const kept = strokes.filter(function () { return rng() < 0.88; });
+    if (!kept.length && strokes.length) kept.push(strokes[0]);
+    for (const s of kept) {
+      const end = drag(s[0], s[1], t);
+      t = Math.max(t + 4, Math.round(t + (end - t) * R(0.4, 0.8)));
+    }
+    let last = 0;
+    for (const e of events) last = Math.max(last, e.type === 'drag' ? e.t1 : e.t);
+    return { events: events, steps: last + SETTLE };
+  }
+
   global.PouredGround = {
     STYLES: STYLES, FPS: FPS, FORMATS: FORMATS, FORMAT_KEYS: FORMAT_KEYS, PAPER: PAPER,
-    compose: compose, dragAt: dragAt, assignColours: assignColours, sheet: sheet,
+    compose: compose, composeBrief: composeBrief, briefColours: briefColours, dragAt: dragAt, assignColours: assignColours, sheet: sheet,
     hexToSRGB: hexToSRGB, toLinear: toLinear, luminance: luminance, fromUV: fromUV,
   };
 })(typeof window !== 'undefined' ? window : globalThis);

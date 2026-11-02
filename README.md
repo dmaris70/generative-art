@@ -487,8 +487,10 @@ chronograph mode overlays three instants of one gust in three pens for the plott
 [`projects/060-poured-ground`](projects/060-poured-ground/) reimplements mofu-dev's
 [foundation](https://mofu-dev.com/en/blog/fluid-foundation/) method in WebGL2. A Stable Fluids
 velocity field moves four pigment height maps, and a trace history keeps where paint has been.
-The paint is shaded from cubic-spline normals and mixed by Kubelka–Munk. Colours are the 133
-[colorlisa.com](https://colorlisa.com/) palettes. Prints export as streamed, tiled 16-bit sRGB PNGs
+The paint is shaded from cubic-spline normals and mixed by Kubelka–Munk. Each generation picks one of the 133
+[colorlisa.com](https://colorlisa.com/) works and composes after it, using its five colours and a brief
+of its layout (`briefs.js`): A Bigger Splash's house, palms, pool and splash, or Starry Night's
+cypress and swirls. Prints export as streamed, tiled 16-bit sRGB PNGs
 with the true dpi and the full recipe embedded, from A3 to 40×50 in.
 `node tools/poured-ground-check.mjs` checks the palettes, the scores and the print geometry.
 A dedicated [print studio](projects/060-poured-ground/studio.html) offers a palette browser, print setup with a live spec, and export.
