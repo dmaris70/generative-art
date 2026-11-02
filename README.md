@@ -492,7 +492,10 @@ The paint is shaded from cubic-spline normals and mixed by Kubelka–Munk. Each 
 of its layout (`briefs.js`): A Bigger Splash's house, palms, pool and splash, or Starry Night's
 cypress and swirls. That layout is the starting point. An interpretation setting then applies seeded
 readings (detail, turn, fragment, drift, distil, echo, exchange), so each print is an
-interpretation of the work, not a copy of it. Prints export as streamed, tiled 16-bit sRGB PNGs
+interpretation of the work, not a copy of it.
+Each sheet also has an animated version that moves with 048 Plotted Field's wind (a gust every
+5.03 s). The painting is created in the order its paint arrived, breathes, and is carried away,
+in a loop that closes exactly. It can be recorded as WebM, or any instant printed. Prints export as streamed, tiled 16-bit sRGB PNGs
 with the true dpi and the full recipe embedded, from A3 to 40×50 in.
 `node tools/poured-ground-check.mjs` checks the palettes, the scores and the print geometry.
 A dedicated [print studio](projects/060-poured-ground/studio.html) offers a palette browser, print setup with a live spec, and export.
