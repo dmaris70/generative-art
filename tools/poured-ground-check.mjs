@@ -16,6 +16,7 @@
 //   8. Containment: every laid field lies wholly on the sheet (nothing cut off by the edge).
 //   9. Originals: only public-domain works (EU + US rule, museum's public-domain flag) ship an image;
 //      each is traceable to the holding museum's open-access record.
+//  10. View links: every work links to a page showing the painting (https) and to an image search.
 // Usage: node tools/poured-ground-check.mjs
 import { createRequire } from 'node:module';
 const require = createRequire(import.meta.url);
@@ -134,6 +135,18 @@ BRIEFS.forEach((b, i) => {
     ok(/public domain|^pd/i.test(m.license), 'source licence says public domain ' + id + ': ' + m.license);
     ok(m.file && fs.existsSync(path.join(dir, 'originals', m.file)), 'original file present ' + id);
     ok(typeof m.source === 'string' && m.source.length > 3 && /^https:\/\//.test(m.source_url) && m.source_object !== undefined, 'original traceable (holding museum, object, URL) ' + id);
+  }
+}
+
+// 10. View links: every work has a link to view the painting itself (https) and an image search.
+{
+  const path = require('path');
+  require(path.join(path.dirname(new URL(import.meta.url).pathname), '../projects/060-poured-ground/links.js'));
+  const WL = globalThis.WORK_LINKS || {};
+  ok(Object.keys(WL).length === PALS.length, 'a view link for every work (' + Object.keys(WL).length + ')');
+  for (const p of PALS) {
+    const l = WL[p.id];
+    ok(l && /^https:\/\//.test(l.url) && /^https:\/\/www\.google\.com\/search\?tbm=isch&q=/.test(l.search) && l.site, 'view link + image search ' + p.id + ' ' + p.painting);
   }
 }
 
