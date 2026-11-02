@@ -26,6 +26,8 @@
 </head>
 <body>
   <a class="back" href="../../">← gallery</a>
+  <a class="back" id="studioLink" href="studio.html" style="left:100px">print studio →</a>
+  <script>{ const l = document.getElementById('studioLink'); l.addEventListener('click', () => { l.href = 'studio.html' + location.search; }); }</script>
   <canvas id="gl" aria-label="Poured Ground"></canvas>
   <div id="caption"></div>
   <div id="track"><div id="bar"></div></div>
