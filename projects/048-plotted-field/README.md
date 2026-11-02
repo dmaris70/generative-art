@@ -164,6 +164,18 @@ drawing a sheet in the order a plotter would draw it.
 - Each blade is drawn as a single centreline, so the line weight is the pen's. Blade width
   affects only what gets hidden, not how thick anything looks.
 
+## Extending it
+
+`build` takes an optional `extend(ctx)` function, used by [059 Plotted Sky](../059-plotted-sky/).
+It runs after all the grass is drawn, receives the camera, the lens, the frame, the occlusion map
+and the moon, and may add pen layers, a caption line and a title. Without it, the output is
+byte-identical to before (checked by SHA-1 on views 1, 5, 12, 24 and the map of field 7).
+
+`stable: true` (also for 059's motion) takes the two random choices in a build, thinning distant
+blades and dithering hair-thin ones, from each blade's own hash instead of a sequence seeded by
+the instant, so the same blades are kept in every frame of an animation. Off by default, with the
+same byte-identical check.
+
 ## Files
 
 - `field.js`: the engine. It is pure geometry with no drawing library, runs in a browser or
