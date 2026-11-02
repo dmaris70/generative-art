@@ -482,6 +482,16 @@ its own sheets are byte-identical. `motion.html` runs both loops together, 048's
 flip-book of plotted sheets that closes exactly over 3 gusts, built by a pool of workers; a
 chronograph mode overlays three instants of one gust in three pens for the plotter.
 
+## Poured Ground — liquid paint for giclée prints
+
+[`projects/060-poured-ground`](projects/060-poured-ground/) reimplements mofu-dev's
+[foundation](https://mofu-dev.com/en/blog/fluid-foundation/) method in WebGL2. A Stable Fluids
+velocity field moves four pigment height maps, and a trace history keeps where paint has been.
+The paint is shaded from cubic-spline normals and mixed by Kubelka–Munk. Colours are the 133
+[colorlisa.com](https://colorlisa.com/) palettes. Prints export as streamed, tiled 16-bit sRGB PNGs
+with the true dpi and the full recipe embedded, from A3 to 40×50 in.
+`node tools/poured-ground-check.mjs` checks the palettes, the scores and the print geometry.
+
 ## Contact sheet
 
 `variations.html` renders one piece across many seeds as a grid of live tiles — the

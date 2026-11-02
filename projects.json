@@ -3,6 +3,14 @@
   "author": "dmaris70",
   "projects": [
     {
+      "slug": "060-poured-ground",
+      "title": "Poured Ground",
+      "year": 2026,
+      "tools": ["webgl2", "glsl", "giclée"],
+      "description": "Liquid paint poured and spread by a hand, after mofu-dev's foundation method: a Stable Fluids solver drives four pigment height maps with trace history, cubic-spline normals and a Kubelka–Munk mix. Colours come from the 133 colorlisa.com painting palettes, with one colour as the ground and four as paint. A seed writes a score of pours and drags (Spread, Sweep, Swirl, Scatter). The finished sheet exports as a 16-bit, true-dpi, sRGB giclée PNG from A3 to 40×50 in, streamed in tiles, with the recipe embedded.",
+      "thumb": "preview.png"
+    },
+    {
       "slug": "059-plotted-sky",
       "title": "Plotted Sky",
       "year": 2026,
