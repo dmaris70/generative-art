@@ -215,7 +215,8 @@
         const cxp = x + dx * L * Math.sin(th) * 0.12, czp = z + dz * L * Math.sin(th) * 0.12, cyp = y + L * 0.62;
         const dep = (x - E[0]) * B.f[0] + (y - E[1]) * B.f[1] + (z - E[2]) * B.f[2];
         if (dep < NEAR) continue;
-        blades.push([dep, x, y, z, cxp, cyp, czp, tipX, tipY, tipZ, head ? 0.003 : 0.004 + 0.004 * r4, head]);
+        blades.push([dep, x, y, z, cxp, cyp, czp, tipX, tipY, tipZ, head ? 0.003 : 0.004 + 0.004 * r4, head,
+          ihash((hc ^ Math.imul(b + 1, 0x85ebca6b)) >>> 0)]);   // the blade's own key, for `stable`
       }
     }
     blades.sort((a, b) => a[0] - b[0]);
@@ -268,11 +269,14 @@
       return len;
     }
     // a body of world width w (tapering by `taper` toward the end) into the occlusion bitmap
-    function stamp(xyz, count, w, taper) {
+    // `stable` (used by 059's motion): the random choices below come from each blade's own key
+    // instead of a sequence seeded by the instant, so a blade is kept or culled the same way in
+    // every frame. Off by default; 048's sheets are unchanged.
+    function stamp(xyz, count, w, taper, key) {
       for (let i = 0; i < count - 1; i++) {
         const x0 = xyz[i * 3] / grain, y0 = xyz[i * 3 + 1] / grain, x1 = xyz[i * 3 + 3] / grain, y1 = xyz[i * 3 + 4] / grain;
         const t = (i + 0.5) / (count - 1), wpx = o.body * w * (1 - taper * t) * F / ((xyz[i * 3 + 2] + xyz[i * 3 + 5]) / 2) / grain;
-        if (wpx < 1 && rnd() > wpx) continue;
+        if (wpx < 1 && (o.stable ? u01(ihash((key ^ Math.imul(i + 1, 0x27d4eb2d)) >>> 0)) : rnd()) > wpx) continue;
         const steps = Math.max(1, Math.ceil(Math.hypot(x1 - x0, y1 - y0) / 0.7)), rad = Math.max(0.5, wpx / 2);
         for (let k = 0; k <= steps; k++) mask.disc(x0 + (x1 - x0) * k / steps, y0 + (y1 - y0) * k / steps, rad);
       }
@@ -300,7 +304,7 @@
       // constant with distance, then the exponential lets them go
       const keep = smoothstep(o.cutoff * 0.5, o.cutoff * 1.5, size)
         * (zc > o.haze ? (o.haze / zc) ** 2 * Math.exp(-(zc - o.haze) / o.hazeLength) : 1);
-      if (keep <= 0 || rnd() > keep) { culled++; continue; }
+      if (keep <= 0 || (o.stable ? u01(bl[12]) : rnd()) > keep) { culled++; continue; }
       if (Math.max(ax, P[0]) < -2 || Math.min(ax, P[0]) > frame.w + 2 || Math.max(ay, P[1]) < -2 || Math.min(ay, P[1]) > frame.h + 2) {
         // maybe the curve enters the frame through its middle; the control point bounds it
         if (!project(bl[4], bl[5], bl[6])) continue;
@@ -343,8 +347,19 @@
       drawn++;
 
       // the bodies: real width, tapering to the tip, projected; thinner than a pixel → dithered
-      stamp(pts, n + 1, bl[10], 0.85);
-      if (projected.length) stamp(projected[0], projected[0].length / 3, 0.006, 0.6);
+      stamp(pts, n + 1, bl[10], 0.85, bl[12]);
+      if (projected.length) stamp(projected[0], projected[0].length / 3, 0.006, 0.6, bl[12] ^ 0x5bd1e995);
+    }
+
+    // ── optional extension (059 Plotted Sky): runs after all grass is drawn, with every ground
+    // cell stamped, and may add pen layers and a caption line. Without it nothing here changes.
+    let extra = null;
+    if (typeof o.extend === 'function') {
+      while (o.ground && gi < ground.length) {
+        const q = ground[gi++][1];
+        mask.tri(q[0], q[1], q[2], q[3], q[4], q[5]); mask.tri(q[0], q[1], q[4], q[5], q[6], q[7]);
+      }
+      extra = o.extend({ options: o, world, camera: cam, basis: B, eye: E, F, frame, grain, mask, MW, MH, moon: M });
     }
 
     const result = { kind: 'view', options: o, world, camera: cam, sheet: { w: SW, h: SH }, frame };
@@ -352,13 +367,17 @@
       planted, considered: blades.length, drawn, culled, heads: headsDrawn,
       strokes: grass.length + heads.length, ink: (ink + headInk) / 1000,
     };
+    if (extra && extra.stats) result.extra = extra.stats;
     const text = caption(result);
+    if (extra && extra.title) text[0] = text[0].replace('PLOTTED FIELD', extra.title);
+    if (extra && extra.caption) text.push(...extra.caption);
     const inset = insetMap(result);
     const words = captionStrokes(text, frame.x, frame.y + frame.h, SW);
     result.layers = [
       { id: 'grass', label: '1 grass', pen: 1, strokes: grass },
       { id: 'heads', label: '2 seed heads', pen: 2, strokes: heads },
-      { id: 'caption', label: '3 caption and map', pen: 1, strokes: words.concat(inset) },
+      ...(extra && extra.layers ? extra.layers : []),
+      { id: 'caption', label: (extra && extra.layers && extra.layers.length ? extra.layers.length + 3 : 3) + ' caption and map', pen: 1, strokes: words.concat(inset) },
     ];
     finish(result, t0);
     return result;
