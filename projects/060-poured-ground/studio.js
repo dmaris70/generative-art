@@ -49,7 +49,7 @@
   });
 
   // ---------------------------------------------------------------- segmented controls
-  ['mode', 'ground', 'style', 'label', 'labelPos', 'landscape', 'dpi', 'bits'].forEach(function (k) {
+  ['mode', 'ground', 'style', 'label', 'labelPos', 'original', 'landscape', 'dpi', 'bits'].forEach(function (k) {
     $(k).addEventListener('click', function (e) {
       const b = e.target.closest('button');
       if (b) set(k, +b.dataset.v);
@@ -149,7 +149,7 @@
     // the seed row previews which palette the seed draws
     seedRow.querySelector('.strip').innerHTML = pid < 0 ? S.palette.colors.map((c) => '<i style="background:' + c + '"></i>').join('') : '';
     seedRow.querySelector('span').textContent = pid < 0 ? S.palette.artist + ' · ' + S.palette.painting : 'a different palette for every seed';
-    ['mode', 'ground', 'style', 'label', 'labelPos', 'landscape', 'dpi', 'bits'].forEach((k) => seg(k, G.param(k)));
+    ['mode', 'ground', 'style', 'label', 'labelPos', 'original', 'landscape', 'dpi', 'bits'].forEach((k) => seg(k, G.param(k)));
     $('labelPos').classList.toggle('dim', G.param('label') !== 1);
     $('labelSize').parentNode.classList.toggle('dim', G.param('label') !== 1);
     const inspired = G.param('mode') === 0;
@@ -175,7 +175,13 @@
         const a = document.createElement('a'); a.href = src.meta.source_url; a.target = '_blank'; a.rel = 'noopener';
         a.textContent = src.meta.source; a.style.color = 'var(--accent)'; srcLine.appendChild(a);
         srcLine.appendChild(document.createTextNode(').'));
-      } else srcLine.textContent = 'In motion, its composition map rises in the paper. The work is in copyright, so no image of it is used.';
+        // the option: show the original over the canvas, to compare
+        const btn = document.createElement('button');
+        btn.textContent = app.originalView() ? 'Hide the original (O)' : 'Show the original (O)';
+        btn.style.cssText = 'display:block;margin-top:8px;width:100%';
+        btn.onclick = function () { app.setOriginalView(!app.originalView()); refresh(); };
+        srcLine.appendChild(btn);
+      } else srcLine.textContent = 'In motion, its composition map rises in the paper. The work is in copyright (or not yet sourced), so no image of it is shown or used.';
       w.insertBefore(srcLine, w.querySelector('.basis'));
       w.querySelector('.basis').title = S.brief.k
         ? 'The fields follow the documented composition of the painting.'
