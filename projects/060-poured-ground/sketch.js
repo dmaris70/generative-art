@@ -254,11 +254,11 @@
     // outflow, gathered from the backtraced source (mofu's "added"). Each step the arrivals of a
     // pigment are scaled so they total exactly what left, so paint is neither made nor lost.
     tOut: HEAD + `
-    uniform sampler2D uH, uVel; uniform vec2 uTh; uniform float uK;
+    uniform sampler2D uH, uVel; uniform vec2 uTh; uniform float uK; uniform vec4 uMob;
     void main(){
       ivec2 c = ivec2(gl_FragCoord.xy);
       float s = smoothstep(uTh.x, uTh.y, length(texelFetch(uVel, c, 0).xy));
-      o = texelFetch(uH, c, 0) * (s * uK);
+      o = texelFetch(uH, c, 0) * (s * uK) * uMob;   // uMob: each pigment's mobility (paint body), else 1
     }`,
     tArrive: HEAD + `
     uniform sampler2D uOut, uVel;
@@ -353,6 +353,35 @@
       vec4 sd = texelFetch(uSumD, ivec2(0), 0), sw = texelFetch(uSumW, ivec2(0), 0);
       o = max(vec4(0), texelFetch(uH, c, 0) + texelFetch(uD, c, 0) - texelFetch(uW, c, 0) * sd / max(sw, vec4(1e-12)));
     }`,
+    // ---- paint body: ridges where colours meet, a lip where a film ends ------------------------
+    // The share of each pigment, and of bare ground, changes sharply at an interface. Half the sum
+    // of those changes (per short-side unit) marks every boundary once, between colours and at a
+    // film's edge alike. The ridge stands in proportion to the paint present there (capped), and is
+    // smoothed over a fixed width in sheet units afterwards (blur1), so it is the same at any grid.
+    bodyRaw: HEAD + `
+    uniform sampler2D uH;
+    vec4 share(ivec2 q, out float g){
+      vec4 h = max(texelFetch(uH, q, 0), vec4(0)); float t = h.x+h.y+h.z+h.w;
+      float c = smoothstep(0., 0.004, t);          // coverage, as the render's film threshold
+      g = 1. - c;                                  // bare ground, the fifth share
+      return t > 1e-6 ? h / t * c : vec4(0);
+    }
+    void main(){
+      ivec2 c = ivec2(gl_FragCoord.xy), m = ivec2(uSize)-1;
+      float gL, gR, gB, gT;
+      vec4 L = share(clamp(c-ivec2(1,0),ivec2(0),m), gL), R = share(clamp(c+ivec2(1,0),ivec2(0),m), gR);
+      vec4 B = share(clamp(c-ivec2(0,1),ivec2(0),m), gB), T = share(clamp(c+ivec2(0,1),ivec2(0),m), gT);
+      float minS = min(uSize.x, uSize.y);
+      vec4 dx = (R - L) * 0.5 * minS, dy = (T - B) * 0.5 * minS;
+      float gx = (gR - gL) * 0.5 * minS, gy = (gT - gB) * 0.5 * minS;
+      float edge = 0.5 * (length(vec2(dx.x,dy.x)) + length(vec2(dx.y,dy.y)) + length(vec2(dx.z,dy.z)) + length(vec2(dx.w,dy.w)) + length(vec2(gx,gy)));
+      vec4 h = max(texelFetch(uH, c, 0), vec4(0));
+      float t = h.x+h.y+h.z+h.w;
+      // where the boundary is a film edge the paint here may be thin: take the thicker neighbour
+      float tn = max(t, max(max(dot(texelFetch(uH, clamp(c-ivec2(1,0),ivec2(0),m),0), vec4(1)), dot(texelFetch(uH, clamp(c+ivec2(1,0),ivec2(0),m),0), vec4(1))),
+                            max(dot(texelFetch(uH, clamp(c-ivec2(0,1),ivec2(0),m),0), vec4(1)), dot(texelFetch(uH, clamp(c+ivec2(0,1),ivec2(0),m),0), vec4(1)))));
+      o = vec4(edge * min(tn, 0.1), 0., 0., 1.);
+    }`,
     // sum of a 4×4 block (a reduction step; repeated down to one texel)
     sum4: HEAD + `
     uniform sampler2D uT; uniform vec2 uFine;
@@ -401,6 +430,9 @@
   precision highp float; precision highp sampler2D;
   out vec4 o;
   uniform sampler2D uH, uHist;
+  uniform sampler2D uBody;    // paint body: ridge height field (x), smoothed in sheet units
+  uniform float uBodyOn, uBodyK;
+  uniform vec4 uOpq;          // each pigment's hiding power (paint body), else 1
   uniform vec2 uSize, uAspect;
   uniform vec2 uOut;          // output size in px (whole sheet)
   uniform vec2 uOrigin;       // this tile's top-left in output px
@@ -448,6 +480,18 @@
       float W = wx[x]*wy[y];
       H += h*W; Q += q*W; Hx += h*dx[x]*wy[y]; Hy += h*wx[x]*dy[y];
     }
+  }
+  // the body field's gradient, from the same cubic B-spline
+  vec2 bodyGrad(vec2 uv){
+    vec2 p = uv*uSize - 0.5, i = floor(p), f = p - i;
+    vec4 wx, dx, wy, dy; bspline(f.x, wx, dx); bspline(f.y, wy, dy);
+    ivec2 m = ivec2(uSize)-1, b = ivec2(i) - 1;
+    vec2 g = vec2(0);
+    for (int y = 0; y < 4; y++) for (int x = 0; x < 4; x++) {
+      float v = texelFetch(uBody, clamp(b + ivec2(x,y), ivec2(0), m), 0).x;
+      g += v * vec2(dx[x]*wy[y], wx[x]*dy[y]);
+    }
+    return g;
   }
   vec3 ks2r(vec3 ks){ return 1. + ks - sqrt(ks*ks + 2.*ks); }
   vec3 srgb(vec3 c){ c = clamp(c,0.,1.); return mix(c*12.92, 1.055*pow(c, vec3(1./2.4)) - 0.055, step(0.0031308, c)); }
@@ -502,6 +546,8 @@
       // gradient of total thickness per short-side unit
       float minS = min(uSize.x, uSize.y);
       vec2 g = vec2(Hx.x+Hx.y+Hx.z+Hx.w, Hy.x+Hy.y+Hy.z+Hy.w) * minS;
+      // paint body: ridges and lips add to the relief (the field fades with the paint in the ending)
+      if (uBodyOn > 0.5) g += bodyGrad(uvS) * minS * uBodyK * (uAnim > 0.5 ? clamp(total / max(dot(Hc, vec4(1.)), 1e-6), 0., 1.) : 1.);
       vec3 N = normalize(vec3(-g*uRelief, 1.));
       // like light over a field in wind: the sheen leans with each gust as it passes
       // coverage, per pigment: mofu's alpha = 0.5·(trace history) + 0.5·(present film), both
@@ -518,8 +564,16 @@
       vec3 ks = ws > 1e-6 ? (uKS[0]*w.x + uKS[1]*w.y + uKS[2]*w.z + uKS[3]*w.w)/ws : uKS[0];
       vec3 paint = ks2r(ks);
       // a thin film lets the ground through
-      float hide = 1. - exp(-total*40.);
-      float cover = A * mix(0.9, 1., hide);
+      float hide, cover;
+      if (uBodyOn > 0.5) {
+        // paint body: each pigment hides the ground by its own power, so a glaze lets it glow through
+        float O = dot(w, uOpq) / max(ws, 1e-6);
+        hide = 1. - exp(-total*40.*O);
+        cover = A * mix(0.9 - 0.5*max(0., 1. - O), 1., hide);
+      } else {
+        hide = 1. - exp(-total*40.);
+        cover = A * mix(0.9, 1., hide);
+      }
       vec3 ground = uGround * (1. + tooth(mm));
       // the source rises through the paper's pores beneath the paint (open pores first), the
       // paint thinning to a veil so both are seen; in the ending the paper drinks it too
@@ -801,6 +855,7 @@
   }
   function freeT(x) { gl.deleteTexture(x.t); gl.deleteFramebuffer(x.f); }
   function freeV2(s) {
+    if (s.bodyA) { freeT(s.bodyA); freeT(s.bodyB); s.bodyA = s.bodyB = null; }
     if (s.curlT) { freeT(s.curlT); freeT(s.curlB); freeT(s.velHat); s.curlT = s.curlB = s.velHat = null; }
     if (s.sumVol) { s.sumVol.forEach(freeT); s.sumVol = null; }
     if (!s.mg) return;
@@ -848,7 +903,8 @@
     vcycle(0); vcycle(0);
     bind(P.projectWall, { uVel: S.vel.a.t, uP: top.p.a.t }); run(S.vel.b); S.vel.swap();
     // transport: outflow, arrivals, the two totals, then the conserving combination
-    bind(P.tOut, { uH: S.hgt.a.t, uVel: S.vel.a.t }); gl.uniform2f(P.tOut.u.uTh, TH[0], TH[1]); gl.uniform1f(P.tOut.u.uK, KMOVE); run(S.out);
+    bind(P.tOut, { uH: S.hgt.a.t, uVel: S.vel.a.t }); gl.uniform2f(P.tOut.u.uTh, TH[0], TH[1]); gl.uniform1f(P.tOut.u.uK, KMOVE);
+    const mob = bodyProps().mob; gl.uniform4f(P.tOut.u.uMob, mob[0], mob[1], mob[2], mob[3]); run(S.out);
     bind(P.tArrive, { uOut: S.out.t, uVel: S.vel.a.t }); run(S.arr);
     const so = reduce(S.out, S.sumOut), sa = reduce(S.arr, S.sumArr);
     bind(P.tCombine, { uH: S.hgt.a.t, uOut: S.out.t, uArr: S.arr.t, uSumOut: so.t, uSumArr: sa.t, uH0: S.h0 ? S.h0.t : S.hgt.a.t });
@@ -1000,7 +1056,27 @@
     }
     return { x: x0, y: y0, w: labelBox.w, h: labelBox.h, ink: linRGB(ink), inBorder: inBorder, text: lines.join(', ') };
   }
+  // ---------------------------------------------------------------- paint body
+  // Each pigment's mobility (heavier paint spreads less) and hiding power (a glaze lets the ground
+  // through), seeded per work from their own stream so no other seeded choice changes.
+  // body off: both 1, and the ridge field is not drawn, which reproduces every earlier print.
+  const BODY_SIGMA = 0.003, BODY_K = 0.35;   // ridge width (short-side units), ridge height factor
+  function bodyProps() {
+    if (!S || G.param('body') !== 1) return { mob: [1, 1, 1, 1], opq: [1, 1, 1, 1] };
+    const r = GenArt._mulberry32((G.seed ^ 0x1b873593) >>> 0), mob = [], opq = [];
+    for (let i = 0; i < 4; i++) { mob.push(+(0.75 + 0.5 * r()).toFixed(3)); opq.push(+(0.7 + 0.6 * r()).toFixed(3)); }
+    return { mob: mob, opq: opq };
+  }
+  function updateBody() {
+    if (!S.bodyA) { S.bodyA = target(S.w, S.h, gl.RGBA16F, gl.NEAREST); S.bodyB = target(S.w, S.h, gl.RGBA16F, gl.NEAREST); }
+    const sigma = Math.max(1, BODY_SIGMA * Math.min(S.w, S.h));
+    bind(P.bodyRaw, { uH: S.hgt.a.t }); run(S.bodyA);
+    bind(P.blur1, { uT: S.bodyA.t }); gl.uniform2f(P.blur1.u.uDir, 1, 0); gl.uniform1f(P.blur1.u.uSigma, sigma); run(S.bodyB);
+    bind(P.blur1, { uT: S.bodyB.t }); gl.uniform2f(P.blur1.u.uDir, 0, 1); gl.uniform1f(P.blur1.u.uSigma, sigma); run(S.bodyA);
+  }
   function setRenderUniforms(outW, outH, pxPerMM, linearOut) {
+    const bodyOn = G.param('body') === 1;
+    if (bodyOn) updateBody();
     const u = P.render.u, sh = S.sheet;
     const lab = labelFor(outW, outH, pxPerMM);
     bind(P.render, { uH: S.hgt.a.t, uHist: S.hist.a.t, uLabel: labelTex });
@@ -1031,6 +1107,12 @@
     gl.uniform1f(u.uEnd, ending ? motion.et / motion.endSteps() : 0);
     const ar = GenArt._mulberry32((G.seed ^ 0x2545f491) >>> 0);
     gl.uniform4f(u.uAbsorb, 0.75 + 0.5 * ar(), 0.75 + 0.5 * ar(), 0.75 + 0.5 * ar(), 0.75 + 0.5 * ar());
+    const bp = bodyProps();
+    gl.uniform1f(u.uBodyOn, bodyOn ? 1 : 0);
+    gl.uniform1f(u.uBodyK, (typeof window.__BODY_K === 'number' ? window.__BODY_K : BODY_K) * BODY_SIGMA * 2.5066);   // override: tests only   // the smoothed field peaks at ≈ thickness / (σ√2π): ridge ≈ BODY_K × thickness
+    gl.uniform4f(u.uOpq, bp.opq[0], bp.opq[1], bp.opq[2], bp.opq[3]);
+    gl.activeTexture(gl.TEXTURE5); gl.bindTexture(gl.TEXTURE_2D, bodyOn && S.bodyA ? S.bodyA.t : S.hgt.a.t); gl.uniform1i(u.uBody, 5);
+    gl.activeTexture(gl.TEXTURE0);
   }
 
   let view = { x: 0, y: 0, w: 1, h: 1 };
@@ -1508,7 +1590,7 @@
   function generate() {
     G.shuffle(function (key) {
       // a new composition; the print setup (format, border, dpi, bits) and quality settings stay
-      if (['engine', 'format', 'landscape', 'border', 'dpi', 'bits', 'simres', 'iterations', 'speed'].indexOf(key) >= 0) return G.param(key);
+      if (['engine', 'body', 'format', 'landscape', 'border', 'dpi', 'bits', 'simres', 'iterations', 'speed'].indexOf(key) >= 0) return G.param(key);
       if (key === 'palette') return -1;
       if (key === 'collection') return G.param('collection');
       if (key === 'mode') return G.param('mode');
@@ -1519,7 +1601,7 @@
   }
 
   // ---------------------------------------------------------------- harness
-  const SIM_KEYS = ['engine', 'mode', 'interp', 'proportions', 'collection', 'palette', 'ground', 'style', 'pours', 'energy', 'flow', 'levelling', 'iterations', 'simres', 'format', 'landscape', 'border'];
+  const SIM_KEYS = ['engine', 'body', 'mode', 'interp', 'proportions', 'collection', 'palette', 'ground', 'style', 'pours', 'energy', 'flow', 'levelling', 'iterations', 'simres', 'format', 'landscape', 'border'];
   G = GenArt.create({
     title: 'Poured Ground',
     resetOnFinish: true,
@@ -1548,6 +1630,7 @@
       labelSize: { value: 1, min: 0.5, max: 2.5, step: 0.05, label: 'label size', group: 'label' },
       relief: { value: 0.22, min: 0, max: 0.8, step: 0.01, label: 'relief', group: 'surface' },
       gloss: { value: 0.25, min: 0, max: 1, step: 0.01, label: 'gloss', group: 'surface' },
+      body: { value: 1, options: { 'paint body': 1, 'flat (prints before Nov 2026)': 0 }, label: 'paint body', group: 'surface' },
       tooth: { value: 0.035, min: 0, max: 0.15, step: 0.005, label: 'paper tooth', group: 'surface' },
       format: { value: 5, options: FMT_OPTIONS, label: 'format', group: 'print' },
       landscape: { value: 2, options: { 'as the original': 2, portrait: 0, landscape: 1 }, label: 'orientation', group: 'print' },
