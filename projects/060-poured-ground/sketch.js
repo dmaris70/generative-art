@@ -295,12 +295,25 @@
       float B = texelFetch(uVel, clamp(c-ivec2(0,1),ivec2(0),m),0).x, T = texelFetch(uVel, clamp(c+ivec2(0,1),ivec2(0),m),0).x;
       o = vec4(0.5*((R-L) - (T-B)), 0., 0., 1.);
     }`,
+    // separable gaussian of the curl (sigma in cells; 17 taps over ±2 sigma)
+    blur1: HEAD + `
+    uniform sampler2D uT; uniform vec2 uDir; uniform float uSigma;
+    void main(){
+      ivec2 c = ivec2(gl_FragCoord.xy), m = ivec2(uSize)-1;
+      float acc = 0., ws = 0.;
+      for (int k = -8; k <= 8; k++) {
+        float x = float(k) * uSigma * 0.25, w = exp(-0.5 * (x*x) / (uSigma*uSigma));
+        ivec2 q = clamp(c + ivec2(round(uDir * x)), ivec2(0), m);
+        acc += w * texelFetch(uT, q, 0).x; ws += w;
+      }
+      o = vec4(acc / ws, 0., 0., 1.);
+    }`,
     // vorticity confinement (Fedkiw et al.): a force along N × ω, N pointing up the gradient of
     // |ω|, which spins up the small eddies numerical diffusion removes. In this per-cell form the
     // force shrinks with the cell size, so it restores what the grid loses and converges with
     // resolution. uEps is the strength.
     vort: HEAD + `
-    uniform sampler2D uVel, uCurl; uniform float uEps;
+    uniform sampler2D uVel, uCurl; uniform float uEps, uSigma;
     void main(){
       ivec2 c = ivec2(gl_FragCoord.xy), m = ivec2(uSize)-1;
       float w = texelFetch(uCurl, c, 0).x;
@@ -308,14 +321,17 @@
       float B = abs(texelFetch(uCurl, clamp(c-ivec2(0,1),ivec2(0),m),0).x), T = abs(texelFetch(uCurl, clamp(c+ivec2(0,1),ivec2(0),m),0).x);
       vec2 g = 0.5*vec2(R-L, T-B);
       vec2 N = g / (length(g) + 1e-6);
-      vec2 f = uEps * DT * vec2(N.y, -N.x) * w;              // Δv = Δt · ε · (N × ω), per-cell ω
+      // Δv = Δt · ε · ℓ · (N × ω): ω is the physical vorticity of the smoothed field (w · cells per
+      // short side), ℓ the smoothing scale in short-side units, so ε is dimensionless and the force
+      // is the same at every grid size; w · uSigma = ω · ℓ.
+      vec2 f = uEps * DT * uSigma * vec2(N.y, -N.x) * w;
       vec2 v = texelFetch(uVel, c, 0).xy + f;
       if (c.x < 1 || c.y < 1 || c.x >= m.x || c.y >= m.y) v = vec2(0);
       o = vec4(v, 0., 1.);
     }`,
     // v3 wall memory, zero-sum: within ~5% of the walls the paint is drawn further toward the
     // painting as poured (weight w), so paint the wind piles against the frame dissolves back. The
-    // pull is made to add no paint: its total is taken back in proportion to w (wallFix).
+    // pull is made to add no paint: its total is taken back in proportion to w × paint (wallFix).
     wallPull: HEAD + `
     uniform sampler2D uH, uH0; uniform float uK;
     void main(){
@@ -324,11 +340,11 @@
       float w = uK * (1. - smoothstep(0.0, 0.05, min(e.x, e.y)));
       o = w * (texelFetch(uH0, c, 0) - texelFetch(uH, c, 0));
     }`,
-    wallW: HEAD + `
-    uniform float uK;
+    wallW: HEAD + `   // weight × paint present: where the pull's total is taken back (never below zero)
+    uniform sampler2D uH; uniform float uK;
     void main(){
       vec2 e = min(vUv, 1. - vUv) * uAspect;
-      o = vec4(uK * (1. - smoothstep(0.0, 0.05, min(e.x, e.y))));
+      o = uK * (1. - smoothstep(0.0, 0.05, min(e.x, e.y))) * texelFetch(uH, ivec2(gl_FragCoord.xy), 0);
     }`,
     wallFix: HEAD + `
     uniform sampler2D uH, uD, uW, uSumD, uSumW;
@@ -723,7 +739,7 @@
       engine: G.param('engine'),
     };
     if (S.engine >= 2) allocV2(S);
-    if (S.engine >= 3) { S.curlT = target(w, h, gl.RGBA16F, gl.NEAREST); S.velHat = target(w, h, gl.RGBA16F, gl.LINEAR); }
+    if (S.engine >= 3) { S.curlT = target(w, h, gl.RGBA16F, gl.NEAREST); S.curlB = target(w, h, gl.RGBA16F, gl.NEAREST); S.velHat = target(w, h, gl.RGBA16F, gl.LINEAR); }
     for (const e of score.events) if (e.type === 'pour' || e.type === 'zone') (S.pours[e.t] = S.pours[e.t] || []).push(e);
     if (brief) sourceFor(pal.id);   // fetch the source now, long before the animated version reveals it
     if (origView) setTimeout(placeOriginal, 0);
@@ -784,7 +800,7 @@
   }
   function freeT(x) { gl.deleteTexture(x.t); gl.deleteFramebuffer(x.f); }
   function freeV2(s) {
-    if (s.curlT) { freeT(s.curlT); freeT(s.velHat); s.curlT = s.velHat = null; }
+    if (s.curlT) { freeT(s.curlT); freeT(s.curlB); freeT(s.velHat); s.curlT = s.curlB = s.velHat = null; }
     if (s.sumVol) { s.sumVol.forEach(freeT); s.sumVol = null; }
     if (!s.mg) return;
     s.mg.forEach(function (l) { l.p.free(); freeT(l.rhs); freeT(l.r); });
@@ -852,18 +868,22 @@
   // ---------------------------------------------------------------- engine v3
   // v2 plus: vorticity confinement, MacCormack velocity advection, and a stronger memory at the
   // walls. Paint transport is v2's, so paint is still conserved exactly.
-  const V3_EPS = 20, V3_EDGE_MEM = 8;
+  const V3_EPS = 5, V3_SCALE = 0.015, V3_EDGE_MEM = 8;
   function wallMemory() {
     const k = S.mem * V3_EDGE_MEM;
     bind(P.wallPull, { uH: S.hgt.a.t, uH0: S.h0.t }); gl.uniform1f(P.wallPull.u.uK, k); run(S.out);
-    bind(P.wallW, {}); gl.uniform1f(P.wallW.u.uK, k); run(S.arr);
+    bind(P.wallW, { uH: S.hgt.a.t }); gl.uniform1f(P.wallW.u.uK, k); run(S.arr);
     const sd = reduce(S.out, S.sumOut), sw = reduce(S.arr, S.sumArr);
     bind(P.wallFix, { uH: S.hgt.a.t, uD: S.out.t, uW: S.arr.t, uSumD: sd.t, uSumW: sw.t }); run(S.hgt.b); S.hgt.swap();
   }
   function advectV3() {
     bind(P.curl, { uVel: S.vel.a.t }); run(S.curlT);
+    // eddies at the painting's scale, not the grid's: smooth the curl over 1.5% of the short side
+    const sigma = V3_SCALE * Math.min(S.w, S.h);
+    bind(P.blur1, { uT: S.curlT.t }); gl.uniform2f(P.blur1.u.uDir, 1, 0); gl.uniform1f(P.blur1.u.uSigma, sigma); run(S.curlB);
+    bind(P.blur1, { uT: S.curlB.t }); gl.uniform2f(P.blur1.u.uDir, 0, 1); gl.uniform1f(P.blur1.u.uSigma, sigma); run(S.curlT);
     // window.__V3_EPS overrides the strength (tests only)
-    bind(P.vort, { uVel: S.vel.a.t, uCurl: S.curlT.t }); gl.uniform1f(P.vort.u.uEps, typeof window.__V3_EPS === 'number' ? window.__V3_EPS : V3_EPS);
+    bind(P.vort, { uVel: S.vel.a.t, uCurl: S.curlT.t }); gl.uniform1f(P.vort.u.uEps, typeof window.__V3_EPS === 'number' ? window.__V3_EPS : V3_EPS); gl.uniform1f(P.vort.u.uSigma, sigma);
     run(S.vel.b); S.vel.swap();
     bind(P.advect, { uVel: S.vel.a.t }); gl.uniform1f(P.advect.u.uDamp, 1); run(S.velHat);
     bind(P.advectMC, { uVel: S.vel.a.t, uHat: S.velHat.t }); gl.uniform1f(P.advectMC.u.uDamp, G.param('flow')); run(S.vel.b); S.vel.swap();
