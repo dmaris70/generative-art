@@ -1076,7 +1076,13 @@
   }
   function setRenderUniforms(outW, outH, pxPerMM, linearOut) {
     const bodyOn = G.param('body') === 1;
-    if (bodyOn) updateBody();
+    if (bodyOn) {
+      // the body pass renders into its own targets: restore the caller's target and viewport, or the
+      // render would draw into the body texture it also reads (a feedback loop: a black screen)
+      const fb = gl.getParameter(gl.FRAMEBUFFER_BINDING), vp = gl.getParameter(gl.VIEWPORT);
+      updateBody();
+      gl.bindFramebuffer(gl.FRAMEBUFFER, fb); gl.viewport(vp[0], vp[1], vp[2], vp[3]);
+    }
     const u = P.render.u, sh = S.sheet;
     const lab = labelFor(outW, outH, pxPerMM);
     bind(P.render, { uH: S.hgt.a.t, uHist: S.hist.a.t, uLabel: labelTex });
