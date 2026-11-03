@@ -313,6 +313,30 @@
       if (c.x < 1 || c.y < 1 || c.x >= m.x || c.y >= m.y) v = vec2(0);
       o = vec4(v, 0., 1.);
     }`,
+    // v3 wall memory, zero-sum: within ~5% of the walls the paint is drawn further toward the
+    // painting as poured (weight w), so paint the wind piles against the frame dissolves back. The
+    // pull is made to add no paint: its total is taken back in proportion to w (wallFix).
+    wallPull: HEAD + `
+    uniform sampler2D uH, uH0; uniform float uK;
+    void main(){
+      ivec2 c = ivec2(gl_FragCoord.xy);
+      vec2 e = min(vUv, 1. - vUv) * uAspect;
+      float w = uK * (1. - smoothstep(0.0, 0.05, min(e.x, e.y)));
+      o = w * (texelFetch(uH0, c, 0) - texelFetch(uH, c, 0));
+    }`,
+    wallW: HEAD + `
+    uniform float uK;
+    void main(){
+      vec2 e = min(vUv, 1. - vUv) * uAspect;
+      o = vec4(uK * (1. - smoothstep(0.0, 0.05, min(e.x, e.y))));
+    }`,
+    wallFix: HEAD + `
+    uniform sampler2D uH, uD, uW, uSumD, uSumW;
+    void main(){
+      ivec2 c = ivec2(gl_FragCoord.xy);
+      vec4 sd = texelFetch(uSumD, ivec2(0), 0), sw = texelFetch(uSumW, ivec2(0), 0);
+      o = max(vec4(0), texelFetch(uH, c, 0) + texelFetch(uD, c, 0) - texelFetch(uW, c, 0) * sd / max(sw, vec4(1e-12)));
+    }`,
     // sum of a 4×4 block (a reduction step; repeated down to one texel)
     sum4: HEAD + `
     uniform sampler2D uT; uniform vec2 uFine;
@@ -326,18 +350,15 @@
       o = s;
     }`,
     tCombine: HEAD + `
-    uniform sampler2D uH, uOut, uArr, uSumOut, uSumArr, uH0; uniform float uMem, uEdgeMem;
+    uniform sampler2D uH, uOut, uArr, uSumOut, uSumArr, uH0; uniform float uMem;
     void main(){
       ivec2 c = ivec2(gl_FragCoord.xy);
       vec4 so = texelFetch(uSumOut, ivec2(0), 0), sa = texelFetch(uSumArr, ivec2(0), 0);
       // arrivals rescaled to the outflow; a pigment that barely moves keeps ratio 1
       vec4 k = mix(vec4(1.), clamp(so / max(sa, vec4(1e-12)), 0.5, 2.0), step(vec4(1e-9), sa));
       vec4 h = max(vec4(0), texelFetch(uH, c, 0) - texelFetch(uOut, c, 0) + texelFetch(uArr, c, 0) * k);
-      // elastic memory (living phase), as in v1. v3: stronger within ~5% of the walls, so paint
-      // the wind piles against the frame dissolves back into the painting instead of forming a rim
-      vec2 e = min(vUv, 1. - vUv) * uAspect;
-      float edge = 1. - smoothstep(0.0, 0.05, min(e.x, e.y));
-      o = mix(h, texelFetch(uH0, c, 0), min(1., uMem * (1. + uEdgeMem * edge)));
+      // elastic memory (living phase), as in v1
+      o = mix(h, texelFetch(uH0, c, 0), uMem);
     }`,
     // Levelling as an exchange between neighbours: each pair trades paint in proportion to the
     // difference in height, where either side is moving. What one cell gives the other takes, so
@@ -815,8 +836,8 @@
     const so = reduce(S.out, S.sumOut), sa = reduce(S.arr, S.sumArr);
     bind(P.tCombine, { uH: S.hgt.a.t, uOut: S.out.t, uArr: S.arr.t, uSumOut: so.t, uSumArr: sa.t, uH0: S.h0 ? S.h0.t : S.hgt.a.t });
     gl.uniform1f(P.tCombine.u.uMem, S.h0 ? S.mem : 0);
-    gl.uniform1f(P.tCombine.u.uEdgeMem, S.engine >= 3 ? V3_EDGE_MEM : 0);
     run(S.hgt.b); S.hgt.swap();
+    if (S.engine >= 3 && S.h0 && S.mem > 0) wallMemory();
     // levelling, in sheet units: v1's per-step strength at the 1024 grid, scaled by (cells per
     // sheet)² so the same film levels the same at any resolution; sub-steps keep it stable
     const lv = G.param('levelling');
@@ -832,9 +853,18 @@
   // v2 plus: vorticity confinement, MacCormack velocity advection, and a stronger memory at the
   // walls. Paint transport is v2's, so paint is still conserved exactly.
   const V3_EPS = 20, V3_EDGE_MEM = 8;
+  function wallMemory() {
+    const k = S.mem * V3_EDGE_MEM;
+    bind(P.wallPull, { uH: S.hgt.a.t, uH0: S.h0.t }); gl.uniform1f(P.wallPull.u.uK, k); run(S.out);
+    bind(P.wallW, {}); gl.uniform1f(P.wallW.u.uK, k); run(S.arr);
+    const sd = reduce(S.out, S.sumOut), sw = reduce(S.arr, S.sumArr);
+    bind(P.wallFix, { uH: S.hgt.a.t, uD: S.out.t, uW: S.arr.t, uSumD: sd.t, uSumW: sw.t }); run(S.hgt.b); S.hgt.swap();
+  }
   function advectV3() {
     bind(P.curl, { uVel: S.vel.a.t }); run(S.curlT);
-    bind(P.vort, { uVel: S.vel.a.t, uCurl: S.curlT.t }); gl.uniform1f(P.vort.u.uEps, typeof window.__V3_EPS === 'number' ? window.__V3_EPS : V3_EPS);   // override: tests only run(S.vel.b); S.vel.swap();
+    // window.__V3_EPS overrides the strength (tests only)
+    bind(P.vort, { uVel: S.vel.a.t, uCurl: S.curlT.t }); gl.uniform1f(P.vort.u.uEps, typeof window.__V3_EPS === 'number' ? window.__V3_EPS : V3_EPS);
+    run(S.vel.b); S.vel.swap();
     bind(P.advect, { uVel: S.vel.a.t }); gl.uniform1f(P.advect.u.uDamp, 1); run(S.velHat);
     bind(P.advectMC, { uVel: S.vel.a.t, uHat: S.velHat.t }); gl.uniform1f(P.advectMC.u.uDamp, G.param('flow')); run(S.vel.b); S.vel.swap();
   }
