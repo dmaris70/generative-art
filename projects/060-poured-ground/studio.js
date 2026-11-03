@@ -156,7 +156,7 @@
     const cpi = G.param('simres') / long;
     const rowsOut = [
       ['sheet', sh.mm[0].toFixed(0) + ' × ' + sh.mm[1].toFixed(0) + ' mm · ' + inch(sh.mm[0]) + ' × ' + inch(sh.mm[1]) + ' in'],
-      ['image', sh.imageMM[0].toFixed(0) + ' × ' + sh.imageMM[1].toFixed(0) + ' mm' + (sh.imgAspect ? ' · proportions of the original' : ' · proportions unknown: fills the format')],
+      ['image', sh.imageMM[0].toFixed(0) + ' × ' + sh.imageMM[1].toFixed(0) + ' mm' + (sh.imgAspect ? ' · proportions of the original (size: ' + ((S && S.palette && S.palette.aspectSource) || 'Wikidata') + ')' : ' · proportions unknown: fills the format')],
       ['pixels', sh.px[0].toLocaleString() + ' × ' + sh.px[1].toLocaleString() + ' (' + (mp / 1e6).toFixed(0) + ' MP)'],
       ['file', bits + '-bit RGB · sRGB · ' + dpi + ' dpi'],
       ['raw data', mb(raw) + ' (PNG smaller)'],
@@ -241,7 +241,7 @@
       w.hidden = false;
       w.innerHTML = '<b></b><span class="note"></span><div class="readings v"></div><div class="readings o"></div><span class="basis">Colorist Archive</span>';
       w.querySelector('b').textContent = P.painting + ' — ' + P.artist + (P.date ? ' (' + P.date + ')' : '');
-      w.querySelector('.note').textContent = 'Composed from its palette: this work has no layout brief. Proportions: ' + (P.aspect ? 'as the original (' + P.aspect.toFixed(3) + ' : 1, from Wikidata).' : 'unknown, so it fills the format.');
+      w.querySelector('.note').textContent = 'Composed from its palette: this work has no layout brief. Proportions: ' + (P.aspect ? 'as the original (' + P.aspect.toFixed(3) + ' : 1, size from ' + (P.aspectSource || 'Wikidata') + ').' : 'unknown, so it fills the format.');
       const v = w.querySelector('.v');
       if (L) { const a = document.createElement('a'); a.href = L.url; a.target = '_blank'; a.rel = 'noopener'; a.textContent = 'View the painting ↗'; a.style.color = 'var(--accent)'; v.appendChild(a); v.appendChild(document.createTextNode(' ' + L.site)); }
       const o = w.querySelector('.o');
