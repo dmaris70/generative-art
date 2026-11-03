@@ -266,6 +266,93 @@
       vec2 v = texelFetch(uVel, ivec2(gl_FragCoord.xy), 0).xy;
       o = bilin(uOut, vUv - v*DT/uAspect);
     }`,
+    // ---- engine v3: keep the eddies -------------------------------------------------------
+    // MacCormack velocity advection: a forward semi-Lagrangian step (uHat, from the advect pass),
+    // traced back again; half the round-trip error is added back, then clamped to the four source
+    // texels so it can never overshoot. Second-order, so small swirls survive the step.
+    advectMC: HEAD + `
+    uniform sampler2D uVel, uHat; uniform float uDamp;
+    void main(){
+      ivec2 c = ivec2(gl_FragCoord.xy), m = ivec2(uSize)-1;
+      vec2 v = texelFetch(uVel, c, 0).xy;
+      vec2 hat = texelFetch(uHat, c, 0).xy;
+      vec2 back = bilin(uHat, vUv + v*DT/uAspect).xy;            // the forward result, traced back
+      vec2 r = hat + 0.5*(v - back);
+      vec2 p = (vUv - v*DT/uAspect)*uSize - 0.5; ivec2 i = ivec2(floor(p));
+      vec2 a = texelFetch(uVel, clamp(i, ivec2(0), m), 0).xy, b = texelFetch(uVel, clamp(i+ivec2(1,0), ivec2(0), m), 0).xy;
+      vec2 d = texelFetch(uVel, clamp(i+ivec2(0,1), ivec2(0), m), 0).xy, e = texelFetch(uVel, clamp(i+ivec2(1,1), ivec2(0), m), 0).xy;
+      r = clamp(r, min(min(a,b),min(d,e)), max(max(a,b),max(d,e)));  // limiter
+      r *= uDamp;
+      if (c.x < 1 || c.y < 1 || c.x >= m.x || c.y >= m.y) r = vec2(0);
+      o = vec4(r, 0., 1.);
+    }`,
+    // vorticity (curl) of the velocity, per cell: velocity difference across two cells
+    curl: HEAD + `
+    uniform sampler2D uVel;
+    void main(){
+      ivec2 c = ivec2(gl_FragCoord.xy), m = ivec2(uSize)-1;
+      float L = texelFetch(uVel, clamp(c-ivec2(1,0),ivec2(0),m),0).y, R = texelFetch(uVel, clamp(c+ivec2(1,0),ivec2(0),m),0).y;
+      float B = texelFetch(uVel, clamp(c-ivec2(0,1),ivec2(0),m),0).x, T = texelFetch(uVel, clamp(c+ivec2(0,1),ivec2(0),m),0).x;
+      o = vec4(0.5*((R-L) - (T-B)), 0., 0., 1.);
+    }`,
+    // separable gaussian of the curl (sigma in cells; 17 taps over ±2 sigma)
+    blur1: HEAD + `
+    uniform sampler2D uT; uniform vec2 uDir; uniform float uSigma;
+    void main(){
+      ivec2 c = ivec2(gl_FragCoord.xy), m = ivec2(uSize)-1;
+      float acc = 0., ws = 0.;
+      for (int k = -8; k <= 8; k++) {
+        float x = float(k) * uSigma * 0.25, w = exp(-0.5 * (x*x) / (uSigma*uSigma));
+        ivec2 q = clamp(c + ivec2(round(uDir * x)), ivec2(0), m);
+        acc += w * texelFetch(uT, q, 0).x; ws += w;
+      }
+      o = vec4(acc / ws, 0., 0., 1.);
+    }`,
+    // vorticity confinement (Fedkiw et al.): a force along N × ω, N pointing up the gradient of
+    // |ω|, which spins up the small eddies numerical diffusion removes. In this per-cell form the
+    // force shrinks with the cell size, so it restores what the grid loses and converges with
+    // resolution. uEps is the strength.
+    vort: HEAD + `
+    uniform sampler2D uVel, uCurl; uniform float uEps, uSigma;
+    void main(){
+      ivec2 c = ivec2(gl_FragCoord.xy), m = ivec2(uSize)-1;
+      float w = texelFetch(uCurl, c, 0).x;
+      float L = abs(texelFetch(uCurl, clamp(c-ivec2(1,0),ivec2(0),m),0).x), R = abs(texelFetch(uCurl, clamp(c+ivec2(1,0),ivec2(0),m),0).x);
+      float B = abs(texelFetch(uCurl, clamp(c-ivec2(0,1),ivec2(0),m),0).x), T = abs(texelFetch(uCurl, clamp(c+ivec2(0,1),ivec2(0),m),0).x);
+      vec2 g = 0.5*vec2(R-L, T-B);
+      vec2 N = g / (length(g) + 1e-6);
+      // Δv = Δt · ε · ℓ · (N × ω): ω is the physical vorticity of the smoothed field (w · cells per
+      // short side), ℓ the smoothing scale in short-side units, so ε is dimensionless and the force
+      // is the same at every grid size; w · uSigma = ω · ℓ.
+      vec2 f = uEps * DT * uSigma * vec2(N.y, -N.x) * w;
+      vec2 v = texelFetch(uVel, c, 0).xy + f;
+      if (c.x < 1 || c.y < 1 || c.x >= m.x || c.y >= m.y) v = vec2(0);
+      o = vec4(v, 0., 1.);
+    }`,
+    // v3 wall memory, zero-sum: within ~5% of the walls the paint is drawn further toward the
+    // painting as poured (weight w), so paint the wind piles against the frame dissolves back. The
+    // pull is made to add no paint: its total is taken back in proportion to w × paint (wallFix).
+    wallPull: HEAD + `
+    uniform sampler2D uH, uH0; uniform float uK;
+    void main(){
+      ivec2 c = ivec2(gl_FragCoord.xy);
+      vec2 e = min(vUv, 1. - vUv) * uAspect;
+      float w = uK * (1. - smoothstep(0.0, 0.05, min(e.x, e.y)));
+      o = w * (texelFetch(uH0, c, 0) - texelFetch(uH, c, 0));
+    }`,
+    wallW: HEAD + `   // weight × paint present: where the pull's total is taken back (never below zero)
+    uniform sampler2D uH; uniform float uK;
+    void main(){
+      vec2 e = min(vUv, 1. - vUv) * uAspect;
+      o = uK * (1. - smoothstep(0.0, 0.05, min(e.x, e.y))) * texelFetch(uH, ivec2(gl_FragCoord.xy), 0);
+    }`,
+    wallFix: HEAD + `
+    uniform sampler2D uH, uD, uW, uSumD, uSumW;
+    void main(){
+      ivec2 c = ivec2(gl_FragCoord.xy);
+      vec4 sd = texelFetch(uSumD, ivec2(0), 0), sw = texelFetch(uSumW, ivec2(0), 0);
+      o = max(vec4(0), texelFetch(uH, c, 0) + texelFetch(uD, c, 0) - texelFetch(uW, c, 0) * sd / max(sw, vec4(1e-12)));
+    }`,
     // sum of a 4×4 block (a reduction step; repeated down to one texel)
     sum4: HEAD + `
     uniform sampler2D uT; uniform vec2 uFine;
@@ -651,7 +738,8 @@
       pours: {},
       engine: G.param('engine'),
     };
-    if (S.engine === 2) allocV2(S);
+    if (S.engine >= 2) allocV2(S);
+    if (S.engine >= 3) { S.curlT = target(w, h, gl.RGBA16F, gl.NEAREST); S.curlB = target(w, h, gl.RGBA16F, gl.NEAREST); S.velHat = target(w, h, gl.RGBA16F, gl.LINEAR); }
     for (const e of score.events) if (e.type === 'pour' || e.type === 'zone') (S.pours[e.t] = S.pours[e.t] || []).push(e);
     if (brief) sourceFor(pal.id);   // fetch the source now, long before the animated version reveals it
     if (origView) setTimeout(placeOriginal, 0);
@@ -712,6 +800,7 @@
   }
   function freeT(x) { gl.deleteTexture(x.t); gl.deleteFramebuffer(x.f); }
   function freeV2(s) {
+    if (s.curlT) { freeT(s.curlT); freeT(s.curlB); freeT(s.velHat); s.curlT = s.curlB = s.velHat = null; }
     if (s.sumVol) { s.sumVol.forEach(freeT); s.sumVol = null; }
     if (!s.mg) return;
     s.mg.forEach(function (l) { l.p.free(); freeT(l.rhs); freeT(l.r); });
@@ -764,6 +853,7 @@
     bind(P.tCombine, { uH: S.hgt.a.t, uOut: S.out.t, uArr: S.arr.t, uSumOut: so.t, uSumArr: sa.t, uH0: S.h0 ? S.h0.t : S.hgt.a.t });
     gl.uniform1f(P.tCombine.u.uMem, S.h0 ? S.mem : 0);
     run(S.hgt.b); S.hgt.swap();
+    if (S.engine >= 3 && S.h0 && S.mem > 0) wallMemory();
     // levelling, in sheet units: v1's per-step strength at the 1024 grid, scaled by (cells per
     // sheet)² so the same film levels the same at any resolution; sub-steps keep it stable
     const lv = G.param('levelling');
@@ -774,6 +864,29 @@
         run(S.hgt.b); S.hgt.swap();
       }
     }
+  }
+  // ---------------------------------------------------------------- engine v3
+  // v2 plus: vorticity confinement, MacCormack velocity advection, and a stronger memory at the
+  // walls. Paint transport is v2's, so paint is still conserved exactly.
+  const V3_EPS = 2, V3_SCALE = 0.015, V3_EDGE_MEM = 8;
+  function wallMemory() {
+    const k = S.mem * V3_EDGE_MEM;
+    bind(P.wallPull, { uH: S.hgt.a.t, uH0: S.h0.t }); gl.uniform1f(P.wallPull.u.uK, k); run(S.out);
+    bind(P.wallW, { uH: S.hgt.a.t }); gl.uniform1f(P.wallW.u.uK, k); run(S.arr);
+    const sd = reduce(S.out, S.sumOut), sw = reduce(S.arr, S.sumArr);
+    bind(P.wallFix, { uH: S.hgt.a.t, uD: S.out.t, uW: S.arr.t, uSumD: sd.t, uSumW: sw.t }); run(S.hgt.b); S.hgt.swap();
+  }
+  function advectV3() {
+    bind(P.curl, { uVel: S.vel.a.t }); run(S.curlT);
+    // eddies at the painting's scale, not the grid's: smooth the curl over 1.5% of the short side
+    const sigma = V3_SCALE * Math.min(S.w, S.h);
+    bind(P.blur1, { uT: S.curlT.t }); gl.uniform2f(P.blur1.u.uDir, 1, 0); gl.uniform1f(P.blur1.u.uSigma, sigma); run(S.curlB);
+    bind(P.blur1, { uT: S.curlB.t }); gl.uniform2f(P.blur1.u.uDir, 0, 1); gl.uniform1f(P.blur1.u.uSigma, sigma); run(S.curlT);
+    // window.__V3_EPS overrides the strength (tests only)
+    bind(P.vort, { uVel: S.vel.a.t, uCurl: S.curlT.t }); gl.uniform1f(P.vort.u.uEps, typeof window.__V3_EPS === 'number' ? window.__V3_EPS : V3_EPS); gl.uniform1f(P.vort.u.uSigma, sigma);
+    run(S.vel.b); S.vel.swap();
+    bind(P.advect, { uVel: S.vel.a.t }); gl.uniform1f(P.advect.u.uDamp, 1); run(S.velHat);
+    bind(P.advectMC, { uVel: S.vel.a.t, uHat: S.velHat.t }); gl.uniform1f(P.advectMC.u.uDamp, G.param('flow')); run(S.vel.b); S.vel.swap();
   }
   // total paint per pigment (sum of heights), read back: for checks, not used by the simulation
   function volume() {
@@ -798,9 +911,12 @@
       const h = handQueue.shift();
       if (h.type === 'pour') pour(h.x, h.y, h.r, h.pig); else finger(h.a, h.b, h.r, 0.9);
     }
-    bind(P.advect, { uVel: S.vel.a.t }); gl.uniform1f(P.advect.u.uDamp, G.param('flow'));
-    run(S.vel.b); S.vel.swap();
-    if (S.engine === 2) stepV2(); else {
+    // v3's eddies act in the moving version only (living and ending): the pour, and so every still
+    // print, is exactly v2's, which keeps prints the same at every sim resolution. Measured on the
+    // finished pour, 256 vs 1024 cells: v2 2.5% of pixels differ, eddies throughout 5.1%.
+    if (S.engine >= 3 && motion.on && motion.phase !== 'creation') advectV3();
+    else { bind(P.advect, { uVel: S.vel.a.t }); gl.uniform1f(P.advect.u.uDamp, G.param('flow')); run(S.vel.b); S.vel.swap(); }
+    if (S.engine >= 2) stepV2(); else {
       // engine v1, unchanged: 30 Jacobi iterations (by default), mofu's height rule as published
       bind(P.divergence, { uVel: S.vel.a.t }); run(S.div);
       bind(P.scale, { uT: S.p.a.t }); gl.uniform1f(P.scale.u.uK, 0.8); run(S.p.b); S.p.swap();
@@ -997,7 +1113,7 @@
     bind(P.wind, { uVel: S.vel.a.t });
     gl.uniform2f(P.wind.u.uWdir, Math.cos(ang), Math.sin(ang));
     gl.uniform1f(P.wind.u.uTsec, k / 60);
-    gl.uniform1f(P.wind.u.uAmp, 0.3 * G.param('wind') * (S.engine === 2 ? V2_WIND : 1));
+    gl.uniform1f(P.wind.u.uAmp, 0.3 * G.param('wind') * (S.engine >= 2 ? V2_WIND : 1));
     gl.uniform1f(P.wind.u.uAmt, 0.06);
     run(S.vel.b); S.vel.swap();
   }
@@ -1244,7 +1360,7 @@
     return {
       Title: 'Poured Ground' + (S.brief ? ' — ' + after() : '') + ', seed ' + G.seed,
       Author: 'dmaris70 / generative-art',
-      Software: 'Poured Ground (projects/060-poured-ground), WebGL2, engine v' + S.engine + (S.engine === 2 ? ' (multigrid pressure, conservative transport)' : ' (original)'),
+      Software: 'Poured Ground (projects/060-poured-ground), WebGL2, engine v' + S.engine + (S.engine === 3 ? ' (v2 + vorticity confinement, MacCormack advection, wall memory)' : S.engine === 2 ? ' (multigrid pressure, conservative transport)' : ' (original)'),
       Source: 'Palette: colorlisa.com - ' + p.artist + ', ' + p.painting + ' [' + p.colors.join(' ') + ']',
       Description: (S.brief ? 'Starting point: ' + S.brief.note + ' (' + (S.brief.k ? 'layout follows the documented composition' : 'layout inferred from the title and the artist\'s typical structure') + '). Interpretation ' + S.score.interp.toFixed(2) + (S.score.readings.length ? ': ' + S.score.readings.join('; ') : ': close to the starting layout') + '. No image of the work is used; only its five colorlisa colours and a description of its layout. ' : 'Free gestures. ') +
         'Ground ' + S.colours.ground + '; pigments ' + S.colours.pigments.join(' ') + '. Sheet ' + S.sheet.name +
@@ -1418,7 +1534,7 @@
       energy: { value: 1, min: 0.4, max: 2, step: 0.05, label: 'hand speed', group: 'composition' },
       flow: { value: 0.985, min: 0.9, max: 0.998, step: 0.001, label: 'flow (momentum)', group: 'simulation' },
       levelling: { value: 0.03, min: 0, max: 0.2, step: 0.005, label: 'levelling', group: 'simulation' },
-      engine: { value: 2, options: { 'v2 · same at every resolution, conserves paint': 2, 'v1 · original (prints before Nov 2026)': 1 }, label: 'engine', group: 'simulation' },
+      engine: { value: 3, options: { 'v3 · v2 with eddies kept': 3, 'v2 · same at every resolution, conserves paint': 2, 'v1 · original (prints before Nov 2026)': 1 }, label: 'engine', group: 'simulation' },
       iterations: { value: 30, min: 8, max: 80, step: 1, label: 'pressure iterations (v1)', group: 'simulation' },
       simres: { value: 1024, options: { '512': 512, '768': 768, '1024': 1024, '1536': 1536, '2048': 2048 }, label: 'sim long side', group: 'simulation' },
       speed: { value: 4, min: 1, max: 24, step: 1, label: 'steps / frame', group: 'simulation' },
