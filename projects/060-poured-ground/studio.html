@@ -207,6 +207,9 @@
       <div class="ctl"><label for="simres">sim detail</label><select id="simres">
         <option value="512">512 — draft</option><option value="768">768</option><option value="1024">1024 — standard</option><option value="1536">1536 — large prints</option><option value="2048">2048 — very large</option>
       </select></div>
+      <div class="ctl"><label>engine</label>
+        <div class="seg" id="engine" style="grid-column: 2 / span 2" title="v2 gives the same composition at every sim detail and conserves paint; v1 reproduces prints made before November 2026"><button data-v="2">v2</button><button data-v="1">v1 · original</button></div>
+      </div>
       <dl class="spec" id="spec"></dl>
     </div>
     <div class="foot">

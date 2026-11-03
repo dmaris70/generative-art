@@ -21,7 +21,39 @@ steps and constants. No code was copied beyond the shader expressions the articl
 | Shading | Normals from the height map, Matcap texture | Normals from a **cubic B-spline** of the height (value and analytic gradient, C2), so a 1k grid prints smoothly at 10k px. A procedural key light plus gloss stands in for the Matcap and is normalised so flat paint renders **exactly its palette colour** |
 | Colour mix | Simplified Kubelka–Munk weighted by thickness, alpha history where thin | Single-constant Kubelka–Munk in linear light: K/S = (1−R)²/2R per pigment, mixed by thickness, R = 1 + K/S − √((K/S)² + 2K/S). Thin films let the ground show through |
 
-Like the original, it is tuned by eye and does not conserve volume.
+Like the original, it is tuned by eye. Engine v1 also shares its two limits: paint volume is not conserved, and results depend on the simulation grid. Engine v2 removes both.
+
+### Engine v2 (default)
+
+v1 is the method above, kept unchanged so that earlier prints and links can be reproduced
+(`engine: v1`, or `p_engine=1` in a link). v2 changes four things:
+
+| | v1 (original) | v2 |
+|---|---|---|
+| Pressure | 30 Jacobi iterations (16-bit float). Information travels about 30 cells, so a finer grid is less incompressible and the same seed spreads differently at 512 and 2048 | Multigrid V-cycles (two per step, weighted-Jacobi smoothing, 32-bit float). The solve converges at every grid size, so the flow is the same in sheet units |
+| Walls | Velocity zeroed after advection, then re-introduced by the projection | Held at zero after the projection too, so no paint is drawn in from beyond the edge |
+| Paint transport | mofu's rule: `removed` where the paint is, `added` from the backtraced source. Not conservative: circular motion adds liquid | Same `removed` (outflow). The arrivals are that outflow gathered from the backtraced source, and each step they are rescaled per pigment so they total exactly what left. Paint is neither made nor lost; resting paint is untouched |
+| Levelling | Each moving cell blends toward its neighbours, one cell per step, so it is 16× weaker in sheet units at 2048 than at 512 | An exchange between neighbour pairs, so it conserves paint, scaled by (grid / 1024)² with stable sub-steps. It matches v1's strength at the default 1024 and is the same in sheet units at every size |
+
+Everything mofu-specific is unchanged: the movement threshold (0.02–0.22), the 0.3 transfer
+factor, the pour profile, the trace history and the rendering. The elastic memory of the
+living phase still pulls toward the painting as poured (a deliberate force, not a leak). The
+PNG's provenance records which engine made the file.
+
+**Motion defaults for v2.** Because v2 conserves paint, the same wind moves it less than in v1,
+where part of the visible motion was paint vanishing. v2 therefore applies the wind at 2.2×,
+with memory unchanged (1). The *wind* setting still reads 1 by default, so v1 links are unchanged.
+The value was chosen from a sweep over three works (seed 7, 30 s of living):
+
+| setting | motion vs v1 | image still within 24/255 of the pour | paint volume |
+|---|---|---|---|
+| v1, wind 1 | 100% | 80–96% | −4 to −9% |
+| v2, wind 1.0 | 25–38% | 95–99% | exact |
+| v2, wind 1.8 | 55–71% | 89–98% | exact |
+| **v2, wind 2.2 (default)** | **72–96%** | **85–98%** | **exact** |
+| v2, wind 2.2, memory 0.5 | 85–117% | 79–97% | exact |
+
+Memory 0.5 lets *Broadway Boogie Woogie*'s grid dissolve (79% held), so memory stays at 1.
 
 ## Colour
 
@@ -251,8 +283,8 @@ border in mm. Settings:
 - **Paper tooth** is set in millimetres, so it prints at the same physical scale at any dpi.
 
 The preview and the print come from the same simulation textures. Only the final render pass
-changes resolution, so what you see is what prints. A finer *sim long side* (1536 or 2048) adds
-detail to large prints.
+changes resolution, so what you see is what prints. With engine v2, a finer *sim long side*
+(1536 or 2048) adds detail to large prints while keeping the composition of the standard grid.
 
 **For the print lab:** the file is sRGB. Soft-proof it against the printer and paper ICC profile.
 Saturated palettes such as Warhol, Geiger and Klee's *Fire Evening* can fall outside matte
