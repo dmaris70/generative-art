@@ -86,7 +86,7 @@
   });
 
   // ---------------------------------------------------------------- segmented controls
-  ['mode', 'ground', 'style', 'label', 'labelPos', 'original', 'collection', 'proportions', 'landscape', 'dpi', 'bits'].forEach(function (k) {
+  ['mode', 'ground', 'style', 'label', 'labelPos', 'original', 'collection', 'proportions', 'landscape', 'dpi', 'bits', 'engine'].forEach(function (k) {
     $(k).addEventListener('click', function (e) {
       const b = e.target.closest('button');
       if (b) set(k, +b.dataset.v);
@@ -186,7 +186,7 @@
     // the seed row previews which palette the seed draws
     seedRow.querySelector('.strip').innerHTML = pid < 0 ? S.palette.colors.map((c) => '<i style="background:' + c + '"></i>').join('') : '';
     seedRow.querySelector('span').textContent = pid < 0 ? S.palette.artist + ' · ' + S.palette.painting : 'a different palette for every seed';
-    ['mode', 'ground', 'style', 'label', 'labelPos', 'original', 'collection', 'proportions', 'landscape', 'dpi', 'bits'].forEach((k) => seg(k, G.param(k)));
+    ['mode', 'ground', 'style', 'label', 'labelPos', 'original', 'collection', 'proportions', 'landscape', 'dpi', 'bits', 'engine'].forEach((k) => seg(k, G.param(k)));
     $('labelPos').classList.toggle('dim', G.param('label') !== 1);
     $('labelSize').parentNode.classList.toggle('dim', G.param('label') !== 1);
     const inspired = G.param('mode') === 0;

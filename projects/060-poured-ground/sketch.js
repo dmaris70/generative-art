@@ -186,6 +186,123 @@
       hh = smoothstep(0., 0.025, hh) * hh * 0.66;
       o = texelFetch(uH, ivec2(gl_FragCoord.xy), 0) + uMask*hh*uK;   // uK < 1: a flatter dab
     }`,
+
+    // ---- engine v2 -------------------------------------------------------------------------
+    // Multigrid pressure: the same Poisson problem as the Jacobi pass (L+R+B+T − 4p = div, walls
+    // by clamping), solved with V-cycles so it converges at every grid size. The flow is then the
+    // same in sheet units whether the sheet is simulated on 512 or 2048 cells.
+    mgSmooth: HEAD + `   // weighted Jacobi
+    uniform sampler2D uP, uRhs; uniform float uOmega;
+    void main(){
+      ivec2 c = ivec2(gl_FragCoord.xy), m = ivec2(uSize)-1;
+      float p = texelFetch(uP, c, 0).x;
+      float L = texelFetch(uP, clamp(c-ivec2(1,0),ivec2(0),m),0).x, R = texelFetch(uP, clamp(c+ivec2(1,0),ivec2(0),m),0).x;
+      float B = texelFetch(uP, clamp(c-ivec2(0,1),ivec2(0),m),0).x, T = texelFetch(uP, clamp(c+ivec2(0,1),ivec2(0),m),0).x;
+      o = vec4(mix(p, (L+R+B+T - texelFetch(uRhs,c,0).x)*0.25, uOmega), 0., 0., 1.);
+    }`,
+    mgResidual: HEAD + `
+    uniform sampler2D uP, uRhs;
+    void main(){
+      ivec2 c = ivec2(gl_FragCoord.xy), m = ivec2(uSize)-1;
+      float p = texelFetch(uP, c, 0).x;
+      float L = texelFetch(uP, clamp(c-ivec2(1,0),ivec2(0),m),0).x, R = texelFetch(uP, clamp(c+ivec2(1,0),ivec2(0),m),0).x;
+      float B = texelFetch(uP, clamp(c-ivec2(0,1),ivec2(0),m),0).x, T = texelFetch(uP, clamp(c+ivec2(0,1),ivec2(0),m),0).x;
+      o = vec4(texelFetch(uRhs,c,0).x - (L+R+B+T - 4.*p), 0., 0., 1.);
+    }`,
+    // fine residual → coarse right-hand side: the sum of the 2×2 block (coarse cells are twice
+    // as wide, so the Laplacian in coarse units is 4× the fine one; the sum is 4× the mean)
+    mgRestrict: HEAD + `
+    uniform sampler2D uR; uniform vec2 uFine;
+    void main(){
+      ivec2 c = ivec2(gl_FragCoord.xy)*2, m = ivec2(uFine);
+      float s = 0.;
+      for (int y = 0; y < 2; y++) for (int x = 0; x < 2; x++) {
+        ivec2 f = c + ivec2(x,y);
+        if (f.x < m.x && f.y < m.y) s += texelFetch(uR, f, 0).x;
+      }
+      o = vec4(s, 0., 0., 1.);
+    }`,
+    // coarse correction → fine: bilinear in coarse cell coordinates, added to the fine pressure
+    mgProlong: HEAD + `
+    uniform sampler2D uP, uE; uniform vec2 uCoarse;
+    void main(){
+      ivec2 c = ivec2(gl_FragCoord.xy), m = ivec2(uCoarse)-1;
+      vec2 q = (vec2(c)+0.5)*0.5 - 0.5; vec2 i = floor(q), f = q - i;
+      ivec2 a = clamp(ivec2(i), ivec2(0), m), b = clamp(ivec2(i)+1, ivec2(0), m);
+      float e = mix(mix(texelFetch(uE,a,0).x, texelFetch(uE,ivec2(b.x,a.y),0).x, f.x),
+                    mix(texelFetch(uE,ivec2(a.x,b.y),0).x, texelFetch(uE,b,0).x, f.x), f.y);
+      o = vec4(texelFetch(uP, c, 0).x + e, 0., 0., 1.);
+    }`,
+    // projection with walls: the outermost cells carry no flow, after the projection as well as
+    // after the advection, so paint is never drawn in from beyond the sheet's edge
+    projectWall: HEAD + `
+    uniform sampler2D uVel, uP;
+    void main(){
+      ivec2 c = ivec2(gl_FragCoord.xy), m = ivec2(uSize)-1;
+      float L = texelFetch(uP, clamp(c-ivec2(1,0),ivec2(0),m),0).x, R = texelFetch(uP, clamp(c+ivec2(1,0),ivec2(0),m),0).x;
+      float B = texelFetch(uP, clamp(c-ivec2(0,1),ivec2(0),m),0).x, T = texelFetch(uP, clamp(c+ivec2(0,1),ivec2(0),m),0).x;
+      vec2 v = texelFetch(uVel,c,0).xy - 0.5*vec2(R-L, T-B);
+      if (c.x < 1 || c.y < 1 || c.x >= m.x || c.y >= m.y) v = vec2(0);
+      o = vec4(v, 0., 1.);
+    }`,
+    // Conservative transport, in mofu's terms. What leaves a cell is mofu's "removed"
+    // (threshold × 0.3 × height, the threshold taken where the paint is); what arrives is that
+    // outflow, gathered from the backtraced source (mofu's "added"). Each step the arrivals of a
+    // pigment are scaled so they total exactly what left, so paint is neither made nor lost.
+    tOut: HEAD + `
+    uniform sampler2D uH, uVel; uniform vec2 uTh; uniform float uK;
+    void main(){
+      ivec2 c = ivec2(gl_FragCoord.xy);
+      float s = smoothstep(uTh.x, uTh.y, length(texelFetch(uVel, c, 0).xy));
+      o = texelFetch(uH, c, 0) * (s * uK);
+    }`,
+    tArrive: HEAD + `
+    uniform sampler2D uOut, uVel;
+    void main(){
+      vec2 v = texelFetch(uVel, ivec2(gl_FragCoord.xy), 0).xy;
+      o = bilin(uOut, vUv - v*DT/uAspect);
+    }`,
+    // sum of a 4×4 block (a reduction step; repeated down to one texel)
+    sum4: HEAD + `
+    uniform sampler2D uT; uniform vec2 uFine;
+    void main(){
+      ivec2 c = ivec2(gl_FragCoord.xy)*4, m = ivec2(uFine);
+      vec4 s = vec4(0);
+      for (int y = 0; y < 4; y++) for (int x = 0; x < 4; x++) {
+        ivec2 f = c + ivec2(x,y);
+        if (f.x < m.x && f.y < m.y) s += texelFetch(uT, f, 0);
+      }
+      o = s;
+    }`,
+    tCombine: HEAD + `
+    uniform sampler2D uH, uOut, uArr, uSumOut, uSumArr, uH0; uniform float uMem;
+    void main(){
+      ivec2 c = ivec2(gl_FragCoord.xy);
+      vec4 so = texelFetch(uSumOut, ivec2(0), 0), sa = texelFetch(uSumArr, ivec2(0), 0);
+      // arrivals rescaled to the outflow; a pigment that barely moves keeps ratio 1
+      vec4 k = mix(vec4(1.), clamp(so / max(sa, vec4(1e-12)), 0.5, 2.0), step(vec4(1e-9), sa));
+      vec4 h = max(vec4(0), texelFetch(uH, c, 0) - texelFetch(uOut, c, 0) + texelFetch(uArr, c, 0) * k);
+      // elastic memory (living phase), as in v1
+      o = mix(h, texelFetch(uH0, c, 0), uMem);
+    }`,
+    // Levelling as an exchange between neighbours: each pair trades paint in proportion to the
+    // difference in height, where either side is moving. What one cell gives the other takes, so
+    // levelling conserves paint too. uD is per sub-step, already scaled to sheet units.
+    tLevel: HEAD + `
+    uniform sampler2D uH, uVel; uniform vec2 uTh; uniform float uD;
+    float mob(ivec2 c){ return smoothstep(uTh.x, uTh.y, length(texelFetch(uVel, c, 0).xy)); }
+    void main(){
+      ivec2 c = ivec2(gl_FragCoord.xy), m = ivec2(uSize)-1;
+      vec4 h = texelFetch(uH, c, 0); float s = mob(c);
+      vec4 acc = vec4(0);
+      ivec2 n[4] = ivec2[4](ivec2(-1,0), ivec2(1,0), ivec2(0,-1), ivec2(0,1));
+      for (int i = 0; i < 4; i++) {
+        ivec2 q = c + n[i];
+        if (q.x < 0 || q.y < 0 || q.x > m.x || q.y > m.y) continue;   // the wall: no exchange
+        acc += max(s, mob(q)) * (texelFetch(uH, q, 0) - h);
+      }
+      o = h + uD * acc;
+    }`,
   };
 
   // render: one pass, any output size. Output pixel → sheet uv → image uv → sim.
@@ -470,7 +587,7 @@
     return null;
   }
 
-  function bind(prog, tex) {
+  function bind(prog, tex, size) {   // size: [w, h] of a coarser grid (multigrid, reductions)
     gl.useProgram(prog.p);
     let unit = 0;
     for (const name in tex) {
@@ -478,7 +595,7 @@
       gl.bindTexture(gl.TEXTURE_2D, tex[name]);
       gl.uniform1i(prog.u[name], unit++);
     }
-    if (prog.u.uSize) gl.uniform2f(prog.u.uSize, S.w, S.h);
+    if (prog.u.uSize) gl.uniform2f(prog.u.uSize, size ? size[0] : S.w, size ? size[1] : S.h);
     if (prog.u.uAspect) gl.uniform2f(prog.u.uAspect, S.aspect[0], S.aspect[1]);
   }
   function run(dst) {
@@ -506,7 +623,7 @@
     const long = G.param('simres');
     const a = sh.aspect, big = Math.max(a[0], a[1]);
     const w = Math.max(64, Math.round(long * a[0] / big)), h = Math.max(64, Math.round(long * a[1] / big));
-    if (S) { S.vel.free(); S.p.free(); S.hgt.free(); S.hist.free(); [S.h0, S.hist0, S.dye0].forEach(function (x) { if (x) { gl.deleteTexture(x.t); gl.deleteFramebuffer(x.f); } }); if (S.dye) S.dye.free(); gl.deleteTexture(S.div.t); gl.deleteFramebuffer(S.div.f); }
+    if (S) { freeV2(S); S.vel.free(); S.p.free(); S.hgt.free(); S.hist.free(); [S.h0, S.hist0, S.dye0].forEach(function (x) { if (x) { gl.deleteTexture(x.t); gl.deleteFramebuffer(x.f); } }); if (S.dye) S.dye.free(); gl.deleteTexture(S.div.t); gl.deleteFramebuffer(S.div.f); }
     // a fresh generator from the seed: the same sequence G.rng gives after a reset, so the
     // animated cycle can rebuild the identical composition each time it begins again
     const rng = GenArt._mulberry32(G.seed);
@@ -528,7 +645,9 @@
       hgt: pair(w, h, gl.RGBA32F, gl.NEAREST),
       hist: pair(w, h, gl.RGBA16F, gl.NEAREST),
       pours: {},
+      engine: G.param('engine'),
     };
+    if (S.engine === 2) allocV2(S);
     for (const e of score.events) if (e.type === 'pour' || e.type === 'zone') (S.pours[e.t] = S.pours[e.t] || []).push(e);
     if (brief) sourceFor(pal.id);   // fetch the source now, long before the animated version reveals it
     if (origView) setTimeout(placeOriginal, 0);
@@ -565,6 +684,97 @@
     run(S.vel.b); S.vel.swap();
   }
 
+  // ---------------------------------------------------------------- engine v2
+  // v1 (the original) is kept unchanged for reproducing earlier prints: p_engine=1.
+  // v2: multigrid pressure (converged at every grid size), walls held after projection,
+  // conservative transport and levelling, levelling in sheet units. Pressure in 32-bit float.
+  const REF_LONG = 1024;                 // v1's default grid: v2's levelling matches it there
+  function allocV2(s) {
+    s.mg = [];
+    let w = s.w, h = s.h;
+    for (;;) {
+      s.mg.push({ w: w, h: h, p: pair(w, h, gl.RGBA32F, gl.NEAREST), rhs: target(w, h, gl.RGBA32F, gl.NEAREST), r: target(w, h, gl.RGBA32F, gl.NEAREST) });
+      if (Math.min(w, h) <= 4) break;
+      w = Math.ceil(w / 2); h = Math.ceil(h / 2);
+    }
+    s.out = target(s.w, s.h, gl.RGBA32F, gl.NEAREST);
+    s.arr = target(s.w, s.h, gl.RGBA32F, gl.NEAREST);
+    s.sumChain = function () {               // targets for a reduction down to 1×1
+      const c = []; let w2 = s.w, h2 = s.h;
+      do { w2 = Math.ceil(w2 / 4); h2 = Math.ceil(h2 / 4); c.push(target(w2, h2, gl.RGBA32F, gl.NEAREST)); } while (w2 > 1 || h2 > 1);
+      return c;
+    };
+    s.sumOut = s.sumChain(); s.sumArr = s.sumChain(); s.sumVol = s.sumChain();
+  }
+  function freeT(x) { gl.deleteTexture(x.t); gl.deleteFramebuffer(x.f); }
+  function freeV2(s) {
+    if (s.sumVol) { s.sumVol.forEach(freeT); s.sumVol = null; }
+    if (!s.mg) return;
+    s.mg.forEach(function (l) { l.p.free(); freeT(l.rhs); freeT(l.r); });
+    [s.out, s.arr].forEach(freeT);
+    [s.sumOut, s.sumArr].forEach(function (c) { c.forEach(freeT); });
+    s.mg = null;
+  }
+  function reduce(src, chain) {            // sum of every texel of src into chain's last (1×1)
+    let from = src, fw = S.w, fh = S.h;
+    for (const t of chain) {
+      bind(P.sum4, { uT: from.t }, [t.w, t.h]); gl.uniform2f(P.sum4.u.uFine, fw, fh); run(t);
+      from = t; fw = t.w; fh = t.h;
+    }
+    return from;
+  }
+  function vcycle(l) {
+    const L = S.mg[l], sz = [L.w, L.h];
+    const smooth = function (n) {
+      for (let i = 0; i < n; i++) {
+        bind(P.mgSmooth, { uP: L.p.a.t, uRhs: L.rhs.t }, sz); gl.uniform1f(P.mgSmooth.u.uOmega, 0.8);
+        run(L.p.b); L.p.swap();
+      }
+    };
+    if (l === S.mg.length - 1) { smooth(40); return; }
+    smooth(2);
+    bind(P.mgResidual, { uP: L.p.a.t, uRhs: L.rhs.t }, sz); run(L.r);
+    const C = S.mg[l + 1];
+    bind(P.mgRestrict, { uR: L.r.t }, [C.w, C.h]); gl.uniform2f(P.mgRestrict.u.uFine, L.w, L.h); run(C.rhs);
+    bind(P.scale, { uT: C.p.a.t }, [C.w, C.h]); gl.uniform1f(P.scale.u.uK, 0); run(C.p.b); C.p.swap();   // e = 0
+    vcycle(l + 1);
+    bind(P.mgProlong, { uP: L.p.a.t, uE: C.p.a.t }, sz); gl.uniform2f(P.mgProlong.u.uCoarse, C.w, C.h); run(L.p.b); L.p.swap();
+    smooth(2);
+  }
+  const TH = [0.02, 0.22], KMOVE = 0.3;      // mofu's movement threshold and transfer factor
+  function stepV2() {
+    const top = S.mg[0];
+    bind(P.divergence, { uVel: S.vel.a.t }); run(top.rhs);
+    bind(P.scale, { uT: top.p.a.t }); gl.uniform1f(P.scale.u.uK, 0.8); run(top.p.b); top.p.swap();   // warm start, as v1
+    vcycle(0); vcycle(0);
+    bind(P.projectWall, { uVel: S.vel.a.t, uP: top.p.a.t }); run(S.vel.b); S.vel.swap();
+    // transport: outflow, arrivals, the two totals, then the conserving combination
+    bind(P.tOut, { uH: S.hgt.a.t, uVel: S.vel.a.t }); gl.uniform2f(P.tOut.u.uTh, TH[0], TH[1]); gl.uniform1f(P.tOut.u.uK, KMOVE); run(S.out);
+    bind(P.tArrive, { uOut: S.out.t, uVel: S.vel.a.t }); run(S.arr);
+    const so = reduce(S.out, S.sumOut), sa = reduce(S.arr, S.sumArr);
+    bind(P.tCombine, { uH: S.hgt.a.t, uOut: S.out.t, uArr: S.arr.t, uSumOut: so.t, uSumArr: sa.t, uH0: S.h0 ? S.h0.t : S.hgt.a.t });
+    gl.uniform1f(P.tCombine.u.uMem, S.h0 ? S.mem : 0);
+    run(S.hgt.b); S.hgt.swap();
+    // levelling, in sheet units: v1's per-step strength at the 1024 grid, scaled by (cells per
+    // sheet)² so the same film levels the same at any resolution; sub-steps keep it stable
+    const lv = G.param('levelling');
+    if (lv > 0) {
+      const f = Math.pow(Math.max(S.w, S.h) / REF_LONG, 2), D = lv / 4 * f, n = Math.max(1, Math.ceil(D / 0.2));
+      for (let i = 0; i < n; i++) {
+        bind(P.tLevel, { uH: S.hgt.a.t, uVel: S.vel.a.t }); gl.uniform2f(P.tLevel.u.uTh, TH[0], TH[1]); gl.uniform1f(P.tLevel.u.uD, D / n);
+        run(S.hgt.b); S.hgt.swap();
+      }
+    }
+  }
+  // total paint per pigment (sum of heights), read back: for checks, not used by the simulation
+  function volume() {
+    if (!S) return null;
+    const chain = S.sumVol || (S.sumVol = (function () { const c = []; let w2 = S.w, h2 = S.h; do { w2 = Math.ceil(w2 / 4); h2 = Math.ceil(h2 / 4); c.push(target(w2, h2, gl.RGBA32F, gl.NEAREST)); } while (w2 > 1 || h2 > 1); return c; })());
+    const t = reduce(S.hgt.a, chain), px = new Float32Array(4);
+    gl.bindFramebuffer(gl.FRAMEBUFFER, t.f); gl.readPixels(0, 0, 1, 1, gl.RGBA, gl.FLOAT, px);
+    return Array.from(px);
+  }
+
   const handQueue = [];
   function step() {
     const t = S.t;
@@ -581,17 +791,20 @@
     }
     bind(P.advect, { uVel: S.vel.a.t }); gl.uniform1f(P.advect.u.uDamp, G.param('flow'));
     run(S.vel.b); S.vel.swap();
-    bind(P.divergence, { uVel: S.vel.a.t }); run(S.div);
-    bind(P.scale, { uT: S.p.a.t }); gl.uniform1f(P.scale.u.uK, 0.8); run(S.p.b); S.p.swap();
-    const iters = G.param('iterations');
-    for (let i = 0; i < iters; i++) { bind(P.pressure, { uP: S.p.a.t, uDiv: S.div.t }); run(S.p.b); S.p.swap(); }
-    bind(P.project, { uVel: S.vel.a.t, uP: S.p.a.t }); run(S.vel.b); S.vel.swap();
-    bind(P.height, { uH: S.hgt.a.t, uVel: S.vel.a.t, uH0: S.h0 ? S.h0.t : S.hgt.a.t });
-    gl.uniform1f(P.height.u.uMem, S.h0 ? S.mem : 0);
-    gl.uniform2f(P.height.u.uTh, 0.02, 0.22);
-    gl.uniform1f(P.height.u.uK, 0.3);
-    gl.uniform1f(P.height.u.uLevel, G.param('levelling'));
-    run(S.hgt.b); S.hgt.swap();
+    if (S.engine === 2) stepV2(); else {
+      // engine v1, unchanged: 30 Jacobi iterations (by default), mofu's height rule as published
+      bind(P.divergence, { uVel: S.vel.a.t }); run(S.div);
+      bind(P.scale, { uT: S.p.a.t }); gl.uniform1f(P.scale.u.uK, 0.8); run(S.p.b); S.p.swap();
+      const iters = G.param('iterations');
+      for (let i = 0; i < iters; i++) { bind(P.pressure, { uP: S.p.a.t, uDiv: S.div.t }); run(S.p.b); S.p.swap(); }
+      bind(P.project, { uVel: S.vel.a.t, uP: S.p.a.t }); run(S.vel.b); S.vel.swap();
+      bind(P.height, { uH: S.hgt.a.t, uVel: S.vel.a.t, uH0: S.h0 ? S.h0.t : S.hgt.a.t });
+      gl.uniform1f(P.height.u.uMem, S.h0 ? S.mem : 0);
+      gl.uniform2f(P.height.u.uTh, 0.02, 0.22);
+      gl.uniform1f(P.height.u.uK, 0.3);
+      gl.uniform1f(P.height.u.uLevel, G.param('levelling'));
+      run(S.hgt.b); S.hgt.swap();
+    }
     bind(P.history, { uHist: S.hist.a.t, uH: S.hgt.a.t, uHist0: S.hist0 ? S.hist0.t : S.hist.a.t });
     gl.uniform1f(P.history.u.uMem, S.hist0 ? S.mem * 2 : 0);
     run(S.hist.b); S.hist.swap();
@@ -1022,7 +1235,7 @@
     return {
       Title: 'Poured Ground' + (S.brief ? ' — ' + after() : '') + ', seed ' + G.seed,
       Author: 'dmaris70 / generative-art',
-      Software: 'Poured Ground (projects/060-poured-ground), WebGL2',
+      Software: 'Poured Ground (projects/060-poured-ground), WebGL2, engine v' + S.engine + (S.engine === 2 ? ' (multigrid pressure, conservative transport)' : ' (original)'),
       Source: 'Palette: colorlisa.com - ' + p.artist + ', ' + p.painting + ' [' + p.colors.join(' ') + ']',
       Description: (S.brief ? 'Starting point: ' + S.brief.note + ' (' + (S.brief.k ? 'layout follows the documented composition' : 'layout inferred from the title and the artist\'s typical structure') + '). Interpretation ' + S.score.interp.toFixed(2) + (S.score.readings.length ? ': ' + S.score.readings.join('; ') : ': close to the starting layout') + '. No image of the work is used; only its five colorlisa colours and a description of its layout. ' : 'Free gestures. ') +
         'Ground ' + S.colours.ground + '; pigments ' + S.colours.pigments.join(' ') + '. Sheet ' + S.sheet.name +
@@ -1169,7 +1382,7 @@
   function generate() {
     G.shuffle(function (key) {
       // a new composition; the print setup (format, border, dpi, bits) and quality settings stay
-      if (['format', 'landscape', 'border', 'dpi', 'bits', 'simres', 'iterations', 'speed'].indexOf(key) >= 0) return G.param(key);
+      if (['engine', 'format', 'landscape', 'border', 'dpi', 'bits', 'simres', 'iterations', 'speed'].indexOf(key) >= 0) return G.param(key);
       if (key === 'palette') return -1;
       if (key === 'collection') return G.param('collection');
       if (key === 'mode') return G.param('mode');
@@ -1180,7 +1393,7 @@
   }
 
   // ---------------------------------------------------------------- harness
-  const SIM_KEYS = ['mode', 'interp', 'proportions', 'collection', 'palette', 'ground', 'style', 'pours', 'energy', 'flow', 'levelling', 'iterations', 'simres', 'format', 'landscape', 'border'];
+  const SIM_KEYS = ['engine', 'mode', 'interp', 'proportions', 'collection', 'palette', 'ground', 'style', 'pours', 'energy', 'flow', 'levelling', 'iterations', 'simres', 'format', 'landscape', 'border'];
   G = GenArt.create({
     title: 'Poured Ground',
     resetOnFinish: true,
@@ -1196,7 +1409,8 @@
       energy: { value: 1, min: 0.4, max: 2, step: 0.05, label: 'hand speed', group: 'composition' },
       flow: { value: 0.985, min: 0.9, max: 0.998, step: 0.001, label: 'flow (momentum)', group: 'simulation' },
       levelling: { value: 0.03, min: 0, max: 0.2, step: 0.005, label: 'levelling', group: 'simulation' },
-      iterations: { value: 30, min: 8, max: 80, step: 1, label: 'pressure iterations', group: 'simulation' },
+      engine: { value: 2, options: { 'v2 · same at every resolution, conserves paint': 2, 'v1 · original (prints before Nov 2026)': 1 }, label: 'engine', group: 'simulation' },
+      iterations: { value: 30, min: 8, max: 80, step: 1, label: 'pressure iterations (v1)', group: 'simulation' },
       simres: { value: 1024, options: { '512': 512, '768': 768, '1024': 1024, '1536': 1536, '2048': 2048 }, label: 'sim long side', group: 'simulation' },
       speed: { value: 4, min: 1, max: 24, step: 1, label: 'steps / frame', group: 'simulation' },
       gusts: { value: 6, min: 2, max: 24, step: 1, label: 'living (gusts of 5.03 s)', group: 'motion' },
@@ -1236,6 +1450,7 @@
     sheet: function (dpi) { return sheetFor(dpi); },
     archive: { index: function () { return loadArchiveIndex(); }, artist: function (id) { return loadArtist(id); }, BASE: ARCHIVE_BASE },
     viewLink: function () { return S ? viewLink(S.palette) : null; },
+    volume: volume, engine: function () { return S ? S.engine : null; },
     motion: motion, setMotion: setMotion, setPlaying: setPlaying, restartMotion: restartMotion, advance: advance, motionInfo: motionInfo, recordLoop: recordLoop, loopSeconds: loopSeconds,
     after: function () { return S ? after() : null; },
     source: function () { return S ? sourceFor(S.palette.id) : null; }, revealAmount: function () { return revealAmount(); },
