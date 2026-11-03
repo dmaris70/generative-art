@@ -868,7 +868,7 @@
   // ---------------------------------------------------------------- engine v3
   // v2 plus: vorticity confinement, MacCormack velocity advection, and a stronger memory at the
   // walls. Paint transport is v2's, so paint is still conserved exactly.
-  const V3_EPS = 5, V3_SCALE = 0.015, V3_EDGE_MEM = 8;
+  const V3_EPS = 2, V3_SCALE = 0.015, V3_EDGE_MEM = 8;
   function wallMemory() {
     const k = S.mem * V3_EDGE_MEM;
     bind(P.wallPull, { uH: S.hgt.a.t, uH0: S.h0.t }); gl.uniform1f(P.wallPull.u.uK, k); run(S.out);
