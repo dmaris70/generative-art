@@ -1450,8 +1450,8 @@
       Title: 'Poured Ground' + (S.brief ? ' — ' + after() : '') + ', seed ' + G.seed,
       Author: 'dmaris70 / generative-art',
       Software: 'Poured Ground (projects/060-poured-ground), WebGL2, engine v' + S.engine + (S.engine === 3 ? ' (v2 + vorticity confinement, MacCormack advection, wall memory)' : S.engine === 2 ? ' (multigrid pressure, conservative transport)' : ' (original)'),
-      Source: 'Palette: colorlisa.com - ' + p.artist + ', ' + p.painting + ' [' + p.colors.join(' ') + ']',
-      Description: (S.brief ? 'Starting point: ' + S.brief.note + ' (' + (S.brief.k ? 'layout follows the documented composition' : 'layout inferred from the title and the artist\'s typical structure') + '). Interpretation ' + S.score.interp.toFixed(2) + (S.score.readings.length ? ': ' + S.score.readings.join('; ') : ': close to the starting layout') + '. No image of the work is used; only its five colorlisa colours and a description of its layout. ' : 'Free gestures. ') +
+      Source: 'Palette: ' + paletteCredit(p) + ' - ' + p.artist + ', ' + p.painting + ' [' + p.colors.join(' ') + ']',
+      Description: (S.brief ? 'Starting point: ' + S.brief.note + ' (' + (S.brief.k ? 'layout follows the documented composition' : 'layout inferred from the title and the artist\'s typical structure') + '). Interpretation ' + S.score.interp.toFixed(2) + (S.score.readings.length ? ': ' + S.score.readings.join('; ') : ': close to the starting layout') + '. No image of the work is used; only its five colorlisa colours and a description of its layout. ' : p.archive && G.param('mode') === 0 ? 'Composed from the work\'s palette (Colorist Archive works have no layout brief). ' : 'Free gestures. ') +
         'Ground ' + S.colours.ground + '; pigments ' + S.colours.pigments.join(' ') + '. Sheet ' + S.sheet.name +
         (S.sheet.landscape ? ' landscape' : ' portrait') + ', image ' + S.sheet.imageMM[0].toFixed(0) + '×' + S.sheet.imageMM[1].toFixed(0) + ' mm' + (S.sheet.imgAspect ? ' in the proportions of the original (' + S.sheet.imgAspect.toFixed(3) + ' : 1, size from ' + (S.palette.aspectSource || 'Wikidata') + ')' : '') + ', borders ' + S.sheet.bx.toFixed(1) + '/' + S.sheet.by.toFixed(1) + ' mm, ' + W + '×' + H + ' px at ' + dpi + ' dpi, ' + bits + '-bit sRGB.' +
         (G.param('label') === 1 ? ' Label: "' + S.palette.painting + '", ' + S.palette.artist + ' (Cedarville Cursive, ' + (G.param('labelPos') === 1 ? 'border' : 'image') + ').' : ' No label.') +
@@ -1543,6 +1543,8 @@
     return { url: p.link || ('https://www.google.com/search?tbm=isch&q=' + q), site: (p.link || '').replace(/^https?:\/\/(www\.)?([^/]+).*$/, '$2') || 'image search',
              search: 'https://www.google.com/search?tbm=isch&q=' + q, note: 'Colorist Archive source page' };
   }
+  // where the palette comes from: colorlisa's 133 works or the Colorist Archive
+  function paletteCredit(p) { return p.archive ? 'Colorist Archive, meditationsincolor.com' : 'colorlisa.com'; }
   function updateCaption() {
     // nothing to describe while an archive work is still loading; build() calls this again
     if (!S) return;
@@ -1554,7 +1556,7 @@
       '<b>Poured Ground</b>' + (S.brief ? ' — <em>' + after() + '</em>' : '') + ' · seed ' + G.seed + '<br>' +
       (S.brief ? '<span class="src">' + (S.score.readings.length ? S.score.readings.join(' · ') : 'close to the work') + '</span><br>' : '') +
       (viewLink(S.palette) ? '<a class="view" target="_blank" rel="noopener" href="' + viewLink(S.palette).url + '">view the painting ↗</a> <span class="src">' + viewLink(S.palette).site + '</span> · <a class="view" target="_blank" rel="noopener" href="' + viewLink(S.palette).search + '">image search ↗</a><br>' : '') +
-      'palette: ' + p.artist + ', <em>' + p.painting + '</em> <span class="src">(colorlisa.com)</span><br>' +
+      'palette: ' + p.artist + ', <em>' + p.painting + '</em> <span class="src">(' + paletteCredit(p) + ')</span><br>' +
       '<span class="sw">ground ' + swatch(c.ground) + ' paint ' + c.pigments.map(function (h, i) { return '<span class="pig' + (i === pigment ? ' on' : '') + '">' + (i + 1) + swatch(h) + '</span>'; }).join('') + '</span><br>' +
       '<span class="src">print ' + sh.name + ' · ' + sh.px[0] + '×' + sh.px[1] + ' px @ ' + G.param('dpi') + ' dpi · ' + G.param('bits') + '-bit · sim ' + S.w + '×' + S.h + '</span>';
   }
