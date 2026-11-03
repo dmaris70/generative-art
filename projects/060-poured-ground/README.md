@@ -40,6 +40,21 @@ factor, the pour profile, the trace history and the rendering. The elastic memor
 living phase still pulls toward the painting as poured (a deliberate force, not a leak). The
 PNG's provenance records which engine made the file.
 
+**Motion defaults for v2.** Because v2 conserves paint, the same wind moves it less than in v1,
+where part of the visible motion was paint vanishing. v2 therefore applies the wind at 2.2×,
+with memory unchanged (1). The *wind* setting still reads 1 by default, so v1 links are unchanged.
+The value was chosen from a sweep over three works (seed 7, 30 s of living):
+
+| setting | motion vs v1 | image still within 24/255 of the pour | paint volume |
+|---|---|---|---|
+| v1, wind 1 | 100% | 80–96% | −4 to −9% |
+| v2, wind 1.0 | 25–38% | 95–99% | exact |
+| v2, wind 1.8 | 55–71% | 89–98% | exact |
+| **v2, wind 2.2 (default)** | **72–96%** | **85–98%** | **exact** |
+| v2, wind 2.2, memory 0.5 | 85–117% | 79–97% | exact |
+
+Memory 0.5 lets *Broadway Boogie Woogie*'s grid dissolve (79% held), so memory stays at 1.
+
 ## Colour
 
 Each palette is five hex colours taken verbatim from colorlisa.com (`palettes.js` records artist,

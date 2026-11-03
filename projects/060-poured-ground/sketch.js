@@ -746,6 +746,11 @@
     smooth(2);
   }
   const TH = [0.02, 0.22], KMOVE = 0.3;      // mofu's movement threshold and transfer factor
+  // v2's wind gain. v1's living motion was partly paint vanishing and smearing; v2 conserves
+  // paint, so the same wind moves it less. Tuned by eye and by measure (A Bigger Splash, Broadway
+  // Boogie Woogie, The Starry Night; seed 7): at 2.2× v2 moves 72–96% as much as v1 while
+  // 85–98% of the image stays within 24/255 of the painting as poured (v1: 80–96%).
+  const V2_WIND = 2.2;
   function stepV2() {
     const top = S.mg[0];
     bind(P.divergence, { uVel: S.vel.a.t }); run(top.rhs);
@@ -992,7 +997,7 @@
     bind(P.wind, { uVel: S.vel.a.t });
     gl.uniform2f(P.wind.u.uWdir, Math.cos(ang), Math.sin(ang));
     gl.uniform1f(P.wind.u.uTsec, k / 60);
-    gl.uniform1f(P.wind.u.uAmp, 0.3 * G.param('wind'));
+    gl.uniform1f(P.wind.u.uAmp, 0.3 * G.param('wind') * (S.engine === 2 ? V2_WIND : 1));
     gl.uniform1f(P.wind.u.uAmt, 0.06);
     run(S.vel.b); S.vel.swap();
   }
