@@ -12,8 +12,12 @@
 (function () {
   'use strict';
   const PG = window.PouredGround, PALS = window.PALETTES;
-  // proportions of colorlisa's works (width / height of the original, from Wikidata), when known
-  PALS.forEach(function (p) { const r = (window.PROPORTIONS || {})[p.id]; if (r && r.aspect) p.aspect = r.aspect; });
+  // proportions of colorlisa's works (width / height of the original), when known, with the record they come from
+  PALS.forEach(function (p) { const r = (window.PROPORTIONS || {})[p.id]; if (r && r.aspect) { p.aspect = r.aspect; p.aspectSource = r.source || 'Wikidata'; } });
+  // where an archive work's size comes from (field `as`); absent means Wikidata
+  const ASPECT_SOURCES = { wd: 'Wikidata', met: 'The Met', aic: 'Art Institute of Chicago', cma: 'Cleveland Museum of Art',
+    nga: 'National Gallery of Art', rijks: 'Rijksmuseum', tate: 'Tate', smk: 'SMK (National Gallery of Denmark)', va: 'V&A',
+    commons: 'the Wikimedia Commons artwork record' };
 
   // ---------------------------------------------------------------- GL setup
   const canvas = document.getElementById('gl');
@@ -557,7 +561,7 @@
     const a = artistAt(n); if (!a) return null;
     const w = (archive.files[a.id] || [])[n - a.o]; if (!w) return null;
     return { id: ARCHIVE_BASE + n, archive: true, artist: a.name, painting: w.t, date: w.d, year: w.y, colors: w.c,
-             aspect: w.a, link: w.u, img: w.pd ? w.i : null, pd: w.pd, source: w.src, artistId: a.id, artistDied: a.died };
+             aspect: w.a, aspectSource: w.a ? ASPECT_SOURCES[w.as || 'wd'] || 'Wikidata' : null, link: w.u, img: w.pd ? w.i : null, pd: w.pd, source: w.src, artistId: a.id, artistDied: a.died };
   }
   function workFor(id, cb) {       // resolve any work id; cb(work) once its data is loaded
     if (id < ARCHIVE_BASE) { cb(PALS[id]); return; }
@@ -1239,7 +1243,7 @@
       Source: 'Palette: colorlisa.com - ' + p.artist + ', ' + p.painting + ' [' + p.colors.join(' ') + ']',
       Description: (S.brief ? 'Starting point: ' + S.brief.note + ' (' + (S.brief.k ? 'layout follows the documented composition' : 'layout inferred from the title and the artist\'s typical structure') + '). Interpretation ' + S.score.interp.toFixed(2) + (S.score.readings.length ? ': ' + S.score.readings.join('; ') : ': close to the starting layout') + '. No image of the work is used; only its five colorlisa colours and a description of its layout. ' : 'Free gestures. ') +
         'Ground ' + S.colours.ground + '; pigments ' + S.colours.pigments.join(' ') + '. Sheet ' + S.sheet.name +
-        (S.sheet.landscape ? ' landscape' : ' portrait') + ', image ' + S.sheet.imageMM[0].toFixed(0) + '×' + S.sheet.imageMM[1].toFixed(0) + ' mm' + (S.sheet.imgAspect ? ' in the proportions of the original (' + S.sheet.imgAspect.toFixed(3) + ' : 1)' : '') + ', borders ' + S.sheet.bx.toFixed(1) + '/' + S.sheet.by.toFixed(1) + ' mm, ' + W + '×' + H + ' px at ' + dpi + ' dpi, ' + bits + '-bit sRGB.' +
+        (S.sheet.landscape ? ' landscape' : ' portrait') + ', image ' + S.sheet.imageMM[0].toFixed(0) + '×' + S.sheet.imageMM[1].toFixed(0) + ' mm' + (S.sheet.imgAspect ? ' in the proportions of the original (' + S.sheet.imgAspect.toFixed(3) + ' : 1, size from ' + (S.palette.aspectSource || 'Wikidata') + ')' : '') + ', borders ' + S.sheet.bx.toFixed(1) + '/' + S.sheet.by.toFixed(1) + ' mm, ' + W + '×' + H + ' px at ' + dpi + ' dpi, ' + bits + '-bit sRGB.' +
         (G.param('label') === 1 ? ' Label: "' + S.palette.painting + '", ' + S.palette.artist + ' (Cedarville Cursive, ' + (G.param('labelPos') === 1 ? 'border' : 'image') + ').' : ' No label.') +
         (motion.on && S.dyeReady ? (sourceFor(S.palette.id).kind === 'original'
           ? ' The original rises in the paper: ' + S.palette.painting + ' (' + sourceFor(S.palette.id).meta.work_year + '), ' + S.palette.artist + ', public domain, image: ' + sourceFor(S.palette.id).meta.source + ', ' + sourceFor(S.palette.id).meta.source_url + ' (' + sourceFor(S.palette.id).meta.license + ').'
