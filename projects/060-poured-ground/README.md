@@ -282,6 +282,9 @@ liquid does not actually do, and the canvas walls keep everything on the sheet.
     Culture, the Met, Tate and others). The 8 hosted originals use their museum record instead.
     Checked 2026-11-02: 63 open, 54 refuse automated checks but open in a browser, and 8 dead
     links were replaced (Wikipedia for the Mona Lisa, an image search for the other 7).
+  - **Colour:** the original is decoded with the exact sRGB curve, the inverse of the one used for
+    output, so its tones survive the round trip. Before 3 Nov 2026 a 2.2 power was used, which
+    crushed its deepest shadows (sRGB 10 came out as 3, 20 as 12).
   - **Movement:** the original has its own elastic memory (about 1 s), so it ripples and
     liquefies with the gusts but stays legible. The memory releases in the ending, when the
     original is carried and absorbed with the paint.
