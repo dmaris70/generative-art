@@ -55,6 +55,54 @@ The value was chosen from a sweep over three works (seed 7, 30 s of living):
 
 Memory 0.5 lets *Broadway Boogie Woogie*'s grid dissolve (79% held), so memory stays at 1.
 
+### Engine v3 (default): keeping the eddies
+
+v3 is v2 with three additions, which act in the **moving version only** (the living phase and the ending). The pour, and so every still print, is exactly v2's: a v3 still is pixel-identical to v2. Paint transport is v2's, so paint is still conserved exactly. v2 and
+v1 stay selectable (`p_engine=2`, `p_engine=1`).
+
+- **MacCormack velocity advection.** A second-order step: the forward semi-Lagrangian result is traced
+  back, half the round-trip error is added back, and a limiter clamps it to the source texels so it
+  never overshoots.
+- **Vorticity confinement at the painting's scale.**
+  - The flow's vorticity is smoothed over 1.5% of the short side.
+  - A force along N × ω (N up the gradient of |ω|) then spins up the eddies numerical diffusion removes.
+  - The force uses physical vorticity and a scale fixed in sheet units, so it is the same at every
+    grid size.
+  - Grid-scale confinement was tried first. It amplified cell noise into a pebbled texture, so it was
+    replaced.
+- **Wall memory.** Within ~5% of the walls the elastic memory is 8× stronger, so paint the wind piles
+  against the frame dissolves back into the painting. The pull is zero-sum: its total is taken back
+  in proportion to the paint present, so it adds no paint.
+
+**Choosing ε.** The sweep applied the eddies to the pour as well, to make their effect easy to
+see. It covered *The Starry Night* and *Broadway Boogie Woogie* (seed 7, 30 s of living). "Holds"
+is the share of the image within 24/255 of the poured painting.
+
+| | motion vs v2 | holds | volume | look |
+|---|---|---|---|---|
+| v2 | 100% | 85 / 98% | exact | smooth, eddies damped |
+| v3, ε 0 (MacCormack only) | 87–92% | 86 / 98% | exact | nearly identical to v2 |
+| **v3, ε 2 (default)** | **91–96%** | **86 / 99%** | **exact** | brush-scale curls in the sky and the red masses; no noise |
+| v3, ε 5 | 96–112% | 85 / 98% | exact | pebbled texture begins; grid lines break |
+| v3, ε 12 | 52–90% | 89 / 100% | exact | the painting dissolves |
+
+**Why the moving version only.** With eddies throughout, the finished pour differed on 5.1% of
+pixels between 256 and 1024 cells, against 2.5% for v2. That breaks the promise that a print matches
+its preview at any sim detail. Eddies amplify small differences, as turbulence does.
+
+**As shipped** (eddies in living and ending, ε 2; seed 7, 30 s of living):
+
+| | motion /5 s | holds | volume | ink in the outer 3%, 30 s |
+|---|---|---|---|---|
+| *Broadway Boogie Woogie*, v2 | 8.3 | 85% | exact | +17% |
+| *Broadway Boogie Woogie*, v3 | 8.5 | 86% | exact | +9% |
+| *The Starry Night*, v2 | 2.3 | 98% | exact | – |
+| *The Starry Night*, v3 | 2.1 | 99% | exact | – |
+
+v3 adds curling forms as the painting lives: the red masses and the lower-left blue of *Broadway
+Boogie Woogie*, and the moon in *The Starry Night*. The wall rim is halved. The moving version at
+1024 cells costs about 1.7× v2's time.
+
 ## Colour
 
 Each palette is five hex colours taken verbatim from colorlisa.com (`palettes.js` records artist,
