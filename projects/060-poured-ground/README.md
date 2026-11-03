@@ -298,6 +298,28 @@ liquid does not actually do, and the canvas walls keep everything on the sheet.
 - **Containment:** every laid field lies wholly on the sheet, whatever the interpretation.
   Nothing is cut off by the canvas edge, and the check script verifies it.
 
+## Paint body
+
+The paint has a physical body (setting *paint body*, on by default):
+
+- **Ridges where colours meet, and a lip where a film ends.**
+  - Each pigment's share of the paint, and the share of bare ground, changes sharply at a boundary.
+    Half the sum of those changes marks every boundary once: between colours, and at a film's edge.
+  - The ridge stands in proportion to the paint present there.
+  - It is smoothed over 0.3% of the short side, so it is the same at every sim resolution.
+  - It adds to the relief through the same cubic B-spline.
+  - Its height is 0.8 × the local paint thickness, chosen from close-ups at 150 dpi (0.35, 0.8 and
+    1.5 compared): at 0.35 the edges are easy to miss; at 1.5 they read as outlines.
+- **Weight.** Each pigment has a seeded mobility (0.75–1.25×), so heavier paint spreads less. Engine
+  v2 and later still conserve paint exactly.
+- **Transparency.** Each pigment has a seeded hiding power (0.7–1.3×), so a glaze lets the ground
+  glow through a thin film. A wider range (0.55–1.45) turned *Broadway Boogie Woogie*'s blue block
+  pale, so it was narrowed.
+- **Seeding.** Pigment properties come from their own seeded stream, so no other seeded choice
+  changes.
+- **Earlier prints.** *flat* (`p_body=0`) reproduces every earlier print, pixel for pixel. This was
+  verified on three works.
+
 ## Label
 
 The work's title, with the artist's name beneath it, is written in **Cedarville Cursive** at
