@@ -451,6 +451,7 @@
   }
   vec3 ks2r(vec3 ks){ return 1. + ks - sqrt(ks*ks + 2.*ks); }
   vec3 srgb(vec3 c){ c = clamp(c,0.,1.); return mix(c*12.92, 1.055*pow(c, vec3(1./2.4)) - 0.055, step(0.0031308, c)); }
+  vec3 srgb2lin(vec3 c){ c = clamp(c,0.,1.); return mix(c/12.92, pow((c + 0.055)/1.055, vec3(2.4)), step(0.04045, c)); }
 
   void main(){
     vec2 px = vec2(uOrigin.x + gl_FragCoord.x, uOrigin.y + (uTileH - gl_FragCoord.y));
@@ -528,7 +529,7 @@
         float rt = 0.05 + 0.75 * poreT;
         float gone = smoothstep(rt, rt + 0.12, soak) + (1. - endGate);
         float show = clamp(dy.a * rise * (1. - gone), 0., 1.);
-        vec3 lin = pow(max(dy.rgb, vec3(0.)), vec3(2.2));
+        vec3 lin = srgb2lin(dy.rgb);   // exact inverse of srgb(): a 2.2 power crushed the shadows
         ground = mix(ground, lin * (1. + tooth(mm)), show);
         // the paint becomes a thin veil and takes on the source's colour where they meet, so the
         // two read as one liquid rather than a picture under a cover
@@ -547,7 +548,7 @@
     if (!inImage) col = uPaper * (1. + tooth(mm));
     if (uLabelOn > 0.5) {
       vec2 lu = (px - uLabelRect.xy) / uLabelRect.zw;
-      if (lu.x >= 0. && lu.y >= 0. && lu.x <= 1. && lu.y <= 1.) col = mix(col, uInk, 0.92 * texture(uLabel, lu).a);
+      if (lu.x >= 0. && lu.y >= 0. && lu.x <= 1. && lu.y <= 1.) col = mix(col, uInk, 0.92 * textureLod(uLabel, lu, 0.).a);   // explicit LOD: no derivatives in this branch
     }
     if (uLinearOut > 0.5) { o = vec4(srgb(col), 1.); return; }
     vec3 s = srgb(col);
