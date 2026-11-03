@@ -60,6 +60,11 @@
     .pal .t { font-size: 12px; line-height: 1.3; min-width: 0; }
     .pal .t b { font-weight: 600; display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     .pal .t span { color: var(--muted); display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-style: italic; }
+    .art { padding: 6px 8px; border-radius: 7px; cursor: pointer; font-size: 12px; display: flex; justify-content: space-between; gap: 8px; }
+    .art:hover { background: var(--card); }
+    .art b { font-weight: 600; } .art span { color: var(--muted); white-space: nowrap; }
+    .arch-head { color: var(--muted); font-size: 11px; text-transform: uppercase; letter-spacing: .06em; padding: 10px 8px 4px; }
+    .art-works { padding-left: 8px; border-left: 1px solid var(--border); margin-left: 8px; }
     .pal.seed .strip { background: repeating-linear-gradient(45deg, #26262e 0 6px, #1a1a20 6px 12px); }
     /* resolved colours */
     .chips { display: flex; gap: 6px; flex-wrap: wrap; }
@@ -111,7 +116,8 @@
       <p class="hint" id="interpHint">0 stays close to the work · 1 travels furthest from it</p>
       <div class="work" id="work"></div>
 
-      <h2>Palette <small id="palCount"></small></h2>
+      <h2>Works <small id="palCount"></small></h2>
+      <div class="seg" id="collection" style="margin-bottom:8px"><button data-v="2">Both</button><button data-v="0">colorlisa</button><button data-v="1">Colorist Archive</button></div>
       <input id="palSearch" type="search" placeholder="Search artist or painting…" autocomplete="off" />
       <div id="palettes" role="listbox" aria-label="Palettes"></div>
 
@@ -186,7 +192,10 @@
       <h2>Print</h2>
       <div class="ctl"><label for="format">format</label><select id="format"></select></div>
       <div class="ctl"><label>orientation</label>
-        <div class="seg" id="landscape" style="grid-column: 2 / span 2"><button data-v="0">Portrait</button><button data-v="1">Landscape</button></div>
+        <div class="seg" id="landscape" style="grid-column: 2 / span 2"><button data-v="2">As original</button><button data-v="0">Portrait</button><button data-v="1">Landscape</button></div>
+      </div>
+      <div class="ctl"><label>proportions</label>
+        <div class="seg" id="proportions" style="grid-column: 2 / span 2"><button data-v="1">As the original</button><button data-v="0">Fill the format</button></div>
       </div>
       <div class="ctl"><label for="border">border mm</label><input type="range" id="border" min="0" max="120" step="1" /><span class="val"></span></div>
       <div class="ctl"><label>dpi</label>
@@ -224,6 +233,7 @@
   <script src="briefs.js"></script>
   <script src="originals.js"></script>
   <script src="links.js"></script>
+  <script src="proportions.js"></script>
   <script src="engine.js"></script>
   <script src="png.js"></script>
   <script src="sketch.js"></script>
