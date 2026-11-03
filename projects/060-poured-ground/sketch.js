@@ -911,7 +911,10 @@
       const h = handQueue.shift();
       if (h.type === 'pour') pour(h.x, h.y, h.r, h.pig); else finger(h.a, h.b, h.r, 0.9);
     }
-    if (S.engine >= 3) advectV3();
+    // v3's eddies act in the moving version only (living and ending): the pour, and so every still
+    // print, is exactly v2's, which keeps prints the same at every sim resolution. Measured on the
+    // finished pour, 256 vs 1024 cells: v2 2.5% of pixels differ, eddies throughout 5.1%.
+    if (S.engine >= 3 && motion.on && motion.phase !== 'creation') advectV3();
     else { bind(P.advect, { uVel: S.vel.a.t }); gl.uniform1f(P.advect.u.uDamp, G.param('flow')); run(S.vel.b); S.vel.swap(); }
     if (S.engine >= 2) stepV2(); else {
       // engine v1, unchanged: 30 Jacobi iterations (by default), mofu's height rule as published
