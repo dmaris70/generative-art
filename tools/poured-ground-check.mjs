@@ -168,7 +168,8 @@ for (let f = 0; f < PG.FORMAT_KEYS.length; f++) for (const ar of [0.5, 0.75, 1, 
   const dir = path.join(path.dirname(new URL(import.meta.url).pathname), '../projects/060-poured-ground/archive');
   const ix = JSON.parse(fs.readFileSync(path.join(dir, 'index.json'), 'utf8'));
   ok(ix.total === ix.artists.reduce((n, a) => n + a.n, 0), 'archive total equals the sum of artists');
-  let off = 0, works = 0, imgs = 0, badImg = 0, badPal = 0, badLink = 0, badAspect = 0;
+  let off = 0, works = 0, imgs = 0, badImg = 0, badPal = 0, badLink = 0, badAspect = 0, badSrc = 0, sized = 0;
+  const SRC = new Set(['met', 'aic', 'cma', 'nga', 'rijks', 'tate', 'smk', 'va', 'commons']);   // absent = Wikidata
   for (const a of ix.artists) {
     ok(a.o === off, 'artist offsets are contiguous ' + a.id); off += a.n;
     const W = JSON.parse(fs.readFileSync(path.join(dir, a.id + '.json'), 'utf8'));
@@ -178,6 +179,9 @@ for (let f = 0; f < PG.FORMAT_KEYS.length; f++) for (const ar of [0.5, 0.75, 1, 
       if (!(w.c && w.c.length === 5 && w.c.every((c) => /^#[0-9A-F]{6}$/.test(c)))) badPal++;
       if (w.u && !/^https:\/\//.test(w.u)) badLink++;
       if (w.a !== null && !(w.a > 0.15 && w.a < 7)) badAspect++;
+      if (w.a) sized++;
+      // a size names its record: Wikidata (no field) or a known museum / Commons source, and only when sized
+      if (w.as !== undefined && !(w.a && SRC.has(w.as))) badSrc++;
       // an image is referenced only for public-domain works: artist died <= 1955, work dated <= 1930
       if (w.i) { imgs++; if (!(w.pd && a.died && a.died <= 1955 && w.y && w.y <= 1930)) badImg++; }
       if (w.pd && !(a.died && a.died <= 1955 && w.y && w.y <= 1930)) badImg++;
@@ -187,7 +191,21 @@ for (let f = 0; f < PG.FORMAT_KEYS.length; f++) for (const ar of [0.5, 0.75, 1, 
   ok(badPal === 0, 'every archive work has a 5-colour palette (' + badPal + ' bad)');
   ok(badLink === 0, 'archive links are https (' + badLink + ' not)');
   ok(badAspect === 0, 'archive proportions are plausible (' + badAspect + ' bad)');
+  ok(badSrc === 0, 'archive sizes name a known source (' + sized + ' sized, ' + badSrc + ' bad)');
   ok(badImg === 0, 'images only for public-domain archive works (' + imgs + ' referenced, ' + badImg + ' violations)');
+}
+
+// 13. colorlisa proportions: each names its record (Wikidata item, or museum + record), and the
+//     stored size agrees with the aspect.
+{
+  require('../projects/060-poured-ground/proportions.js');
+  const R = globalThis.PROPORTIONS;
+  for (const [id, r] of Object.entries(R)) {
+    ok(PALS[+id] !== undefined, 'proportions refer to a colorlisa work ' + id);
+    ok(r.aspect > 0.15 && r.aspect < 7, 'colorlisa proportions plausible ' + id);
+    ok(Boolean(r.wikidata) || (Boolean(r.source) && Boolean(r.record)), 'colorlisa proportions name their record ' + id);
+    ok(Math.abs(r.size_cm[1] / r.size_cm[0] - r.aspect) < 0.002, 'colorlisa size agrees with aspect ' + id);
+  }
 }
 
 console.log(failures ? `${failures} of ${checks} checks failed` : `all ${checks} checks pass`);
