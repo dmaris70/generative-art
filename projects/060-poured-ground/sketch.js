@@ -1172,7 +1172,7 @@
     }
     requestAnimationFrame(frame);
   }
-  function finishSim() { while (S.t < S.score.steps) step(); dirty = true; }
+  function finishSim() { if (!S) return; while (S.t < S.score.steps) step(); dirty = true; }
 
   // ---------------------------------------------------------------- motion
   // The animated version is the simulation itself, as in mofu's method: one velocity field
@@ -1544,6 +1544,8 @@
              search: 'https://www.google.com/search?tbm=isch&q=' + q, note: 'Colorist Archive source page' };
   }
   function updateCaption() {
+    // nothing to describe while an archive work is still loading; build() calls this again
+    if (!S) return;
     window.dispatchEvent(new CustomEvent('pouredground:update'));
     if (!cap) return;
     const p = S.palette, c = S.colours;
