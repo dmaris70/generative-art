@@ -1060,7 +1060,7 @@
   // Each pigment's mobility (heavier paint spreads less) and hiding power (a glaze lets the ground
   // through), seeded per work from their own stream so no other seeded choice changes.
   // body off: both 1, and the ridge field is not drawn, which reproduces every earlier print.
-  const BODY_SIGMA = 0.003, BODY_K = 0.35;   // ridge width (short-side units), ridge height factor
+  const BODY_SIGMA = 0.003, BODY_K = 0.8;    // ridge width (short-side units), ridge height factor
   function bodyProps() {
     if (!S || G.param('body') !== 1) return { mob: [1, 1, 1, 1], opq: [1, 1, 1, 1] };
     const r = GenArt._mulberry32((G.seed ^ 0x1b873593) >>> 0), mob = [], opq = [];
