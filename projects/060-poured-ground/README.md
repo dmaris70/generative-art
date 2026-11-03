@@ -146,8 +146,15 @@ Alongside colorlisa's 133 works, the piece draws on the **Colorist Archive** of
 
 When the physical size of a work is known, every generation keeps its **proportions**.
 
-- **Source:** Wikidata's recorded height × width, for archive works with a Wikidata entry and
-  for colorlisa works (`proportions.js`).
+- **Sources**, in order:
+  - **Wikidata's** recorded height × width.
+  - Otherwise, the **holding museum's own collection record**:
+    - APIs: The Met, Art Institute of Chicago, Cleveland Museum of Art, the V&A, SMK, and the Rijksmuseum's linked data.
+    - Open datasets: Tate, National Gallery of Art, MoMA.
+    - Each work is found by the object number in its source link. colorlisa works are matched on artist and title, and only exact matches are kept.
+  - Otherwise, the dimensions on the work's **Wikimedia Commons** artwork record. These are kept only when the photograph's own proportions agree within 15%. The photo decides the orientation when the record does not state which figure is the height.
+- **What is measured:** the support or painted surface (unframed). Frame, glazing and mat measurements are rejected.
+- **Recorded per work:** archive files store the aspect as `a` and the source as `as`; no `as` means Wikidata. `proportions.js` names the museum and record for each colorlisa work. The studio card, the print spec and the PNG's provenance all name the source.
 - **Fit:** the image area takes the original's width-to-height ratio and is fitted whole inside
   the chosen paper. The border grows on one axis only, so nothing is cropped and the paper keeps
   its size.
