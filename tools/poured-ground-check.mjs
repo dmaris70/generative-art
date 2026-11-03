@@ -17,6 +17,8 @@
 //   9. Originals: only public-domain works (EU + US rule, museum's public-domain flag) ship an image;
 //      each is traceable to the holding museum's open-access record.
 //  10. View links: every work links to a page showing the painting (https) and to an image search.
+//  11. Proportions of the original: exact aspect, fits the paper, border grows on one axis only.
+//  12. Colorist Archive: integrity, https links, and images only for public-domain works.
 // Usage: node tools/poured-ground-check.mjs
 import { createRequire } from 'node:module';
 const require = createRequire(import.meta.url);
@@ -148,6 +150,44 @@ BRIEFS.forEach((b, i) => {
     const l = WL[p.id];
     ok(l && /^https:\/\//.test(l.url) && /^https:\/\/www\.google\.com\/search\?tbm=isch&q=/.test(l.search) && l.site, 'view link + image search ' + p.id + ' ' + p.painting);
   }
+}
+
+// 11. Proportions of the original: the image area takes the work's aspect exactly, fits whole inside
+//     the paper, and the border on each axis is at least the one asked for (it grows on one axis).
+for (let f = 0; f < PG.FORMAT_KEYS.length; f++) for (const ar of [0.5, 0.75, 1, 1.333, 2.2]) for (const land of [false, true, 'auto']) {
+  const s = PG.sheet(f, land, 30, 300, ar), b = s.borderMM;
+  ok(Math.abs(s.imageMM[0] / s.imageMM[1] - ar) < 1e-9, 'image keeps the original aspect ' + s.name + ' ' + ar);
+  ok(s.bx >= b - 1e-9 && s.by >= b - 1e-9 && Math.abs(s.bx - b) < 1e-9 || Math.abs(s.by - b) < 1e-9, 'border grows on one axis only ' + s.name + ' ' + ar);
+  ok(Math.abs(s.aspect[0] / s.aspect[1] - ar) < 1e-9, 'simulation grid takes the aspect ' + s.name + ' ' + ar);
+  if (land === 'auto') ok(s.landscape === (ar > 1), 'auto orientation follows the original ' + s.name + ' ' + ar);
+}
+
+// 12. The Colorist Archive (meditationsincolor.com/colorists): data integrity and the image rule.
+{
+  const fs = require('fs'), path = require('path');
+  const dir = path.join(path.dirname(new URL(import.meta.url).pathname), '../projects/060-poured-ground/archive');
+  const ix = JSON.parse(fs.readFileSync(path.join(dir, 'index.json'), 'utf8'));
+  ok(ix.total === ix.artists.reduce((n, a) => n + a.n, 0), 'archive total equals the sum of artists');
+  let off = 0, works = 0, imgs = 0, badImg = 0, badPal = 0, badLink = 0, badAspect = 0;
+  for (const a of ix.artists) {
+    ok(a.o === off, 'artist offsets are contiguous ' + a.id); off += a.n;
+    const W = JSON.parse(fs.readFileSync(path.join(dir, a.id + '.json'), 'utf8'));
+    ok(W.length === a.n, 'artist file has its works ' + a.id);
+    for (const w of W) {
+      works++;
+      if (!(w.c && w.c.length === 5 && w.c.every((c) => /^#[0-9A-F]{6}$/.test(c)))) badPal++;
+      if (w.u && !/^https:\/\//.test(w.u)) badLink++;
+      if (w.a !== null && !(w.a > 0.15 && w.a < 7)) badAspect++;
+      // an image is referenced only for public-domain works: artist died <= 1955, work dated <= 1930
+      if (w.i) { imgs++; if (!(w.pd && a.died && a.died <= 1955 && w.y && w.y <= 1930)) badImg++; }
+      if (w.pd && !(a.died && a.died <= 1955 && w.y && w.y <= 1930)) badImg++;
+    }
+  }
+  ok(works === ix.total, 'archive works counted ' + works);
+  ok(badPal === 0, 'every archive work has a 5-colour palette (' + badPal + ' bad)');
+  ok(badLink === 0, 'archive links are https (' + badLink + ' not)');
+  ok(badAspect === 0, 'archive proportions are plausible (' + badAspect + ' bad)');
+  ok(badImg === 0, 'images only for public-domain archive works (' + imgs + ' referenced, ' + badImg + ' violations)');
 }
 
 console.log(failures ? `${failures} of ${checks} checks failed` : `all ${checks} checks pass`);

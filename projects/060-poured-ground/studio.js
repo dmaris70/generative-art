@@ -37,7 +37,43 @@
     list.appendChild(el);
     return el;
   });
-  $('palCount').textContent = PALS.length + ' from colorlisa.com';
+  $('palCount').textContent = PALS.length + ' colorlisa · Colorist Archive';
+  // ---- the Colorist Archive: 367 artists, each loaded on demand (meditationsincolor.com)
+  const archHead = document.createElement('div'); archHead.className = 'arch-head';
+  archHead.textContent = 'Colorist Archive — loading…'; list.appendChild(archHead);
+  const artRows = [];
+  const swatches = (c) => '<div class="strip">' + c.map((h) => '<i style="background:' + h + '"></i>').join('') + '</div>';
+  function workRow(id, w) {
+    const el = document.createElement('div'); el.className = 'pal'; el.dataset.id = id; el.setAttribute('role', 'option');
+    el.innerHTML = swatches(w.c) + '<div class="t"><b></b><span></span></div>';
+    el.querySelector('b').textContent = w.t; el.querySelector('span').textContent = (w.d || '') + (w.a ? '' : ' · proportions unknown');
+    el.title = w.t + (w.d ? ', ' + w.d : '') + '\n' + w.c.join('  ');
+    return el;
+  }
+  app.archive.index().then(function (ix) {
+    archHead.textContent = 'Colorist Archive — ' + ix.artists.length + ' artists, ' + ix.total.toLocaleString() + ' works';
+    $('palCount').textContent = (PALS.length + ix.total).toLocaleString() + ' works';
+    ix.artists.forEach(function (a) {
+      const row = document.createElement('div'); row.className = 'art';
+      row.innerHTML = '<b></b><span></span>';
+      row.querySelector('b').textContent = a.name; row.querySelector('span').textContent = a.dates + ' · ' + a.n;
+      row._key = (a.name + ' ' + (a.mov || '') + ' ' + (a.nat || '')).normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+      const box = document.createElement('div'); box.className = 'art-works'; box.hidden = true;
+      row.onclick = function () {
+        if (!box.hidden) { box.hidden = true; return; }
+        box.hidden = false;
+        if (!box.childElementCount) {
+          box.textContent = 'loading…';
+          app.archive.artist(a.id).then(function (works) {
+            box.textContent = '';
+            works.forEach(function (w, i) { box.appendChild(workRow(app.archive.BASE + a.o + i, w)); });
+            refresh();
+          });
+        }
+      };
+      list.appendChild(row); list.appendChild(box); artRows.push(row);
+    });
+  });
   list.addEventListener('click', function (e) {
     const el = e.target.closest('.pal');
     if (el) set('palette', +el.dataset.id);
@@ -45,11 +81,12 @@
   $('palSearch').addEventListener('input', function () {
     const q = this.value.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().trim();
     rows.forEach((el) => { el.hidden = q && el._key.indexOf(q) < 0; });
+    artRows.forEach((el) => { el.hidden = q && el._key.indexOf(q) < 0; if (el.hidden) el.nextSibling.hidden = true; });
     seedRow.hidden = !!q;
   });
 
   // ---------------------------------------------------------------- segmented controls
-  ['mode', 'ground', 'style', 'label', 'labelPos', 'original', 'landscape', 'dpi', 'bits'].forEach(function (k) {
+  ['mode', 'ground', 'style', 'label', 'labelPos', 'original', 'collection', 'proportions', 'landscape', 'dpi', 'bits'].forEach(function (k) {
     $(k).addEventListener('click', function (e) {
       const b = e.target.closest('button');
       if (b) set(k, +b.dataset.v);
@@ -110,7 +147,7 @@
     const S = app.state();
     const border = borderOverride !== undefined ? borderOverride : G.param('border');
     const dpi = G.param('dpi'), bits = G.param('bits');
-    const sh = PG.sheet(G.param('format'), G.param('landscape') === 1, border, dpi);
+    const sh = (function () { const x = app.sheet(dpi); return border === G.param('border') ? x : PG.sheet(G.param('format'), x.landscape, border, dpi, x.imgAspect); })();
     const inch = (mm) => (mm / 25.4).toFixed(1);
     const mp = sh.px[0] * sh.px[1];
     const raw = mp * 3 * (bits / 8);
@@ -119,7 +156,7 @@
     const cpi = G.param('simres') / long;
     const rowsOut = [
       ['sheet', sh.mm[0].toFixed(0) + ' × ' + sh.mm[1].toFixed(0) + ' mm · ' + inch(sh.mm[0]) + ' × ' + inch(sh.mm[1]) + ' in'],
-      ['image', sh.imageMM[0].toFixed(0) + ' × ' + sh.imageMM[1].toFixed(0) + ' mm'],
+      ['image', sh.imageMM[0].toFixed(0) + ' × ' + sh.imageMM[1].toFixed(0) + ' mm' + (sh.imgAspect ? ' · proportions of the original' : ' · proportions unknown: fills the format')],
       ['pixels', sh.px[0].toLocaleString() + ' × ' + sh.px[1].toLocaleString() + ' (' + (mp / 1e6).toFixed(0) + ' MP)'],
       ['file', bits + '-bit RGB · sRGB · ' + dpi + ' dpi'],
       ['raw data', mb(raw) + ' (PNG smaller)'],
@@ -141,7 +178,7 @@
     if (!S) return;
     const pid = G.param('palette');
     list.querySelectorAll('.pal.on').forEach((el) => el.classList.remove('on'));
-    const sel = pid < 0 ? seedRow : rows[pid];
+    const sel = pid < 0 ? seedRow : pid < app.archive.BASE ? rows[pid] : list.querySelector('.pal[data-id="' + pid + '"]');
     if (sel) {
       sel.classList.add('on');
       if (!sel.hidden && document.activeElement !== $('palSearch')) sel.scrollIntoView({ block: 'nearest' });
@@ -149,7 +186,7 @@
     // the seed row previews which palette the seed draws
     seedRow.querySelector('.strip').innerHTML = pid < 0 ? S.palette.colors.map((c) => '<i style="background:' + c + '"></i>').join('') : '';
     seedRow.querySelector('span').textContent = pid < 0 ? S.palette.artist + ' · ' + S.palette.painting : 'a different palette for every seed';
-    ['mode', 'ground', 'style', 'label', 'labelPos', 'original', 'landscape', 'dpi', 'bits'].forEach((k) => seg(k, G.param(k)));
+    ['mode', 'ground', 'style', 'label', 'labelPos', 'original', 'collection', 'proportions', 'landscape', 'dpi', 'bits'].forEach((k) => seg(k, G.param(k)));
     $('labelPos').classList.toggle('dim', G.param('label') !== 1);
     $('labelSize').parentNode.classList.toggle('dim', G.param('label') !== 1);
     const inspired = G.param('mode') === 0;
@@ -198,6 +235,22 @@
       w.querySelector('.basis').title = S.brief.k
         ? 'The fields follow the documented composition of the painting.'
         : 'The composition of this work is not documented in the brief\'s sources; the layout follows its title and the artist\'s typical structure.';
+    } else if (S.palette.archive) {
+      // an archive work: composed from its palette (no layout brief), linked to its source
+      const P = S.palette, L = app.viewLink(), src = app.source();
+      w.hidden = false;
+      w.innerHTML = '<b></b><span class="note"></span><div class="readings v"></div><div class="readings o"></div><span class="basis">Colorist Archive</span>';
+      w.querySelector('b').textContent = P.painting + ' — ' + P.artist + (P.date ? ' (' + P.date + ')' : '');
+      w.querySelector('.note').textContent = 'Composed from its palette: this work has no layout brief. Proportions: ' + (P.aspect ? 'as the original (' + P.aspect.toFixed(3) + ' : 1, from Wikidata).' : 'unknown, so it fills the format.');
+      const v = w.querySelector('.v');
+      if (L) { const a = document.createElement('a'); a.href = L.url; a.target = '_blank'; a.rel = 'noopener'; a.textContent = 'View the painting ↗'; a.style.color = 'var(--accent)'; v.appendChild(a); v.appendChild(document.createTextNode(' ' + L.site)); }
+      const o = w.querySelector('.o');
+      if (src && (src.kind === 'original' || src.kind === 'view-only')) {
+        o.textContent = 'Public domain (' + P.year + '): ';
+        const btn = document.createElement('button'); btn.textContent = app.originalView() ? 'Hide the original (O)' : 'Show the original (O)';
+        btn.style.cssText = 'display:block;margin-top:6px;width:100%'; btn.onclick = function () { app.setOriginalView(!app.originalView()); refresh(); };
+        o.appendChild(btn);
+      } else o.textContent = P.pd ? 'Public domain, but no image is available from the source.' : 'In copyright (or undated): no image of it is shown or used.';
     } else w.hidden = true;
     SIM.concat(LIVE).forEach(function (k) {
       const input = $(k);
