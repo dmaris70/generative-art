@@ -256,7 +256,9 @@ Alongside colorlisa's 133 works, the piece draws on the **Colorist Archive** of
   layout brief. The studio card says so and links to the work's source page, so the painting
   itself can always be viewed.
 - **Images:** an image is referenced only for works that are public domain by our rule (artist
-  died ≤ 1955 and work dated ≤ 1930). Such a work can be shown with **O** and can rise in the
+  died ≤ 1955 and work dated ≤ 1930). Wikimedia serves hotlinked thumbnails only at its standard
+  widths, so the archive's Wikimedia image URLs are at 1280 px (its 600 and 960 px thumbnails
+  were refused with HTTP 400 from 10 Nov 2026). Such a work can be shown with **O** and can rise in the
   animated version, loaded from its source; if the source refuses cross-origin use, it can
   still be viewed. For every other work no image is referenced, shown or requested. The check
   script verifies this across all 20,367 works.
