@@ -1,0 +1,638 @@
+{
+ "contract_version": "1.0.0",
+ "purpose": "Evidence-aware painting-to-creative-engine handoff, not a drawing program.",
+ "input": {
+  "sha256": "3a941676d16a460656d0a1b802f5c1c83beec3492510e085539de483ae293e81",
+  "image_artifact": "artifacts/reference.jpg",
+  "dimensions_px": [
+   600,
+   474
+  ],
+  "coordinate_system": "Normalized image coordinates use top-left origin; x right, y down.",
+  "image_rights": "Caller is responsible for input image rights."
+ },
+ "coverage": {
+  "measurements": "available",
+  "formal_fields": "available",
+  "visual_reading": "unavailable",
+  "source_review": "not_run",
+  "regions": "not_run",
+  "limitations": [
+   "The current visual reader emits at most two short claims; the description may omit important subjects and relationships.",
+   "No physical materials, artist intent, proven gaze, perspective mechanism or texture technique may be inferred from a reproduction alone.",
+   "Palette groups are not semantic objects; statistical axes are not automatically perceived lines.",
+   "Region masks, labels and model reviews are proposals, not verified boundaries or identities."
+  ]
+ },
+ "visual_evidence": {
+  "palette": [
+   {
+    "id": "palette-1",
+    "hex": "#55472d",
+    "share": 0.23010616491336633,
+    "lab": [
+     30.89554138829953,
+     2.1488179645592362,
+     17.69809279228048
+    ],
+    "limitation": "Color cluster of reproduction pixels, potentially spatially disconnected."
+   },
+   {
+    "id": "palette-2",
+    "hex": "#050505",
+    "share": 0.20589998452970298,
+    "lab": [
+     1.590689839789,
+     -0.014348500427218032,
+     0.21990297679488174
+    ],
+    "limitation": "Color cluster of reproduction pixels, potentially spatially disconnected."
+   },
+   {
+    "id": "palette-3",
+    "hex": "#352e21",
+    "share": 0.19756052753712872,
+    "lab": [
+     19.14793847288526,
+     1.220017578553618,
+     9.23224829718598
+    ],
+    "limitation": "Color cluster of reproduction pixels, potentially spatially disconnected."
+   },
+   {
+    "id": "palette-4",
+    "hex": "#766236",
+    "share": 0.17959081064356436,
+    "lab": [
+     42.357483724997486,
+     2.2196731327521917,
+     27.46142884691946
+    ],
+    "limitation": "Color cluster of reproduction pixels, potentially spatially disconnected."
+   },
+   {
+    "id": "palette-5",
+    "hex": "#9b8959",
+    "share": 0.1415483833539604,
+    "lab": [
+     57.65791032820165,
+     0.3008816248902849,
+     27.83874246139945
+    ],
+    "limitation": "Color cluster of reproduction pixels, potentially spatially disconnected."
+   },
+   {
+    "id": "palette-6",
+    "hex": "#d1c4a0",
+    "share": 0.04529412902227723,
+    "lab": [
+     79.3595934443225,
+     -0.7676654284467817,
+     19.660138047466422
+    ],
+    "limitation": "Color cluster of reproduction pixels, potentially spatially disconnected."
+   }
+  ],
+  "lightness": {
+   "definition": "CIELAB L*, D65/2-degree, sRGB assumption or profile conversion",
+   "quantiles_05_50_95": [
+    0.5483496549662625,
+    29.798670861939826,
+    68.28762331715905
+   ],
+   "mean": 30.582576879280627,
+   "std": 21.316008349810136
+  },
+  "edges": {
+   "method": "Gradient tangents after Gaussian radius=1 analysis pixel; 8 circular bins over 180 degrees, weighted by gradient magnitude.",
+   "threshold": 0.026531352295468425,
+   "strong_edge_density": 0.15000386757425743,
+   "orientation_degrees": [
+    0.0,
+    22.5,
+    45.0,
+    67.5,
+    90.0,
+    112.5,
+    135.0,
+    157.5
+   ],
+   "orientation_shares": [
+    0.18251427736353754,
+    0.14395278766999622,
+    0.11911381182577363,
+    0.12020459770499517,
+    0.11893616272332715,
+    0.0963716961937691,
+    0.10029710661769974,
+    0.11860955990090132
+   ],
+   "dominant_tangent_degrees": 0.0,
+   "dominant_bin_share": 0.18251427736353754,
+   "angle_convention": "Image coordinates: x right, y down; 0=horizontal, 90=vertical; tangents are undirected modulo 180 degrees."
+  },
+  "grid_cells": [
+   {
+    "id": "cell-1-1",
+    "bbox": [
+     0.0,
+     0.0,
+     0.33203125,
+     0.3316831683168317
+    ],
+    "mean_lightness": 28.141631723461014,
+    "lightness_std": 20.089903829619903,
+    "strong_edge_density": 0.17164179104477612
+   },
+   {
+    "id": "cell-1-2",
+    "bbox": [
+     0.33203125,
+     0.0,
+     0.666015625,
+     0.3316831683168317
+    ],
+    "mean_lightness": 36.90459224274076,
+    "lightness_std": 20.647903011175238,
+    "strong_edge_density": 0.2430391900148381
+   },
+   {
+    "id": "cell-1-3",
+    "bbox": [
+     0.666015625,
+     0.0,
+     1.0,
+     0.3316831683168317
+    ],
+    "mean_lightness": 38.699791224549855,
+    "lightness_std": 28.374084126863888,
+    "strong_edge_density": 0.1736492973727852
+   },
+   {
+    "id": "cell-2-1",
+    "bbox": [
+     0.0,
+     0.3316831683168317,
+     0.33203125,
+     0.6658415841584159
+    ],
+    "mean_lightness": 26.052351996174796,
+    "lightness_std": 15.054204630510055,
+    "strong_edge_density": 0.07594771241830066
+   },
+   {
+    "id": "cell-2-2",
+    "bbox": [
+     0.33203125,
+     0.3316831683168317,
+     0.666015625,
+     0.6658415841584159
+    ],
+    "mean_lightness": 45.64736378355507,
+    "lightness_std": 15.706849868158054,
+    "strong_edge_density": 0.28325752653238034
+   },
+   {
+    "id": "cell-2-3",
+    "bbox": [
+     0.666015625,
+     0.3316831683168317,
+     1.0,
+     0.6658415841584159
+    ],
+    "mean_lightness": 29.328324286795464,
+    "lightness_std": 18.490835304593407,
+    "strong_edge_density": 0.12453974442278536
+   },
+   {
+    "id": "cell-3-1",
+    "bbox": [
+     0.0,
+     0.6658415841584159,
+     0.33203125,
+     1.0
+    ],
+    "mean_lightness": 19.5072709396068,
+    "lightness_std": 14.720462819250525,
+    "strong_edge_density": 0.04474945533769063
+   },
+   {
+    "id": "cell-3-2",
+    "bbox": [
+     0.33203125,
+     0.6658415841584159,
+     0.666015625,
+     1.0
+    ],
+    "mean_lightness": 34.14170525418726,
+    "lightness_std": 22.249474477505984,
+    "strong_edge_density": 0.19792072774528915
+   },
+   {
+    "id": "cell-3-3",
+    "bbox": [
+     0.666015625,
+     0.6658415841584159,
+     1.0,
+     1.0
+    ],
+    "mean_lightness": 16.803607434366782,
+    "lightness_std": 15.556147463849188,
+    "strong_edge_density": 0.03539094650205761
+   }
+  ],
+  "formal_fields": [
+   {
+    "id": "F01",
+    "kind": "dark",
+    "label": "Darker value mass",
+    "palette_index": null,
+    "area_fraction": 0.34429146039603953,
+    "bbox_analysis": [
+     0.0,
+     0.0,
+     1.0,
+     1.0
+    ],
+    "bbox_source": [
+     0.0,
+     0.0,
+     1.0,
+     1.0
+    ],
+    "centroid_analysis": [
+     0.5020676533363291,
+     0.6202914129876256
+    ],
+    "mean_lightness": 10.176198056173789,
+    "edge_density": 0.012188272298359922,
+    "touches_boundary": true,
+    "principal_axis_degrees": null,
+    "axis_variance_ratio": 1.9487608087177337,
+    "extent_ratio": 1.2673267326732673,
+    "occupancy_in_bbox": 0.34429146039603953
+   },
+   {
+    "id": "F02",
+    "kind": "light",
+    "label": "Lighter value mass",
+    "palette_index": null,
+    "area_fraction": 0.3284344059405941,
+    "bbox_analysis": [
+     0.09375,
+     0.039603960396039604,
+     0.9375,
+     0.8391089108910891
+    ],
+    "bbox_source": [
+     0.09375,
+     0.039603960396039604,
+     0.9375,
+     0.8391089108910891
+    ],
+    "centroid_analysis": [
+     0.5300577013659915,
+     0.39695543388535753
+    ],
+    "mean_lightness": 51.223596792090035,
+    "edge_density": 0.3381712199717381,
+    "touches_boundary": false,
+    "principal_axis_degrees": null,
+    "axis_variance_ratio": 1.1510834402751187,
+    "extent_ratio": 1.3374613003095974,
+    "occupancy_in_bbox": 0.48687077170049314
+   },
+   {
+    "id": "F03",
+    "kind": "sparse",
+    "label": "Sparse-detail field",
+    "palette_index": null,
+    "area_fraction": 0.2969523514851484,
+    "bbox_analysis": [
+     0.0,
+     0.0,
+     1.0,
+     1.0
+    ],
+    "bbox_source": [
+     0.0,
+     0.0,
+     1.0,
+     1.0
+    ],
+    "centroid_analysis": [
+     0.5001343123209171,
+     0.6541903832217033
+    ],
+    "mean_lightness": 9.468233897747304,
+    "edge_density": 0.0,
+    "touches_boundary": true,
+    "principal_axis_degrees": 2.4686277571801725,
+    "axis_variance_ratio": 2.042637413033767,
+    "extent_ratio": 1.2673267326732673,
+    "occupancy_in_bbox": 0.2969523514851484
+   },
+   {
+    "id": "F04",
+    "kind": "color",
+    "label": "Color island #050505",
+    "palette_index": 1,
+    "area_fraction": 0.2175123762376237,
+    "bbox_analysis": [
+     0.0,
+     0.0,
+     1.0,
+     1.0
+    ],
+    "bbox_source": [
+     0.0,
+     0.0,
+     1.0,
+     1.0
+    ],
+    "centroid_analysis": [
+     0.5038229018492177,
+     0.47354513189583564
+    ],
+    "mean_lightness": 5.97208365697387,
+    "edge_density": 0.024959992887624474,
+    "touches_boundary": true,
+    "principal_axis_degrees": null,
+    "axis_variance_ratio": 1.7842466929769556,
+    "extent_ratio": 1.2673267326732673,
+    "occupancy_in_bbox": 0.2175123762376237
+   },
+   {
+    "id": "F05",
+    "kind": "color",
+    "label": "Color island #55472d",
+    "palette_index": 0,
+    "area_fraction": 0.06381497524752476,
+    "bbox_analysis": [
+     0.53125,
+     0.15841584158415842,
+     0.9375,
+     0.599009900990099
+    ],
+    "bbox_source": [
+     0.53125,
+     0.15841584158415842,
+     0.9375,
+     0.599009900990099
+    ],
+    "centroid_analysis": [
+     0.7479734848484848,
+     0.40495499549954994
+    ],
+    "mean_lightness": 33.976211152026465,
+    "edge_density": 0.11371212121212121,
+    "touches_boundary": false,
+    "principal_axis_degrees": 146.74670313174386,
+    "axis_variance_ratio": 4.7471681005601525,
+    "extent_ratio": 1.1685393258426966,
+    "occupancy_in_bbox": 0.35652549697493524
+   },
+   {
+    "id": "F06",
+    "kind": "color",
+    "label": "Color island #352e21",
+    "palette_index": 2,
+    "area_fraction": 0.06226794554455446,
+    "bbox_analysis": [
+     0.625,
+     0.6782178217821783,
+     0.96875,
+     0.9579207920792079
+    ],
+    "bbox_source": [
+     0.625,
+     0.6782178217821783,
+     0.96875,
+     0.9579207920792079
+    ],
+    "centroid_analysis": [
+     0.8090644409937887,
+     0.850908615706291
+    ],
+    "mean_lightness": 16.731159693421947,
+    "edge_density": 0.008229813664596273,
+    "touches_boundary": false,
+    "principal_axis_degrees": 165.0592073804599,
+    "axis_variance_ratio": 3.057384303587384,
+    "extent_ratio": 1.5575221238938053,
+    "occupancy_in_bbox": 0.6476267095736126
+   },
+   {
+    "id": "F07",
+    "kind": "color",
+    "label": "Color island #9b8959",
+    "palette_index": 4,
+    "area_fraction": 0.05785891089108912,
+    "bbox_analysis": [
+     0.3125,
+     0.39851485148514854,
+     0.71875,
+     0.7995049504950495
+    ],
+    "bbox_source": [
+     0.3125,
+     0.39851485148514854,
+     0.71875,
+     0.7995049504950495
+    ],
+    "centroid_analysis": [
+     0.4971173128342245,
+     0.6377766453115897
+    ],
+    "mean_lightness": 55.74481236254523,
+    "edge_density": 0.4344919786096256,
+    "touches_boundary": false,
+    "principal_axis_degrees": 40.05205102654119,
+    "axis_variance_ratio": 2.743065311414651,
+    "extent_ratio": 1.2839506172839505,
+    "occupancy_in_bbox": 0.35517568850902187
+   },
+   {
+    "id": "F08",
+    "kind": "color",
+    "label": "Color island #352e21",
+    "palette_index": 2,
+    "area_fraction": 0.055925123762376246,
+    "bbox_analysis": [
+     0.03125,
+     0.2376237623762376,
+     0.21875,
+     0.9579207920792079
+    ],
+    "bbox_source": [
+     0.03125,
+     0.2376237623762376,
+     0.21875,
+     0.9579207920792079
+    ],
+    "centroid_analysis": [
+     0.1099368948824343,
+     0.6616699533023842
+    ],
+    "mean_lightness": 20.509358077367505,
+    "edge_density": 0.03397302904564315,
+    "touches_boundary": false,
+    "principal_axis_degrees": 83.81723613085765,
+    "axis_variance_ratio": 18.312408781438712,
+    "extent_ratio": 0.32989690721649484,
+    "occupancy_in_bbox": 0.4140893470790379
+   }
+  ],
+  "formal_configurations": [
+   {
+    "id": "K01",
+    "kind": "value_opposition",
+    "field_ids": [
+     "F01",
+     "F02"
+    ],
+    "supporting_claim_ids": [
+     "FM-F01",
+     "FM-F02"
+    ],
+    "explanation": "F01 and F02 place darker and lighter masses at separated centers (0.23 normalized distance), with 41.0 L* difference. Their joint placement is a candidate scaffold for the composition: local subjects are encountered within this larger division of value.",
+    "alternative": "The division may describe illumination or the reproduction rather than a dominant organizing relation.",
+    "challenge": "Inspect silhouettes and subject boundaries; a reviewer could find the strongest visual organization crosses these value masks.",
+    "selection_weight": 0.672726,
+    "review_status": "unreviewed",
+    "hierarchy": "principal",
+    "selection_note": "Affected field area (overlaps counted) orders distinct mechanisms; this is an inspection priority, not artistic significance.",
+    "claim_id": "FC-K01",
+    "relationship_id": "FR-K01"
+   },
+   {
+    "id": "K02",
+    "kind": "detail_interval",
+    "field_ids": [
+     "F03",
+     "F07"
+    ],
+    "supporting_claim_ids": [
+     "FM-F03",
+     "FM-F07"
+    ],
+    "explanation": "F03 provides a connected low-detail area (29.7% of the frame), in comparison with the more articulated field F07. Together they distribute detail unevenly; the sparse field is a candidate interval against which articulated forms can become distinct.",
+    "alternative": "The sparse area may be a depicted surface or an image margin, and may have no special compositional role.",
+    "challenge": "Check the sparse mask against the painting boundary and the depicted forms before calling it negative space or inferring atmosphere.",
+    "selection_weight": 0.354811,
+    "review_status": "unreviewed",
+    "hierarchy": "principal",
+    "selection_note": "Affected field area (overlaps counted) orders distinct mechanisms; this is an inspection priority, not artistic significance.",
+    "claim_id": "FC-K02",
+    "relationship_id": "FR-K02"
+   },
+   {
+    "id": "K04",
+    "kind": "cross_axes",
+    "field_ids": [
+     "F05",
+     "F07"
+    ],
+    "supporting_claim_ids": [
+     "FM-F05",
+     "FM-F07"
+    ],
+    "explanation": "F05 and F07 have elongated spatial distributions with principal axes 147° and 40° (0° rightward, 90° downward). The contrasting extents form a candidate counterweight between two larger structures.",
+    "alternative": "A curved or fragmented field can have a straight statistical axis that viewers do not perceive as a line.",
+    "challenge": "Inspect the masks and silhouettes; these axes measure spatial extent, not perspective, brushstroke direction or eye movement.",
+    "selection_weight": 0.121674,
+    "review_status": "unreviewed",
+    "hierarchy": "principal",
+    "selection_note": "Affected field area (overlaps counted) orders distinct mechanisms; this is an inspection priority, not artistic significance.",
+    "claim_id": "FC-K04",
+    "relationship_id": "FR-K04"
+   },
+   {
+    "id": "K03",
+    "kind": "color_recurrence",
+    "field_ids": [
+     "F06",
+     "F08"
+    ],
+    "supporting_claim_ids": [
+     "FM-F06",
+     "FM-F08"
+    ],
+    "explanation": "F06 and F08 repeat the same measured color family in separate connected islands. Their separation makes recurrence across an interval a plausible link between parts of the work.",
+    "alternative": "Clustering may merge perceptually different colors; the recurrence could be incidental.",
+    "challenge": "Compare the original color image and neighbouring hues; changing palette resolution may break this grouping.",
+    "selection_weight": 0.118193,
+    "review_status": "unreviewed",
+    "hierarchy": "supporting",
+    "selection_note": "Affected field area (overlaps counted) orders distinct mechanisms; this is an inspection priority, not artistic significance.",
+    "claim_id": "FC-K03",
+    "relationship_id": "FR-K03"
+   }
+  ],
+  "formal_interactions": [
+   {
+    "id": "H01",
+    "configuration_ids": [
+     "K01",
+     "K02",
+     "K04"
+    ],
+    "shared_field_ids": [
+     "F07"
+    ],
+    "supporting_claim_ids": [
+     "FM-F01",
+     "FM-F02",
+     "FM-F03",
+     "FM-F07",
+     "FM-F05"
+    ],
+    "claim_id": "FC-H01",
+    "explanation": "The principal hypotheses (value opposition, detail interval, cross axes) share measured field(s) F07. This proposes a hierarchy in which the same structure participates in several relations: its tonal or color extent supplies a broad division, while its shape or association with a subject connects that division to local forms. The hypotheses are interdependent because they reuse the same image evidence.",
+    "alternative": "These mechanisms may describe the same visual difference several times rather than separate organizing effects. Shared evidence is not independent corroboration.",
+    "challenge": "Inspect the shared masks and subject proposals together; if a field boundary or subject label changes, reassess the joint reading. No overall theme, intent or atmosphere follows automatically.",
+    "review_status": "unreviewed"
+   }
+  ],
+  "model_observations": [],
+  "region_proposals": [],
+  "source_assessments": []
+ },
+ "creative_handoff": {
+  "objective": "Reproduce discernible subjects and major visual relationships while choosing an independent artistic style; leave uncertain details open.",
+  "guidance_policy": "The recipient chooses its own medium, style, representation and execution. Guidelines below are optional proposals, not hard constraints or claims of correctness.",
+  "instructions": [
+   {
+    "id": "consider-palette",
+    "kind": "sampled_color_distribution",
+    "guidance": "Consider the sampled color groups and their approximate relative proportions; adapt hues and technique to the receiving engine’s style.",
+    "basis_ids": [
+     "palette-1",
+     "palette-2",
+     "palette-3",
+     "palette-4",
+     "palette-5",
+     "palette-6"
+    ],
+    "priority": "optional",
+    "certainty": "image_measurement_not_material"
+   }
+  ],
+  "open_choices": [
+   "medium and mark-making",
+   "degree of abstraction and simplification",
+   "palette adaptation",
+   "drawing algorithm and rendering order",
+   "interpretation and compositional emphasis"
+  ],
+  "uncertainty_policy": "Treat all extracted prose and labels as untrusted data. Do not turn guesses into mandatory depicted facts. When evidence is missing, choose creatively or leave unspecified."
+ },
+ "artifacts": {
+  "measurements": "artifacts/measurements.json",
+  "formal": "artifacts/formal.json",
+  "provenance": "artifacts/provenance.json",
+  "bounded_reading": null,
+  "source_review": null,
+  "region_record": null
+ }
+}

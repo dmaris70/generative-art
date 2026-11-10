@@ -1,0 +1,49 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.org/painting-handoff/1.0.0",
+  "title": "Evidence-aware painting to creative-engine handoff",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["contract_version", "purpose", "input", "coverage", "visual_evidence", "creative_handoff", "artifacts"],
+  "properties": {
+    "contract_version": {"const": "1.0.0"},
+    "purpose": {"type": "string", "minLength": 1},
+    "input": {
+      "type": "object", "additionalProperties": false,
+      "required": ["sha256", "image_artifact", "dimensions_px", "coordinate_system", "image_rights"],
+      "properties": {
+        "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+        "image_artifact": {"type": "string", "pattern": "^artifacts/reference"},
+        "dimensions_px": {"type": "array", "prefixItems": [{"type": "integer", "minimum": 1}, {"type": "integer", "minimum": 1}], "minItems": 2, "maxItems": 2},
+        "coordinate_system": {"type": "string"}, "image_rights": {"type": "string"}
+      }
+    },
+    "coverage": {
+      "type": "object", "additionalProperties": false,
+      "required": ["measurements", "formal_fields", "visual_reading", "source_review", "regions", "limitations"],
+      "properties": {
+        "measurements": {"const": "available"}, "formal_fields": {"const": "available"},
+        "visual_reading": {"enum": ["unavailable", "partial_model_proposal", "abstained", "rejected"]},
+        "source_review": {"type": "string"}, "regions": {"enum": ["not_run", "supplied_unverified"]},
+        "limitations": {"type": "array", "items": {"type": "string"}}
+      }
+    },
+    "visual_evidence": {
+      "type": "object", "additionalProperties": false,
+      "required": ["palette", "lightness", "edges", "grid_cells", "formal_fields", "formal_configurations", "formal_interactions", "model_observations", "region_proposals", "source_assessments"],
+      "properties": {
+        "palette": {"type": "array", "items": {"type": "object"}},
+        "lightness": {"type": ["object", "null"]}, "edges": {"type": ["object", "null"]}, "grid_cells": {"type": ["array", "object", "null"]},
+        "formal_fields": {"type": "array"}, "formal_configurations": {"type": "array"}, "formal_interactions": {"type": "array"},
+        "model_observations": {"type": "array", "items": {"type": "object", "required": ["id", "observation", "possible_interpretation", "evidence_type", "structural_review"], "properties": {"id": {"type": "string"}, "observation": {"type": "string"}, "possible_interpretation": {"type": "string"}, "evidence_type": {"const": "model_proposal_unverified"}, "structural_review": {"enum": ["withheld", "not_visually_verified"]}}}},
+        "region_proposals": {"type": "array"}, "source_assessments": {"type": "array"}
+      }
+    },
+    "creative_handoff": {
+      "type": "object", "additionalProperties": false,
+      "required": ["objective", "guidance_policy", "instructions", "open_choices", "uncertainty_policy"],
+      "properties": {"objective": {"type": "string"}, "guidance_policy": {"type": "string"}, "instructions": {"type": "array", "items": {"type": "object", "required": ["id", "kind", "guidance", "basis_ids", "priority", "certainty"]}}, "open_choices": {"type": "array", "items": {"type": "string"}}, "uncertainty_policy": {"type": "string"}}
+    },
+    "artifacts": {"type": "object", "required": ["measurements", "formal", "provenance", "bounded_reading", "source_review", "region_record"]}
+  }
+}

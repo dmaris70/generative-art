@@ -1,0 +1,54 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Connected formal fields and configuration hypotheses 0.3",
+  "type": "object", "additionalProperties": false,
+  "required": ["version", "coordinate_frame", "grid", "method", "limits", "thresholds", "fields", "configurations", "interactions", "principal_configuration_ids"],
+  "properties": {
+    "version": {"const": "formal-fields-0.3.0"},
+    "coordinate_frame": {"type": "string"}, "method": {"type": "string"}, "limits": {"type": "string"},
+    "thresholds": {"type": "object", "additionalProperties": false, "required": ["dark_max_L", "light_min_L", "sparse_max_edge_density", "sparse_max_gradient_energy"], "properties": {
+      "dark_max_L": {"type": ["number", "null"]}, "light_min_L": {"type": ["number", "null"]},
+      "sparse_max_edge_density": {"type": ["number", "null"]}, "sparse_max_gradient_energy": {"type": ["number", "null"]}
+    }},
+    "grid": {"type": "object", "additionalProperties": false, "required": ["columns", "rows", "x_pixel_boundaries", "y_pixel_boundaries"], "properties": {
+      "columns": {"type": "integer", "minimum": 1, "maximum": 32}, "rows": {"type": "integer", "minimum": 1, "maximum": 32},
+      "x_pixel_boundaries": {"type": "array", "items": {"type": "integer", "minimum": 0}},
+      "y_pixel_boundaries": {"type": "array", "items": {"type": "integer", "minimum": 0}}
+    }},
+    "fields": {"type": "array", "maxItems": 18, "items": {"type": "object", "additionalProperties": false,
+      "required": ["id", "kind", "label", "palette_index", "cells_xy", "area_fraction", "bbox_analysis", "bbox_source", "centroid_analysis", "mean_lightness", "edge_density", "touches_boundary", "extent_ratio", "occupancy_in_bbox", "principal_axis_degrees", "axis_variance_ratio"],
+      "properties": {
+        "id": {"type": "string", "pattern": "^F[0-9]{2}$"}, "kind": {"enum": ["dark", "light", "sparse", "color"]}, "label": {"type": "string"},
+        "palette_index": {"type": ["integer", "null"], "minimum": 0, "maximum": 5},
+        "cells_xy": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "array", "minItems": 2, "maxItems": 2, "items": {"type": "integer", "minimum": 0, "maximum": 31}}},
+        "area_fraction": {"type": "number", "minimum": 0.02, "maximum": 1},
+        "bbox_analysis": {"$ref": "#/$defs/box"}, "bbox_source": {"$ref": "#/$defs/box"},
+        "centroid_analysis": {"type": "array", "minItems": 2, "maxItems": 2, "items": {"type": "number", "minimum": 0, "maximum": 1}},
+        "mean_lightness": {"type": "number", "minimum": -0.001, "maximum": 100.001}, "edge_density": {"type": "number", "minimum": 0, "maximum": 1},
+        "touches_boundary": {"type": "boolean"}, "extent_ratio": {"type": "number", "exclusiveMinimum": 0},
+        "occupancy_in_bbox": {"type": "number", "exclusiveMinimum": 0, "maximum": 1.000000001},
+        "principal_axis_degrees": {"type": ["number", "null"], "minimum": 0, "exclusiveMaximum": 180},
+        "axis_variance_ratio": {"type": "number", "minimum": 0}
+      }}},
+    "configurations": {"type": "array", "items": {"type": "object", "additionalProperties": false,
+      "required": ["id", "kind", "field_ids", "supporting_claim_ids", "explanation", "alternative", "challenge", "selection_weight", "review_status", "hierarchy", "selection_note", "claim_id", "relationship_id"],
+      "properties": {
+        "id": {"type": "string"}, "kind": {"enum": ["value_opposition", "detail_interval", "color_recurrence", "cross_axes", "subject_field"]},
+        "field_ids": {"$ref": "#/$defs/ids"}, "supporting_claim_ids": {"$ref": "#/$defs/ids"},
+        "explanation": {"type": "string"}, "alternative": {"type": "string"}, "challenge": {"type": "string"},
+        "selection_weight": {"type": "number", "minimum": 0}, "review_status": {"const": "unreviewed"}, "hierarchy": {"enum": ["principal", "supporting"]},
+        "selection_note": {"type": "string"}, "claim_id": {"type": "string"}, "relationship_id": {"type": "string"}
+      }}},
+    "interactions": {"type": "array", "maxItems": 1, "items": {"type": "object", "additionalProperties": false,
+      "required": ["id", "configuration_ids", "shared_field_ids", "supporting_claim_ids", "claim_id", "explanation", "alternative", "challenge", "review_status"],
+      "properties": {
+        "id": {"type": "string"}, "configuration_ids": {"$ref": "#/$defs/ids"}, "shared_field_ids": {"$ref": "#/$defs/ids"}, "supporting_claim_ids": {"$ref": "#/$defs/ids"},
+        "claim_id": {"type": "string"}, "explanation": {"type": "string"}, "alternative": {"type": "string"}, "challenge": {"type": "string"}, "review_status": {"const": "unreviewed"}
+      }}},
+    "principal_configuration_ids": {"type": "array", "uniqueItems": true, "maxItems": 3, "items": {"type": "string"}}
+  },
+  "$defs": {
+    "box": {"type": "array", "minItems": 4, "maxItems": 4, "items": {"type": "number", "minimum": 0, "maximum": 1}},
+    "ids": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string"}}
+  }
+}
