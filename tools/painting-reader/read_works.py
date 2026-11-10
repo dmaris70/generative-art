@@ -95,7 +95,17 @@ def merge_palette(palette):
     return [c['hex'] for c in cl], [r3(c['share']) for c in cl], map6, [[r3(c['c'][0]), r3(c['c'][1])] for c in cl]
 
 
-def compact(doc, meta, measurements=None):
+def mask_bits(cells, cols, rows):
+    """A field's coarse mask (the reader's connected grid cells) as base64: row-major, y down,
+    bit (y*cols + x) set where the cell belongs, bytes packed least-significant bit first."""
+    import base64
+    buf = bytearray((cols * rows + 7) // 8)
+    for x, y in cells:
+        i = int(y) * cols + int(x); buf[i >> 3] |= 1 << (i & 7)
+    return base64.b64encode(bytes(buf)).decode()
+
+
+def compact(doc, meta, measurements=None, formal=None):
     """One reading record from a handoff.json (see engine.js readBrief for how it is used).
 
     The palette is merged from the measurements artifact when given: the handoff's palette
@@ -103,20 +113,26 @@ def compact(doc, meta, measurements=None):
     """
     ve = doc['visual_evidence']
     colors, shares, map6, centroids = merge_palette((measurements or {}).get('palette') or ve['palette'])
+    grid = None; cells = {}
+    if formal and formal.get('grid'):
+        grid = [int(formal['grid']['columns']), int(formal['grid']['rows'])]
+        cells = {f['id']: f.get('cells_xy') or [] for f in formal.get('fields', [])}
     fields = []
     for f in ve['formal_fields']:
         b = f['bbox_analysis']; c = f['centroid_analysis']
-        fields.append([f['id'], f['kind'], r3(f['area_fraction']), r3(b[0]), r3(b[1]), r3(b[2]), r3(b[3]), r3(c[0]), r3(c[1]),
-                       None if f.get('principal_axis_degrees') is None else round(float(f['principal_axis_degrees'])),
-                       r2(f.get('axis_variance_ratio')), r2(f['occupancy_in_bbox']), r3(f['edge_density']), round(float(f['mean_lightness'])),
-                       None if f.get('palette_index') is None else map6[int(f['palette_index'])]])
+        row = [f['id'], f['kind'], r3(f['area_fraction']), r3(b[0]), r3(b[1]), r3(b[2]), r3(b[3]), r3(c[0]), r3(c[1]),
+               None if f.get('principal_axis_degrees') is None else round(float(f['principal_axis_degrees'])),
+               r2(f.get('axis_variance_ratio')), r2(f['occupancy_in_bbox']), r3(f['edge_density']), round(float(f['mean_lightness'])),
+               None if f.get('palette_index') is None else map6[int(f['palette_index'])]]
+        if grid and cells.get(f['id']): row.append(mask_bits(cells[f['id']], grid[0], grid[1]))   # 16th: the field's own silhouette
+        fields.append(row)
     configs = [[c['id'], c['kind'], list(c['field_ids'])] for c in ve['formal_configurations']]
     shared = sorted({fid for h in ve['formal_interactions'] for fid in h.get('shared_field_ids', [])})
     e = ve['edges'] or {}
     cells = sorted(ve['grid_cells'] or [], key=lambda c: c['id'])
     rec = {'id': meta['id'], 'sha256': doc['input']['sha256'], 'image': meta['image'], 'source': meta['source'],
            'px': list(doc['input']['dimensions_px']), 'reader': meta['reader'], 'code_sha256': meta['code_sha256'], 'read_on': meta['read_on'],
-           'reading': doc['coverage']['visual_reading'],
+           'reading': doc['coverage']['visual_reading'], 'grid': grid,
            'colors': colors, 'shares': shares, 'centroids': centroids, 'map6': map6, 'fields': fields, 'configs': configs, 'shared': shared,
            'edges': [round(float(e.get('dominant_tangent_degrees', 0))), r3(e.get('dominant_bin_share', 0)), r3(e.get('strong_edge_density', 0))],
            'cells': [r3(c['strong_edge_density']) for c in cells]}
@@ -129,8 +145,9 @@ def read_image(image_path, meta):
         doc = painting_handoff.analyze(image_path, out)
         prov = json.loads((out / 'artifacts/provenance.json').read_text())
         measurements = json.loads((out / 'artifacts/measurements.json').read_text())
+        formal = json.loads((out / 'artifacts/formal.json').read_text())
         meta = dict(meta, reader=prov.get('formal_layer'), code_sha256=prov.get('code_sha256'), read_on=time.strftime('%Y-%m-%d'))
-        return compact(doc, meta, measurements), doc
+        return compact(doc, meta, measurements, formal), doc
 
 
 def write_js(path, name, data, comment):
@@ -153,7 +170,9 @@ def run_colorlisa():
                '// path: colour clusters, value masses, colour islands, detail distribution, formal configurations; no subject\n'
                '// identification). Each record is compacted from readings/<id>.handoff.json by tools/painting-reader/read_works.py\n'
                '// and turned into a composition by engine.js readBrief. Fields: [id, kind, area, x0, y0, x1, y1, cx, cy, axis°,\n'
-               '// axisVarianceRatio, occupancyInBbox, edgeDensity, meanL*, colourIndex]. centroids: the pixel centroid of each colour.\n'
+               '// axisVarianceRatio, occupancyInBbox, edgeDensity, meanL*, colourIndex, mask]. The mask is the field\'s own silhouette:\n'
+               '// the reader\'s connected grid cells (grid [cols, rows]) as base64 bits, row-major, y down, least-significant bit first.\n'
+               '// centroids: the pixel centroid of each colour.\n'
                '// Coordinates: image uv, x right, y down.\n')
     write_js(PROJECT / 'readings.js', 'READINGS', records, comment)
     print('wrote', PROJECT / 'readings.js', 'and', len(records), 'handoffs in', out_dir)
