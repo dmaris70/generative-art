@@ -171,7 +171,7 @@
     uniform sampler2D uH; uniform vec2 uC, uHalf; uniform float uAng, uShape, uTh; uniform vec4 uMask;
     // uShape 2: a silhouette. uSil is the field's smoothed mask over the whole image (sim
     // orientation); it is sampled in its own frame: uM0 its original centre, uScale its size now
-    uniform sampler2D uSil; uniform vec2 uM0; uniform float uScale, uCell;
+    uniform sampler2D uSil; uniform vec2 uM0, uPad; uniform float uScale, uCell;
     void main(){
       vec2 p = (vUv - uC)*uAspect;
       float c = cos(uAng), s = sin(uAng);
@@ -181,8 +181,11 @@
       else if (uShape < 1.5) d = (length(q/uHalf) - 1.) * min(uHalf.x, uHalf.y);
       else {
         vec2 mu = uM0 + q / (uScale * uAspect);
-        float inside = step(0., mu.x) * step(mu.x, 1.) * step(0., mu.y) * step(mu.y, 1.);
-        float v = texture(uSil, clamp(mu, 0., 1.)).r * inside;   // 0..1, smooth across cells
+        // the mask texture carries an empty ring around the reader's grid, so the silhouette
+        // closes inside its own frame: image coords run [-uPad, 1+uPad] across the texture
+        vec2 mt = (mu + uPad) / (1. + 2. * uPad);
+        float inside = step(0., mt.x) * step(mt.x, 1.) * step(0., mt.y) * step(mt.y, 1.);
+        float v = texture(uSil, clamp(mt, 0., 1.)).r * inside;   // 0..1, smooth across cells
         d = (0.5 - v) * uCell * uScale;                            // a distance-like signed value, short units
       }
       float m = 1. - smoothstep(-0.0015, 0.0015, d);
@@ -842,8 +845,17 @@
   const silhouettes = {};
   function silhouette(m) {
     if (silhouettes[m.bits]) return silhouettes[m.bits];
-    const cols = m.cols, rows = m.rows, raw = atob(m.bits), cell = new Float32Array(cols * rows);
-    for (let i = 0; i < cols * rows; i++) cell[i] = (raw.charCodeAt(i >> 3) >> (i & 7)) & 1;
+    // The reader's cells, inside a ring of empty cells. Half of all silhouettes have cells on the
+    // grid's own border, and the frame the mask is sampled in rarely lands exactly on the sheet's
+    // edge (it is placed by the field's box and scaled), so without the ring a shape that reached
+    // the border was cut off along a straight, axis-aligned line inside the picture. With it the
+    // contour closes before the frame ends and the cut has nothing left to cut.
+    const PAD = 1, c0 = m.cols, r0 = m.rows, cols = c0 + 2 * PAD, rows = r0 + 2 * PAD;
+    const raw = atob(m.bits), cell = new Float32Array(cols * rows);
+    for (let i = 0; i < c0 * r0; i++) {
+      if (!((raw.charCodeAt(i >> 3) >> (i & 7)) & 1)) continue;
+      cell[(((i / c0) | 0) + PAD) * cols + (i % c0) + PAD] = 1;
+    }
     const U = 4, W = cols * U, H = rows * U, up = new Float32Array(W * H);
     for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {   // bilinear upsample, y flipped to sim (up)
       const fx = (x + 0.5) / U - 0.5, fy = (rows - (y + 0.5) / U) - 0.5;
@@ -868,7 +880,7 @@
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
     gl.activeTexture(gl.TEXTURE0);
-    return (silhouettes[m.bits] = { t: t, cell: 1 / Math.max(cols, rows) });
+    return (silhouettes[m.bits] = { t: t, cell: 1 / Math.max(c0, r0), pad: [PAD / c0, PAD / r0] });
   }
   function zone(e) {
     const u = P.zone.u;
@@ -877,8 +889,9 @@
       const sil = silhouette(e.mask);
       gl.activeTexture(gl.TEXTURE1); gl.bindTexture(gl.TEXTURE_2D, sil.t); gl.uniform1i(u.uSil, 1); gl.activeTexture(gl.TEXTURE0);
       gl.uniform2f(u.uM0, e.m0[0], e.m0[1]); gl.uniform1f(u.uScale, e.scale);
+      gl.uniform2f(u.uPad, sil.pad[0], sil.pad[1]);
       gl.uniform1f(u.uCell, sil.cell * Math.max(S.aspect[0], S.aspect[1]));   // one grid cell, short-side units
-    } else { gl.uniform1i(u.uSil, 1); gl.uniform2f(u.uM0, 0, 0); gl.uniform1f(u.uScale, 1); gl.uniform1f(u.uCell, 0.03); }
+    } else { gl.uniform1i(u.uSil, 1); gl.uniform2f(u.uM0, 0, 0); gl.uniform2f(u.uPad, 0, 0); gl.uniform1f(u.uScale, 1); gl.uniform1f(u.uCell, 0.03); }
     gl.uniform2f(u.uC, e.cx, e.cy); gl.uniform2f(u.uHalf, Math.max(1e-4, e.hx), Math.max(1e-4, e.hy));
     gl.uniform1f(u.uAng, e.ang); gl.uniform1f(u.uShape, e.shape); gl.uniform1f(u.uTh, e.th);
     gl.uniform4f(u.uMask, e.chan === 0 ? 1 : 0, e.chan === 1 ? 1 : 0, e.chan === 2 ? 1 : 0, e.chan === 3 ? 1 : 0);
