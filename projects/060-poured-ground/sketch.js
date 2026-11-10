@@ -1647,7 +1647,9 @@
     resetOnFinish: true,
     closedGroups: ['simulation', 'surface'],
     params: {
-      mode: { value: 0, options: { 'after the work': 0, 'free gestures': 1, 'from the reading': 2 }, label: 'composition', group: 'colour' },
+      // default 2: from the reading where the painting reader has read the work's image, else the
+      // work's brief (colorlisa) or palette (archive), exactly as 'after the work' would
+      mode: { value: 2, options: { 'from the reading': 2, 'after the work': 0, 'free gestures': 1 }, label: 'composition', group: 'colour' },
       interp: { value: 0.65, min: 0, max: 1, step: 0.05, label: 'interpretation', group: 'colour' },
       collection: { value: 2, options: { 'colorlisa + Colorist Archive': 2, colorlisa: 0, 'Colorist Archive': 1 }, label: 'collection', group: 'colour' },
       palette: { value: -1, options: PAL_OPTIONS, label: 'palette', group: 'colour' },
