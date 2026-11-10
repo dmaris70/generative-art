@@ -453,7 +453,7 @@
   uniform float uPxPerMM;
   uniform vec3 uGround, uPaper;
   uniform vec3 uKS[4];        // Kubelka–Munk K/S per pigment (linear RGB)
-  uniform float uRelief, uGloss, uTooth, uLinearOut;
+  uniform float uRelief, uGloss, uTooth, uLinearOut, uTrace;
   // the animated version's ending: absorption into the paper (uEnd 0→1). The movement itself is
   // the simulation; nothing here displaces the paint.
   uniform float uAnim, uEnd, uReveal;
@@ -560,7 +560,10 @@
       vec2 g = vec2(Hx.x+Hx.y+Hx.z+Hx.w, Hy.x+Hy.y+Hy.z+Hy.w) * minS;
       // paint body: ridges and lips add to the relief (the field fades with the paint in the ending)
       if (uBodyOn > 0.5) g += bodyGrad(uvS) * minS * uBodyK * (uAnim > 0.5 ? clamp(total / max(dot(Hc, vec4(1.)), 1e-6), 0., 1.) : 1.);
-      vec3 N = normalize(vec3(-g*uRelief, 1.));
+      // The relief runs with the film too. The gradient alone makes a thin strand's edge stand as
+      // tall as a deep pool's, which is the other half of why every form wore the same sheen.
+      float wet = smoothstep(0.004, 0.055, total);
+      vec3 N = normalize(vec3(-g*uRelief*mix(0.25, 1.1, wet), 1.));
       // like light over a field in wind: the sheen leans with each gust as it passes
       // coverage, per pigment: mofu's alpha = 0.5·(trace history) + 0.5·(present film), both
       // near-binary at sim scale. Here each is thresholded on the smooth cubic field and
@@ -568,7 +571,10 @@
       vec4 fwH = max(fwidth(H), vec4(1e-7)), fwQ = max(fwidth(Q), vec4(1e-5));
       vec4 film  = smoothstep(vec4(0.004) - fwH, vec4(0.004) + fwH, H);
       vec4 stain = smoothstep(vec4(0.5) - fwQ, vec4(0.5) + fwQ, Q);
-      vec4 a4 = 0.5*max(stain, film) + 0.5*film;
+      // uTrace: how much the sheet remembers. 0 keeps only the present film; 1 keeps the whole
+      // record of where paint has been, which holds the silhouettes as laid behind the moved
+      // paint. 0.5 is what every print before this setting was made with.
+      vec4 a4 = uTrace*max(stain, film) + (1. - uTrace)*film;
       float A = max(max(a4.x,a4.y), max(a4.z,a4.w));
       // Kubelka–Munk: mix absorption/scatter weighted by thickness; stains weigh in where thin
       vec4 w = max(Hc, vec4(0)) + 0.015*a4;          // hue of the paint as laid, even once soaked in
@@ -607,9 +613,13 @@
       // light: flat paint renders as its palette colour exactly; relief adds key light and gloss
       vec3 L = normalize(vec3(-0.45, 0.55, 0.70)), Hh = normalize(L + vec3(0,0,1));
       float shade = 1. + 0.9*(dot(N,L) - L.z);
-      float sh = 70.;
+      // The highlight says how thick the paint is. A deep pool holds a smooth surface and takes a
+      // tight, bright sheen; a thin strand sits on the paper's tooth and takes a broad, dim one.
+      // With one sharpness for both, a filament and a pool wore the same slick highlight and the
+      // surface read as liquid plastic rather than as paint of varying body.
+      float sh = mix(10., 90., wet);
       float spec = max(0., pow(max(dot(N,Hh),0.), sh) - pow(Hh.z, sh));
-      col = base*mix(1., shade, cover) + uGloss*spec*cover*vec3(1.);
+      col = base*mix(1., shade, cover) + uGloss*spec*cover*mix(0.12, 1.15, wet)*vec3(1.);
     }
     if (!inImage) col = uPaper * (1. + tooth(mm));
     if (uLabelOn > 0.5) {
@@ -1189,6 +1199,7 @@
     gl.uniform1f(u.uRelief, G.param('relief'));
     gl.uniform1f(u.uGloss, G.param('gloss'));
     gl.uniform1f(u.uTooth, G.param('tooth'));
+    gl.uniform1f(u.uTrace, G.param('trace'));
     gl.uniform1f(u.uLinearOut, linearOut ? 1 : 0);
     gl.uniform1f(u.uSeed, G.seed % 100000);
     const ending = motion.on && motion.phase === 'ending';
@@ -1736,6 +1747,7 @@
       gloss: { value: 0.25, min: 0, max: 1, step: 0.01, label: 'gloss', group: 'surface' },
       body: { value: 1, options: { 'paint body': 1, 'flat (prints before Nov 2026)': 0 }, label: 'paint body', group: 'surface' },
       tooth: { value: 0.035, min: 0, max: 0.15, step: 0.005, label: 'paper tooth', group: 'surface' },
+      trace: { value: 0.5, min: 0, max: 1, step: 0.05, label: 'memory of the pour', group: 'surface' },
       format: { value: 5, options: FMT_OPTIONS, label: 'format', group: 'print' },
       landscape: { value: 2, options: { 'as the original': 2, portrait: 0, landscape: 1 }, label: 'orientation', group: 'print' },
       proportions: { value: 1, options: { 'as the original': 1, 'fill the format': 0 }, label: 'proportions', group: 'print' },
