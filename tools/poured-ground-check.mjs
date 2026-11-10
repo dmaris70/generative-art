@@ -278,6 +278,17 @@ for (let f = 0; f < PG.FORMAT_KEYS.length; f++) for (const ar of [0.5, 0.75, 1, 
         // the second direction is the lighter one
         ok(sheetCombs.length < 2 || (sheetCombs[1][6] === 2 && sheetCombs[1][7] < sheetCombs[0][7]), 'the second grain comb is lighter ' + id);
       }
+      // the intervals the reading found: each is a strip between two fields whose boxes do not
+      // meet, and with the reserve on, no stroke and no dab enters one
+      ok(!b.r || b.r.every((g) => g.length === 4 && g[2] > g[0] && g[3] > g[1] && g.every((v) => v >= 0 && v <= 1)), 'reserves are strips on the sheet ' + id);
+      if (b.r && b.r.length) {
+        const sc = PG.composeBrief(mulberry32(id * 7 + 3), b, { energy: 1, aspect: A, interp: 0, reserve: 1 });
+        const inside = (q, g, m2) => q[0] > g[0] - m2 && q[0] < g[2] + m2 && q[1] > 1 - g[3] - m2 && q[1] < 1 - g[1] + m2;
+        ok(sc.events.filter((e) => e.type === 'drag').every((e) => e.pts.every((q) => !b.r.some((g) => inside(q, g, 0)))), 'no stroke enters an interval ' + id);
+        ok(sc.events.filter((e) => e.type === 'pour').every((e) => !b.r.some((g) => inside([e.x, e.y], g, 0))), 'no dab lands in an interval ' + id);
+        const off = PG.composeBrief(mulberry32(id * 7 + 3), b, { energy: 1, aspect: A, interp: 0, reserve: 0 });
+        ok(JSON.stringify(off) !== JSON.stringify(sc), 'the reserve changes the score ' + id);
+      }
       // the hand follows the reader's own order: a configuration's weight is the summed area of
       // the fields it names, and the heaviest one is made first
       const areaOf = {}; rd.fields.forEach((f) => { areaOf[f[0]] = f[2]; });

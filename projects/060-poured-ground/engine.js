@@ -535,6 +535,26 @@
         m.push(['P', f[0].cx, f[0].cy, f[1].cx, f[1].cy, +(0.03 * k).toFixed(3)]);
       }
     });
+    // The interval. Where a configuration names two fields whose boxes do not meet, the strip
+    // between their facing edges is what separates them, and the gesture the configuration
+    // produces runs straight across it, filling in the very gap that made the relation legible.
+    // A reserve marks that strip so the hand does not cross it; the ground stays open there.
+    const res = [];
+    weighed.forEach(function (q) {
+      const a = q.f[0], b2 = q.f[1];
+      let r = null;
+      if (a.x1 < b2.x0 || b2.x1 < a.x0) {               // a gap across the sheet
+        const l = a.x1 < b2.x0 ? a : b2, g = l === a ? b2 : a;
+        const y0 = Math.max(a.y0, b2.y0), y1 = Math.min(a.y1, b2.y1);
+        if (y1 - y0 >= 0.15 && g.x0 - l.x1 >= 0.03) r = [l.x1, y0, g.x0, y1];
+      } else if (a.y1 < b2.y0 || b2.y1 < a.y0) {         // a gap up the sheet
+        const t = a.y1 < b2.y0 ? a : b2, g = t === a ? b2 : a;
+        const x0 = Math.max(a.x0, b2.x0), x1 = Math.min(a.x1, b2.x1);
+        if (x1 - x0 >= 0.15 && g.y0 - t.y1 >= 0.03) r = [x0, t.y1, x1, g.y0];
+      }
+      if (r) res.push(r.map(function (v) { return +v.toFixed(3); }));
+    });
+
     if (rd.shared && rd.shared.length && byId[rd.shared[0]]) {
       const s = byId[rd.shared[0]], rad = clamp(0.5 * Math.sqrt(s.area * A[0] * A[1] / Math.PI), 0.06, 0.3);
       m.push(['S', s.cx, s.cy, +rad.toFixed(3), 1.5, 0.04]);
@@ -591,7 +611,7 @@
     const kinds = rd.configs.map(function (c) { return c[1].replace('_', ' '); });
     if (kinds.length) parts.push(kinds.join(', '));
     const note = parts.join('; ') || 'what the reader measured in the image';
-    return { g: g, k: 2, note: note, z: z, m: m, read: { fields: F.length, laid: z.length, gestures: m.length, configurations: kinds, sha256: rd.sha256, source: rd.source, px: rd.px, reader: rd.reader, read_on: rd.read_on } };
+    return { g: g, k: 2, note: note, z: z, m: m, r: res, read: { fields: F.length, laid: z.length, gestures: m.length, configurations: kinds, sha256: rd.sha256, source: rd.source, px: rd.px, reader: rd.reader, read_on: rd.read_on } };
   }
 
   function composeBrief(rng, brief, o) {
@@ -601,6 +621,9 @@
     // settles. handling 0 is the earlier sweeping hand: one pour, then every gesture at full reach.
     const layered = o.handling === undefined ? 1 : (o.handling ? 1 : 0);
     const REACH = layered ? 0.62 : 1;
+    // reserve 1: the hand keeps out of the intervals the reading found between related fields,
+    // so the ground stays open where two masses face each other across a gap
+    const keepGap = o.reserve ? (brief.r || []) : [];
     const R = function (a, b) { return a + (b - a) * rng(); };
     const J = function (v, j) { return v + R(-j, j); };
     const plan = interpret(rng, brief, interp);
@@ -756,8 +779,29 @@
       }
     });
     // the hand chooses: most gestures are kept, occasionally one is left out
-    const kept = strokes.filter(function () { return rng() < 0.88; });
+    let kept = strokes.filter(function () { return rng() < 0.88; });
     if (!kept.length && strokes.length) kept.push(strokes[0]);
+    if (keepGap.length) {
+      // a stroke that would cross an interval is cut at its edge and continues on the far side,
+      // so the gesture still reads where it may and the strip between the masses is left bare
+      const inGap = function (q, r) {
+        return keepGap.some(function (g) {
+          const y0 = 1 - g[3], y1 = 1 - g[1], m2 = r * 0.5;     // reader y is down, the sheet's is up
+          return q[0] > g[0] - m2 && q[0] < g[2] + m2 && q[1] > y0 - m2 && q[1] < y1 + m2;
+        });
+      };
+      const cut = [];
+      for (const st of kept) {
+        let run = [];
+        for (const q of st[0]) {
+          if (inGap(q, st[1])) { if (run.length >= 4) cut.push([run, st[1]]); run = []; }
+          else run.push(q);
+        }
+        if (run.length >= 4) cut.push([run, st[1]]);
+      }
+      kept = cut;
+      for (let i = drops.length - 1; i >= 0; i--) if (inGap([drops[i].x, drops[i].y], drops[i].r)) drops.splice(i, 1);
+    }
     // Wet into wet. The masses are poured largest first; layered, the hand works between the
     // layers instead of after all of them, so a small mass lands on paint that has already moved
     // and is itself worked by fewer, later strokes. Unlayered, there is one layer: pour, then work.
