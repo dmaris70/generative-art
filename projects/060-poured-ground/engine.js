@@ -465,16 +465,28 @@
   function readBrief(rd, aspect) {
     const A = aspect || [1, 1], cols = rd.colors;
     const lum = cols.map(luminance);
-    const argmax = function (a) { let k = 0; a.forEach(function (v, i) { if (v > a[k]) k = i; }); return k; };
-    const argmin = function (a) { let k = 0; a.forEach(function (v, i) { if (v < a[k]) k = i; }); return k; };
-    const g = 0, lightIdx = argmax(lum), darkIdx = argmin(lum);
+    const g = 0;
     const clamp = function (v, lo, hi) { return Math.max(lo, Math.min(hi, v)); };
     const tilt = function (deg) { let t = -deg; while (t <= -90) t += 180; while (t > 90) t -= 180; return Math.round(t); };  // reader: 0 right, 90 down → ccw
     const F = rd.fields.map(function (f) {
       return { id: f[0], kind: f[1], area: f[2], x0: f[3], y0: f[4], x1: f[5], y1: f[6], cx: f[7], cy: f[8], axis: f[9], vr: f[10], occ: f[11], edge: f[12], L: f[13], pal: f[14], mask: f[15] || null };
     });
     const byId = {}; F.forEach(function (f) { byId[f.id] = f; });
-    const colourOf = function (f) { return f.kind === 'light' ? lightIdx : f.kind === 'dark' ? darkIdx : f.kind === 'color' ? f.pal : null; };
+    // A value mass takes a pigment by rank, not always the single lightest or darkest: the darker
+    // of two dark masses gets the darker pigment, the next the next, so a work with one dark mass
+    // keeps its strongest colour (the Wave stays Prussian blue) and a work with five spreads across
+    // the palette instead of flooding the sheet with one. The ground is not a candidate, so a mass
+    // the reader measured is always laid rather than cleared to bare sheet.
+    const Lst = lum.map(function (y) { return y > 0.008856 ? 116 * Math.cbrt(y) - 16 : 903.3 * y; });
+    const pigments = [0, 1, 2, 3, 4].filter(function (i) { return i !== g; });
+    const darkRank = pigments.slice().sort(function (a, b) { return Lst[a] - Lst[b]; });
+    const lightRank = pigments.slice().sort(function (a, b) { return Lst[b] - Lst[a]; });
+    const massColour = {};
+    rd.fields.filter(function (f) { return f[1] === 'dark'; }).sort(function (a, b) { return a[13] - b[13]; })
+      .forEach(function (f, i) { massColour[f[0]] = darkRank[Math.min(i, darkRank.length - 1)]; });
+    rd.fields.filter(function (f) { return f[1] === 'light'; }).sort(function (a, b) { return b[13] - a[13]; })
+      .forEach(function (f, i) { massColour[f[0]] = lightRank[Math.min(i, lightRank.length - 1)]; });
+    const colourOf = function (f) { return f.kind === 'color' ? f.pal : f.kind === 'light' || f.kind === 'dark' ? massColour[f.id] : null; };
     const z = [];
     F.filter(function (f) { return f.kind !== 'sparse' && colourOf(f) !== null; })
       .sort(function (a, b) { return b.area - a.area; })
