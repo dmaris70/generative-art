@@ -1,0 +1,365 @@
+{
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "version",
+    "artifact_kind",
+    "work_id",
+    "generated_at",
+    "binding",
+    "features",
+    "sky_probe",
+    "image_evidence",
+    "viewer_responses",
+    "image_only",
+    "viewer_informed",
+    "audit_dimensions",
+    "display",
+    "transfer_probes",
+    "model",
+    "limits"
+  ],
+  "properties": {
+    "version": {
+      "const": "0.8.0"
+    },
+    "artifact_kind": {
+      "const": "viewer_informed_reading"
+    },
+    "work_id": {
+      "const": "met-436535"
+    },
+    "generated_at": {
+      "type": "string"
+    },
+    "binding": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "code_sha256",
+        "roles_sha256",
+        "image_sha256",
+        "summary_sha256",
+        "response_files"
+      ],
+      "properties": {
+        "code_sha256": {
+          "type": "string"
+        },
+        "roles_sha256": {
+          "type": "string"
+        },
+        "image_sha256": {
+          "type": "string"
+        },
+        "summary_sha256": {
+          "type": "string"
+        },
+        "response_files": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "features": {
+      "type": "object",
+      "required": [
+        "image_size",
+        "candidates",
+        "method"
+      ]
+    },
+    "sky_probe": {
+      "type": "object"
+    },
+    "image_evidence": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      }
+    },
+    "viewer_responses": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      },
+      "minItems": 4,
+      "maxItems": 4
+    },
+    "image_only": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "payload",
+        "paragraph"
+      ],
+      "properties": {
+        "payload": {
+          "type": "object"
+        },
+        "paragraph": {
+          "type": "string"
+        }
+      }
+    },
+    "viewer_informed": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "payload",
+        "paragraph"
+      ],
+      "properties": {
+        "payload": {
+          "type": "object"
+        },
+        "paragraph": {
+          "type": "string"
+        }
+      }
+    },
+    "audit_dimensions": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "case_id",
+          "premises",
+          "inference",
+          "qualification",
+          "premise_reason",
+          "inference_reason",
+          "qualification_reason",
+          "missing_evidence"
+        ],
+        "properties": {
+          "case_id": {
+            "type": "string"
+          },
+          "premises": {
+            "enum": [
+              "supported",
+              "partly_supported",
+              "unsupported",
+              "not_assessable"
+            ]
+          },
+          "inference": {
+            "enum": [
+              "literal",
+              "plausible",
+              "weak",
+              "unsupported",
+              "not_assessable"
+            ]
+          },
+          "qualification": {
+            "enum": [
+              "appropriate",
+              "overstated",
+              "understated",
+              "not_assessable"
+            ]
+          },
+          "premise_reason": {
+            "type": "string"
+          },
+          "inference_reason": {
+            "type": "string"
+          },
+          "qualification_reason": {
+            "type": "string"
+          },
+          "missing_evidence": {
+            "type": "string"
+          }
+        }
+      },
+      "minItems": 2,
+      "maxItems": 2
+    },
+    "display": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "origin",
+        "paragraph",
+        "selection_flags",
+        "generated_assessment",
+        "scope"
+      ],
+      "properties": {
+        "origin": {
+          "enum": [
+            "attributed_response_summary",
+            "viewer_informed_model_draft"
+          ]
+        },
+        "paragraph": {
+          "type": "string"
+        },
+        "selection_flags": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "generated_assessment": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "raw",
+            "effective_kind",
+            "disposition",
+            "flags",
+            "independent_review"
+          ],
+          "properties": {
+            "raw": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "case_id",
+                "premises",
+                "inference",
+                "qualification",
+                "premise_reason",
+                "inference_reason",
+                "qualification_reason",
+                "missing_evidence"
+              ],
+              "properties": {
+                "case_id": {
+                  "type": "string"
+                },
+                "premises": {
+                  "enum": [
+                    "supported",
+                    "partly_supported",
+                    "unsupported",
+                    "not_assessable"
+                  ]
+                },
+                "inference": {
+                  "enum": [
+                    "literal",
+                    "plausible",
+                    "weak",
+                    "unsupported",
+                    "not_assessable"
+                  ]
+                },
+                "qualification": {
+                  "enum": [
+                    "appropriate",
+                    "overstated",
+                    "understated",
+                    "not_assessable"
+                  ]
+                },
+                "premise_reason": {
+                  "type": "string"
+                },
+                "inference_reason": {
+                  "type": "string"
+                },
+                "qualification_reason": {
+                  "type": "string"
+                },
+                "missing_evidence": {
+                  "type": "string"
+                }
+              }
+            },
+            "effective_kind": {
+              "type": "string"
+            },
+            "disposition": {
+              "enum": [
+                "proposed",
+                "qualified",
+                "withheld"
+              ]
+            },
+            "flags": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "independent_review": {
+              "const": "pending"
+            }
+          }
+        },
+        "scope": {
+          "type": "string"
+        }
+      }
+    },
+    "transfer_probes": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "work_id",
+          "source_roles_sha256",
+          "source_image_sha256",
+          "features",
+          "scope"
+        ],
+        "properties": {
+          "work_id": {
+            "type": "string"
+          },
+          "source_roles_sha256": {
+            "type": "string"
+          },
+          "source_image_sha256": {
+            "type": "string"
+          },
+          "features": {
+            "type": "object"
+          },
+          "scope": {
+            "type": "string"
+          }
+        }
+      },
+      "minItems": 2,
+      "maxItems": 2
+    },
+    "model": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "revision",
+        "independent_validation"
+      ],
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "revision": {
+          "type": "string"
+        },
+        "independent_validation": {
+          "const": false
+        }
+      }
+    },
+    "limits": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    }
+  },
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Focused viewer-informed reading 0.8"
+}

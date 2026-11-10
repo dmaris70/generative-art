@@ -174,6 +174,61 @@ Fixed at every level:
 `composition: free gestures` keeps the earlier behaviour: palette colours with the seeded
 gesture styles below.
 
+## From the reading: the painting reader
+
+`composition: from the reading` replaces the hand-written brief with a **reading of the work's
+image** by the painting reader (`tools/painting-reader`, the measurement-only path of the
+painting-reader handoff). Until now a brief described the painting's layout in words; here the
+layout is *measured*, and the measurements become instructions to the pour. Nothing is traced: the
+reader does not detect objects or edges to copy, it measures masses, and the hand reinterprets them.
+
+**What the reader measures** (CPU, ~2 s per image; the optional vision model is not used, so no
+subject is identified or described): six colour clusters with their shares and pixel centroids;
+connected value masses (lighter, darker), colour islands and a sparse-detail field, each with its
+box, centroid, principal axis, axis-variance ratio and occupancy; the configurations between them
+(`value_opposition`, `cross_axes`, `detail_interval`, `color_recurrence`); the dominant edge
+direction; and the detail in each cell of a 3 × 3 grid.
+
+**How a reading becomes a composition** (`engine.js`, `readBrief`; deterministic, auditable from
+the record):
+
+| reader | Poured Ground |
+|---|---|
+| six colour clusters | five colours: the two closest in CIELAB are merged (ΔE < 12). Largest share first; the largest is the ground, as the painting's surface |
+| lighter / darker mass | laid in the lightest / darkest of the five |
+| colour island | laid in its own cluster's colour |
+| a mass filling ≥ 55% of its box | a rectangle of that extent, centred on its centroid |
+| any other mass | an ellipse of its measured area, elongated by its axis-variance ratio, turned to its principal axis |
+| sparse-detail field | nothing is laid: a calm interval the gestures avoid |
+| a colour with no connected island | dabs around its pixel centroid, so every measured colour is present |
+| `value_opposition` | one pull of the hand from the dark mass to the light one |
+| `cross_axes` | a comb along each field's axis |
+| `detail_interval` | a burst from the detailed field, aimed away from the sparse one |
+| `color_recurrence` | a pull joining the two islands of one colour |
+| a field shared by the principal configurations | a swirl on it |
+| a dominant edge direction (≥ 22% of edges) | a comb across the sheet along it |
+| the most detailed grid cell(s) | scribbles inside them |
+
+The result is a brief in the same DSL as `briefs.js`, so the interpretation readings, containment,
+the moving version and the label all apply unchanged. Its basis is `k: 2`, and the studio card, the
+caption and the PNG's provenance say so: *layout read from the museum image by the painting reader:
+measurements only, no subject identification*, with the reader version, the date, the image's
+SHA-256 and the museum that holds the image. The five colours are credited as *measured by the
+painting reader from the image held by …*.
+
+**Which works have a reading.** Only works whose image we may use: the 8 public-domain originals
+(`readings.js`, with each full `readings/<id>.handoff.json` kept for audit) and the Colorist
+Archive's public-domain works whose image is served by a museum (`archive/readings.json`, read
+from the Met, Tate, Cleveland, National Gallery of Art and Google Arts & Culture; Wikimedia, which
+hosts most of the archive, rate-limits requests and is not read yet). A work without a reading says
+so in the caption and falls back to its brief (colorlisa) or its palette (archive). Readings are
+bound to their image by SHA-256; the check script verifies the held originals against theirs.
+
+**Limits**, from the reader's own contract (`tools/painting-reader/INTEGRATION.md`): a colour
+cluster is pixels, not an object; a principal axis is the extent of a distribution, not a line
+anyone sees; occupancy and area describe a reproduction at 512 px. The reading is a starting point
+the hand reinterprets, exactly as a brief is.
+
 ## Composition
 
 A seed writes a **score**: timed pours and finger drags on a fixed 60 Hz clock (`engine.js`, no

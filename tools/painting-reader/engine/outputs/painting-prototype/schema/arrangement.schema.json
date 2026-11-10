@@ -1,0 +1,23 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["version", "artifact_kind", "work_id", "identity", "generated_at", "partition", "binding", "image_size", "source_region_caveats", "analysis", "pixel_controls", "diagram_experiments", "layout_diagnostics", "runtime", "limits"],
+  "properties": {
+    "version": {"const": "0.11.0"},
+    "artifact_kind": {"const": "spatial_arrangement"},
+    "work_id": {"type": "string", "pattern": "^[a-z]+-[0-9]+$"},
+    "identity": {"type": "object"},
+    "generated_at": {"type": "string"},
+    "partition": {"const": "development_method_extension"},
+    "binding": {"type": "object", "required": ["code_sha256", "source_files", "protocol_sha256", "attributes_sha256"]},
+    "image_size": {"type": "array", "minItems": 2, "maxItems": 2, "items": {"type": "integer", "minimum": 8}},
+    "source_region_caveats": {"type": "array"},
+    "analysis": {"type": "object", "required": ["network", "junctions", "line_region_links", "line_side_fields", "spatial_graph", "evidence", "account", "layout_only_account"]},
+    "pixel_controls": {"type": "object", "required": ["resolution", "reflection", "length_thresholds"]},
+    "diagram_experiments": {"type": "array", "minItems": 4, "maxItems": 4},
+    "layout_diagnostics": {"type": "object", "required": ["conditions", "scope"]},
+    "runtime": {"type": "object"},
+    "limits": {"type": "array", "minItems": 5, "items": {"type": "string"}}
+  }
+}

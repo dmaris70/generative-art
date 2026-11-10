@@ -208,5 +208,65 @@ for (let f = 0; f < PG.FORMAT_KEYS.length; f++) for (const ar of [0.5, 0.75, 1, 
   }
 }
 
+// 14. Readings by the painting reader: records are complete and bound to the image they describe,
+//     and the brief derived from them (engine.js readBrief) is deterministic, uses the whole palette,
+//     and keeps every field on the sheet at every format.
+{
+  const fs = require('fs'), path = require('path'), crypto = require('crypto');
+  const dir = path.join(path.dirname(new URL(import.meta.url).pathname), '../projects/060-poured-ground');
+  require('../projects/060-poured-ground/readings.js');
+  require('../projects/060-poured-ground/originals.js');
+  const RD = globalThis.READINGS, OR = globalThis.ORIGINALS;
+  const archivePath = path.join(dir, 'archive/readings.json');
+  const AR = fs.existsSync(archivePath) ? JSON.parse(fs.readFileSync(archivePath, 'utf8')) : {};
+  const checkRecord = (id, rd, who) => {
+    ok(String(rd.id) === String(id), 'reading id ' + who);
+    ok(/^[0-9a-f]{64}$/.test(rd.sha256), 'reading sha256 ' + who);
+    ok(rd.colors.length === 5 && rd.colors.every((h) => /^#[0-9a-f]{6}$/i.test(h)), 'reading has five colours ' + who);
+    ok(rd.shares.length === 5 && rd.shares.every((x, i, a) => i === 0 || a[i - 1] >= x), 'reading shares by size ' + who);
+    ok(rd.map6.every((k) => k >= 0 && k < 5), 'reading cluster map ' + who);
+    ok(rd.fields.length > 0 && rd.fields.every((f) => f.length === 15 && ['light', 'dark', 'color', 'sparse'].includes(f[1]) && f[2] > 0 && f[2] <= 1 && f.slice(3, 9).every((v) => v >= 0 && v <= 1) && (f[14] === null || (f[14] >= 0 && f[14] < 5))), 'reading fields ' + who);
+    ok(rd.configs.every((c) => ['value_opposition', 'cross_axes', 'detail_interval', 'color_recurrence', 'subject_field'].includes(c[1])), 'reading configurations ' + who);
+    ok(rd.cells.length === 9 && rd.edges.length === 3, 'reading edges and cells ' + who);
+    ok(rd.reading === 'unavailable', 'no subject description is claimed ' + who);
+  };
+  for (const [id, rd] of Object.entries(RD)) {
+    checkRecord(id, rd, 'colorlisa ' + id);
+    const o = OR[id];
+    ok(o && o.public_domain === true, 'reading is of a public-domain original ' + id);
+    const file = path.join(dir, 'originals', o.file);
+    ok(crypto.createHash('sha256').update(fs.readFileSync(file)).digest('hex') === rd.sha256, 'reading is bound to the held image ' + id);
+    ok(fs.existsSync(path.join(dir, 'readings', String(id).padStart(3, '0') + '.handoff.json')), 'full handoff kept ' + id);
+  }
+  for (const [id, rd] of Object.entries(AR)) {
+    checkRecord(id, rd, 'archive ' + id);
+    ok(+id >= 1000 && /^https:\/\//.test(rd.image), 'archive reading has its image url ' + id);
+  }
+  const all = Object.entries(RD).concat(Object.entries(AR).slice(0, 40));
+  for (const [id, rd] of all) {
+    for (const A of [[1, 1.25], [1.25, 1], [1, 1], [1.414, 1]]) {
+      const b = PG.readBrief(rd, A), b2 = PG.readBrief(rd, A);
+      ok(JSON.stringify(b) === JSON.stringify(b2), 'reading brief deterministic ' + id);
+      ok(b.k === 2 && b.g === 0 && typeof b.note === 'string' && b.note.length > 10, 'reading brief basis ' + id);
+      ok(b.z.length > 0 && b.m.length > 0, 'reading brief has fields and gestures ' + id);
+      ok(b.z.every((f) => f.length === { R: 7, E: 7, L: 7, D: 8 }[f[0]] && f[1] >= 0 && f[1] < 5), 'reading brief field arity ' + id);
+      ok(b.m.every((q) => q.length === { P: 6, B: 8, C: 8, S: 6, W: 7 }[q[0]] && q.slice(1).every(Number.isFinite)), 'reading brief gesture arity ' + id);
+      for (const interp of [0, 0.65]) {
+        const plan = PG.interpret(mulberry32(+id * 7 + 1), b, interp);
+        const cs = new Set([plan.g]); plan.z.forEach((f) => cs.add(f[1]));
+        ok([0, 1, 2, 3, 4].every((c) => cs.has(c) || rd.colors[c] === rd.colors[plan.g]), 'reading keeps all five colours ' + id + ' @' + interp);
+        const sc = PG.composeBrief(mulberry32(+id * 13 + 5), b, { energy: 1, aspect: A, interp });
+        ok(sc.events.filter((e) => e.type === 'zone').every((e) => {
+          const c = Math.abs(Math.cos(e.ang)), sn = Math.abs(Math.sin(e.ang));
+          const ex = e.shape === 1 ? Math.hypot(e.hx * c, e.hy * sn) : e.hx * c + e.hy * sn, ey = e.shape === 1 ? Math.hypot(e.hx * sn, e.hy * c) : e.hx * sn + e.hy * c;
+          return e.cx - ex / A[0] > -1e-9 && e.cx + ex / A[0] < 1 + 1e-9 && e.cy - ey / A[1] > -1e-9 && e.cy + ey / A[1] < 1 + 1e-9;
+        }), 'reading fields stay on the sheet ' + id + ' @' + interp);
+        ok(sc.events.filter((e) => e.type === 'drag').every((e) => e.pts.every((p) => p[0] >= 0 && p[0] <= 1 && p[1] >= 0 && p[1] <= 1)), 'reading gestures inside ' + id + ' @' + interp);
+      }
+    }
+  }
+  ok(Object.keys(RD).length >= 8, 'readings exist for the held originals (' + Object.keys(RD).length + ' colorlisa, ' + Object.keys(AR).length + ' archive)');
+}
+
 console.log(failures ? `${failures} of ${checks} checks failed` : `all ${checks} checks pass`);
 process.exit(failures ? 1 : 0);

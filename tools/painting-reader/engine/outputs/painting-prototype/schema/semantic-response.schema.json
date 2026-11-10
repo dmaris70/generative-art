@@ -1,0 +1,167 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Localized visual model proposals",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "regions",
+    "observations",
+    "interpretations",
+    "summary",
+    "uncertainties"
+  ],
+  "properties": {
+    "regions": {
+      "type": "array",
+      "minItems": 3,
+      "maxItems": 6,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "label",
+          "bbox_1000"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^r[1-9]$"
+          },
+          "label": {
+            "type": "string",
+            "minLength": 2,
+            "maxLength": 80
+          },
+          "bbox_1000": {
+            "type": "array",
+            "minItems": 4,
+            "maxItems": 4,
+            "items": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 1000
+            }
+          }
+        }
+      }
+    },
+    "observations": {
+      "type": "array",
+      "minItems": 4,
+      "maxItems": 6,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "domain",
+          "statement",
+          "region_ids"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^o[1-9]$"
+          },
+          "domain": {
+            "enum": [
+              "subject_and_motif",
+              "color",
+              "value_and_light",
+              "line_and_edge",
+              "geometry",
+              "composition",
+              "space_and_perspective"
+            ]
+          },
+          "statement": {
+            "type": "string",
+            "minLength": 2,
+            "maxLength": 500
+          },
+          "region_ids": {
+            "type": "array",
+            "minItems": 1,
+            "maxItems": 3,
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    },
+    "interpretations": {
+      "type": "array",
+      "minItems": 2,
+      "maxItems": 2,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "domain",
+          "statement",
+          "observation_ids",
+          "measurement_claim_ids",
+          "alternative"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^i[1-9]$"
+          },
+          "domain": {
+            "enum": [
+              "composition",
+              "space_and_perspective",
+              "atmosphere_and_expression",
+              "theme_and_meaning"
+            ]
+          },
+          "statement": {
+            "type": "string",
+            "minLength": 2,
+            "maxLength": 300
+          },
+          "observation_ids": {
+            "type": "array",
+            "minItems": 2,
+            "maxItems": 4,
+            "items": {
+              "type": "string"
+            }
+          },
+          "measurement_claim_ids": {
+            "type": "array",
+            "minItems": 0,
+            "maxItems": 3,
+            "items": {
+              "type": "string"
+            }
+          },
+          "alternative": {
+            "type": "string",
+            "minLength": 2,
+            "maxLength": 220
+          }
+        }
+      }
+    },
+    "summary": {
+      "type": "string",
+      "minLength": 20,
+      "maxLength": 500
+    },
+    "uncertainties": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 4,
+      "items": {
+        "type": "string",
+        "minLength": 2,
+        "maxLength": 500
+      }
+    }
+  }
+}

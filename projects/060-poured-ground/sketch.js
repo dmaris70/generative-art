@@ -680,7 +680,20 @@
   // the proportions of the original; it composes from its palette (no layout brief), and an image
   // is referenced only when it is public domain by our rule.
   const ARCHIVE_BASE = 1000;
-  const archive = { index: null, files: {}, pending: {}, loading: null };
+  const archive = { index: null, files: {}, pending: {}, loading: null, readings: null, readingsLoading: null };
+  // the painting reader's readings of archive works (tools/painting-reader/read_works.py --archive)
+  function loadArchiveReadings() {
+    if (archive.readings) return Promise.resolve(archive.readings);
+    if (!archive.readingsLoading) archive.readingsLoading = fetch('archive/readings.json').then(function (r) { return r.ok ? r.json() : {}; })
+      .catch(function () { return {}; }).then(function (d) { archive.readings = d || {}; return archive.readings; });
+    return archive.readingsLoading;
+  }
+  // the reading of a work, if the painting reader has read its image (null otherwise)
+  function readingFor(pal) {
+    if (!pal) return null;
+    if (pal.archive) return archive.readings ? archive.readings[String(pal.id)] || null : null;
+    return (window.READINGS || {})[String(pal.id)] || null;
+  }
   function loadArchiveIndex() {
     if (archive.index || archive.loading) return archive.loading;
     archive.loading = fetch('archive/index.json').then(function (r) { return r.json(); })
@@ -762,8 +775,18 @@
     return PG.sheet(G.param('format'), orientation(pal), G.param('border'), dpi, workAspect(pal));
   }
   function build() {
-    const pal0 = paletteFor(G.seed);
+    let pal0 = paletteFor(G.seed);
     if (!pal0) { say('Loading the Colorist Archive…'); return; }   // runs again when the data arrives
+    // mode 2, from the reading: the painting reader's measurements of the work's image set the
+    // colours, the fields and the gestures (engine.js readBrief). Without a reading the work
+    // falls back to its brief (colorlisa) or its palette (archive), and says so.
+    let reading = null, readingMissing = false;
+    if (G.param('mode') === 2) {
+      if (pal0.archive && !archive.readings) { loadArchiveReadings().then(function () { simKey = ''; G.reset(); }); say('Loading the readings…'); return; }
+      reading = readingFor(pal0);
+      readingMissing = !reading;
+      if (reading) pal0 = Object.assign({}, pal0, { colors: reading.colors.slice(), reading: reading });
+    }
     say('');
     const sh = sheetFor(300, pal0);
     const long = G.param('simres');
@@ -773,10 +796,11 @@
     // a fresh generator from the seed: the same sequence G.rng gives after a reset, so the
     // animated cycle can rebuild the identical composition each time it begins again
     const rng = GenArt._mulberry32(G.seed);
-    const pal = paletteFor(G.seed);
+    const pal = pal0;
     // mode 0, after the work: the palette's brief sets the ground, the fields and the gestures.
     // mode 1, free gestures: the palette's colours with the seeded gesture styles.
-    const brief = G.param('mode') === 0 && !pal.archive ? window.BRIEFS[pal.id] : null;  // archive works: from the palette
+    // mode 2, from the reading: the reader's measurements (above); archive works without one: from the palette
+    const brief = reading ? PG.readBrief(reading, a) : (G.param('mode') !== 1 && !pal.archive ? window.BRIEFS[pal.id] : null);
     const score = brief
       ? PG.composeBrief(rng, brief, { energy: G.param('energy'), aspect: a, interp: G.param('interp') })
       : PG.compose(rng, { style: G.param('style'), pours: G.param('pours'), energy: G.param('energy'), aspect: a });
@@ -792,6 +816,7 @@
       hist: pair(w, h, gl.RGBA16F, gl.NEAREST),
       pours: {},
       engine: G.param('engine'),
+      reading: reading, readingMissing: readingMissing,
     };
     if (S.engine >= 2) allocV2(S);
     if (S.engine >= 3) { S.curlT = target(w, h, gl.RGBA16F, gl.NEAREST); S.curlB = target(w, h, gl.RGBA16F, gl.NEAREST); S.velHat = target(w, h, gl.RGBA16F, gl.LINEAR); }
@@ -1449,9 +1474,9 @@
     return {
       Title: 'Poured Ground' + (S.brief ? ' — ' + after() : '') + ', seed ' + G.seed,
       Author: 'dmaris70 / generative-art',
-      Software: 'Poured Ground (projects/060-poured-ground), WebGL2, engine v' + S.engine + (S.engine === 3 ? ' (v2 + vorticity confinement, MacCormack advection, wall memory)' : S.engine === 2 ? ' (multigrid pressure, conservative transport)' : ' (original)'),
+      Software: 'Poured Ground (projects/060-poured-ground), WebGL2' + (S.brief && S.brief.k === 2 ? ' + painting reader ' + S.brief.read.reader : '') + ', engine v' + S.engine + (S.engine === 3 ? ' (v2 + vorticity confinement, MacCormack advection, wall memory)' : S.engine === 2 ? ' (multigrid pressure, conservative transport)' : ' (original)'),
       Source: 'Palette: ' + paletteCredit(p) + ' - ' + p.artist + ', ' + p.painting + ' [' + p.colors.join(' ') + ']',
-      Description: (S.brief ? 'Starting point: ' + S.brief.note + ' (' + (S.brief.k ? 'layout follows the documented composition' : 'layout inferred from the title and the artist\'s typical structure') + '). Interpretation ' + S.score.interp.toFixed(2) + (S.score.readings.length ? ': ' + S.score.readings.join('; ') : ': close to the starting layout') + '. No image of the work is used; only its five colorlisa colours and a description of its layout. ' : p.archive && G.param('mode') === 0 ? 'Composed from the work\'s palette (Colorist Archive works have no layout brief). ' : 'Free gestures. ') +
+      Description: (S.brief ? 'Starting point: ' + S.brief.note + ' (' + basisText(S.brief) + '). Interpretation ' + S.score.interp.toFixed(2) + (S.score.readings.length ? ': ' + S.score.readings.join('; ') : ': close to the starting layout') + '. ' + (S.brief.k === 2 ? 'The work\'s image was measured by the painting reader (tools/painting-reader, ' + S.brief.read.reader + ', ' + S.brief.read.read_on + '; image SHA-256 ' + S.brief.read.sha256 + ', ' + S.brief.read.source + '): ' + S.brief.read.fields + ' fields, ' + S.brief.read.configurations.length + ' configurations; the five colours are its clusters. Nothing is traced: the masses are laid where they were measured and the configurations become the hand\'s gestures. ' : 'No image of the work is used; only its five colorlisa colours and a description of its layout. ') : p.archive && G.param('mode') !== 1 ? 'Composed from the work\'s palette (' + (S.readingMissing ? 'the painting reader has not read this work yet; ' : '') + 'Colorist Archive works have no layout brief). ' : 'Free gestures. ') +
         'Ground ' + S.colours.ground + '; pigments ' + S.colours.pigments.join(' ') + '. Sheet ' + S.sheet.name +
         (S.sheet.landscape ? ' landscape' : ' portrait') + ', image ' + S.sheet.imageMM[0].toFixed(0) + '×' + S.sheet.imageMM[1].toFixed(0) + ' mm' + (S.sheet.imgAspect ? ' in the proportions of the original (' + S.sheet.imgAspect.toFixed(3) + ' : 1, size from ' + (S.palette.aspectSource || 'Wikidata') + ')' : '') + ', borders ' + S.sheet.bx.toFixed(1) + '/' + S.sheet.by.toFixed(1) + ' mm, ' + W + '×' + H + ' px at ' + dpi + ' dpi, ' + bits + '-bit sRGB.' +
         (G.param('label') === 1 ? ' Label: "' + S.palette.painting + '", ' + S.palette.artist + ' (Cedarville Cursive, ' + (G.param('labelPos') === 1 ? 'border' : 'image') + ').' : ' No label.') +
@@ -1544,7 +1569,12 @@
              search: 'https://www.google.com/search?tbm=isch&q=' + q, note: 'Colorist Archive source page' };
   }
   // where the palette comes from: colorlisa's 133 works or the Colorist Archive
-  function paletteCredit(p) { return p.archive ? 'Colorist Archive, meditationsincolor.com' : 'colorlisa.com'; }
+  function paletteCredit(p) { return p.reading ? 'measured by the painting reader from the image held by ' + p.reading.source : p.archive ? 'Colorist Archive, meditationsincolor.com' : 'colorlisa.com'; }
+  // the basis of a brief: k 1 documented, 0 inferred, 2 read from the image by the painting reader
+  function basisText(b) {
+    return b.k === 2 ? 'layout read from the museum image by the painting reader: measurements only, value masses, colour islands and detail, no subject identification'
+      : b.k ? 'layout follows the documented composition' : 'layout inferred from the title and the artist\'s typical structure';
+  }
   function updateCaption() {
     // nothing to describe while an archive work is still loading; build() calls this again
     if (!S) return;
@@ -1554,7 +1584,7 @@
     const sh = sheetFor(G.param('dpi'));
     cap.innerHTML =
       '<b>Poured Ground</b>' + (S.brief ? ' — <em>' + after() + '</em>' : '') + ' · seed ' + G.seed + '<br>' +
-      (S.brief ? '<span class="src">' + (S.score.readings.length ? S.score.readings.join(' · ') : 'close to the work') + '</span><br>' : '') +
+      (S.brief ? '<span class="src">' + (S.brief.k === 2 ? 'read from the image · ' : '') + (S.score.readings.length ? S.score.readings.join(' · ') : 'close to the work') + '</span><br>' : S.readingMissing ? '<span class="src">no reading of this work yet · composed from its palette</span><br>' : '') +
       (viewLink(S.palette) ? '<a class="view" target="_blank" rel="noopener" href="' + viewLink(S.palette).url + '">view the painting ↗</a> <span class="src">' + viewLink(S.palette).site + '</span> · <a class="view" target="_blank" rel="noopener" href="' + viewLink(S.palette).search + '">image search ↗</a><br>' : '') +
       'palette: ' + p.artist + ', <em>' + p.painting + '</em> <span class="src">(' + paletteCredit(p) + ')</span><br>' +
       '<span class="sw">ground ' + swatch(c.ground) + ' paint ' + c.pigments.map(function (h, i) { return '<span class="pig' + (i === pigment ? ' on' : '') + '">' + (i + 1) + swatch(h) + '</span>'; }).join('') + '</span><br>' +
@@ -1617,7 +1647,7 @@
     resetOnFinish: true,
     closedGroups: ['simulation', 'surface'],
     params: {
-      mode: { value: 0, options: { 'after the work': 0, 'free gestures': 1 }, label: 'composition', group: 'colour' },
+      mode: { value: 0, options: { 'after the work': 0, 'free gestures': 1, 'from the reading': 2 }, label: 'composition', group: 'colour' },
       interp: { value: 0.65, min: 0, max: 1, step: 0.05, label: 'interpretation', group: 'colour' },
       collection: { value: 2, options: { 'colorlisa + Colorist Archive': 2, colorlisa: 0, 'Colorist Archive': 1 }, label: 'collection', group: 'colour' },
       palette: { value: -1, options: PAL_OPTIONS, label: 'palette', group: 'colour' },
@@ -1670,6 +1700,7 @@
     archive: { index: function () { return loadArchiveIndex(); }, artist: function (id) { return loadArtist(id); }, BASE: ARCHIVE_BASE },
     viewLink: function () { return S ? viewLink(S.palette) : null; },
     volume: volume, engine: function () { return S ? S.engine : null; },
+    reading: function () { return S && S.brief && S.brief.k === 2 ? S.brief.read : null; }, readings: { load: loadArchiveReadings, of: readingFor },
     motion: motion, setMotion: setMotion, setPlaying: setPlaying, restartMotion: restartMotion, advance: advance, motionInfo: motionInfo, recordLoop: recordLoop, loopSeconds: loopSeconds,
     after: function () { return S ? after() : null; },
     source: function () { return S ? sourceFor(S.palette.id) : null; }, revealAmount: function () { return revealAmount(); },

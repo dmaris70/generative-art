@@ -189,7 +189,7 @@
     ['mode', 'ground', 'style', 'label', 'labelPos', 'original', 'collection', 'proportions', 'landscape', 'dpi', 'bits', 'engine', 'body'].forEach((k) => seg(k, G.param(k)));
     $('labelPos').classList.toggle('dim', G.param('label') !== 1);
     $('labelSize').parentNode.classList.toggle('dim', G.param('label') !== 1);
-    const inspired = G.param('mode') === 0;
+    const inspired = G.param('mode') !== 1;
     $('freeOnly').classList.toggle('dim', inspired);
     $('freeOnly2').classList.toggle('dim', inspired);
     $('interpRow').classList.toggle('dim', !inspired);
@@ -199,11 +199,22 @@
       w.hidden = false;
       w.innerHTML = '<b></b><span class="note"></span><div class="readings"></div><span class="basis"></span>';
       w.querySelector('b').textContent = 'After ' + S.palette.painting + ' — ' + S.palette.artist;
-      w.querySelector('.note').textContent = 'Starting point: ' + S.brief.note + '.';
+      w.querySelector('.note').textContent = (S.brief.k === 2 ? 'Read from the image: ' : 'Starting point: ') + S.brief.note + '.';
       w.querySelector('.readings').textContent = S.score.readings.length
         ? 'Our reading: ' + S.score.readings.join(' · ') + '.'
         : 'Our reading: kept close to the work.';
-      w.querySelector('.basis').textContent = S.brief.k ? 'layout from the work' : 'layout inferred from title';
+      w.querySelector('.basis').textContent = S.brief.k === 2 ? 'read by the painting reader' : S.brief.k ? 'layout from the work' : 'layout inferred from title';
+      if (S.brief.k === 2) {
+        // what the reader measured, so the composition can be audited against the record
+        const rd = S.brief.read, line = document.createElement('div'); line.className = 'readings';
+        line.textContent = 'Painting reader (' + rd.reader + ', ' + rd.read_on + '): ' + rd.fields + ' fields measured in the ' + rd.source + ' image (' + rd.px[0] + '×' + rd.px[1] + ' px), ' + rd.laid + ' laid as paint, ' + rd.gestures + ' gestures from ' + (rd.configurations.length ? rd.configurations.join(', ') : 'the edges and the detail') + '. The five colours are its clusters, largest first as the ground. No subject was identified; nothing is traced.';
+        line.title = 'Image SHA-256 ' + rd.sha256;
+        w.insertBefore(line, w.querySelector('.basis'));
+      } else if (G.param('mode') === 2) {
+        const line = document.createElement('div'); line.className = 'readings';
+        line.textContent = 'The painting reader has not read this work (no public-domain image is held for it), so the hand-written brief is used.';
+        w.insertBefore(line, w.querySelector('.basis'));
+      }
       // what rises in the paper before the paint is absorbed
       const src = app.source(), srcLine = document.createElement('div');
       srcLine.className = 'readings';
@@ -221,7 +232,7 @@
       } else srcLine.textContent = 'In motion, its composition map rises in the paper. The work is in copyright (or not yet sourced), so no image of it is shown or used.';
       w.insertBefore(srcLine, w.querySelector('.basis'));
       // where to view the painting itself (a link, for every work: nothing is copied)
-      const L = (window.WORK_LINKS || {})[S.palette.id];
+      const L = S.palette.archive ? app.viewLink() : (window.WORK_LINKS || {})[S.palette.id];
       if (L) {
         const v = document.createElement('div'); v.className = 'readings view';
         const a1 = document.createElement('a'); a1.href = L.url; a1.target = '_blank'; a1.rel = 'noopener';
@@ -232,7 +243,7 @@
         v.appendChild(a1); v.appendChild(s1); v.appendChild(a2);
         w.insertBefore(v, w.querySelector('.basis'));
       }
-      w.querySelector('.basis').title = S.brief.k
+      w.querySelector('.basis').title = S.brief.k === 2 ? 'The layout was read from the museum image by the painting reader: value masses, colour islands and detail, with their measured positions, sizes and axes. Measurements only; no subject identification.' : S.brief.k
         ? 'The fields follow the documented composition of the painting.'
         : 'The composition of this work is not documented in the brief\'s sources; the layout follows its title and the artist\'s typical structure.';
     } else if (S.palette.archive) {
@@ -241,7 +252,7 @@
       w.hidden = false;
       w.innerHTML = '<b></b><span class="note"></span><div class="readings v"></div><div class="readings o"></div><span class="basis">Colorist Archive</span>';
       w.querySelector('b').textContent = P.painting + ' — ' + P.artist + (P.date ? ' (' + P.date + ')' : '');
-      w.querySelector('.note').textContent = 'Composed from its palette: this work has no layout brief. Proportions: ' + (P.aspect ? 'as the original (' + P.aspect.toFixed(3) + ' : 1, size from ' + (P.aspectSource || 'Wikidata') + ').' : 'unknown, so it fills the format.');
+      w.querySelector('.note').textContent = (S.readingMissing ? 'The painting reader has not read this work yet. ' : '') + 'Composed from its palette: this work has no layout brief. Proportions: ' + (P.aspect ? 'as the original (' + P.aspect.toFixed(3) + ' : 1, size from ' + (P.aspectSource || 'Wikidata') + ').' : 'unknown, so it fills the format.');
       const v = w.querySelector('.v');
       if (L) { const a = document.createElement('a'); a.href = L.url; a.target = '_blank'; a.rel = 'noopener'; a.textContent = 'View the painting ↗'; a.style.color = 'var(--accent)'; v.appendChild(a); v.appendChild(document.createTextNode(' ' + L.site)); }
       const o = w.querySelector('.o');
