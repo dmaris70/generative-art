@@ -509,29 +509,52 @@
       });
     const m = [];
     const centroidDist = function (a, b) { return Math.hypot((a.cx - b.cx) * A[0], (a.cy - b.cy) * A[1]); };
-    rd.configs.forEach(function (c) {
-      const kind = c[1], f = c[2].map(function (id) { return byId[id]; }).filter(Boolean);
-      if (f.length < 2) return;
+    // The reader orders its configurations by the area they affect, and says so: its selection
+    // weight is the summed area of the fields a configuration names. The hand follows that order
+    // and that weight, so the relation the reader called principal is made first and made hardest.
+    const weighed = rd.configs.map(function (c) {
+      const f = c[2].map(function (id) { return byId[id]; }).filter(Boolean);
+      return { c: c, f: f, w: f.reduce(function (s, x) { return s + x.area; }, 0) };
+    }).filter(function (q) { return q.f.length >= 2; }).sort(function (a, b) { return b.w - a.w; });
+    const wTop = weighed.length ? weighed[0].w : 1;
+    weighed.forEach(function (q) {
+      const kind = q.c[1], f = q.f;
+      const k = 0.6 + 0.8 * (wTop > 0 ? q.w / wTop : 1);          // 1.4 for the principal, 0.6 for the slightest
       if (kind === 'value_opposition') {
         const d = f[0].kind === 'dark' ? f[0] : f[1], l = d === f[0] ? f[1] : f[0];
-        m.push(['P', d.cx, d.cy, l.cx, l.cy, +(0.03 + 0.06 * Math.sqrt(Math.min(d.area, l.area))).toFixed(3)]);
+        m.push(['P', d.cx, d.cy, l.cx, l.cy, +((0.03 + 0.06 * Math.sqrt(Math.min(d.area, l.area))) * k).toFixed(3)]);
       } else if (kind === 'cross_axes') {
-        f.forEach(function (x) { if (x.axis !== null && x.axis !== undefined) m.push(['C', x.x0, x.y0, x.x1, x.y1, tilt(x.axis), Math.max(2, Math.round(2 + 6 * Math.sqrt(x.area))), 0.03]); });
+        f.forEach(function (x) { if (x.axis !== null && x.axis !== undefined) m.push(['C', x.x0, x.y0, x.x1, x.y1, tilt(x.axis), Math.max(2, Math.round((2 + 6 * Math.sqrt(x.area)) * k)), +(0.03 * k).toFixed(3)]); });
       } else if (kind === 'detail_interval') {
         const sp = f[0].kind === 'sparse' ? f[0] : f[1], det = sp === f[0] ? f[1] : f[0];
         const dx = (det.cx - sp.cx) * A[0], dy = (det.cy - sp.cy) * A[1];
         const ang = Math.round(Math.atan2(-dy, dx) * 180 / Math.PI);    // away from the calm field, ccw (90 = up)
-        const len = clamp(0.5 * Math.hypot(dx, dy), 0.08, 0.3);
-        m.push(['B', det.cx, det.cy, ang - 50, ang + 50, +len.toFixed(3), clamp(3 + Math.round(det.edge * 20), 3, 8), 0.03]);
+        const len = clamp(0.5 * Math.hypot(dx, dy) * k, 0.08, 0.3);
+        m.push(['B', det.cx, det.cy, ang - 50, ang + 50, +len.toFixed(3), clamp(Math.round((3 + det.edge * 20) * k), 3, 8), +(0.03 * k).toFixed(3)]);
       } else if (kind === 'color_recurrence') {
-        m.push(['P', f[0].cx, f[0].cy, f[1].cx, f[1].cy, 0.03]);
+        m.push(['P', f[0].cx, f[0].cy, f[1].cx, f[1].cy, +(0.03 * k).toFixed(3)]);
       }
     });
     if (rd.shared && rd.shared.length && byId[rd.shared[0]]) {
       const s = byId[rd.shared[0]], rad = clamp(0.5 * Math.sqrt(s.area * A[0] * A[1] / Math.PI), 0.06, 0.3);
       m.push(['S', s.cx, s.cy, +rad.toFixed(3), 1.5, 0.04]);
     }
-    if (rd.edges && rd.edges[1] >= 0.22) m.push(['C', 0.05, 0.05, 0.95, 0.95, tilt(rd.edges[0]), 3, 0.025]);
+    // The grain of the whole sheet. The reader bins edge tangents into 8 directions over 180
+    // degrees; a flat image would put 1/8 in each. The strongest direction carrying at least 1.5
+    // times that is combed across the sheet, with 2 to 4 teeth in proportion to its share; a
+    // second such direction is combed lightly across it, 2 narrow teeth, so a woven painting is
+    // crossed both ways without being worked into drips. A one-direction painting is combed once,
+    // as before. Two full combs were tried first and turned rectilinear works into curtains.
+    if (rd.ebins && rd.ebins.length === 8) {
+      const EB_MIN = 0.1875, EB_MAX = 2;
+      rd.ebins.map(function (v, i) { return [v, i * 180 / 8]; })
+        .filter(function (b) { return b[0] >= EB_MIN; })
+        .sort(function (a, b) { return b[0] - a[0]; })
+        .slice(0, EB_MAX)
+        .forEach(function (b, i) { m.push(['C', 0.05, 0.05, 0.95, 0.95, tilt(b[1]), i === 0 ? clamp(Math.round(b[0] * 10), 2, 4) : 2, i === 0 ? 0.025 : 0.015]); });
+    } else if (rd.edges && rd.edges[1] >= 0.22) {   // a reading made before the grain was kept
+      m.push(['C', 0.05, 0.05, 0.95, 0.95, tilt(rd.edges[0]), 3, 0.025]);
+    }
     if (rd.cells && rd.cells.length === 9) {
       const order = rd.cells.map(function (d, i) { return [d, i]; }).sort(function (a, b) { return b[0] - a[0]; });
       order.slice(0, 2).forEach(function (ci, k) {

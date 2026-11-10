@@ -135,6 +135,7 @@ def compact(doc, meta, measurements=None, formal=None):
            'reading': doc['coverage']['visual_reading'], 'grid': grid,
            'colors': colors, 'shares': shares, 'centroids': centroids, 'map6': map6, 'fields': fields, 'configs': configs, 'shared': shared,
            'edges': [round(float(e.get('dominant_tangent_degrees', 0))), r3(e.get('dominant_bin_share', 0)), r3(e.get('strong_edge_density', 0))],
+           'ebins': [r3(v) for v in (e.get('orientation_shares') or [])],   # the whole grain: 8 bins over 180 degrees, 0 = horizontal
            'cells': [r3(c['strong_edge_density']) for c in cells]}
     return rec
 

@@ -208,7 +208,8 @@ the record):
 | `detail_interval` | a burst from the detailed field, aimed away from the sparse one |
 | `color_recurrence` | a pull joining the two islands of one colour |
 | a field shared by the principal configurations | a swirl on it |
-| a dominant edge direction (≥ 22% of edges) | a comb across the sheet along it |
+| a configuration's **weight** | the reader orders configurations by the area they affect, and its selection weight is the summed area of the fields it names. The hand works them in that order, heaviest first, and scales each gesture's radius, reach and tooth count by 0.6 + 0.8 × (weight / heaviest weight), so the principal relation is made first and made hardest |
+| the grain: the 8-bin histogram of edge directions | the strongest direction carrying at least 1.5 × an isotropic share (≥ 18.75%) is combed across the sheet with 2–4 teeth in proportion to its share; a second such direction is combed lightly across it, 2 narrow teeth. Two full combs were tried first and turned rectilinear works into drip curtains. A reading made before the grain was kept falls back to one comb along the single dominant direction when it holds ≥ 22% |
 | the most detailed grid cell(s) | scribbles inside them |
 
 Silhouettes are the reader's own evidence (`formal.json` `cells_xy`), not an interpretation of it: the
