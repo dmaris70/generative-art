@@ -103,9 +103,19 @@ BRIEFS.forEach((b, i) => {
     ok(plan.z.every((f) => f.slice(2).every(Number.isFinite)) && plan.m.every((q) => q.slice(1).every(Number.isFinite)), 'finite geometry ' + i + ' @' + interp);
     const a = PG.composeBrief(mulberry32(seed * 131 + i), b, o), c = PG.composeBrief(mulberry32(seed * 131 + i), b, o);
     ok(JSON.stringify(a) === JSON.stringify(c), 'brief determinism ' + i);
-    const fieldsEnd = Math.max(0, ...a.events.filter((e) => e.type !== 'drag').map((e) => e.t));
+    const fieldTs = a.events.filter((e) => e.type !== 'drag').map((e) => e.t).sort((x, y) => x - y);
     const firstDrag = Math.min(...a.events.filter((e) => e.type === 'drag').map((e) => e.t0));
-    ok(fieldsEnd < firstDrag, 'fields before gestures ' + i);
+    ok(fieldTs[0] < firstDrag, 'the hand never works a bare sheet ' + i);
+    // layered handling pours in runs with the hand between them: at most three runs, and every
+    // run is finished before the strokes that follow it begin
+    const runs = fieldTs.reduce((n, t, k) => n + (k && t - fieldTs[k - 1] > 1 ? 1 : 0), 1);
+    ok(runs >= 1 && runs <= 3, 'poured in at most three layers ' + i);
+    const drags = a.events.filter((e) => e.type === 'drag').map((e) => e.t0).sort((x, y) => x - y);
+    ok(fieldTs.every((t) => drags.every((d) => d !== t)), 'a pour and a drag never share a step ' + i);
+    // the earlier sweeping hand still lays every field before any gesture
+    const sweep = PG.composeBrief(mulberry32(seed * 131 + i), b, Object.assign({}, o, { handling: 0 }));
+    ok(Math.max(0, ...sweep.events.filter((e) => e.type !== 'drag').map((e) => e.t))
+       < Math.min(...sweep.events.filter((e) => e.type === 'drag').map((e) => e.t0)), 'sweeping: fields before gestures ' + i);
     ok(a.events.filter((e) => e.type === 'zone').every((e) => e.chan >= -1 && e.chan <= 3 && e.hx > 0 && e.hy > 0), 'zone channels ' + i);
     // nothing is cut off by the canvas: every field lies wholly on the sheet
     ok(a.events.filter((e) => e.type === 'zone').every((e) => {
