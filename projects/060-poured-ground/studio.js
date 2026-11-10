@@ -207,7 +207,7 @@
       if (S.brief.k === 2) {
         // what the reader measured, so the composition can be audited against the record
         const rd = S.brief.read, line = document.createElement('div'); line.className = 'readings';
-        line.textContent = 'Painting reader (' + rd.reader + ', ' + rd.read_on + '): ' + rd.fields + ' fields measured in the ' + rd.source + ' image (' + rd.px[0] + '×' + rd.px[1] + ' px), ' + rd.laid + ' laid as paint, ' + rd.gestures + ' gestures from ' + (rd.configurations.length ? rd.configurations.join(', ') : 'the edges and the detail') + '. The five colours are its clusters, largest first as the ground. No subject was identified; nothing is traced.';
+        line.textContent = 'Painting reader (' + rd.reader + ', ' + rd.read_on + '): ' + rd.fields + ' fields measured in the image held by ' + rd.source + ' (' + rd.px[0] + '×' + rd.px[1] + ' px), ' + rd.laid + ' laid as paint, ' + rd.gestures + ' gestures from ' + (rd.configurations.length ? rd.configurations.join(', ') : 'the edges and the detail') + '. The five colours are its clusters, largest first as the ground. No subject was identified; nothing is traced.';
         line.title = 'Image SHA-256 ' + rd.sha256;
         w.insertBefore(line, w.querySelector('.basis'));
       } else if (G.param('mode') === 2) {
