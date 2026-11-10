@@ -197,7 +197,7 @@ the record):
 | reader | Poured Ground |
 |---|---|
 | six colour clusters | five colours: the two closest in CIELAB are merged (ΔE < 12). Largest share first; the largest is the ground, as the painting's surface |
-| lighter / darker mass | laid in the lightest / darkest of the five |
+| lighter / darker mass | laid in a pigment by rank: the darkest of several dark masses takes the darkest pigment, the next the next, and the same from the light end. One dark mass keeps the darkest colour; five spread across the palette. The ground is never a candidate, so a measured mass is always laid |
 | colour island | laid in its own cluster's colour |
 | each mass | laid as its **own silhouette**: the reader's connected grid cells (32 × 22 on the long side), upsampled 4× and softened, so the contour is drawn rather than stepped. The silhouette keeps its own frame, so interpretation can move, scale and turn it |
 | a record without masks | a rectangle of the box (a mass filling ≥ 55% of it) or an ellipse of its area, elongated by its axis-variance ratio and turned to its principal axis |
