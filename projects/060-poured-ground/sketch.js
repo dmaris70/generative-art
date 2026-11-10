@@ -169,13 +169,22 @@
     // uMask = 0 clears to the ground (a cut-out).
     zone: HEAD + `
     uniform sampler2D uH; uniform vec2 uC, uHalf; uniform float uAng, uShape, uTh; uniform vec4 uMask;
+    // uShape 2: a silhouette. uSil is the field's smoothed mask over the whole image (sim
+    // orientation); it is sampled in its own frame: uM0 its original centre, uScale its size now
+    uniform sampler2D uSil; uniform vec2 uM0; uniform float uScale, uCell;
     void main(){
       vec2 p = (vUv - uC)*uAspect;
       float c = cos(uAng), s = sin(uAng);
       vec2 q = vec2(c*p.x + s*p.y, -s*p.x + c*p.y);
       float d;
       if (uShape < 0.5) { vec2 dd = abs(q) - uHalf; d = length(max(dd, 0.)) + min(max(dd.x, dd.y), 0.); }
-      else d = (length(q/uHalf) - 1.) * min(uHalf.x, uHalf.y);
+      else if (uShape < 1.5) d = (length(q/uHalf) - 1.) * min(uHalf.x, uHalf.y);
+      else {
+        vec2 mu = uM0 + q / (uScale * uAspect);
+        float inside = step(0., mu.x) * step(mu.x, 1.) * step(0., mu.y) * step(mu.y, 1.);
+        float v = texture(uSil, clamp(mu, 0., 1.)).r * inside;   // 0..1, smooth across cells
+        d = (0.5 - v) * uCell * uScale;                            // a distance-like signed value, short units
+      }
       float m = 1. - smoothstep(-0.0015, 0.0015, d);
       float hh = uTh * smoothstep(0., 0.01, -d);
       o = texelFetch(uH, ivec2(gl_FragCoord.xy), 0)*(1. - m) + uMask*hh;
@@ -828,9 +837,48 @@
     dirty = true;
   }
 
+  // a field's silhouette as a texture: the reader's cells, upsampled 4× and softened, so the
+  // laid shape has a drawn contour rather than a stepped one. Cached by the mask's bits.
+  const silhouettes = {};
+  function silhouette(m) {
+    if (silhouettes[m.bits]) return silhouettes[m.bits];
+    const cols = m.cols, rows = m.rows, raw = atob(m.bits), cell = new Float32Array(cols * rows);
+    for (let i = 0; i < cols * rows; i++) cell[i] = (raw.charCodeAt(i >> 3) >> (i & 7)) & 1;
+    const U = 4, W = cols * U, H = rows * U, up = new Float32Array(W * H);
+    for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {   // bilinear upsample, y flipped to sim (up)
+      const fx = (x + 0.5) / U - 0.5, fy = (rows - (y + 0.5) / U) - 0.5;
+      const x0 = Math.max(0, Math.min(cols - 1, Math.floor(fx))), y0 = Math.max(0, Math.min(rows - 1, Math.floor(fy)));
+      const x1 = Math.min(cols - 1, x0 + 1), y1 = Math.min(rows - 1, y0 + 1), tx = Math.max(0, Math.min(1, fx - x0)), ty = Math.max(0, Math.min(1, fy - y0));
+      up[y * W + x] = (cell[y0 * cols + x0] * (1 - tx) + cell[y0 * cols + x1] * tx) * (1 - ty) + (cell[y1 * cols + x0] * (1 - tx) + cell[y1 * cols + x1] * tx) * ty;
+    }
+    let a = up, b = new Float32Array(W * H);   // two box blurs of one cell: a soft, round contour
+    for (let pass = 0; pass < 2; pass++) {
+      for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
+        let sum = 0, n = 0;
+        for (let dy = -U / 2; dy <= U / 2; dy++) for (let dx = -U / 2; dx <= U / 2; dx++) { const xx = x + dx, yy = y + dy; if (xx >= 0 && yy >= 0 && xx < W && yy < H) { sum += a[yy * W + xx]; n++; } }
+        b[y * W + x] = sum / n;
+      }
+      const t = a; a = b; b = t;
+    }
+    const bytes = new Uint8Array(W * H); for (let i = 0; i < W * H; i++) bytes[i] = Math.round(a[i] * 255);
+    gl.activeTexture(gl.TEXTURE1);
+    const t = gl.createTexture(); gl.bindTexture(gl.TEXTURE_2D, t);
+    gl.pixelStorei(gl.UNPACK_ALIGNMENT, 1);
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.R8, W, H, 0, gl.RED, gl.UNSIGNED_BYTE, bytes);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+    gl.activeTexture(gl.TEXTURE0);
+    return (silhouettes[m.bits] = { t: t, cell: 1 / Math.max(cols, rows) });
+  }
   function zone(e) {
     const u = P.zone.u;
     bind(P.zone, { uH: S.hgt.a.t });
+    if (e.shape === 2) {
+      const sil = silhouette(e.mask);
+      gl.activeTexture(gl.TEXTURE1); gl.bindTexture(gl.TEXTURE_2D, sil.t); gl.uniform1i(u.uSil, 1); gl.activeTexture(gl.TEXTURE0);
+      gl.uniform2f(u.uM0, e.m0[0], e.m0[1]); gl.uniform1f(u.uScale, e.scale);
+      gl.uniform1f(u.uCell, sil.cell * Math.max(S.aspect[0], S.aspect[1]));   // one grid cell, short-side units
+    } else { gl.uniform1i(u.uSil, 1); gl.uniform2f(u.uM0, 0, 0); gl.uniform1f(u.uScale, 1); gl.uniform1f(u.uCell, 0.03); }
     gl.uniform2f(u.uC, e.cx, e.cy); gl.uniform2f(u.uHalf, Math.max(1e-4, e.hx), Math.max(1e-4, e.hy));
     gl.uniform1f(u.uAng, e.ang); gl.uniform1f(u.uShape, e.shape); gl.uniform1f(u.uTh, e.th);
     gl.uniform4f(u.uMask, e.chan === 0 ? 1 : 0, e.chan === 1 ? 1 : 0, e.chan === 2 ? 1 : 0, e.chan === 3 ? 1 : 0);

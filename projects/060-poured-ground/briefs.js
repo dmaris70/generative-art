@@ -7,6 +7,7 @@
 // index clears paint back to the ground (a cut-out).
 //
 //   fields   R(c, x0,y0,x1,y1, deg)    rectangle (deg: counter-clockwise tilt)
+//            M(c, cx,cy, sx,sy, deg, mask) a silhouette, made only by engine.js readBrief from a reading
 //            E(c, cx,cy, rx,ry, deg)   ellipse; radii in short-side units, so circles stay round
 //            L(c, x0,y0,x1,y1, w)      a band from one point to another, width w (short-side units)
 //            D(c, x0,y0,x1,y1, n, r)   n dabs of radius r scattered in a region (flatter than a pour)

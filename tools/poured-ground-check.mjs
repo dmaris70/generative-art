@@ -225,7 +225,9 @@ for (let f = 0; f < PG.FORMAT_KEYS.length; f++) for (const ar of [0.5, 0.75, 1, 
     ok(rd.colors.length === 5 && rd.colors.every((h) => /^#[0-9a-f]{6}$/i.test(h)), 'reading has five colours ' + who);
     ok(rd.shares.length === 5 && rd.shares.every((x, i, a) => i === 0 || a[i - 1] >= x), 'reading shares by size ' + who);
     ok(rd.map6.every((k) => k >= 0 && k < 5), 'reading cluster map ' + who);
-    ok(rd.fields.length > 0 && rd.fields.every((f) => f.length === 15 && ['light', 'dark', 'color', 'sparse'].includes(f[1]) && f[2] > 0 && f[2] <= 1 && f.slice(3, 9).every((v) => v >= 0 && v <= 1) && (f[14] === null || (f[14] >= 0 && f[14] < 5))), 'reading fields ' + who);
+    ok(rd.fields.length > 0 && rd.fields.every((f) => (f.length === 15 || f.length === 16) && ['light', 'dark', 'color', 'sparse'].includes(f[1]) && f[2] > 0 && f[2] <= 1 && f.slice(3, 9).every((v) => v >= 0 && v <= 1) && (f[14] === null || (f[14] >= 0 && f[14] < 5))), 'reading fields ' + who);
+    // a silhouette, when present, is a base64 mask of exactly the grid's cells, and it is not empty
+    if (rd.grid) ok(rd.grid.length === 2 && rd.fields.every((f) => f.length < 16 || (Buffer.from(f[15], 'base64').length === Math.ceil(rd.grid[0] * rd.grid[1] / 8) && Buffer.from(f[15], 'base64').some((x) => x))), 'reading silhouettes ' + who);
     ok(rd.configs.every((c) => ['value_opposition', 'cross_axes', 'detail_interval', 'color_recurrence', 'subject_field'].includes(c[1])), 'reading configurations ' + who);
     ok(rd.cells.length === 9 && rd.edges.length === 3, 'reading edges and cells ' + who);
     ok(rd.reading === 'unavailable', 'no subject description is claimed ' + who);
@@ -249,7 +251,8 @@ for (let f = 0; f < PG.FORMAT_KEYS.length; f++) for (const ar of [0.5, 0.75, 1, 
       ok(JSON.stringify(b) === JSON.stringify(b2), 'reading brief deterministic ' + id);
       ok(b.k === 2 && b.g === 0 && typeof b.note === 'string' && b.note.length > 10, 'reading brief basis ' + id);
       ok(b.z.length > 0 && b.m.length > 0, 'reading brief has fields and gestures ' + id);
-      ok(b.z.every((f) => f.length === { R: 7, E: 7, L: 7, D: 8 }[f[0]] && f[1] >= 0 && f[1] < 5), 'reading brief field arity ' + id);
+      ok(b.z.every((f) => f.length === { R: 7, E: 7, L: 7, D: 8, M: 8 }[f[0]] && f[1] >= 0 && f[1] < 5), 'reading brief field arity ' + id);
+      if (rd.grid) ok(b.z.some((f) => f[0] === 'M') && b.z.every((f) => f[0] !== 'M' || (f[7].cols === rd.grid[0] && f[7].rows === rd.grid[1] && typeof f[7].bits === 'string')), 'reading brief lays silhouettes ' + id);
       ok(b.m.every((q) => q.length === { P: 6, B: 8, C: 8, S: 6, W: 7 }[q[0]] && q.slice(1).every(Number.isFinite)), 'reading brief gesture arity ' + id);
       for (const interp of [0, 0.65]) {
         const plan = PG.interpret(mulberry32(+id * 7 + 1), b, interp);
@@ -261,6 +264,7 @@ for (let f = 0; f < PG.FORMAT_KEYS.length; f++) for (const ar of [0.5, 0.75, 1, 
           const ex = e.shape === 1 ? Math.hypot(e.hx * c, e.hy * sn) : e.hx * c + e.hy * sn, ey = e.shape === 1 ? Math.hypot(e.hx * sn, e.hy * c) : e.hx * sn + e.hy * c;
           return e.cx - ex / A[0] > -1e-9 && e.cx + ex / A[0] < 1 + 1e-9 && e.cy - ey / A[1] > -1e-9 && e.cy + ey / A[1] < 1 + 1e-9;
         }), 'reading fields stay on the sheet ' + id + ' @' + interp);
+        ok(sc.events.filter((e) => e.type === 'zone' && e.shape === 2).every((e) => e.scale > 0 && e.mask && e.m0.length === 2 && isFinite(e.scale)), 'silhouette zones carry their mask and scale ' + id + ' @' + interp);
         ok(sc.events.filter((e) => e.type === 'drag').every((e) => e.pts.every((p) => p[0] >= 0 && p[0] <= 1 && p[1] >= 0 && p[1] <= 1)), 'reading gestures inside ' + id + ' @' + interp);
       }
     }
