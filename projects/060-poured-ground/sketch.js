@@ -560,7 +560,10 @@
       vec2 g = vec2(Hx.x+Hx.y+Hx.z+Hx.w, Hy.x+Hy.y+Hy.z+Hy.w) * minS;
       // paint body: ridges and lips add to the relief (the field fades with the paint in the ending)
       if (uBodyOn > 0.5) g += bodyGrad(uvS) * minS * uBodyK * (uAnim > 0.5 ? clamp(total / max(dot(Hc, vec4(1.)), 1e-6), 0., 1.) : 1.);
-      vec3 N = normalize(vec3(-g*uRelief, 1.));
+      // The relief runs with the film too. The gradient alone makes a thin strand's edge stand as
+      // tall as a deep pool's, which is the other half of why every form wore the same sheen.
+      float wet = smoothstep(0.004, 0.055, total);
+      vec3 N = normalize(vec3(-g*uRelief*mix(0.25, 1.1, wet), 1.));
       // like light over a field in wind: the sheen leans with each gust as it passes
       // coverage, per pigment: mofu's alpha = 0.5·(trace history) + 0.5·(present film), both
       // near-binary at sim scale. Here each is thresholded on the smooth cubic field and
@@ -614,10 +617,9 @@
       // tight, bright sheen; a thin strand sits on the paper's tooth and takes a broad, dim one.
       // With one sharpness for both, a filament and a pool wore the same slick highlight and the
       // surface read as liquid plastic rather than as paint of varying body.
-      float wet = smoothstep(0.006, 0.05, total);
-      float sh = mix(14., 90., wet);
+      float sh = mix(10., 90., wet);
       float spec = max(0., pow(max(dot(N,Hh),0.), sh) - pow(Hh.z, sh));
-      col = base*mix(1., shade, cover) + uGloss*spec*cover*mix(0.3, 1.15, wet)*vec3(1.);
+      col = base*mix(1., shade, cover) + uGloss*spec*cover*mix(0.12, 1.15, wet)*vec3(1.);
     }
     if (!inImage) col = uPaper * (1. + tooth(mm));
     if (uLabelOn > 0.5) {
