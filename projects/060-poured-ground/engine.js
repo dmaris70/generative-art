@@ -706,7 +706,11 @@
           const off = (n === 1 ? 0 : (i / (n - 1) - 0.5)) * ext * 1.2 + R(-0.02, 0.02);
           const mid = [ctr[0] + nrm[0] * off, ctr[1] + nrm[1] * off];
           const half = ext * R(0.6, 0.95);
-          const box = function (p) { return [Math.max(lo[0], Math.min(hi[0], p[0])), Math.max(lo[1], Math.min(hi[1], p[1]))]; };
+          // every tooth stops somewhere of its own: with one shared boundary they all end on the
+          // same line and the region reads as a rectangle laid over the paint
+          const sx = (hi[0] - lo[0]) * 0.12, sy = (hi[1] - lo[1]) * 0.12;
+          const bl = [lo[0] + R(-sx, sx), lo[1] + R(-sy, sy)], bh = [hi[0] + R(-sx, sx), hi[1] + R(-sy, sy)];
+          const box = function (p) { return [Math.max(bl[0], Math.min(bh[0], p[0])), Math.max(bl[1], Math.min(bh[1], p[1]))]; };
           strokes.push([line(box([mid[0] - d[0] * half, mid[1] - d[1] * half]), box([mid[0] + d[0] * half, mid[1] + d[1] * half]), R(-0.1, 0.1)), m[7] * R(0.8, 1.25)]);
         }
       } else if (k === 'S') {
@@ -723,11 +727,17 @@
         const n = Math.max(1, m[5] + Math.round(R(-2, 2)));
         for (let i = 0; i < n; i++) {
           let p = [R(lo[0], hi[0]), R(lo[1], hi[1])], h = R(0, Math.PI * 2);
+          // a walk is held near where it started rather than clamped to the cell: clamping gave
+          // every walk in a cell the same straight boundary, and the cell showed as a rectangle
+          const home = [p[0], p[1]], rad = Math.min(hi[0] - lo[0], hi[1] - lo[1]) * R(0.3, 0.5);
           const pts = [un(p)], steps = 6 + Math.floor(rng() * 8);
           for (let s = 0; s < steps; s++) {
             h += R(-1.6, 1.6);
             const st = R(0.04, 0.1);
-            p = [Math.max(lo[0], Math.min(hi[0], p[0] + Math.cos(h) * st)), Math.max(lo[1], Math.min(hi[1], p[1] + Math.sin(h) * st))];
+            let q = [p[0] + Math.cos(h) * st, p[1] + Math.sin(h) * st];
+            const dx = q[0] - home[0], dy = q[1] - home[1], dd = Math.hypot(dx, dy);
+            if (dd > rad) { q = [home[0] + dx / dd * rad, home[1] + dy / dd * rad]; h += Math.PI * R(0.4, 0.6); }
+            p = q;
             pts.push(un(p));
           }
           strokes.push([pts, m[6] * R(0.8, 1.25)]);
