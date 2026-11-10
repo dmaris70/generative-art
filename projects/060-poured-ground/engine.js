@@ -596,6 +596,11 @@
 
   function composeBrief(rng, brief, o) {
     const A = o.aspect, energy = o.energy, interp = o.interp || 0;
+    // handling 1 (default): the masses are poured in layers and the hand works between them, and
+    // every stroke travels less, so what the reader measured is still legible when the film
+    // settles. handling 0 is the earlier sweeping hand: one pour, then every gesture at full reach.
+    const layered = o.handling === undefined ? 1 : (o.handling ? 1 : 0);
+    const REACH = layered ? 0.62 : 1;
     const R = function (a, b) { return a + (b - a) * rng(); };
     const J = function (v, j) { return v + R(-j, j); };
     const plan = interpret(rng, brief, interp);
@@ -649,7 +654,7 @@
       const ctr = un([(a[0] + b[0]) / 2, (a[1] + b[1]) / 2]);
       return { type: 'zone', shape: 0, cx: ctr[0], cy: ctr[1], hx: len / 2, hy: f[6] / 2 * (1 + R(-sj, sj)), ang: Math.atan2(dy, dx), chan: ch, th: FIELD_TH };
     };
-    const drops = [];
+    const drops = [], zones = [];
     for (const f of brief.z) {
       if (f[0] === 'D') {
         const n = Math.max(1, Math.round(f[6] * R(0.8, 1.25)));
@@ -658,11 +663,9 @@
           drops.push({ type: 'pour', x: Math.max(0.02, Math.min(0.98, u[0])), y: Math.max(0.02, Math.min(0.98, u[1])), r: f[7] * R(0.7, 1.4), pig: chan[f[1]], k: 0.4 });
         }
       } else {
-        const e = fieldOf(f); e.t = t++; events.push(e);
+        zones.push(fieldOf(f));
       }
     }
-    for (const d of drops) { d.t = t++; events.push(d); }
-    t += 8;
 
     const speed = function () { return R(0.35, 0.8) * energy; };
     const drag = function (pts, r, start) {
@@ -686,14 +689,17 @@
     brief.m.forEach(function (m) {
       const k = m[0];
       if (k === 'P') {
-        const a = sh(scr(J(m[1], .03), J(m[2], .03))), b = sh(scr(J(m[3], .03), J(m[4], .03)));
+        let a = sh(scr(J(m[1], .03), J(m[2], .03))), b = sh(scr(J(m[3], .03), J(m[4], .03)));
+        const mid = [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2];     // shortened about its middle: same
+        a = [mid[0] + (a[0] - mid[0]) * REACH, mid[1] + (a[1] - mid[1]) * REACH];   // place, same
+        b = [mid[0] + (b[0] - mid[0]) * REACH, mid[1] + (b[1] - mid[1]) * REACH];   // direction
         strokes.push([line(a, b, R(-0.15, 0.15)), m[5] * R(0.8, 1.25)]);
       } else if (k === 'B') {
         const c = sh(scr(J(m[1], .02), J(m[2], .02)));
         const n = Math.max(2, m[6] + Math.round(R(-1, 1)));
         for (let i = 0; i < n; i++) {
           const ang = (m[3] + (m[4] - m[3]) * (i + 0.5) / n + R(-12, 12)) * Math.PI / 180;
-          const len = m[5] * R(0.7, 1.15);
+          const len = m[5] * R(0.7, 1.15) * REACH;
           strokes.push([line(c, [c[0] + Math.cos(ang) * len, c[1] + Math.sin(ang) * len], R(-0.2, 0.2)), m[7] * R(0.8, 1.25)]);
         }
       } else if (k === 'C') {
@@ -705,7 +711,7 @@
         for (let i = 0; i < n; i++) {
           const off = (n === 1 ? 0 : (i / (n - 1) - 0.5)) * ext * 1.2 + R(-0.02, 0.02);
           const mid = [ctr[0] + nrm[0] * off, ctr[1] + nrm[1] * off];
-          const half = ext * R(0.6, 0.95);
+          const half = ext * R(0.6, 0.95) * REACH;
           // every tooth stops somewhere of its own: with one shared boundary they all end on the
           // same line and the region reads as a rectangle laid over the paint
           const sx = (hi[0] - lo[0]) * 0.12, sy = (hi[1] - lo[1]) * 0.12;
@@ -733,7 +739,7 @@
           const pts = [un(p)], steps = 6 + Math.floor(rng() * 8);
           for (let s = 0; s < steps; s++) {
             h += R(-1.6, 1.6);
-            const st = R(0.04, 0.1);
+            const st = R(0.04, 0.1) * REACH;
             let q = [p[0] + Math.cos(h) * st, p[1] + Math.sin(h) * st];
             const dx = q[0] - home[0], dy = q[1] - home[1], dd = Math.hypot(dx, dy);
             if (dd > rad) { q = [home[0] + dx / dd * rad, home[1] + dy / dd * rad]; h += Math.PI * R(0.4, 0.6); }
@@ -747,9 +753,19 @@
     // the hand chooses: most gestures are kept, occasionally one is left out
     const kept = strokes.filter(function () { return rng() < 0.88; });
     if (!kept.length && strokes.length) kept.push(strokes[0]);
-    for (const s of kept) {
-      const end = drag(s[0], s[1], t);
-      t = Math.max(t + 4, Math.round(t + (end - t) * R(0.4, 0.8)));
+    // Wet into wet. The masses are poured largest first; layered, the hand works between the
+    // layers instead of after all of them, so a small mass lands on paint that has already moved
+    // and is itself worked by fewer, later strokes. Unlayered, there is one layer: pour, then work.
+    const L = layered ? (zones.length >= 6 ? 3 : zones.length >= 3 ? 2 : 1) : 1;
+    const zPer = Math.ceil(zones.length / L), sPer = Math.ceil(kept.length / L);
+    for (let i = 0; i < L; i++) {
+      for (const e of zones.slice(i * zPer, (i + 1) * zPer)) { e.t = t++; events.push(e); }
+      if (i === L - 1) for (const d of drops) { d.t = t++; events.push(d); }
+      t += 8;
+      for (const s of kept.slice(i * sPer, (i + 1) * sPer)) {
+        const end = drag(s[0], s[1], t);
+        t = Math.max(t + 4, Math.round(t + (end - t) * R(0.4, 0.8)));
+      }
     }
     let last = 0;
     for (const e of events) last = Math.max(last, e.type === 'drag' ? e.t1 : e.t);

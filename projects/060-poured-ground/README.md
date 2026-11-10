@@ -239,6 +239,18 @@ cluster is pixels, not an object; a principal axis is the extent of a distributi
 anyone sees; occupancy and area describe a reproduction at 512 px. The reading is a starting point
 the hand reinterprets, exactly as a brief is.
 
+## Handling: how the hand works the sheet
+
+Setting *handling* (`p_handling`), two values:
+
+- **layered** (default). The masses are poured in up to three layers, largest first, and the hand
+  works between them, so a small mass lands on paint that has already moved and is itself worked by
+  fewer, later strokes. Every stroke also travels 0.62 of its full reach, keeping its place and
+  direction: a pull is shortened about its middle, a burst's rays and a comb's teeth are shorter,
+  and a scribble steps less far. The measured structure is still legible when the film settles.
+- **sweeping** (`p_handling=0`). The earlier hand: every mass poured first, then every gesture at
+  full reach. Reproduces prints made before November 2026.
+
 ## Composition
 
 A seed writes a **score**: timed pours and finger drags on a fixed 60 Hz clock (`engine.js`, no
