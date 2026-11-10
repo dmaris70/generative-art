@@ -173,7 +173,16 @@ def archive_jobs(hosts):
     return jobs
 
 
+WIKIMEDIA_WIDTH = 1280   # Wikimedia serves hotlinked thumbnails only at standard widths; 1280 px is accepted
+def readable_url(url):
+    """The URL to fetch: Wikimedia thumbnails at a standard width (the archive's 600 px ones are refused)."""
+    if '://upload.wikimedia.org/' in url and '/thumb/' in url:
+        return re.sub(r'/\d+px-', '/%dpx-' % WIKIMEDIA_WIDTH, url)
+    return url
+
+
 def fetch(url, dest, tries=4):
+    url = readable_url(url)
     for k in range(tries):
         try:
             req = urllib.request.Request(url, headers=UA)
@@ -184,7 +193,7 @@ def fetch(url, dest, tries=4):
             dest.write_bytes(data); return True
         except urllib.error.HTTPError as e:
             if e.code == 429: time.sleep(int(e.headers.get('Retry-After') or 15) + 1); continue
-            if e.code in (403, 404, 410): return False
+            if e.code in (400, 403, 404, 410): return False
             time.sleep(3 * (k + 1))
         except Exception:
             time.sleep(3 * (k + 1))
@@ -206,7 +215,7 @@ def run_archive(hosts, out, resume, workers, limit):
             img = Path(tmp) / 'image'
             if not fetch(j['image'], img): return j, None, 'download failed'
             try:
-                rec, _ = read_image(img, {'id': j['id'], 'image': j['image'], 'source': j['source']})
+                rec, _ = read_image(img, {'id': j['id'], 'image': readable_url(j['image']), 'source': j['source']})
                 return j, rec, None
             except Exception as e:
                 return j, None, type(e).__name__ + ': ' + str(e)[:120]
