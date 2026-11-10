@@ -113,7 +113,8 @@ colours lead. Palette `— chosen by seed —` draws one of the 133 from the see
 
 ## After the work
 
-By default (`composition: after the work`) each generation chooses one of the 133 colorlisa
+With `composition: after the work` (the default until 10 Nov 2026; now the fallback of *from the
+reading* for works the painting reader has not read) each generation chooses one of the 133 colorlisa
 palettes at random. It takes that work's five colours, and also its **composition**. Every
 palette has a brief in `briefs.js`, which is a short description of the painting's layout as
 data:
@@ -176,7 +177,8 @@ gesture styles below.
 
 ## From the reading: the painting reader
 
-`composition: from the reading` replaces the hand-written brief with a **reading of the work's
+`composition: from the reading` (the default since 10 Nov 2026; earlier links carry `p_mode=0`
+and reproduce as before) replaces the hand-written brief with a **reading of the work's
 image** by the painting reader (`tools/painting-reader`, the measurement-only path of the
 painting-reader handoff). Until now a brief described the painting's layout in words; here the
 layout is *measured*, and the measurements become instructions to the pour. Nothing is traced: the
