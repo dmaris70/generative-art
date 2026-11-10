@@ -173,8 +173,29 @@ def archive_jobs(hosts):
     return jobs
 
 
+WIKIMEDIA_WIDTH = 1280   # Wikimedia serves hotlinked thumbnails only at standard widths; 1280 px is accepted
+def readable_url(url):
+    """The URL to fetch: Wikimedia thumbnails at a standard width (the archive's 600 px ones are refused)."""
+    if '://upload.wikimedia.org/' in url and '/thumb/' in url:
+        return re.sub(r'/\d+px-', '/%dpx-' % WIKIMEDIA_WIDTH, url)
+    return url
+
+
+import threading
+PACE = {'seconds': 0.0, 'next': 0.0, 'lock': threading.Lock()}
+def paced():
+    """Wait so that requests are at least PACE['seconds'] apart (all workers together)."""
+    with PACE['lock']:
+        now = time.time(); wait = max(0.0, PACE['next'] - now)
+        PACE['next'] = max(now, PACE['next']) + PACE['seconds']
+    if wait: time.sleep(wait)
+
+
 def fetch(url, dest, tries=4):
-    for k in range(tries):
+    url = readable_url(url)
+    k = 0
+    while k < tries:
+        paced()
         try:
             req = urllib.request.Request(url, headers=UA)
             with urllib.request.urlopen(req, timeout=60) as r:
@@ -183,11 +204,13 @@ def fetch(url, dest, tries=4):
             if len(data) > 60_000_000: raise ValueError('image too large')
             dest.write_bytes(data); return True
         except urllib.error.HTTPError as e:
-            if e.code == 429: time.sleep(int(e.headers.get('Retry-After') or 15) + 1); continue
-            if e.code in (403, 404, 410): return False
+            if e.code == 429:   # rate limited: wait as told and try again; this does not count as an attempt
+                time.sleep(int(e.headers.get('Retry-After') or 15) + 1 + PACE['seconds']); continue
+            if e.code in (400, 403, 404, 410): return False
             time.sleep(3 * (k + 1))
         except Exception:
             time.sleep(3 * (k + 1))
+        k += 1
     return False
 
 
@@ -206,7 +229,7 @@ def run_archive(hosts, out, resume, workers, limit):
             img = Path(tmp) / 'image'
             if not fetch(j['image'], img): return j, None, 'download failed'
             try:
-                rec, _ = read_image(img, {'id': j['id'], 'image': j['image'], 'source': j['source']})
+                rec, _ = read_image(img, {'id': j['id'], 'image': readable_url(j['image']), 'source': j['source']})
                 return j, rec, None
             except Exception as e:
                 return j, None, type(e).__name__ + ': ' + str(e)[:120]
@@ -234,8 +257,10 @@ def main():
     ap.add_argument('--resume', action='store_true')
     ap.add_argument('--workers', type=int, default=3)
     ap.add_argument('--limit', type=int, default=0)
+    ap.add_argument('--pace', type=float, default=0, help='minimum seconds between requests, all workers together (Wikimedia needs ~120 from a cloud address)')
     a = ap.parse_args()
     if a.colorlisa: run_colorlisa()
+    PACE['seconds'] = a.pace
     if a.archive: run_archive([h for h in a.hosts.split(',') if h], a.out, a.resume, a.workers, a.limit)
     if not (a.colorlisa or a.archive): ap.print_help()
 
