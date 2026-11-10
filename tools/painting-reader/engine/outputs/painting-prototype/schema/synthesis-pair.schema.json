@@ -1,0 +1,481 @@
+{
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "version",
+    "generated_at",
+    "questions",
+    "evidence",
+    "selection",
+    "generation",
+    "model",
+    "limits",
+    "artifact_kind",
+    "pair_id",
+    "binding",
+    "works",
+    "nodes",
+    "order_control",
+    "duplicate_control"
+  ],
+  "properties": {
+    "version": {
+      "const": "0.7.0"
+    },
+    "generated_at": {
+      "type": "string"
+    },
+    "questions": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      },
+      "minItems": 2,
+      "maxItems": 2
+    },
+    "evidence": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "id",
+          "kind"
+        ],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "kind": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "selection": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      },
+      "minItems": 2,
+      "maxItems": 2
+    },
+    "generation": {
+      "type": "object"
+    },
+    "model": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "revision",
+        "independent_validation"
+      ],
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "revision": {
+          "type": "string"
+        },
+        "independent_validation": {
+          "const": false
+        }
+      }
+    },
+    "limits": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "artifact_kind": {
+      "const": "grounded_synthesis_pair"
+    },
+    "pair_id": {
+      "type": "string",
+      "pattern": "^met-[0-9]+--met-[0-9]+$"
+    },
+    "binding": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "code_sha256"
+      ],
+      "properties": {
+        "code_sha256": {
+          "type": "string"
+        }
+      }
+    },
+    "works": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "alias",
+          "work_id",
+          "synthesis_sha256",
+          "image_sha256"
+        ],
+        "properties": {
+          "alias": {
+            "enum": [
+              "A",
+              "B"
+            ]
+          },
+          "work_id": {
+            "type": "string"
+          },
+          "synthesis_sha256": {
+            "type": "string"
+          },
+          "image_sha256": {
+            "type": "string"
+          }
+        }
+      },
+      "minItems": 2,
+      "maxItems": 2
+    },
+    "nodes": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "question_id",
+          "kind",
+          "text",
+          "support_ids",
+          "challenge_ids",
+          "depends_on",
+          "assessment"
+        ],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "question_id": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "kind": {
+            "enum": [
+              "observation",
+              "relation",
+              "role",
+              "bridge",
+              "integration",
+              "comparison"
+            ]
+          },
+          "text": {
+            "type": "string"
+          },
+          "support_ids": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "uniqueItems": true
+          },
+          "challenge_ids": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "uniqueItems": true
+          },
+          "depends_on": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "uniqueItems": true
+          },
+          "assessment": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "raw",
+              "effective_kind",
+              "disposition",
+              "flags",
+              "independent_review"
+            ],
+            "properties": {
+              "raw": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "case_id",
+                  "premises",
+                  "inference",
+                  "qualification",
+                  "premise_reason",
+                  "inference_reason",
+                  "qualification_reason",
+                  "missing_evidence"
+                ],
+                "properties": {
+                  "case_id": {
+                    "type": "string"
+                  },
+                  "premises": {
+                    "enum": [
+                      "supported",
+                      "partly_supported",
+                      "unsupported",
+                      "not_assessable"
+                    ]
+                  },
+                  "inference": {
+                    "enum": [
+                      "literal",
+                      "plausible",
+                      "weak",
+                      "unsupported",
+                      "not_assessable"
+                    ]
+                  },
+                  "qualification": {
+                    "enum": [
+                      "appropriate",
+                      "overstated",
+                      "understated",
+                      "not_assessable"
+                    ]
+                  },
+                  "premise_reason": {
+                    "type": "string"
+                  },
+                  "inference_reason": {
+                    "type": "string"
+                  },
+                  "qualification_reason": {
+                    "type": "string"
+                  },
+                  "missing_evidence": {
+                    "type": "string"
+                  }
+                }
+              },
+              "effective_kind": {
+                "enum": [
+                  "observation",
+                  "relation",
+                  "role",
+                  "bridge",
+                  "integration",
+                  "comparison"
+                ]
+              },
+              "disposition": {
+                "enum": [
+                  "proposed",
+                  "qualified",
+                  "withheld"
+                ]
+              },
+              "flags": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "independent_review": {
+                "const": "pending"
+              }
+            }
+          }
+        }
+      },
+      "minItems": 4,
+      "maxItems": 4
+    },
+    "order_control": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "original",
+        "reversed",
+        "changed_case_ids"
+      ],
+      "properties": {
+        "original": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "case_id",
+              "premises",
+              "inference",
+              "qualification",
+              "premise_reason",
+              "inference_reason",
+              "qualification_reason",
+              "missing_evidence"
+            ],
+            "properties": {
+              "case_id": {
+                "type": "string"
+              },
+              "premises": {
+                "enum": [
+                  "supported",
+                  "partly_supported",
+                  "unsupported",
+                  "not_assessable"
+                ]
+              },
+              "inference": {
+                "enum": [
+                  "literal",
+                  "plausible",
+                  "weak",
+                  "unsupported",
+                  "not_assessable"
+                ]
+              },
+              "qualification": {
+                "enum": [
+                  "appropriate",
+                  "overstated",
+                  "understated",
+                  "not_assessable"
+                ]
+              },
+              "premise_reason": {
+                "type": "string"
+              },
+              "inference_reason": {
+                "type": "string"
+              },
+              "qualification_reason": {
+                "type": "string"
+              },
+              "missing_evidence": {
+                "type": "string"
+              }
+            }
+          },
+          "minItems": 4,
+          "maxItems": 4
+        },
+        "reversed": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "case_id",
+              "premises",
+              "inference",
+              "qualification",
+              "premise_reason",
+              "inference_reason",
+              "qualification_reason",
+              "missing_evidence"
+            ],
+            "properties": {
+              "case_id": {
+                "type": "string"
+              },
+              "premises": {
+                "enum": [
+                  "supported",
+                  "partly_supported",
+                  "unsupported",
+                  "not_assessable"
+                ]
+              },
+              "inference": {
+                "enum": [
+                  "literal",
+                  "plausible",
+                  "weak",
+                  "unsupported",
+                  "not_assessable"
+                ]
+              },
+              "qualification": {
+                "enum": [
+                  "appropriate",
+                  "overstated",
+                  "understated",
+                  "not_assessable"
+                ]
+              },
+              "premise_reason": {
+                "type": "string"
+              },
+              "inference_reason": {
+                "type": "string"
+              },
+              "qualification_reason": {
+                "type": "string"
+              },
+              "missing_evidence": {
+                "type": "string"
+              }
+            }
+          },
+          "minItems": 4,
+          "maxItems": 4
+        },
+        "changed_case_ids": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "uniqueItems": true
+        }
+      }
+    },
+    "duplicate_control": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "pixels_equal",
+        "work_id",
+        "selection",
+        "generation",
+        "unexpected_difference_ids"
+      ],
+      "properties": {
+        "pixels_equal": {
+          "const": true
+        },
+        "work_id": {
+          "type": "string"
+        },
+        "selection": {
+          "type": "array",
+          "items": {
+            "type": "object"
+          },
+          "minItems": 2,
+          "maxItems": 2
+        },
+        "generation": {
+          "type": "object"
+        },
+        "unexpected_difference_ids": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "uniqueItems": true
+        }
+      }
+    }
+  },
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "synthesis-pair 0.7"
+}

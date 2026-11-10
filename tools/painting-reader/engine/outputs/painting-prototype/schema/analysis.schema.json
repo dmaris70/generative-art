@@ -1,0 +1,702 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Painting analysis with localized evidence and attributed interpretation",
+  "description": "Draft research interchange format, version 0.1. The framework is proposed and has not been validated on a painting corpus. JSON Schema checks structure; application code must separately validate unique IDs, references, bounding-box ordering and evidence rules.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "artwork",
+    "images",
+    "sources",
+    "regions",
+    "claims",
+    "relationships",
+    "synthesis",
+    "open_questions"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": "0.1"
+    },
+    "artwork": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "title": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "artist": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "identification_status": {
+          "enum": [
+            "unknown",
+            "candidate",
+            "documented"
+          ]
+        },
+        "catalog_identifiers": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "authority": {
+                "type": "string",
+                "minLength": 1
+              },
+              "identifier": {
+                "type": "string",
+                "minLength": 1
+              },
+              "url": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "format": "uri"
+              }
+            },
+            "required": [
+              "authority",
+              "identifier",
+              "url"
+            ]
+          },
+          "minItems": 0
+        },
+        "reported_metadata": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/claim"
+          },
+          "minItems": 0
+        }
+      },
+      "required": [
+        "id",
+        "title",
+        "artist",
+        "identification_status",
+        "catalog_identifiers",
+        "reported_metadata"
+      ]
+    },
+    "images": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "uri": {
+            "type": "string",
+            "minLength": 1
+          },
+          "role": {
+            "enum": [
+              "overall",
+              "detail",
+              "technical",
+              "installation",
+              "analytical_derivative"
+            ]
+          },
+          "technical_modality": {
+            "enum": [
+              "visible_light",
+              "raking_light",
+              "infrared",
+              "x_radiography",
+              "ultraviolet",
+              "spectral",
+              "other",
+              "unknown"
+            ]
+          },
+          "source_url": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uri"
+          },
+          "width_px": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "height_px": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "rights_note": {
+            "type": "string",
+            "minLength": 1
+          },
+          "capture_and_processing_note": {
+            "type": "string",
+            "minLength": 1
+          },
+          "parent_image_id": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "coordinate_transform_note": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "uri",
+          "role",
+          "technical_modality",
+          "source_url",
+          "width_px",
+          "height_px",
+          "rights_note",
+          "capture_and_processing_note",
+          "parent_image_id",
+          "coordinate_transform_note"
+        ]
+      },
+      "minItems": 1
+    },
+    "sources": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "title": {
+            "type": "string",
+            "minLength": 1
+          },
+          "creator": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "url": {
+            "type": "string",
+            "format": "uri"
+          },
+          "accessed_on": {
+            "type": "string",
+            "format": "date"
+          },
+          "source_type": {
+            "enum": [
+              "museum_record",
+              "technical_report",
+              "scholarship",
+              "archive",
+              "artist_statement",
+              "viewer_study",
+              "reference",
+              "other"
+            ]
+          },
+          "version_or_date": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "access_note": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "required": [
+          "id",
+          "title",
+          "creator",
+          "url",
+          "accessed_on",
+          "source_type",
+          "version_or_date",
+          "access_note"
+        ]
+      },
+      "minItems": 0
+    },
+    "regions": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "image_id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "label": {
+            "type": "string",
+            "minLength": 1
+          },
+          "bbox_normalized": {
+            "type": "array",
+            "items": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1
+            },
+            "minItems": 4,
+            "maxItems": 4,
+            "description": "[x_min,y_min,x_max,y_max], top-left origin in specified image; application must check min < max. Full image may be represented by [0,0,1,1]."
+          }
+        },
+        "required": [
+          "id",
+          "image_id",
+          "label",
+          "bbox_normalized"
+        ]
+      },
+      "minItems": 0
+    },
+    "claims": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/claim"
+      },
+      "minItems": 0
+    },
+    "relationships": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "domain": {
+            "enum": [
+              "object",
+              "materials",
+              "technique",
+              "color",
+              "value_and_light",
+              "line_and_edge",
+              "geometry",
+              "composition",
+              "space_and_perspective",
+              "subject_and_motif",
+              "theme_and_meaning",
+              "attention_and_duration",
+              "atmosphere_and_expression",
+              "history_and_reception",
+              "condition_and_reproduction",
+              "medium_and_boundaries"
+            ]
+          },
+          "subject_claim_ids": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1
+            },
+            "minItems": 1
+          },
+          "predicate": {
+            "enum": [
+              "adjacent_to",
+              "overlaps",
+              "repeats",
+              "contrasts_with",
+              "aligns_with",
+              "groups_with",
+              "directs_toward",
+              "modifies_appearance_of",
+              "supports_interpretation",
+              "conflicts_with",
+              "other"
+            ]
+          },
+          "object_claim_ids": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1
+            },
+            "minItems": 1
+          },
+          "statement": {
+            "type": "string",
+            "minLength": 1
+          },
+          "epistemic_status": {
+            "enum": [
+              "measured",
+              "visually_described",
+              "source_attributed",
+              "hypothesized",
+              "viewer_reported"
+            ]
+          },
+          "evidence": {
+            "type": "array",
+            "items": {
+              "$ref": "#/$defs/evidence"
+            },
+            "minItems": 1
+          },
+          "confidence": {
+            "$ref": "#/$defs/confidence"
+          },
+          "scope_and_alternatives": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "required": [
+          "id",
+          "domain",
+          "subject_claim_ids",
+          "predicate",
+          "object_claim_ids",
+          "statement",
+          "epistemic_status",
+          "evidence",
+          "confidence",
+          "scope_and_alternatives"
+        ]
+      },
+      "minItems": 0
+    },
+    "synthesis": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "summary": {
+          "type": "string",
+          "minLength": 1
+        },
+        "distinctive_relationship_ids": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "minItems": 0
+        },
+        "supporting_claim_ids": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "minItems": 0
+        },
+        "alternative_readings": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "reading": {
+                "type": "string",
+                "minLength": 1
+              },
+              "supporting_claim_ids": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "minItems": 0
+              },
+              "limits": {
+                "type": "string",
+                "minLength": 1
+              }
+            },
+            "required": [
+              "reading",
+              "supporting_claim_ids",
+              "limits"
+            ]
+          },
+          "minItems": 0
+        },
+        "scope_and_limits": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "required": [
+        "summary",
+        "distinctive_relationship_ids",
+        "supporting_claim_ids",
+        "alternative_readings",
+        "scope_and_limits"
+      ]
+    },
+    "open_questions": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "question": {
+            "type": "string",
+            "minLength": 1
+          },
+          "required_evidence": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1
+            },
+            "minItems": 1
+          },
+          "related_claim_ids": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1
+            },
+            "minItems": 0
+          }
+        },
+        "required": [
+          "question",
+          "required_evidence",
+          "related_claim_ids"
+        ]
+      },
+      "minItems": 0
+    }
+  },
+  "$defs": {
+    "confidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "label": {
+          "enum": [
+            "high",
+            "moderate",
+            "low",
+            "unassessed"
+          ]
+        },
+        "basis": {
+          "type": "string",
+          "minLength": 1
+        },
+        "calibration_note": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "No model-generated numerical probability is implied by the qualitative label."
+        }
+      },
+      "required": [
+        "label",
+        "basis",
+        "calibration_note"
+      ]
+    },
+    "evidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "kind": {
+          "enum": [
+            "image_region",
+            "whole_image",
+            "source",
+            "measurement",
+            "viewer_response"
+          ]
+        },
+        "image_id": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "region_id": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "source_id": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "locator": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Page, section, figure, collection field, or study condition."
+        },
+        "support_note": {
+          "type": "string",
+          "minLength": 1
+        },
+        "method": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "value": {
+          "type": [
+            "number",
+            "string",
+            "boolean",
+            "null"
+          ]
+        },
+        "unit": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "modality_or_conditions": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      },
+      "required": [
+        "kind",
+        "image_id",
+        "region_id",
+        "source_id",
+        "locator",
+        "support_note",
+        "method",
+        "value",
+        "unit",
+        "modality_or_conditions"
+      ]
+    },
+    "claim": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "domain": {
+          "enum": [
+            "object",
+            "materials",
+            "technique",
+            "color",
+            "value_and_light",
+            "line_and_edge",
+            "geometry",
+            "composition",
+            "space_and_perspective",
+            "subject_and_motif",
+            "theme_and_meaning",
+            "attention_and_duration",
+            "atmosphere_and_expression",
+            "history_and_reception",
+            "condition_and_reproduction",
+            "medium_and_boundaries"
+          ]
+        },
+        "kind": {
+          "enum": [
+            "measurement",
+            "visual_description",
+            "documented_assertion",
+            "technical_hypothesis",
+            "interpretive_hypothesis",
+            "viewer_response",
+            "unknown",
+            "not_applicable"
+          ]
+        },
+        "statement": {
+          "type": "string",
+          "minLength": 1
+        },
+        "evidence": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/evidence"
+          },
+          "minItems": 0
+        },
+        "confidence": {
+          "$ref": "#/$defs/confidence"
+        },
+        "alternatives": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "minItems": 0
+        },
+        "scope": {
+          "type": "string",
+          "minLength": 1
+        },
+        "missing_evidence": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "minItems": 0
+        }
+      },
+      "required": [
+        "id",
+        "domain",
+        "kind",
+        "statement",
+        "evidence",
+        "confidence",
+        "alternatives",
+        "scope",
+        "missing_evidence"
+      ]
+    }
+  }
+}
