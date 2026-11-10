@@ -711,9 +711,12 @@
         for (let i = 0; i < n; i++) {
           const off = (n === 1 ? 0 : (i / (n - 1) - 0.5)) * ext * 1.2 + R(-0.02, 0.02);
           const mid = [ctr[0] + nrm[0] * off, ctr[1] + nrm[1] * off];
-          const half = ext * R(0.6, 0.95) * REACH;
-          // every tooth stops somewhere of its own: with one shared boundary they all end on the
-          // same line and the region reads as a rectangle laid over the paint
+          // The teeth are longest in the middle of the comb and shorter towards its ends, so the
+          // paint it disturbs lies in a lens rather than a rectangle. With every tooth the same
+          // length, and all of them clamped to one box, the combed area had four straight sides
+          // and read as a rectangle laid over the painting. Each also stops somewhere of its own.
+          const taper = 0.55 + 0.45 * Math.sqrt(Math.max(0, 1 - Math.pow(ext ? off / ext : 0, 2)));
+          const half = ext * R(0.6, 0.95) * taper * REACH;
           const sx = (hi[0] - lo[0]) * 0.12, sy = (hi[1] - lo[1]) * 0.12;
           const bl = [lo[0] + R(-sx, sx), lo[1] + R(-sy, sy)], bh = [hi[0] + R(-sx, sx), hi[1] + R(-sy, sy)];
           const box = function (p) { return [Math.max(bl[0], Math.min(bh[0], p[0])), Math.max(bl[1], Math.min(bh[1], p[1]))]; };
@@ -732,7 +735,9 @@
         const lo = [Math.min(a[0], b[0]), Math.min(a[1], b[1])], hi = [Math.max(a[0], b[0]), Math.max(a[1], b[1])];
         const n = Math.max(1, m[5] + Math.round(R(-2, 2)));
         for (let i = 0; i < n; i++) {
-          let p = [R(lo[0], hi[0]), R(lo[1], hi[1])], h = R(0, Math.PI * 2);
+          // started nearer the middle of the cell than its corners, for the same reason
+          const mid = [(lo[0] + hi[0]) / 2, (lo[1] + hi[1]) / 2];
+          let p = [mid[0] + (R(lo[0], hi[0]) - mid[0]) * 0.75, mid[1] + (R(lo[1], hi[1]) - mid[1]) * 0.75], h = R(0, Math.PI * 2);
           // a walk is held near where it started rather than clamped to the cell: clamping gave
           // every walk in a cell the same straight boundary, and the cell showed as a rectangle
           const home = [p[0], p[1]], rad = Math.min(hi[0] - lo[0], hi[1] - lo[1]) * R(0.3, 0.5);
