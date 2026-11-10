@@ -199,8 +199,8 @@ the record):
 | six colour clusters | five colours: the two closest in CIELAB are merged (ΔE < 12). Largest share first; the largest is the ground, as the painting's surface |
 | lighter / darker mass | laid in the lightest / darkest of the five |
 | colour island | laid in its own cluster's colour |
-| a mass filling ≥ 55% of its box | a rectangle of that extent, centred on its centroid |
-| any other mass | an ellipse of its measured area, elongated by its axis-variance ratio, turned to its principal axis |
+| each mass | laid as its **own silhouette**: the reader's connected grid cells (32 × 22 on the long side), upsampled 4× and softened, so the contour is drawn rather than stepped. The silhouette keeps its own frame, so interpretation can move, scale and turn it |
+| a record without masks | a rectangle of the box (a mass filling ≥ 55% of it) or an ellipse of its area, elongated by its axis-variance ratio and turned to its principal axis |
 | sparse-detail field | nothing is laid: a calm interval the gestures avoid |
 | a colour with no connected island | dabs around its pixel centroid, so every measured colour is present |
 | `value_opposition` | one pull of the hand from the dark mass to the light one |
@@ -210,6 +210,12 @@ the record):
 | a field shared by the principal configurations | a swirl on it |
 | a dominant edge direction (≥ 22% of edges) | a comb across the sheet along it |
 | the most detailed grid cell(s) | scribbles inside them |
+
+Silhouettes are the reader's own evidence (`formal.json` `cells_xy`), not an interpretation of it: the
+reader's handoff export drops them, so `read_works.py` reads them from the artifact and keeps each as
+base64 bits in the record (`mask`, 16th field element; `grid` gives the cell counts). A brief field
+`M(c, cx, cy, sx, sy, deg, mask)` lays one; the zone shader samples the softened mask in the field's
+frame (`uShape` 2). Fragmentation treats a silhouette as its box.
 
 The result is a brief in the same DSL as `briefs.js`, so the interpretation readings, containment,
 the moving version and the label all apply unchanged. Its basis is `k: 2`, and the studio card, the

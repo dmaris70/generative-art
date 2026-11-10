@@ -290,11 +290,12 @@
     const area = function (f) {
       if (f[0] === 'R') return Math.abs((f[4] - f[2]) * (f[5] - f[3]));
       if (f[0] === 'E') return Math.PI * f[4] * f[5];
+      if (f[0] === 'M') return 4 * f[4] * f[5] * (f[7].a / Math.max(1e-9, 4 * f[7].sx * f[7].sy));   // its box × how much of it the mask fills
       if (f[0] === 'L') return Math.hypot(f[4] - f[2], f[5] - f[3]) * f[6];
       return f[6] * Math.PI * f[7] * f[7];
     };
     const centre = function (f) {
-      if (f[0] === 'E') return [f[2], f[3]];
+      if (f[0] === 'E' || f[0] === 'M') return [f[2], f[3]];
       return [(f[2] + f[4]) / 2, (f[3] + f[5]) / 2];
     };
     // apply a similarity map T (point → point) with length factor k and turn dθ (degrees, CCW)
@@ -304,7 +305,7 @@
         if (f[0] === 'R') {
           const c = T((f[2] + f[4]) / 2, (f[3] + f[5]) / 2), hx = Math.abs(f[4] - f[2]) / 2 * k, hy = Math.abs(f[5] - f[3]) / 2 * k;
           f[2] = c[0] - hx; f[3] = c[1] - hy; f[4] = c[0] + hx; f[5] = c[1] + hy; f[6] += dth;
-        } else if (f[0] === 'E') { const c = T(f[2], f[3]); f[2] = c[0]; f[3] = c[1]; f[4] *= k; f[5] *= k; f[6] += dth; }
+        } else if (f[0] === 'E' || f[0] === 'M') { const c = T(f[2], f[3]); f[2] = c[0]; f[3] = c[1]; f[4] *= k; f[5] *= k; f[6] += dth; }
         else if (f[0] === 'L') { const a = T(f[2], f[3]), b = T(f[4], f[5]); f[2] = a[0]; f[3] = a[1]; f[4] = b[0]; f[5] = b[1]; f[6] *= k; }
         else { box(f, 2); f[7] *= k; }
       };
@@ -348,6 +349,7 @@
       z.forEach(function (f) {
         if (f[0] === 'D' || rng() > 0.35 + 0.5 * interp) { out.push(f); return; }
         const n = 2 + Math.floor(rng() * (2 + 3 * interp)), shift = 0.08 * interp;
+        if (f[0] === 'M') f = ['R', f[1], f[2] - f[4], f[3] - f[5], f[2] + f[4], f[3] + f[5], f[6]];   // a silhouette fragments as its box does
         if (f[0] === 'R') {
           const vert = rng() < 0.5;
           for (let i = 0; i < n; i++) {
@@ -424,7 +426,7 @@
     // every colour stays: one pushed off the sheet comes back as traces
     const visible = function (f) {
       let x0, y0, x1, y1;
-      if (f[0] === 'E') { x0 = f[2] - f[4]; x1 = f[2] + f[4]; y0 = f[3] - f[5]; y1 = f[3] + f[5]; }
+      if (f[0] === 'E' || f[0] === 'M') { x0 = f[2] - f[4]; x1 = f[2] + f[4]; y0 = f[3] - f[5]; y1 = f[3] + f[5]; }
       else { x0 = Math.min(f[2], f[4]); x1 = Math.max(f[2], f[4]); y0 = Math.min(f[3], f[5]); y1 = Math.max(f[3], f[5]); }
       return x1 > 0.04 && x0 < 0.96 && y1 > 0.04 && y0 < 0.96;
     };
@@ -448,8 +450,10 @@
   //   light mass   the lightest colour · dark mass the darkest · colour island its own cluster
   //   sparse field laid as nothing: a calm interval the gestures avoid
   //   a colour with no island   dabs around its pixel centroid, so every measured colour is present
-  //   shape        a mass that fills ≥ 55% of its box is a rectangle, else an ellipse of its own
-  //                area, elongated by its axis-variance ratio and turned to its principal axis
+  //   shape        the field's own silhouette (the reader's connected grid cells, smoothed), laid
+  //                where it was measured; a record without masks falls back to a rectangle (a mass
+  //                filling ≥ 55% of its box) or an ellipse of its area, elongated by its axis-variance
+  //                ratio and turned to its principal axis
   //   value_opposition   one pull of the hand from the dark mass to the light one
   //   cross_axes         a comb along each field's axis
   //   detail_interval    a burst from the detailed field, aimed away from the sparse one
@@ -467,7 +471,7 @@
     const clamp = function (v, lo, hi) { return Math.max(lo, Math.min(hi, v)); };
     const tilt = function (deg) { let t = -deg; while (t <= -90) t += 180; while (t > 90) t -= 180; return Math.round(t); };  // reader: 0 right, 90 down → ccw
     const F = rd.fields.map(function (f) {
-      return { id: f[0], kind: f[1], area: f[2], x0: f[3], y0: f[4], x1: f[5], y1: f[6], cx: f[7], cy: f[8], axis: f[9], vr: f[10], occ: f[11], edge: f[12], L: f[13], pal: f[14] };
+      return { id: f[0], kind: f[1], area: f[2], x0: f[3], y0: f[4], x1: f[5], y1: f[6], cx: f[7], cy: f[8], axis: f[9], vr: f[10], occ: f[11], edge: f[12], L: f[13], pal: f[14], mask: f[15] || null };
     });
     const byId = {}; F.forEach(function (f) { byId[f.id] = f; });
     const colourOf = function (f) { return f.kind === 'light' ? lightIdx : f.kind === 'dark' ? darkIdx : f.kind === 'color' ? f.pal : null; };
@@ -476,7 +480,13 @@
       .sort(function (a, b) { return b.area - a.area; })
       .forEach(function (f) {
         const c = colourOf(f);
-        if (f.occ >= 0.55) {
+        if (f.mask && rd.grid) {
+          // M: the silhouette, placed by its box centre; sx, sy half-extents (uv); the mask object
+          // keeps its own frame so interpretation can move, scale and turn it
+          const sx = (f.x1 - f.x0) / 2, sy = (f.y1 - f.y0) / 2;
+          z.push(['M', c, +((f.x0 + f.x1) / 2).toFixed(3), +((f.y0 + f.y1) / 2).toFixed(3), +sx.toFixed(3), +sy.toFixed(3), 0,
+                  { cols: rd.grid[0], rows: rd.grid[1], bits: f.mask, a: f.area, sx: sx, sy: sy, c0: [(f.x0 + f.x1) / 2, (f.y0 + f.y1) / 2] }]);
+        } else if (f.occ >= 0.55) {
           const s = clamp(Math.sqrt(f.occ), 0.55, 1), hw = (f.x1 - f.x0) / 2 * s, hh = (f.y1 - f.y0) / 2 * s;
           z.push(['R', c, +(f.cx - hw).toFixed(3), +(f.cy - hh).toFixed(3), +(f.cx + hw).toFixed(3), +(f.cy + hh).toFixed(3), 0]);
         } else {
@@ -572,7 +582,7 @@
       let ex = e.shape === 1 ? Math.hypot(e.hx * c, e.hy * s) : e.hx * c + e.hy * s;   // half extents,
       let ey = e.shape === 1 ? Math.hypot(e.hx * s, e.hy * c) : e.hx * s + e.hy * c;   // short units
       const fit = Math.min(1, 0.5 * A[0] / ex, 0.5 * A[1] / ey);
-      if (fit < 1) { e.hx *= fit; e.hy *= fit; ex *= fit; ey *= fit; }
+      if (fit < 1) { e.hx *= fit; e.hy *= fit; ex *= fit; ey *= fit; if (e.mask) e.scale *= fit; }
       const mx = ex / A[0], my = ey / A[1];                     // in uv
       e.cx = Math.min(1 - mx, Math.max(mx, e.cx));
       e.cy = Math.min(1 - my, Math.max(my, e.cy));
@@ -589,6 +599,14 @@
       if (f[0] === 'E') {
         const k = 1 + R(-sj, sj), ctr = scr(J(f[2], jit), J(f[3], jit));
         return { type: 'zone', shape: 1, cx: ctr[0], cy: ctr[1], hx: f[4] * k, hy: f[5] * k, ang: f[6] * Math.PI / 180 + R(-aj, aj), chan: ch, th: FIELD_TH };
+      }
+      if (f[0] === 'M') {
+        // the silhouette: its box centre is placed (with the usual jitter), its extent scaled, its
+        // frame turned; the mask is sampled in its own frame at `scale` times the original size
+        const k = 1 + R(-sj, sj), ctr = scr(J(f[2], jit), J(f[3], jit)), m = f[7];
+        const c0 = scr(m.c0[0], m.c0[1]);
+        return { type: 'zone', shape: 2, cx: ctr[0], cy: ctr[1], hx: f[4] * k * A[0], hy: f[5] * k * A[1], ang: f[6] * Math.PI / 180 + R(-aj, aj), chan: ch, th: FIELD_TH,
+                 mask: m, m0: c0, scale: (f[4] / Math.max(1e-9, m.sx)) * k };
       }
       // L: a band between two points
       const a = sh(scr(J(f[2], jit), J(f[3], jit))), b = sh(scr(J(f[4], jit), J(f[5], jit)));
