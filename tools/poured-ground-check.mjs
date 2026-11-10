@@ -230,6 +230,12 @@ for (let f = 0; f < PG.FORMAT_KEYS.length; f++) for (const ar of [0.5, 0.75, 1, 
     if (rd.grid) ok(rd.grid.length === 2 && rd.fields.every((f) => f.length < 16 || (Buffer.from(f[15], 'base64').length === Math.ceil(rd.grid[0] * rd.grid[1] / 8) && Buffer.from(f[15], 'base64').some((x) => x))), 'reading silhouettes ' + who);
     ok(rd.configs.every((c) => ['value_opposition', 'cross_axes', 'detail_interval', 'color_recurrence', 'subject_field'].includes(c[1])), 'reading configurations ' + who);
     ok(rd.cells.length === 9 && rd.edges.length === 3, 'reading edges and cells ' + who);
+    // the grain, when kept: 8 bins over 180 degrees that sum to 1, the strongest agreeing with `edges`
+    if (rd.ebins) {
+      ok(rd.ebins.length === 8 && rd.ebins.every((v) => v >= 0 && v <= 1) && Math.abs(rd.ebins.reduce((a, b) => a + b, 0) - 1) < 0.01, 'reading grain bins ' + who);
+      const top = rd.ebins.indexOf(Math.max(...rd.ebins));
+      ok(top * 180 / 8 === rd.edges[0] && Math.abs(rd.ebins[top] - rd.edges[1]) < 0.002, 'grain agrees with the strongest direction ' + who);
+    }
     ok(rd.reading === 'unavailable', 'no subject description is claimed ' + who);
   };
   for (const [id, rd] of Object.entries(RD)) {
@@ -253,6 +259,24 @@ for (let f = 0; f < PG.FORMAT_KEYS.length; f++) for (const ar of [0.5, 0.75, 1, 
       ok(b.z.length > 0 && b.m.length > 0, 'reading brief has fields and gestures ' + id);
       ok(b.z.every((f) => f.length === { R: 7, E: 7, L: 7, D: 8, M: 8 }[f[0]] && f[1] >= 0 && f[1] < 5), 'reading brief field arity ' + id);
       if (rd.grid) ok(b.z.some((f) => f[0] === 'M') && b.z.every((f) => f[0] !== 'M' || (f[7].cols === rd.grid[0] && f[7].rows === rd.grid[1] && typeof f[7].bits === 'string')), 'reading brief lays silhouettes ' + id);
+      // the sheet is combed once per direction carrying 1.5x an isotropic share, at most three
+      const sheetCombs = b.m.filter((x) => x[0] === 'C' && x[1] === 0.05 && x[2] === 0.05);
+      if (rd.ebins) {
+        const want = Math.min(2, rd.ebins.filter((v) => v >= 0.1875).length);
+        ok(sheetCombs.length === want, 'grain combed once per strong direction ' + id);
+        ok(sheetCombs.every((c) => c[6] >= 2 && c[6] <= 4), 'grain comb teeth in range ' + id);
+        // the second direction is the lighter one
+        ok(sheetCombs.length < 2 || (sheetCombs[1][6] === 2 && sheetCombs[1][7] < sheetCombs[0][7]), 'the second grain comb is lighter ' + id);
+      }
+      // the hand follows the reader's own order: a configuration's weight is the summed area of
+      // the fields it names, and the heaviest one is made first
+      const areaOf = {}; rd.fields.forEach((f) => { areaOf[f[0]] = f[2]; });
+      const LETTER = { value_opposition: 'P', cross_axes: 'C', detail_interval: 'B', color_recurrence: 'P' };
+      const weighed = rd.configs
+        .filter((c) => c[2].length >= 2 && c[2].every((fid) => areaOf[fid] !== undefined) && LETTER[c[1]])
+        .map((c) => ({ kind: c[1], w: c[2].reduce((s2, fid) => s2 + areaOf[fid], 0) }))
+        .sort((a, b2) => b2.w - a.w);
+      if (weighed.length) ok(b.m.length > 0 && b.m[0][0] === LETTER[weighed[0].kind], 'the heaviest configuration is made first ' + id);
       ok(b.m.every((q) => q.length === { P: 6, B: 8, C: 8, S: 6, W: 7 }[q[0]] && q.slice(1).every(Number.isFinite)), 'reading brief gesture arity ' + id);
       for (const interp of [0, 0.65]) {
         const plan = PG.interpret(mulberry32(+id * 7 + 1), b, interp);

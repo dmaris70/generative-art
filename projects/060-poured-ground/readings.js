@@ -6,6 +6,9 @@
 // the reader's connected grid cells (grid [cols, rows]) as base64 bits, row-major, y down, least-significant bit first.
 // centroids: the pixel centroid of each colour.
 // Coordinates: image uv, x right, y down.
+// `edges` keeps the strongest direction; `ebins` is the whole grain: the share of edge weight in
+// each of 8 directions over 180 degrees, 0 = horizontal, 90 = vertical. A reading made before the
+// grain was kept has no `ebins`, and the engine falls back to the strongest direction alone.
 (function (g) { g.READINGS = {
 "27": {
 "id": 27,
@@ -255,6 +258,16 @@ null,
 0,
 0.44,
 0.072
+],
+"ebins": [
+0.44,
+0.025,
+0.02,
+0.034,
+0.383,
+0.045,
+0.029,
+0.024
 ],
 "cells": [
 0.113,
@@ -687,6 +700,16 @@ null,
 0.264,
 0.143
 ],
+"ebins": [
+0.212,
+0.083,
+0.068,
+0.073,
+0.264,
+0.091,
+0.101,
+0.108
+],
 "cells": [
 0.212,
 0.178,
@@ -937,6 +960,16 @@ null,
 0,
 0.185,
 0.15
+],
+"ebins": [
+0.185,
+0.157,
+0.157,
+0.091,
+0.087,
+0.063,
+0.118,
+0.142
 ],
 "cells": [
 0.094,
@@ -1335,6 +1368,16 @@ null,
 0.254,
 0.15
 ],
+"ebins": [
+0.254,
+0.137,
+0.058,
+0.069,
+0.214,
+0.133,
+0.068,
+0.067
+],
 "cells": [
 0.098,
 0.174,
@@ -1649,6 +1692,16 @@ null,
 0,
 0.323,
 0.15
+],
+"ebins": [
+0.323,
+0.121,
+0.092,
+0.081,
+0.147,
+0.085,
+0.06,
+0.09
 ],
 "cells": [
 0.064,
@@ -1993,6 +2046,16 @@ null,
 0.306,
 0.149
 ],
+"ebins": [
+0.306,
+0.173,
+0.082,
+0.054,
+0.05,
+0.058,
+0.091,
+0.185
+],
 "cells": [
 0.105,
 0.218,
@@ -2253,6 +2316,16 @@ null,
 0,
 0.183,
 0.15
+],
+"ebins": [
+0.183,
+0.144,
+0.119,
+0.12,
+0.119,
+0.096,
+0.1,
+0.119
 ],
 "cells": [
 0.172,
@@ -2560,6 +2633,16 @@ null,
 90,
 0.229,
 0.15
+],
+"ebins": [
+0.19,
+0.07,
+0.076,
+0.111,
+0.229,
+0.103,
+0.085,
+0.134
 ],
 "cells": [
 0.182,
