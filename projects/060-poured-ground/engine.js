@@ -435,6 +435,120 @@
     return { g: g, z: z, m: m, readings: said };
   }
 
+  // ---- from the reading: a brief derived from the painting reader's measurements ------------
+  // A reading (readings.js / archive/readings.json, made by tools/painting-reader) holds what the
+  // reader measured in the museum image: colour clusters with shares, connected value masses,
+  // colour islands and a sparse-detail field (each with box, centroid, principal axis, occupancy),
+  // the configurations it found between them, the dominant edge direction and the detail per
+  // grid cell. Nothing here traces the image: the masses are laid where the reader found them,
+  // at their measured size and orientation, and the configurations become what the hand does.
+  // Deterministic: the same record and aspect give the same brief. Basis k = 2.
+  //
+  //   colours      the five clusters by share; the largest is the ground (the painting's surface)
+  //   light mass   the lightest colour · dark mass the darkest · colour island its own cluster
+  //   sparse field laid as nothing: a calm interval the gestures avoid
+  //   a colour with no island   dabs around its pixel centroid, so every measured colour is present
+  //   shape        a mass that fills ≥ 55% of its box is a rectangle, else an ellipse of its own
+  //                area, elongated by its axis-variance ratio and turned to its principal axis
+  //   value_opposition   one pull of the hand from the dark mass to the light one
+  //   cross_axes         a comb along each field's axis
+  //   detail_interval    a burst from the detailed field, aimed away from the sparse one
+  //   color_recurrence   a pull joining the two islands of one colour
+  //   shared field       a swirl on the field the principal configurations have in common
+  //   edges              a comb across the sheet along the dominant edge direction (if it dominates)
+  //   grid cells         scribbles in the cell(s) with the most detail
+  const READ_KIND = { light: 'light', dark: 'dark', color: 'colour', sparse: 'sparse' };
+  function readBrief(rd, aspect) {
+    const A = aspect || [1, 1], cols = rd.colors;
+    const lum = cols.map(luminance);
+    const argmax = function (a) { let k = 0; a.forEach(function (v, i) { if (v > a[k]) k = i; }); return k; };
+    const argmin = function (a) { let k = 0; a.forEach(function (v, i) { if (v < a[k]) k = i; }); return k; };
+    const g = 0, lightIdx = argmax(lum), darkIdx = argmin(lum);
+    const clamp = function (v, lo, hi) { return Math.max(lo, Math.min(hi, v)); };
+    const tilt = function (deg) { let t = -deg; while (t <= -90) t += 180; while (t > 90) t -= 180; return Math.round(t); };  // reader: 0 right, 90 down → ccw
+    const F = rd.fields.map(function (f) {
+      return { id: f[0], kind: f[1], area: f[2], x0: f[3], y0: f[4], x1: f[5], y1: f[6], cx: f[7], cy: f[8], axis: f[9], vr: f[10], occ: f[11], edge: f[12], L: f[13], pal: f[14] };
+    });
+    const byId = {}; F.forEach(function (f) { byId[f.id] = f; });
+    const colourOf = function (f) { return f.kind === 'light' ? lightIdx : f.kind === 'dark' ? darkIdx : f.kind === 'color' ? f.pal : null; };
+    const z = [];
+    F.filter(function (f) { return f.kind !== 'sparse' && colourOf(f) !== null; })
+      .sort(function (a, b) { return b.area - a.area; })
+      .forEach(function (f) {
+        const c = colourOf(f);
+        if (f.occ >= 0.55) {
+          const s = clamp(Math.sqrt(f.occ), 0.55, 1), hw = (f.x1 - f.x0) / 2 * s, hh = (f.y1 - f.y0) / 2 * s;
+          z.push(['R', c, +(f.cx - hw).toFixed(3), +(f.cy - hh).toFixed(3), +(f.cx + hw).toFixed(3), +(f.cy + hh).toFixed(3), 0]);
+        } else {
+          const areaSU = f.area * A[0] * A[1], q = clamp(Math.sqrt(f.vr || 1), 1, 3);
+          const ry = Math.sqrt(areaSU / (Math.PI * q)), rx = ry * q;
+          z.push(['E', c, f.cx, f.cy, +rx.toFixed(3), +ry.toFixed(3), f.axis === null || f.axis === undefined ? 0 : tilt(f.axis)]);
+        }
+      });
+    const m = [];
+    const centroidDist = function (a, b) { return Math.hypot((a.cx - b.cx) * A[0], (a.cy - b.cy) * A[1]); };
+    rd.configs.forEach(function (c) {
+      const kind = c[1], f = c[2].map(function (id) { return byId[id]; }).filter(Boolean);
+      if (f.length < 2) return;
+      if (kind === 'value_opposition') {
+        const d = f[0].kind === 'dark' ? f[0] : f[1], l = d === f[0] ? f[1] : f[0];
+        m.push(['P', d.cx, d.cy, l.cx, l.cy, +(0.03 + 0.06 * Math.sqrt(Math.min(d.area, l.area))).toFixed(3)]);
+      } else if (kind === 'cross_axes') {
+        f.forEach(function (x) { if (x.axis !== null && x.axis !== undefined) m.push(['C', x.x0, x.y0, x.x1, x.y1, tilt(x.axis), Math.max(2, Math.round(2 + 6 * Math.sqrt(x.area))), 0.03]); });
+      } else if (kind === 'detail_interval') {
+        const sp = f[0].kind === 'sparse' ? f[0] : f[1], det = sp === f[0] ? f[1] : f[0];
+        const dx = (det.cx - sp.cx) * A[0], dy = (det.cy - sp.cy) * A[1];
+        const ang = Math.round(Math.atan2(-dy, dx) * 180 / Math.PI);    // away from the calm field, ccw (90 = up)
+        const len = clamp(0.5 * Math.hypot(dx, dy), 0.08, 0.3);
+        m.push(['B', det.cx, det.cy, ang - 50, ang + 50, +len.toFixed(3), clamp(3 + Math.round(det.edge * 20), 3, 8), 0.03]);
+      } else if (kind === 'color_recurrence') {
+        m.push(['P', f[0].cx, f[0].cy, f[1].cx, f[1].cy, 0.03]);
+      }
+    });
+    if (rd.shared && rd.shared.length && byId[rd.shared[0]]) {
+      const s = byId[rd.shared[0]], rad = clamp(0.5 * Math.sqrt(s.area * A[0] * A[1] / Math.PI), 0.06, 0.3);
+      m.push(['S', s.cx, s.cy, +rad.toFixed(3), 1.5, 0.04]);
+    }
+    if (rd.edges && rd.edges[1] >= 0.22) m.push(['C', 0.05, 0.05, 0.95, 0.95, tilt(rd.edges[0]), 3, 0.025]);
+    if (rd.cells && rd.cells.length === 9) {
+      const order = rd.cells.map(function (d, i) { return [d, i]; }).sort(function (a, b) { return b[0] - a[0]; });
+      order.slice(0, 2).forEach(function (ci, k) {
+        if (ci[0] < (k === 0 ? 0.1 : 0.15)) return;
+        const row = Math.floor(ci[1] / 3), col = ci[1] % 3;
+        m.push(['W', +(col / 3).toFixed(3), +(row / 3).toFixed(3), +((col + 1) / 3).toFixed(3), +((row + 1) / 3).toFixed(3), k === 0 ? 3 : 2, 0.025]);
+      });
+    }
+    // every measured colour reaches the sheet: one the reader found no connected island for is
+    // dropped as dabs around its pixel centroid (the colour is present there, only scattered)
+    const usedC = new Set([g]); z.forEach(function (f) { usedC.add(f[1]); });
+    for (let c = 0; c < cols.length; c++) {
+      if (usedC.has(c)) continue;
+      const ct = (rd.centroids && rd.centroids[c]) || [0.5, 0.5], sh = rd.shares[c] || 0.05, half = clamp(0.1 + 0.3 * Math.sqrt(sh), 0.1, 0.25);
+      z.push(['D', c, +clamp(ct[0] - half, 0.03, 0.97).toFixed(3), +clamp(ct[1] - half, 0.03, 0.97).toFixed(3), +clamp(ct[0] + half, 0.03, 0.97).toFixed(3), +clamp(ct[1] + half, 0.03, 0.97).toFixed(3), clamp(3 + Math.round(sh * 20), 3, 8), +(0.02 + 0.04 * Math.sqrt(sh)).toFixed(3)]);
+    }
+    if (!m.length && z.length) {   // no configuration found: one pull across the largest mass
+      const f = F.filter(function (x) { return x.kind !== 'sparse'; }).sort(function (a, b) { return b.area - a.area; })[0];
+      m.push(['P', f.x0, f.cy, f.x1, f.cy, 0.04]);
+    }
+    // the note: where the reader found the masses (positions, not subjects)
+    const where = function (f) {
+      const v = f.cy < 0.37 ? 'upper' : f.cy > 0.63 ? 'lower' : '', h = f.cx < 0.37 ? 'left' : f.cx > 0.63 ? 'right' : '';
+      return v && h ? v + ' ' + h : v || h || 'centre';
+    };
+    const first = function (kind) { return F.filter(function (f) { return f.kind === kind; }).sort(function (a, b) { return b.area - a.area; })[0]; };
+    const parts = [];
+    const dk = first('dark'), lt = first('light'), sp = first('sparse');
+    if (dk && lt) parts.push('a darker mass ' + where(dk) + ' against a lighter one ' + where(lt));
+    else if (dk) parts.push('a darker mass ' + where(dk)); else if (lt) parts.push('a lighter mass ' + where(lt));
+    const islands = F.filter(function (f) { return f.kind === 'color'; }).sort(function (a, b) { return b.area - a.area; }).slice(0, 3);
+    if (islands.length) parts.push('colour ' + islands.map(function (f) { return cols[f.pal] + ' ' + where(f); }).join(', '));
+    if (sp) parts.push('calm ' + where(sp));
+    const kinds = rd.configs.map(function (c) { return c[1].replace('_', ' '); });
+    if (kinds.length) parts.push(kinds.join(', '));
+    const note = parts.join('; ') || 'what the reader measured in the image';
+    return { g: g, k: 2, note: note, z: z, m: m, read: { fields: F.length, laid: z.length, gestures: m.length, configurations: kinds, sha256: rd.sha256, source: rd.source, px: rd.px, reader: rd.reader, read_on: rd.read_on } };
+  }
+
   function composeBrief(rng, brief, o) {
     const A = o.aspect, energy = o.energy, interp = o.interp || 0;
     const R = function (a, b) { return a + (b - a) * rng(); };
@@ -581,7 +695,7 @@
 
   global.PouredGround = {
     STYLES: STYLES, FPS: FPS, FORMATS: FORMATS, FORMAT_KEYS: FORMAT_KEYS, PAPER: PAPER,
-    compose: compose, composeBrief: composeBrief, interpret: interpret, READINGS: READINGS, briefColours: briefColours, dragAt: dragAt, assignColours: assignColours, sheet: sheet,
+    compose: compose, composeBrief: composeBrief, readBrief: readBrief, interpret: interpret, READINGS: READINGS, briefColours: briefColours, dragAt: dragAt, assignColours: assignColours, sheet: sheet,
     hexToSRGB: hexToSRGB, toLinear: toLinear, luminance: luminance, fromUV: fromUV,
   };
 })(typeof window !== 'undefined' ? window : globalThis);

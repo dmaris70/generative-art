@@ -1,0 +1,19 @@
+{
+  "type":"object","additionalProperties":false,
+  "required":["version","artifact_kind","work_id","partition","generated_at","identity","binding","capture","analysis","resolution_control","runtime","limits"],
+  "properties":{
+    "version":{"const":"0.10.0"},"artifact_kind":{"const":"regional_relations"},
+    "work_id":{"type":"string","pattern":"^(met|aic)-[0-9]+$"},"partition":{"enum":["development","new_transfer_probe"]},
+    "generated_at":{"type":"string"},"identity":{"type":"object"},
+    "binding":{"type":"object","required":["code_sha256","source_image_sha256","protocol_sha256","discovery_sha256","specs_sha256","capture_sha256"],"additionalProperties":{"type":"string","pattern":"^[a-f0-9]{64}$"}},
+    "capture":{"type":"object","required":["source_size","analysis_size","upsampled","domain","processing"],"properties":{"upsampled":{"const":false}}},
+    "analysis":{"type":"object","additionalProperties":false,"required":["regions","evidence","pairs","accounts"],"properties":{
+      "regions":{"type":"array","maxItems":3,"items":{"type":"object","required":["id","geometry","boundary","color","directions","source_spec"]}},
+      "evidence":{"type":"array","items":{"type":"object","required":["id","kind","region_ids","facts","scope"]}},
+      "pairs":{"type":"array"},
+      "accounts":{"type":"array","minItems":1,"maxItems":3,"items":{"type":"object","required":["id","status","text","support_ids","challenge_ids","origin","independent_review"],"properties":{"independent_review":{"const":"not_obtained"},"origin":{"const":"declared_descriptor_construction"}}}}
+    }},
+    "resolution_control":{"type":"object","required":["size","analysis","comparison"]},
+    "runtime":{"type":"object"},"limits":{"type":"array","minItems":4,"items":{"type":"string"}}
+  }
+}
