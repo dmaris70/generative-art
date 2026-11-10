@@ -399,6 +399,21 @@ The paint has a physical body (setting *paint body*, on by default):
 - **Earlier prints.** *flat* (`p_body=0`) reproduces every earlier print, pixel for pixel. This was
   verified on three works.
 
+## The highlight, and the sheet's memory
+
+Two settings in *surface*, both answering an outside critique of the prints:
+
+- **The highlight carries the thickness.** A deep pool holds a smooth surface and takes a tight,
+  bright sheen; a thin strand sits on the paper's tooth and takes a broad, dim one. The specular
+  sharpness runs 14 to 90 and its strength 0.3 to 1.15 across a film thickness of 0.006 to 0.05.
+  Before, one sharpness served both, so a filament and a pool wore the same slick highlight and the
+  surface read as liquid plastic rather than as paint of varying body.
+- **`trace`, the memory of the pour** (0 to 1, default 0.5). The render combines the present film
+  with the record of everywhere paint has been. At 0 only the present film shows; at 1 the record
+  holds the silhouettes as laid behind the moved paint, which is where the measured structure and
+  the liquid meet on one surface. 0.5 is what every print before this setting was made with, so it
+  changes nothing by default.
+
 ## Label
 
 The work's title, with the artist's name beneath it, is written in **Cedarville Cursive** at
