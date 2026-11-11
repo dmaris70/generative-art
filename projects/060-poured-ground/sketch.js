@@ -824,7 +824,7 @@
     // mode 2, from the reading: the reader's measurements (above); archive works without one: from the palette
     const brief = reading ? PG.readBrief(reading, a) : (G.param('mode') !== 1 && !pal.archive ? window.BRIEFS[pal.id] : null);
     const score = brief
-      ? PG.composeBrief(rng, brief, { energy: G.param('energy'), aspect: a, interp: G.param('interp'), handling: G.param('handling') })
+      ? PG.composeBrief(rng, brief, { energy: G.param('energy'), aspect: a, interp: G.param('interp'), handling: G.param('handling'), reserve: G.param('reserve') })
       : PG.compose(rng, { style: G.param('style'), pours: G.param('pours'), energy: G.param('energy'), aspect: a });
     // the interpretation may exchange ground and figure, so colours follow the score
     const cols = brief ? PG.briefColours(pal.colors, { g: score.g }) : PG.assignColours(pal.colors, G.param('ground'), rng);
@@ -1713,7 +1713,7 @@
   }
 
   // ---------------------------------------------------------------- harness
-  const SIM_KEYS = ['engine', 'body', 'handling', 'mode', 'interp', 'proportions', 'collection', 'palette', 'ground', 'style', 'pours', 'energy', 'flow', 'levelling', 'iterations', 'simres', 'format', 'landscape', 'border'];
+  const SIM_KEYS = ['engine', 'body', 'handling', 'reserve', 'mode', 'interp', 'proportions', 'collection', 'palette', 'ground', 'style', 'pours', 'energy', 'flow', 'levelling', 'iterations', 'simres', 'format', 'landscape', 'border'];
   G = GenArt.create({
     title: 'Poured Ground',
     resetOnFinish: true,
@@ -1727,6 +1727,7 @@
       palette: { value: -1, options: PAL_OPTIONS, label: 'palette', group: 'colour' },
       ground: { value: 0, options: { 'lightest colour': 0, 'darkest colour': 1, 'paper white': 2 }, label: 'ground', group: 'colour' },
       style: { value: 4, options: PG.STYLES, label: 'gesture', group: 'composition' },
+      reserve: { value: 0, options: { 'the hand crosses every interval': 0, 'the hand keeps out of the intervals the reading found': 1 }, label: 'intervals', group: 'composition' },
       handling: { value: 1, options: { 'layered · the hand works between the pours, strokes travel less': 1, 'sweeping · one pour, then every gesture at full reach (prints before Nov 2026)': 0 }, label: 'handling', group: 'composition' },
       pours: { value: 12, min: 2, max: 24, step: 1, label: 'pours', group: 'composition' },
       energy: { value: 1, min: 0.4, max: 2, step: 0.05, label: 'hand speed', group: 'composition' },
