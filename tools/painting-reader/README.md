@@ -35,7 +35,11 @@ python3 -I tools/painting-reader/read_works.py --archive --hosts met,tate,cma,ng
   Culture). Images are downloaded into a temporary directory and deleted after reading; only the
   measurements, the image's SHA-256 and its URL are kept, in
   `projects/060-poured-ground/archive/readings.json`. Wikimedia (most of the archive) rate-limits
-  requests and is not read by default (`--hosts wikimedia` reads it slowly).
+  requests and is not read by default (`--hosts wikimedia` reads it slowly). Commons refuses a
+  cloud address outright, so that read has to be run from a personal machine:
+  [RUNNING-THE-ARCHIVE-READ.md](RUNNING-THE-ARCHIVE-READ.md) has the policy limits, the commands,
+  the timings and the one thing that must be fixed first (the readings file is a single blob the
+  studio downloads whole, and a complete read would make it ~58 MB).
 - Each record compacts one handoff: five colours from the reader's six clusters (the two closest
   in CIELAB are merged, ΔE < 12, otherwise the smallest is folded into its nearest; `map6` records
   the mapping), the fields, configurations, shared fields, edges and cells.
