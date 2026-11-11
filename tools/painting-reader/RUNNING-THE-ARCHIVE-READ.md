@@ -120,14 +120,15 @@ What each flag does:
 | flag | why |
 |---|---|
 | `--hosts wikimedia` | only Commons; the configured museum hosts are already exhausted |
-| `--resume` | skips every id already in `readings.json`; always pass it |
+| `--resume` | skips every id already held in `archive/readings/`; always pass it |
 | `--workers 2` | the policy ceiling. Do not raise it |
 | `--pace 0.5` | minimum seconds between requests across all workers; raise it if you see 429s |
 | `--limit N` | stop after N works, for a proving run or a batch |
 
 Progress prints every 25 works, and **the readings file is written every 25 works**, so the run is
 safe to interrupt with Ctrl-C: at most 24 works' work is lost and `--resume` picks up from there.
-Works that fail are collected in `archive/readings.json.failures.json` with the reason.
+Works that fail are collected in `archive/readings/failures.json` with the reason; delete that
+file before committing, it is a run report rather than data.
 
 ## Expected time
 
@@ -153,9 +154,10 @@ progress, silently. If the `n of N` lines stop advancing for more than a few min
 
 ```sh
 cd generative-art
+rm -f projects/060-poured-ground/archive/readings/failures.json
 node tools/poured-ground-check.mjs          # expect: all NNNNN checks pass
 git switch -c archive-readings-<date>
-git add projects/060-poured-ground/archive/readings.json
+git add projects/060-poured-ground/archive/readings
 git commit -m "Read N more Colorist Archive works"
 git push -u origin archive-readings-<date>
 ```
