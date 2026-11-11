@@ -380,8 +380,31 @@ for (let f = 0; f < PG.FORMAT_KEYS.length; f++) for (const ar of [0.5, 0.75, 1, 
   require('../projects/060-poured-ground/readings.js');
   require('../projects/060-poured-ground/originals.js');
   const RD = globalThis.READINGS, OR = globalThis.ORIGINALS;
-  const archivePath = path.join(dir, 'archive/readings.json');
-  const AR = fs.existsSync(archivePath) ? JSON.parse(fs.readFileSync(archivePath, 'utf8')) : {};
+  // the archive's readings are filed per artist, as its works are, so the studio loads a work's
+  // reading with its artist instead of fetching every reading in the archive first
+  const shardDir = path.join(dir, 'archive/readings');
+  ok(!fs.existsSync(path.join(dir, 'archive/readings.json')), 'no single-file archive readings left to drift');
+  const shardIndex = fs.existsSync(path.join(shardDir, 'index.json'))
+    ? JSON.parse(fs.readFileSync(path.join(shardDir, 'index.json'), 'utf8')) : [];
+  const shardFiles = fs.existsSync(shardDir)
+    ? fs.readdirSync(shardDir).filter((f) => f.endsWith('.json') && f !== 'index.json' && f !== 'failures.json') : [];
+  ok(shardIndex.slice().sort().join() === shardFiles.map((f) => f.replace(/\.json$/, '')).sort().join(),
+     'the reading index names exactly the artists that have a shard');
+  const arts = JSON.parse(fs.readFileSync(path.join(dir, 'archive/index.json'), 'utf8')).artists;
+  const byId = Object.fromEntries(arts.map((a) => [a.id, a]));
+  const AR = {};
+  for (const f of shardFiles) {
+    const aid = f.replace(/\.json$/, ''), a = byId[aid];
+    ok(!!a, 'a reading shard belongs to an artist in the archive: ' + aid);
+    const recs = JSON.parse(fs.readFileSync(path.join(shardDir, f), 'utf8'));
+    ok(Object.keys(recs).length > 0, 'a reading shard is not empty: ' + aid);
+    for (const id of Object.keys(recs)) {
+      const n = Number(id) - 1000;
+      ok(a && n >= a.o && n < a.o + a.n, 'a reading is filed with the artist whose work it is: ' + id + ' in ' + aid);
+      ok(!(id in AR), 'a reading appears in one shard only: ' + id);
+      AR[id] = recs[id];
+    }
+  }
   const checkRecord = (id, rd, who) => {
     ok(String(rd.id) === String(id), 'reading id ' + who);
     ok(/^[0-9a-f]{64}$/.test(rd.sha256), 'reading sha256 ' + who);
