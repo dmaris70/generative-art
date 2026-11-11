@@ -412,7 +412,11 @@ full share of the mixture and drags it down.
 With the setting on, each pigment carries an **impurity index** p, its own spectrally non-selective
 scattering, so K = Σ c·p·(K/S) and S = Σ c·p: the mean is weighted by c·p and the pigment that
 scatters more carries the mixture. The extension is Moghareh Abed and Berns's (the 1p-KM model).
-What hides the ground follows the same p rather than a seeded hiding power.
+
+**p governs the mixture only.** How much of a film hides the ground keeps its own term. The two
+were tried together first, and a pigment with a low p then stopped hiding as well as it mixed: the
+Siesta's near-black, the lowest p of any pigment in the four read works at 0.20, came out warm grey
+over the ground and the print no longer said what the reading measured.
 
 p is taken from each cluster's own reflectance, `0.1 + 0.9·√Y` clamped to 1, so a pale cluster
 scatters and a dark saturated one mostly absorbs. **These are not measured K and S.** A real
