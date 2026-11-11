@@ -189,7 +189,7 @@ def archive_jobs(hosts):
             if not (w.get('pd') and w.get('i')): continue
             host = w['i'].split('/')[2]
             if host in allowed:
-                jobs.append({'id': ARCHIVE_BASE + a['o'] + i, 'image': w['i'], 'source': allowed[host], 'title': w['t'], 'artist': a['name']})
+                jobs.append({'id': ARCHIVE_BASE + a['o'] + i, 'image': w['i'], 'source': allowed[host], 'title': w['t'], 'artist': a['name'], 'artist_id': a['id']})
     return jobs
 
 
@@ -234,11 +234,37 @@ def fetch(url, dest, tries=4):
     return False
 
 
+def read_shards(out):
+    """Every reading already held, as {id: record}, from the per-artist shards in `out`."""
+    held = {}
+    for f in sorted(Path(out).glob('*.json')):
+        if f.name == 'index.json': continue
+        held.update(json.loads(f.read_text()))
+    return held
+
+
+def write_shards(out, by_artist):
+    """Write one file per artist, and the index naming the artists that have readings.
+
+    The studio loads a work's reading with its artist, as it loads the artist's works, so the
+    readings are filed the same way (sketch.js: loadArchiveReadings). Before November 2026 they
+    were one file the studio fetched whole: at 3.3 kB a record, a complete read of the archive
+    would have been some 58 MB downloaded on every visit.
+    """
+    d = Path(out); d.mkdir(parents=True, exist_ok=True)
+    for aid, recs in by_artist.items():
+        if recs: (d / (aid + '.json')).write_text(json.dumps(recs, separators=(',', ':'), ensure_ascii=False) + '\n', encoding='utf-8')
+    (d / 'index.json').write_text(json.dumps(sorted(a for a, r in by_artist.items() if r)) + '\n', encoding='utf-8')
+
+
 def run_archive(hosts, out, resume, workers, limit):
     jobs = archive_jobs(hosts)
+    by_artist = {}
     done = {}
-    if resume and Path(out).exists():
-        done = json.loads(Path(out).read_text())
+    if resume and Path(out).is_dir():
+        done = read_shards(out)
+        for f in sorted(Path(out).glob('*.json')):
+            if f.name != 'index.json': by_artist[f.stem] = json.loads(f.read_text())
     todo = [j for j in jobs if str(j['id']) not in done]
     if limit: todo = todo[:limit]
     print(len(jobs), 'eligible works on', hosts, '|', len(done), 'already read |', len(todo), 'to read', flush=True)
@@ -257,14 +283,16 @@ def run_archive(hosts, out, resume, workers, limit):
     with ThreadPoolExecutor(workers) as ex:
         for j, rec, err in ex.map(one, todo):
             n += 1
-            if rec: done[str(j['id'])] = rec
+            if rec:
+                done[str(j['id'])] = rec
+                by_artist.setdefault(j['artist_id'], {})[str(j['id'])] = rec
             else: failures.append({'id': j['id'], 'image': j['image'], 'error': err})
             if n % 25 == 0 or n == len(todo):
-                Path(out).write_text(json.dumps(done, separators=(',', ':'), ensure_ascii=False) + '\n', encoding='utf-8')
+                write_shards(out, by_artist)
                 print(n, 'of', len(todo), '|', len(done), 'readings |', len(failures), 'failed', flush=True)
-    Path(out).write_text(json.dumps(done, separators=(',', ':'), ensure_ascii=False) + '\n', encoding='utf-8')
+    write_shards(out, by_artist)
     if failures:
-        Path(str(out) + '.failures.json').write_text(json.dumps(failures, indent=1) + '\n')
+        (Path(out) / 'failures.json').write_text(json.dumps(failures, indent=1) + '\n')
     print('done:', len(done), 'readings;', len(failures), 'failures')
 
 
@@ -273,7 +301,7 @@ def main():
     ap.add_argument('--colorlisa', action='store_true')
     ap.add_argument('--archive', action='store_true')
     ap.add_argument('--hosts', default='met,tate,cma,nga,google,google2')
-    ap.add_argument('--out', default=str(PROJECT / 'archive/readings.json'))
+    ap.add_argument('--out', default=str(PROJECT / 'archive/readings'), help='directory of per-artist reading shards')
     ap.add_argument('--resume', action='store_true')
     ap.add_argument('--workers', type=int, default=3)
     ap.add_argument('--limit', type=int, default=0)
