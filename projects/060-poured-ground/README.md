@@ -399,6 +399,31 @@ The paint has a physical body (setting *paint body*, on by default):
 - **Earlier prints.** *flat* (`p_body=0`) reproduces every earlier print, pixel for pixel. This was
   verified on three works.
 
+## Pigment mixing: the impurity index
+
+Setting *pigment mixing* (`p_mixing`), single constant by default.
+
+Colours mix by single-constant Kubelka-Munk: the mixture's K/S is the concentration-weighted mean
+of each pigment's K/S. That simplification holds when a white substrate does the scattering and
+every pigment scatters alike. These pigments are **masstones**, measured clusters applied pure, and
+for masstones the assumption fails: a near-black with almost no scattering still counts for its
+full share of the mixture and drags it down.
+
+With the setting on, each pigment carries an **impurity index** p, its own spectrally non-selective
+scattering, so K = Σ c·p·(K/S) and S = Σ c·p: the mean is weighted by c·p and the pigment that
+scatters more carries the mixture. The extension is Moghareh Abed and Berns's (the 1p-KM model).
+What hides the ground follows the same p rather than a seeded hiding power.
+
+p is taken from each cluster's own reflectance, `0.1 + 0.9·√Y` clamped to 1, so a pale cluster
+scatters and a dark saturated one mostly absorbs. **These are not measured K and S.** A real
+calibration needs a masstone and a tint of each pigment on a spectrophotometer, which no photograph
+can supply, so this is a principled parameterisation and not a measurement.
+
+Over the 24 pigment pairs of the four read originals, mixing half and half, the two models differ
+by a mean of 3.1 ΔE and at most 13.6, against a just-noticeable difference near 2.3. The difference
+concentrates where the theory says it should: pairs containing a low-scattering dark. Gauguin's
+near-black has p 0.20, and mixed with the olive the result moves from L\* 17.5 to 25.8.
+
 ## The highlight, and the sheet's memory
 
 Two settings in *surface*, both answering an outside critique of the prints:
