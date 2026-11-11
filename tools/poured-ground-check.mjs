@@ -380,8 +380,31 @@ for (let f = 0; f < PG.FORMAT_KEYS.length; f++) for (const ar of [0.5, 0.75, 1, 
   require('../projects/060-poured-ground/readings.js');
   require('../projects/060-poured-ground/originals.js');
   const RD = globalThis.READINGS, OR = globalThis.ORIGINALS;
-  const archivePath = path.join(dir, 'archive/readings.json');
-  const AR = fs.existsSync(archivePath) ? JSON.parse(fs.readFileSync(archivePath, 'utf8')) : {};
+  // the archive's readings are filed per artist, as its works are, so the studio loads a work's
+  // reading with its artist instead of fetching every reading in the archive first
+  const shardDir = path.join(dir, 'archive/readings');
+  ok(!fs.existsSync(path.join(dir, 'archive/readings.json')), 'no single-file archive readings left to drift');
+  const shardIndex = fs.existsSync(path.join(shardDir, 'index.json'))
+    ? JSON.parse(fs.readFileSync(path.join(shardDir, 'index.json'), 'utf8')) : [];
+  const shardFiles = fs.existsSync(shardDir)
+    ? fs.readdirSync(shardDir).filter((f) => f.endsWith('.json') && f !== 'index.json' && f !== 'failures.json') : [];
+  ok(shardIndex.slice().sort().join() === shardFiles.map((f) => f.replace(/\.json$/, '')).sort().join(),
+     'the reading index names exactly the artists that have a shard');
+  const arts = JSON.parse(fs.readFileSync(path.join(dir, 'archive/index.json'), 'utf8')).artists;
+  const byId = Object.fromEntries(arts.map((a) => [a.id, a]));
+  const AR = {};
+  for (const f of shardFiles) {
+    const aid = f.replace(/\.json$/, ''), a = byId[aid];
+    ok(!!a, 'a reading shard belongs to an artist in the archive: ' + aid);
+    const recs = JSON.parse(fs.readFileSync(path.join(shardDir, f), 'utf8'));
+    ok(Object.keys(recs).length > 0, 'a reading shard is not empty: ' + aid);
+    for (const id of Object.keys(recs)) {
+      const n = Number(id) - 1000;
+      ok(a && n >= a.o && n < a.o + a.n, 'a reading is filed with the artist whose work it is: ' + id + ' in ' + aid);
+      ok(!(id in AR), 'a reading appears in one shard only: ' + id);
+      AR[id] = recs[id];
+    }
+  }
   const checkRecord = (id, rd, who) => {
     ok(String(rd.id) === String(id), 'reading id ' + who);
     ok(/^[0-9a-f]{64}$/.test(rd.sha256), 'reading sha256 ' + who);
@@ -396,8 +419,14 @@ for (let f = 0; f < PG.FORMAT_KEYS.length; f++) for (const ar of [0.5, 0.75, 1, 
     // the grain, when kept: 8 bins over 180 degrees that sum to 1, the strongest agreeing with `edges`
     if (rd.ebins) {
       ok(rd.ebins.length === 8 && rd.ebins.every((v) => v >= 0 && v <= 1) && Math.abs(rd.ebins.reduce((a, b) => a + b, 0) - 1) < 0.01, 'reading grain bins ' + who);
-      const top = rd.ebins.indexOf(Math.max(...rd.ebins));
-      ok(top * 180 / 8 === rd.edges[0] && Math.abs(rd.ebins[top] - rd.edges[1]) < 0.002, 'grain agrees with the strongest direction ' + who);
+      // `edges[0]` is the dominant bin's centre in whole degrees, so an odd multiple of 22.5 is
+      // rounded (22.5 → 22, 67.5 → 68): read the bin back from the angle rather than comparing a
+      // bin centre to it. Shares are kept to three decimals, which can tie two bins that differ
+      // underneath, so the named bin has to be *a* maximum, not the first one `indexOf` finds.
+      const bin = Math.round(rd.edges[0] / 22.5) % 8;
+      ok(Math.abs(bin * 22.5 - rd.edges[0]) <= 0.5, 'the dominant direction is a bin centre ' + who);
+      ok(Math.abs(rd.ebins[bin] - rd.edges[1]) <= 0.001, 'the dominant share is that bin\'s ' + who);
+      ok(rd.ebins[bin] >= Math.max(...rd.ebins) - 0.001, 'grain agrees with the strongest direction ' + who);
     }
     ok(rd.reading === 'unavailable', 'no subject description is claimed ' + who);
   };
