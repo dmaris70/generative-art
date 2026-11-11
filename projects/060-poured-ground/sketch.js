@@ -430,23 +430,42 @@
     tRim: HEAD + `
     uniform sampler2D uH, uVel; uniform vec2 uTh; uniform float uD, uH0;
     float rest(ivec2 c){ return 1. - smoothstep(uTh.x, uTh.y, length(texelFetch(uVel, c, 0).xy)); }
+    // phi is read over a 3-cell block, not from one cell. Taken per cell it changes as soon as
+    // paint piles up, so the flow reversed every step and the exchange rang at the grid: the
+    // sheet came out in staircases. Smoothed, the edge is resolved over several cells and the
+    // gradient driving the creep stays put while the rim builds.
+    float phiAt(ivec2 c, ivec2 m){
+      float a = 0.;
+      // contiguous, never strided: sampling every second cell splits the grid into two lattices
+      // that never see each other, and the rim came back as a checkerboard
+      for (int y = -1; y <= 1; y++) for (int x = -1; x <= 1; x++)
+        a += dot(texelFetch(uH, clamp(c + ivec2(x,y), ivec2(0), m), 0), vec4(1.));
+      return smoothstep(0., uH0, a / 9.);
+    }
     void main(){
       ivec2 c = ivec2(gl_FragCoord.xy), m = ivec2(uSize)-1;
       vec4 h = texelFetch(uH, c, 0);
-      float tot = dot(h, vec4(1.)), phi = smoothstep(0., uH0, tot);
+      float tot = dot(h, vec4(1.)), phi = phiAt(c, m);
       vec4 acc = vec4(0);
       ivec2 n[4] = ivec2[4](ivec2(-1,0), ivec2(1,0), ivec2(0,-1), ivec2(0,1));
       for (int i = 0; i < 4; i++) {
         ivec2 q = c + n[i];
         if (q.x < 0 || q.y < 0 || q.x > m.x || q.y > m.y) continue;
         vec4 hq = texelFetch(uH, q, 0);
-        float totq = dot(hq, vec4(1.)), phiq = smoothstep(0., uH0, totq);
-        float g = min(rest(c), rest(q)) * step(1e-5, tot) * step(1e-5, totq);   // both wet, both at rest
-        float d = phi - phiq;
-        if (d > 0.) acc -= g * d * h / max(tot, 1e-6);                          // this cell gives
-        else        acc += g * (-d) * hq / max(totq, 1e-6);                     // the neighbour gives
+        float totq = dot(hq, vec4(1.)), phiq = phiAt(q, m);
+        // a soft wet gate, not a hard one: a cell switching on and off between steps was half of
+        // why the rim came out stippled
+        float g = min(rest(c), rest(q)) * smoothstep(0., 0.25 * uH0, tot) * smoothstep(0., 0.25 * uH0, totq);
+        // The flux is limited on the edge, not on the cell. Limiting what a cell gives in total
+        // is invisible to its neighbours, which then take what was never sent, and paint is made
+        // from nothing; the edge is the only place both sides agree. Each side may give at most a
+        // quarter of what it holds, shared over its four edges, which stops the rim band from
+        // emptying and refilling and breaking into a stipple.
+        float f = clamp(uD * g * (phi - phiq), -0.0625 * totq, 0.0625 * tot);
+        if (f > 0.) acc -= f * h / max(tot, 1e-6);                              // this cell gives
+        else        acc += (-f) * hq / max(totq, 1e-6);                         // the neighbour gives
       }
-      o = max(h + uD * acc, vec4(0));
+      o = max(h + acc, vec4(0));
     }`,
     tLevel: HEAD + `
     uniform sampler2D uH, uVel; uniform vec2 uTh; uniform float uD;
@@ -1054,7 +1073,7 @@
     smooth(2);
   }
   const TH = [0.02, 0.22], KMOVE = 0.3;      // mofu's movement threshold and transfer factor
-  const RIM_D = 0.22, RIM_H0 = 0.012;        // v4: how fast paint creeps to a rim, and the film
+  const RIM_D = 0.10, RIM_H0 = 0.012;        // v4: how fast paint creeps to a rim, and the film
                                              // thickness past which it is no longer an edge
   // v2's wind gain. v1's living motion was partly paint vanishing and smearing; v2 conserves
   // paint, so the same wind moves it less. Tuned by eye and by measure (A Bigger Splash, Broadway
@@ -1088,7 +1107,7 @@
     }
     // v4: pigment creeps to the rim of a resting film and is stranded there
     if (S.engine >= 4) {
-      const f = Math.pow(Math.max(S.w, S.h) / REF_LONG, 2), D = RIM_D * f, n = Math.max(1, Math.ceil(D / 0.2));
+      const f = Math.pow(Math.max(S.w, S.h) / REF_LONG, 2), D = RIM_D * f, n = Math.max(2, Math.ceil(D / 0.05));
       for (let i = 0; i < n; i++) {
         bind(P.tRim, { uH: S.hgt.a.t, uVel: S.vel.a.t });
         gl.uniform2f(P.tRim.u.uTh, TH[0], TH[1]); gl.uniform1f(P.tRim.u.uD, D / n); gl.uniform1f(P.tRim.u.uH0, RIM_H0);
