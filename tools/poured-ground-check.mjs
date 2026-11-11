@@ -419,8 +419,14 @@ for (let f = 0; f < PG.FORMAT_KEYS.length; f++) for (const ar of [0.5, 0.75, 1, 
     // the grain, when kept: 8 bins over 180 degrees that sum to 1, the strongest agreeing with `edges`
     if (rd.ebins) {
       ok(rd.ebins.length === 8 && rd.ebins.every((v) => v >= 0 && v <= 1) && Math.abs(rd.ebins.reduce((a, b) => a + b, 0) - 1) < 0.01, 'reading grain bins ' + who);
-      const top = rd.ebins.indexOf(Math.max(...rd.ebins));
-      ok(top * 180 / 8 === rd.edges[0] && Math.abs(rd.ebins[top] - rd.edges[1]) < 0.002, 'grain agrees with the strongest direction ' + who);
+      // `edges[0]` is the dominant bin's centre in whole degrees, so an odd multiple of 22.5 is
+      // rounded (22.5 → 22, 67.5 → 68): read the bin back from the angle rather than comparing a
+      // bin centre to it. Shares are kept to three decimals, which can tie two bins that differ
+      // underneath, so the named bin has to be *a* maximum, not the first one `indexOf` finds.
+      const bin = Math.round(rd.edges[0] / 22.5) % 8;
+      ok(Math.abs(bin * 22.5 - rd.edges[0]) <= 0.5, 'the dominant direction is a bin centre ' + who);
+      ok(Math.abs(rd.ebins[bin] - rd.edges[1]) <= 0.001, 'the dominant share is that bin\'s ' + who);
+      ok(rd.ebins[bin] >= Math.max(...rd.ebins) - 0.001, 'grain agrees with the strongest direction ' + who);
     }
     ok(rd.reading === 'unavailable', 'no subject description is claimed ' + who);
   };
