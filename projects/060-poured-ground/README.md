@@ -251,6 +251,25 @@ Setting *handling* (`p_handling`), two values:
 - **sweeping** (`p_handling=0`). The earlier hand: every mass poured first, then every gesture at
   full reach. Reproduces prints made before November 2026.
 
+## Intervals: keeping a gap open
+
+Setting *intervals* (`p_reserve`), off by default.
+
+Where a configuration names two fields whose boxes do not meet, the strip between their facing
+edges is what separates them, and the gesture that configuration produces runs straight across it:
+the pull of a colour recurrence joins two islands by dragging paint through the gap that made the
+pair legible. With *intervals* on, that strip is a **reserve**. A stroke that would cross it is cut
+at its edge and continues on the far side, and no dab lands inside, so the ground stays open there.
+
+A reserve needs the two boxes to be at least 0.03 apart and to face each other over at least 0.15
+of the sheet. Four of the eight read originals have one: Degas (a vertical strip at x 0.531–0.625,
+between the dark island on the right and the one at the centre), Gauguin, Monet and Meissonier.
+The other four have none, and are unchanged whatever the setting.
+
+This exists because an outside critic, having seen each print beside its source, found that what
+survives is the distribution of weight and what dies is whatever organises the eye, and asked for
+one print in which a gap is held open and everything else left alone.
+
 ## Composition
 
 A seed writes a **score**: timed pours and finger drags on a fixed 60 Hz clock (`engine.js`, no
