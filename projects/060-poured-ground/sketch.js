@@ -864,7 +864,7 @@
     const brief = reading ? PG.readBrief(reading, a) : (G.param('mode') !== 1 && !pal.archive ? window.BRIEFS[pal.id] : null);
     const score = brief
       ? PG.composeBrief(rng, brief, { energy: G.param('energy'), aspect: a, interp: G.param('interp'), handling: G.param('handling'), reserve: G.param('reserve') })
-      : PG.compose(rng, { style: G.param('style'), pours: G.param('pours'), energy: G.param('energy'), aspect: a });
+      : PG.compose(rng, { style: G.param('style'), pours: G.param('pours'), energy: G.param('energy'), aspect: a, handling: G.param('handling') });
     // the interpretation may exchange ground and figure, so colours follow the score
     const cols = brief ? PG.briefColours(pal.colors, { g: score.g }) : PG.assignColours(pal.colors, G.param('ground'), rng);
     S = {
@@ -1780,6 +1780,8 @@
       film: { value: 1, options: { 'a film of its own thickness over the paper': 1, 'the masstone blended over the ground (prints before 11 Nov 2026)': 0 }, label: 'film over the paper', group: 'surface' },
       mixing: { value: 1, options: { 'impurity index: each pigment scatters on its own': 1, 'single constant (prints before 11 Nov 2026)': 0 }, label: 'pigment mixing', group: 'surface' },
       reserve: { value: 0, options: { 'the hand crosses every interval': 0, 'the hand keeps out of the intervals the reading found': 1 }, label: 'intervals', group: 'composition' },
+      // the layered hand applies to every work: one read or briefed (composeBrief) and one
+      // composed from its palette alone (compose), which is 19,123 of the archive's 20,367
       handling: { value: 1, options: { 'layered · the hand works between the pours, strokes travel less': 1, 'sweeping · one pour, then every gesture at full reach (prints before Nov 2026)': 0 }, label: 'handling', group: 'composition' },
       pours: { value: 12, min: 2, max: 24, step: 1, label: 'pours', group: 'composition' },
       energy: { value: 1, min: 0.4, max: 2, step: 0.05, label: 'hand speed', group: 'composition' },

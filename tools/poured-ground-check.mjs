@@ -66,7 +66,160 @@ for (let seed = 1; seed <= 40; seed++) for (const style of [0, 1, 2, 3, 4]) {
     }
   }
   ok(a.steps > last, 'score ends after last event');
+  // A work with neither a brief nor a reading (19,123 of the archive's 20,367) composes here. It
+  // is now handled like a brief's: layered by default, the earlier sweeping hand under handling 0.
+  const sweep = PG.compose(mulberry32(seed), Object.assign({}, o, { handling: 0 }));
+  const lay = PG.compose(mulberry32(seed), Object.assign({}, o, { handling: 1 }));
+  ok(JSON.stringify(a) === JSON.stringify(lay), 'palette: layered is the default ' + seed + '/' + style);
+  ok(JSON.stringify(sweep) !== JSON.stringify(lay), 'palette: handling changes the score ' + seed + '/' + style);
+  const pourTs = lay.events.filter((e) => e.type === 'pour').map((e) => e.t).sort((x, y) => x - y);
+  const dragTs = lay.events.filter((e) => e.type === 'drag').map((e) => e.t0).sort((x, y) => x - y);
+  ok(pourTs[0] < dragTs[0], 'palette: the hand never works a bare sheet ' + seed + '/' + style);
+  const runs = pourTs.reduce((n, t, k) => n + (k && t - pourTs[k - 1] > 1 ? 1 : 0), 1);
+  ok(runs >= 1 && runs <= 3, 'palette: poured in at most three layers ' + seed + '/' + style);
+  ok(pourTs.every((t) => dragTs.every((d) => d !== t)), 'palette: a pour and a drag never share a step ' + seed + '/' + style);
+  const travel = (sc) => sc.events.filter((e) => e.type === 'drag').reduce((s2, e) =>
+    s2 + e.pts.reduce((u, q, i) => i ? u + Math.hypot((q[0] - e.pts[i - 1][0]) * aspect[0], (q[1] - e.pts[i - 1][1]) * aspect[1]) : 0, 0), 0);
+  ok(travel(lay) < travel(sweep), 'palette: layered strokes travel less ' + seed + '/' + style);
+  // the sweeping hand is unchanged: each pour is worked where it lands
+  ok(Math.min(...sweep.events.filter((e) => e.type === 'pour').map((e) => e.t))
+     < Math.min(...sweep.events.filter((e) => e.type === 'drag').map((e) => e.t0)), 'palette sweeping: a pour leads ' + seed + '/' + style);
 }
+
+// The sweeping hand, locked to the step. These are hashes of scores PG.compose produced before
+// the layered hand was given to the palette path (November 2026); handling 0 must still produce
+// them exactly, so that every palette-only print made before the change reproduces.
+// [seed, style, pours, aspect[1], hash]
+const SWEEP_GOLD = [
+  [1,0,4,1,1148052685],
+  [1,0,4,1.4142,3003773950],
+  [1,0,12,1,3332890113],
+  [1,0,12,1.4142,1710662872],
+  [1,0,24,1,3622951188],
+  [1,0,24,1.4142,2289721986],
+  [1,1,4,1,2118166356],
+  [1,1,4,1.4142,2882968499],
+  [1,1,12,1,995775605],
+  [1,1,12,1.4142,3675782613],
+  [1,1,24,1,2318407467],
+  [1,1,24,1.4142,2296347732],
+  [1,2,4,1,3745964113],
+  [1,2,4,1.4142,2591710593],
+  [1,2,12,1,432843761],
+  [1,2,12,1.4142,1922855840],
+  [1,2,24,1,1740825228],
+  [1,2,24,1.4142,800003965],
+  [1,3,4,1,2074367027],
+  [1,3,4,1.4142,1773951793],
+  [1,3,12,1,3564122252],
+  [1,3,12,1.4142,877744075],
+  [1,3,24,1,3530765204],
+  [1,3,24,1.4142,440253423],
+  [1,4,4,1,2664831950],
+  [1,4,4,1.4142,1627892432],
+  [1,4,12,1,1889200718],
+  [1,4,12,1.4142,1532249020],
+  [1,4,24,1,1036404646],
+  [1,4,24,1.4142,4142676085],
+  [2,0,4,1,3926450250],
+  [2,0,4,1.4142,1998969450],
+  [2,0,12,1,459650569],
+  [2,0,12,1.4142,394828911],
+  [2,0,24,1,3103250413],
+  [2,0,24,1.4142,4060204786],
+  [2,1,4,1,873317139],
+  [2,1,4,1.4142,4097321326],
+  [2,1,12,1,4261819125],
+  [2,1,12,1.4142,3575808429],
+  [2,1,24,1,242609757],
+  [2,1,24,1.4142,3053372795],
+  [2,2,4,1,3705020331],
+  [2,2,4,1.4142,2116593141],
+  [2,2,12,1,4037419253],
+  [2,2,12,1.4142,3137740116],
+  [2,2,24,1,3022233316],
+  [2,2,24,1.4142,839025072],
+  [2,3,4,1,3465798173],
+  [2,3,4,1.4142,1479659104],
+  [2,3,12,1,1047666933],
+  [2,3,12,1.4142,1858730399],
+  [2,3,24,1,3769219731],
+  [2,3,24,1.4142,4261757446],
+  [2,4,4,1,3473365638],
+  [2,4,4,1.4142,430108726],
+  [2,4,12,1,411411076],
+  [2,4,12,1.4142,4215127119],
+  [2,4,24,1,3237443677],
+  [2,4,24,1.4142,2875279982],
+  [7,0,4,1,3000801605],
+  [7,0,4,1.4142,3908353673],
+  [7,0,12,1,3795743079],
+  [7,0,12,1.4142,4022721631],
+  [7,0,24,1,3487355855],
+  [7,0,24,1.4142,3911848841],
+  [7,1,4,1,3824123097],
+  [7,1,4,1.4142,1432224958],
+  [7,1,12,1,346421636],
+  [7,1,12,1.4142,3126226293],
+  [7,1,24,1,1551446505],
+  [7,1,24,1.4142,3108055110],
+  [7,2,4,1,1517772314],
+  [7,2,4,1.4142,4036465492],
+  [7,2,12,1,3762760611],
+  [7,2,12,1.4142,2872717545],
+  [7,2,24,1,4120064618],
+  [7,2,24,1.4142,2549893251],
+  [7,3,4,1,1641823798],
+  [7,3,4,1.4142,136859088],
+  [7,3,12,1,2683916388],
+  [7,3,12,1.4142,3645859404],
+  [7,3,24,1,815813747],
+  [7,3,24,1.4142,3878910774],
+  [7,4,4,1,1605446343],
+  [7,4,4,1.4142,3310579773],
+  [7,4,12,1,685310285],
+  [7,4,12,1.4142,3175069068],
+  [7,4,24,1,4136570188],
+  [7,4,24,1.4142,3047259175],
+  [11,0,4,1,2388386757],
+  [11,0,4,1.4142,350955284],
+  [11,0,12,1,1646785123],
+  [11,0,12,1.4142,2176624178],
+  [11,0,24,1,851030931],
+  [11,0,24,1.4142,1202314299],
+  [11,1,4,1,1767352733],
+  [11,1,4,1.4142,4118813025],
+  [11,1,12,1,753632170],
+  [11,1,12,1.4142,3191079995],
+  [11,1,24,1,900063721],
+  [11,1,24,1.4142,1768789860],
+  [11,2,4,1,3048285832],
+  [11,2,4,1.4142,146322080],
+  [11,2,12,1,410256496],
+  [11,2,12,1.4142,3672206954],
+  [11,2,24,1,939221141],
+  [11,2,24,1.4142,2696938594],
+  [11,3,4,1,1509838928],
+  [11,3,4,1.4142,3788377998],
+  [11,3,12,1,2027212024],
+  [11,3,12,1.4142,1343125335],
+  [11,3,24,1,2468507270],
+  [11,3,24,1.4142,2106315074],
+  [11,4,4,1,2087255111],
+  [11,4,4,1.4142,2687261462],
+  [11,4,12,1,2458625863],
+  [11,4,12,1.4142,3320702955],
+  [11,4,24,1,1890159050],
+  [11,4,24,1.4142,993921965],
+];
+{
+  const h = (s) => { let x = 7; for (let i = 0; i < s.length; i++) x = (Math.imul(x, 31) + s.charCodeAt(i)) >>> 0; return x; };
+  for (const [seed, style, pours, ay, hash] of SWEEP_GOLD) {
+    const o = { style, pours, energy: 1, aspect: [1, ay], handling: 0 };
+    ok(h(JSON.stringify(PG.compose(mulberry32(seed), o))) === hash, 'sweeping hand unchanged ' + seed + '/' + style + '/' + pours + '/' + ay);
+  }
+}
+
 
 for (let f = 0; f < PG.FORMAT_KEYS.length; f++) for (const land of [false, true]) for (const dpi of [150, 300, 360]) {
   const s = PG.sheet(f, land, 40, dpi);

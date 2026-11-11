@@ -90,7 +90,12 @@
   }
 
   // ---- the score --------------------------------------------------------------------------
-  // o: { style, pours, energy (0.3–2), aspect [ax, ay] = size / min(size) }
+  // o: { style, pours, energy (0.3–2), aspect [ax, ay] = size / min(size), handling }
+  // A work with neither a brief nor a reading composes here, from its palette alone — 19,123 of
+  // the archive's 20,367. The hand is now the same one a brief gets in composeBrief: handling 1,
+  // the default, pours a layer's masses together and works between the layers, and every stroke
+  // travels less (REACH). handling 0 is the earlier sweeping hand, kept to the step so that
+  // prints made before November 2026 reproduce exactly.
   function compose(rng, o) {
     const A = o.aspect;
     const R = function (a, b) { return a + (b - a) * rng(); };
@@ -99,9 +104,10 @@
       return [Math.max(-half[0] + m, Math.min(half[0] - m, p[0])), Math.max(-half[1] + m, Math.min(half[1] - m, p[1]))];
     };
     const energy = o.energy;
+    const layered = o.handling === undefined ? 1 : (o.handling ? 1 : 0);
+    const REACH = layered ? 0.62 : 1;                            // as in composeBrief
     const speed = function () { return R(0.35, 0.8) * energy; }; // short-side units per second
     const events = [];
-    let t = 8;
 
     // pigment sequence: weighted so one or two colours lead, the rest accent
     const weights = [R(1, 3), R(0.6, 2), R(0.3, 1.2), R(0.2, 0.9)];
@@ -112,17 +118,22 @@
       return 3;
     };
 
+    // A gesture is built with its times relative to its own start, so the same geometry can be
+    // scheduled either as one hand sweeping through or in layers. Every random draw stays in the
+    // order it was made before, which is what keeps handling 0 identical.
+    const gestures = [];
+    let g = null;
     const addDrag = function (pts, r, start) {
       // arcs and wavy pulls may overshoot: the finger lifts short of the sheet edge, so paint is not piled against the wall
       pts = pts.map(function (q) { return [Math.max(0.06, Math.min(0.94, q[0])), Math.max(0.06, Math.min(0.94, q[1]))]; });
       const len = polyLength(pts, A);
       const dur = Math.max(12, Math.round((len / speed()) * FPS));
-      events.push({ type: 'drag', t0: start, t1: start + dur, pts: pts, r: r, amt: 0.9 });
+      g.drags.push({ rel: start, dur: dur, pts: pts, r: r });
       return start + dur;
     };
-    const addPour = function (p, r, pig, at) {
+    const addPour = function (p, r, pig) {
       const u = toUV(p, A);
-      events.push({ type: 'pour', t: at, x: u[0], y: u[1], r: r, pig: pig });
+      g.pour = { type: 'pour', t: 0, x: u[0], y: u[1], r: r, pig: pig };
     };
 
     const style = o.style;
@@ -136,16 +147,18 @@
     for (let k = 0; k < n; k++) {
       const s = style === STYLES.Mixed ? Math.floor(rng() * 4) : style;
       const pig = pickPig();
-      let end = t;
+      g = { pour: null, drags: [], end: 0, adv: 0 };
+      gestures.push(g);
+      let end = 0;
       if (s === STYLES.Spread) {
         const c = centres[Math.floor(rng() * centres.length)];
         const p = inside([c[0] + R(-0.12, 0.12), c[1] + R(-0.12, 0.12)], 0.08);
         const r = R(0.06, 0.13);
-        addPour(p, r, pig, t);
+        addPour(p, r, pig);
         const nd = 2 + Math.floor(rng() * 3);
-        let tt = t + 4;
+        let tt = 4;
         for (let d = 0; d < nd; d++) {
-          const ang = R(0, Math.PI * 2), L = R(0.15, 0.45);
+          const ang = R(0, Math.PI * 2), L = R(0.15, 0.45) * REACH;
           const a = [p[0] + Math.cos(ang) * r * 0.3, p[1] + Math.sin(ang) * r * 0.3];
           const b = inside([a[0] + Math.cos(ang) * L, a[1] + Math.sin(ang) * L], 0.04);
           tt = addDrag(curve(a, b, R(-0.25, 0.25), 0, 0, A), R(0.03, 0.07), tt) - 6;
@@ -157,28 +170,51 @@
         const off = R(-0.45, 0.45), along = R(-0.25, 0.1);
         const p = inside([nrm[0] * off * A[0] + dir[0] * along, nrm[1] * off * A[1] + dir[1] * along], 0.08);
         const r = R(0.05, 0.11);
-        addPour(p, r, pig, t);
-        const L = R(0.5, 1.2);
+        addPour(p, r, pig);
+        const L = R(0.5, 1.2) * REACH;
         const a = [p[0] - dir[0] * r * 0.8, p[1] - dir[1] * r * 0.8];
         const b = inside([a[0] + dir[0] * L, a[1] + dir[1] * L], 0.03);
-        end = addDrag(curve(a, b, R(-0.08, 0.08), R(0, 0.03), R(1, 3), A), R(0.06, 0.12), t + 4);
+        end = addDrag(curve(a, b, R(-0.08, 0.08), R(0, 0.03), R(1, 3), A), R(0.06, 0.12), 4);
       } else if (s === STYLES.Swirl) {
         const rho = R(0.02, 0.32), a0 = R(0, Math.PI * 2);
         const p = inside([swirlC[0] + Math.cos(a0) * rho, swirlC[1] + Math.sin(a0) * rho], 0.08);
         const r = R(0.05, 0.11);
-        addPour(p, r, pig, t);
-        const span = R(1.2, 3.4) * (rng() < 0.85 ? 1 : -1);
-        end = addDrag(arc(swirlC, Math.max(rho, 0.05), a0 - 0.2 * Math.sign(span), a0 + span, R(-0.3, 0.5), A), R(0.04, 0.08), t + 4);
+        addPour(p, r, pig);
+        const span = R(1.2, 3.4) * (rng() < 0.85 ? 1 : -1) * REACH;
+        end = addDrag(arc(swirlC, Math.max(rho, 0.05), a0 - 0.2 * Math.sign(span), a0 + span, R(-0.3, 0.5), A), R(0.04, 0.08), 4);
       } else {
         const p = inside([R(-0.45, 0.45) * A[0], R(-0.45, 0.45) * A[1]], 0.05);
         const r = R(0.03, 0.07);
-        addPour(p, r, pig, t);
-        const ang = R(0, Math.PI * 2), L = R(0.06, 0.22);
+        addPour(p, r, pig);
+        const ang = R(0, Math.PI * 2), L = R(0.06, 0.22) * REACH;
         const b = inside([p[0] + Math.cos(ang) * L, p[1] + Math.sin(ang) * L], 0.03);
-        end = addDrag(curve(p, b, R(-0.3, 0.3), 0, 0, A), R(0.025, 0.05), t + 3);
+        end = addDrag(curve(p, b, R(-0.3, 0.3), 0, 0, A), R(0.025, 0.05), 3);
       }
-      // the next gesture starts before this one ends, as a hand would
-      t = Math.max(t + 6, Math.round(t + (end - t) * R(0.45, 0.85)));
+      g.end = end;
+      g.adv = R(0.45, 0.85);   // the next gesture starts before this one ends, as a hand would
+    }
+
+    // Wet into wet, as composeBrief does it: layered, a layer's pours all land, the sheet is given
+    // a moment, and the hand works that layer before the next is poured on top of moving paint.
+    // Unlayered, there is one layer and each pour is worked the moment it lands.
+    const L = layered ? (gestures.length >= 6 ? 3 : gestures.length >= 3 ? 2 : 1) : 1;
+    const per = Math.ceil(gestures.length / L) || 1;
+    let t = 8;
+    for (let i = 0; i < L; i++) {
+      const grp = gestures.slice(i * per, (i + 1) * per);
+      if (layered) { for (const q of grp) { q.pour.t = t++; events.push(q.pour); } t += 8; }
+      let began = -1;                                   // the last step on which a stroke began
+      for (const q of grp) {
+        if (!layered) { q.pour.t = t; events.push(q.pour); }
+        for (const d of q.drags) {
+          events.push({ type: 'drag', t0: t + d.rel, t1: t + d.rel + d.dur, pts: d.pts, r: d.r, amt: 0.9 });
+          began = Math.max(began, t + d.rel);
+        }
+        t = Math.max(t + (layered ? 4 : 6), Math.round(t + q.end * q.adv));
+      }
+      // the next layer is poured onto paint the hand has already moved, but never onto the very
+      // step a stroke begins: a pour and a drag share no step, as in composeBrief
+      if (layered) t = Math.max(t, began + 1);
     }
     let last = 0;
     for (const e of events) last = Math.max(last, e.type === 'pour' ? e.t : e.t1);
