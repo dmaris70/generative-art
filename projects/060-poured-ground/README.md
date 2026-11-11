@@ -396,6 +396,26 @@ liquid does not actually do, and the canvas walls keep everything on the sheet.
 - **Containment:** every laid field lies wholly on the sheet, whatever the interpretation.
   Nothing is cut off by the canvas edge, and the check script verifies it.
 
+### Engine v4: the rim
+
+v4 is v3 with one addition, and it changes the pour, so it is selectable rather than the default
+(`p_engine=4`). v3 remains what every print is made with.
+
+As a film dries, the carrier leaves fastest at its edge and draws liquid outward, stranding pigment
+just inside the boundary. That is the dark ring of a watercolour, and here it is a **transport, not
+a tint**: paint is moved, and thicker paint is darker because the colour model says so.
+
+- `phi` is the film's own presence, saturating once the paint is thicker than 0.012 of a sheet
+  unit, so it is flat deep inside a mass and steep only across its edge.
+- Paint moves down `phi`, from the body of the film toward its rim, and stops where the next cell
+  is dry, so it piles there instead of spreading onto bare paper.
+- The exchange is antisymmetric, so paint is conserved exactly, as in v2 and v3.
+- It acts only where the film is at rest, so the hand's strokes are unaffected; the ring forms
+  while the pour settles.
+
+The ring is self-limiting: as the rim thickens past 0.012 its own `phi` saturates, the gradient
+across the edge falls and the flow stops.
+
 ## Paint body
 
 The paint has a physical body (setting *paint body*, on by default):

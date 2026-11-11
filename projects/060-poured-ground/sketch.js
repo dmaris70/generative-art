@@ -420,6 +420,34 @@
     // Levelling as an exchange between neighbours: each pair trades paint in proportion to the
     // difference in height, where either side is moving. What one cell gives the other takes, so
     // levelling conserves paint too. uD is per sub-step, already scaled to sheet units.
+    // Engine v4: the rim. As a film dries the carrier leaves fastest at its edge and draws liquid
+    // outward, which strands pigment just inside the boundary: the dark ring of a watercolour.
+    // Here that is a transport, not a tint. phi is the film's own presence, saturating once the
+    // paint is thicker than uH0, so it is flat deep inside a mass and steep only across its edge.
+    // Paint moves down phi, from the body of the film toward its rim, and stops where the next
+    // cell is dry, so it piles there. The exchange is antisymmetric, so paint is still conserved
+    // exactly, and it acts only where the film is at rest, not under the hand.
+    tRim: HEAD + `
+    uniform sampler2D uH, uVel; uniform vec2 uTh; uniform float uD, uH0;
+    float rest(ivec2 c){ return 1. - smoothstep(uTh.x, uTh.y, length(texelFetch(uVel, c, 0).xy)); }
+    void main(){
+      ivec2 c = ivec2(gl_FragCoord.xy), m = ivec2(uSize)-1;
+      vec4 h = texelFetch(uH, c, 0);
+      float tot = dot(h, vec4(1.)), phi = smoothstep(0., uH0, tot);
+      vec4 acc = vec4(0);
+      ivec2 n[4] = ivec2[4](ivec2(-1,0), ivec2(1,0), ivec2(0,-1), ivec2(0,1));
+      for (int i = 0; i < 4; i++) {
+        ivec2 q = c + n[i];
+        if (q.x < 0 || q.y < 0 || q.x > m.x || q.y > m.y) continue;
+        vec4 hq = texelFetch(uH, q, 0);
+        float totq = dot(hq, vec4(1.)), phiq = smoothstep(0., uH0, totq);
+        float g = min(rest(c), rest(q)) * step(1e-5, tot) * step(1e-5, totq);   // both wet, both at rest
+        float d = phi - phiq;
+        if (d > 0.) acc -= g * d * h / max(tot, 1e-6);                          // this cell gives
+        else        acc += g * (-d) * hq / max(totq, 1e-6);                     // the neighbour gives
+      }
+      o = max(h + uD * acc, vec4(0));
+    }`,
     tLevel: HEAD + `
     uniform sampler2D uH, uVel; uniform vec2 uTh; uniform float uD;
     float mob(ivec2 c){ return smoothstep(uTh.x, uTh.y, length(texelFetch(uVel, c, 0).xy)); }
@@ -1026,6 +1054,8 @@
     smooth(2);
   }
   const TH = [0.02, 0.22], KMOVE = 0.3;      // mofu's movement threshold and transfer factor
+  const RIM_D = 0.22, RIM_H0 = 0.012;        // v4: how fast paint creeps to a rim, and the film
+                                             // thickness past which it is no longer an edge
   // v2's wind gain. v1's living motion was partly paint vanishing and smearing; v2 conserves
   // paint, so the same wind moves it less. Tuned by eye and by measure (A Bigger Splash, Broadway
   // Boogie Woogie, The Starry Night; seed 7): at 2.2× v2 moves 72–96% as much as v1 while
@@ -1053,6 +1083,15 @@
       const f = Math.pow(Math.max(S.w, S.h) / REF_LONG, 2), D = lv / 4 * f, n = Math.max(1, Math.ceil(D / 0.2));
       for (let i = 0; i < n; i++) {
         bind(P.tLevel, { uH: S.hgt.a.t, uVel: S.vel.a.t }); gl.uniform2f(P.tLevel.u.uTh, TH[0], TH[1]); gl.uniform1f(P.tLevel.u.uD, D / n);
+        run(S.hgt.b); S.hgt.swap();
+      }
+    }
+    // v4: pigment creeps to the rim of a resting film and is stranded there
+    if (S.engine >= 4) {
+      const f = Math.pow(Math.max(S.w, S.h) / REF_LONG, 2), D = RIM_D * f, n = Math.max(1, Math.ceil(D / 0.2));
+      for (let i = 0; i < n; i++) {
+        bind(P.tRim, { uH: S.hgt.a.t, uVel: S.vel.a.t });
+        gl.uniform2f(P.tRim.u.uTh, TH[0], TH[1]); gl.uniform1f(P.tRim.u.uD, D / n); gl.uniform1f(P.tRim.u.uH0, RIM_H0);
         run(S.hgt.b); S.hgt.swap();
       }
     }
@@ -1596,7 +1635,7 @@
     return {
       Title: 'Poured Ground' + (S.brief ? ' — ' + after() : '') + ', seed ' + G.seed,
       Author: 'dmaris70 / generative-art',
-      Software: 'Poured Ground (projects/060-poured-ground), WebGL2' + (S.brief && S.brief.k === 2 ? ' + painting reader ' + S.brief.read.reader : '') + ', engine v' + S.engine + (S.engine === 3 ? ' (v2 + vorticity confinement, MacCormack advection, wall memory)' : S.engine === 2 ? ' (multigrid pressure, conservative transport)' : ' (original)'),
+      Software: 'Poured Ground (projects/060-poured-ground), WebGL2' + (S.brief && S.brief.k === 2 ? ' + painting reader ' + S.brief.read.reader : '') + ', engine v' + S.engine + (S.engine === 4 ? ' (v3 + pigment stranded at a drying rim)' : S.engine === 3 ? ' (v2 + vorticity confinement, MacCormack advection, wall memory)' : S.engine === 2 ? ' (multigrid pressure, conservative transport)' : ' (original)'),
       Source: 'Palette: ' + paletteCredit(p) + ' - ' + p.artist + ', ' + p.painting + ' [' + p.colors.join(' ') + ']',
       Description: (S.brief ? 'Starting point: ' + S.brief.note + ' (' + basisText(S.brief) + '). Interpretation ' + S.score.interp.toFixed(2) + (S.score.readings.length ? ': ' + S.score.readings.join('; ') : ': close to the starting layout') + '. ' + (S.brief.k === 2 ? 'The work\'s image was measured by the painting reader (tools/painting-reader, ' + S.brief.read.reader + ', ' + S.brief.read.read_on + '; image SHA-256 ' + S.brief.read.sha256 + ', ' + S.brief.read.source + '): ' + S.brief.read.fields + ' fields, ' + S.brief.read.configurations.length + ' configurations; the five colours are its clusters. Nothing is traced: the masses are laid where they were measured and the configurations become the hand\'s gestures. ' : 'No image of the work is used; only its five colorlisa colours and a description of its layout. ') : p.archive && G.param('mode') !== 1 ? 'Composed from the work\'s palette (' + (S.readingMissing ? 'the painting reader has not read this work yet; ' : '') + 'Colorist Archive works have no layout brief). ' : 'Free gestures. ') +
         'Ground ' + S.colours.ground + '; pigments ' + S.colours.pigments.join(' ') + '. Sheet ' + S.sheet.name +
@@ -1785,7 +1824,7 @@
       energy: { value: 1, min: 0.4, max: 2, step: 0.05, label: 'hand speed', group: 'composition' },
       flow: { value: 0.985, min: 0.9, max: 0.998, step: 0.001, label: 'flow (momentum)', group: 'simulation' },
       levelling: { value: 0.03, min: 0, max: 0.2, step: 0.005, label: 'levelling', group: 'simulation' },
-      engine: { value: 3, options: { 'v3 · v2 with eddies kept': 3, 'v2 · same at every resolution, conserves paint': 2, 'v1 · original (prints before Nov 2026)': 1 }, label: 'engine', group: 'simulation' },
+      engine: { value: 3, options: { 'v4 · v3 with a rim where the paint dries': 4, 'v3 · v2 with eddies kept': 3, 'v2 · same at every resolution, conserves paint': 2, 'v1 · original (prints before Nov 2026)': 1 }, label: 'engine', group: 'simulation' },
       iterations: { value: 30, min: 8, max: 80, step: 1, label: 'pressure iterations (v1)', group: 'simulation' },
       simres: { value: 1024, options: { '512': 512, '768': 768, '1024': 1024, '1536': 1536, '2048': 2048 }, label: 'sim long side', group: 'simulation' },
       speed: { value: 4, min: 1, max: 24, step: 1, label: 'steps / frame', group: 'simulation' },
