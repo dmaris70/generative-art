@@ -420,7 +420,8 @@ The paint has a physical body (setting *paint body*, on by default):
 
 ## The film over the paper
 
-Setting *film over the paper* (`p_film`), blended by default.
+Setting *film over the paper* (`p_film`), **on by default** since 11 Nov 2026. `p_film=0`
+reproduces prints made before that.
 
 A film of paint over the sheet is a layer of finite thickness over a background: light crosses the
 paint, meets the ground, scatters back and crosses again, and that decides how much of the sheet
@@ -443,7 +444,8 @@ painting physically instead of being alpha-blended with it.
 
 ## Pigment mixing: the impurity index
 
-Setting *pigment mixing* (`p_mixing`), single constant by default.
+Setting *pigment mixing* (`p_mixing`), **on by default** since 11 Nov 2026. `p_mixing=0`
+reproduces prints made before that.
 
 Colours mix by single-constant Kubelka-Munk: the mixture's K/S is the concentration-weighted mean
 of each pigment's K/S. That simplification holds when a white substrate does the scattering and
