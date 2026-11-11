@@ -610,12 +610,13 @@
       vec3 ground = uGround * (1. + tooth(mm));
       // the source rises through the paper's pores beneath the paint (open pores first), the
       // paint thinning to a veil so both are seen; in the ending the paper drinks it too
+      float show = 0.;                                   // how far the original has risen here
       if (uReveal > 0.) {
         vec4 dy = texture(uDye, uvS);
         float rise = smoothstep(0.75 * poreT, 0.75 * poreT + 0.25, uReveal);
         float rt = 0.05 + 0.75 * poreT;
         float gone = smoothstep(rt, rt + 0.12, soak) + (1. - endGate);
-        float show = clamp(dy.a * rise * (1. - gone), 0., 1.);
+        show = clamp(dy.a * rise * (1. - gone), 0., 1.);
         vec3 lin = srgb2lin(dy.rgb);   // exact inverse of srgb(): a 2.2 power crushed the shadows
         ground = mix(ground, lin * (1. + tooth(mm)), show);
         // the paint becomes a thin veil and takes on the source's colour where they meet, so the
@@ -639,7 +640,10 @@
       if (uFilm > 0.5) {
         float Sm = cs > 1e-6 ? dot(cw, uP) / cs : 1.;            // the mixture's scattering
         vec3 aa = 1. + ks, bb = sqrt(max(ks*ks + 2.*ks, vec3(1e-9)));
-        vec3 ct = 1. / tanh(clamp(bb * Sm * (ws * uFilmX), vec3(1e-3), vec3(16.)));
+        // as the original rises the film thins to a veil, which here means its own thickness
+        // falls: without this the film keeps its full depth and hides the painting underneath
+        float X = ws * uFilmX * (1. - 0.8 * show);
+        vec3 ct = 1. / tanh(clamp(bb * Sm * X, vec3(1e-3), vec3(16.)));
         vec3 R = (1. - ground * (aa - bb*ct)) / max(aa - ground + bb*ct, vec3(1e-5));
         base = clamp(R, 0., 1.);
       } else {
