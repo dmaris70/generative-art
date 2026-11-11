@@ -427,21 +427,23 @@
     // Paint moves down phi, from the body of the film toward its rim, and stops where the next
     // cell is dry, so it piles there. The exchange is antisymmetric, so paint is still conserved
     // exactly, and it acts only where the film is at rest, not under the hand.
-    tRim: HEAD + `
-    uniform sampler2D uH, uVel; uniform vec2 uTh; uniform float uD, uH0;
-    float rest(ivec2 c){ return 1. - smoothstep(uTh.x, uTh.y, length(texelFetch(uVel, c, 0).xy)); }
-    // phi is read over a 3-cell block, not from one cell. Taken per cell it changes as soon as
-    // paint piles up, so the flow reversed every step and the exchange rang at the grid: the
-    // sheet came out in staircases. Smoothed, the edge is resolved over several cells and the
-    // gradient driving the creep stays put while the rim builds.
-    float phiAt(ivec2 c, ivec2 m){
+    // The potential the rim creep follows, captured from the film and then held still. Computed
+    // live it is a feedback loop: paint piles at a cell, that cell's own potential rises, the flow
+    // there reverses, and the band rings at the grid. The wet region's shape is set by the carrier,
+    // not by where the pigment has gathered, so freezing it is also the truer reading.
+    rimRef: HEAD + `
+    uniform sampler2D uH; uniform float uH0;
+    void main(){
+      ivec2 c = ivec2(gl_FragCoord.xy), m = ivec2(uSize)-1;
       float a = 0.;
-      // contiguous, never strided: sampling every second cell splits the grid into two lattices
-      // that never see each other, and the rim came back as a checkerboard
       for (int y = -1; y <= 1; y++) for (int x = -1; x <= 1; x++)
         a += dot(texelFetch(uH, clamp(c + ivec2(x,y), ivec2(0), m), 0), vec4(1.));
-      return smoothstep(0., uH0, a / 9.);
-    }
+      o = vec4(smoothstep(0., uH0, a / 9.));
+    }`,
+    tRim: HEAD + `
+    uniform sampler2D uH, uVel, uPhi; uniform vec2 uTh; uniform float uD, uH0;
+    float rest(ivec2 c){ return 1. - smoothstep(uTh.x, uTh.y, length(texelFetch(uVel, c, 0).xy)); }
+    float phiAt(ivec2 c, ivec2 m){ return texelFetch(uPhi, c, 0).r; }
     void main(){
       ivec2 c = ivec2(gl_FragCoord.xy), m = ivec2(uSize)-1;
       vec4 h = texelFetch(uH, c, 0);
@@ -453,9 +455,11 @@
         if (q.x < 0 || q.y < 0 || q.x > m.x || q.y > m.y) continue;
         vec4 hq = texelFetch(uH, q, 0);
         float totq = dot(hq, vec4(1.)), phiq = phiAt(q, m);
-        // a soft wet gate, not a hard one: a cell switching on and off between steps was half of
-        // why the rim came out stippled
-        float g = min(rest(c), rest(q)) * smoothstep(0., 0.25 * uH0, tot) * smoothstep(0., 0.25 * uH0, totq);
+        // Both cells must have been part of the film when the potential was captured. Gating on
+        // the live film instead let a trace of paint reach a dry cell, which then counted as wet
+        // on the next step, so the edge marched outward over the bare ground and left the dots
+        // that read as a stipple. The frozen reference cannot be walked outward this way.
+        float g = min(rest(c), rest(q)) * step(0.02, phi) * step(0.02, phiq);
         // The flux is limited on the edge, not on the cell. Limiting what a cell gives in total
         // is invisible to its neighbours, which then take what was never sent, and paint is made
         // from nothing; the edge is the only place both sides agree. Each side may give at most a
@@ -928,6 +932,7 @@
     };
     if (S.engine >= 2) allocV2(S);
     if (S.engine >= 3) { S.curlT = target(w, h, gl.RGBA16F, gl.NEAREST); S.curlB = target(w, h, gl.RGBA16F, gl.NEAREST); S.velHat = target(w, h, gl.RGBA16F, gl.LINEAR); }
+    if (S.engine >= 4) { S.rimRef = target(w, h, gl.RGBA16F, gl.NEAREST); S.rimAt = -1; }
     for (const e of score.events) if (e.type === 'pour' || e.type === 'zone') (S.pours[e.t] = S.pours[e.t] || []).push(e);
     if (brief) sourceFor(pal.id);   // fetch the source now, long before the animated version reveals it
     if (origView) setTimeout(placeOriginal, 0);
@@ -1073,7 +1078,7 @@
     smooth(2);
   }
   const TH = [0.02, 0.22], KMOVE = 0.3;      // mofu's movement threshold and transfer factor
-  const RIM_D = 0.10, RIM_H0 = 0.012;        // v4: how fast paint creeps to a rim, and the film
+  const RIM_D = 0.10, RIM_H0 = 0.012, RIM_HOLD = 24;   // steps the rim's potential is held still        // v4: how fast paint creeps to a rim, and the film
                                              // thickness past which it is no longer an edge
   // v2's wind gain. v1's living motion was partly paint vanishing and smearing; v2 conserves
   // paint, so the same wind moves it less. Tuned by eye and by measure (A Bigger Splash, Broadway
@@ -1105,11 +1110,17 @@
         run(S.hgt.b); S.hgt.swap();
       }
     }
-    // v4: pigment creeps to the rim of a resting film and is stranded there
+    // v4: pigment creeps to the rim of a resting film and is stranded there. The potential it
+    // follows is recaptured every RIM_HOLD steps and held still in between, so the creep does not
+    // chase its own deposit.
     if (S.engine >= 4) {
+      if (S.rimAt < 0 || S.t - S.rimAt >= RIM_HOLD) {
+        bind(P.rimRef, { uH: S.hgt.a.t }); gl.uniform1f(P.rimRef.u.uH0, RIM_H0);
+        run(S.rimRef); S.rimAt = S.t;
+      }
       const f = Math.pow(Math.max(S.w, S.h) / REF_LONG, 2), D = RIM_D * f, n = Math.max(2, Math.ceil(D / 0.05));
       for (let i = 0; i < n; i++) {
-        bind(P.tRim, { uH: S.hgt.a.t, uVel: S.vel.a.t });
+        bind(P.tRim, { uH: S.hgt.a.t, uVel: S.vel.a.t, uPhi: S.rimRef.t });
         gl.uniform2f(P.tRim.u.uTh, TH[0], TH[1]); gl.uniform1f(P.tRim.u.uD, D / n); gl.uniform1f(P.tRim.u.uH0, RIM_H0);
         run(S.hgt.b); S.hgt.swap();
       }
