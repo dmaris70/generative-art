@@ -16,17 +16,16 @@ Measured from `projects/060-poured-ground/archive/` on 11 November 2026:
 | In the archive | 20,367 |
 | Not public domain (skipped by rule) | 2,611 |
 | Public domain, with an image URL — eligible | **17,756** |
-| Already read | 1,244 |
-| **Left to read** | **16,512** |
+| Already read | 1,635 |
+| **Left to read** | **16,121** |
 
-Of those 16,512, **16,112 are on `upload.wikimedia.org`** and 393 sit on eleven museum hosts that
-the `HOSTS` table in `read_works.py` does not list yet (Walters, Getty, Europeana, SMK, the
-Smithsonian, the V&A, the National Gallery, Google Arts CDNs `lh3`/`lh4`/`lh6`, Culturalia, DIMU).
-The six hosts that *are* configured — Met, Tate, Cleveland, NGA and two Google CDNs — are
-exhausted: 1,244 of their 1,246 eligible works are read, and the two that are not return 403, so
-their URLs have rotted.
+Every one of those 16,121 is on `upload.wikimedia.org`, bar nine. **The museum hosts are
+exhausted**: all 1,635 of their eligible works are read — the Met, Tate, Cleveland, the NGA, four
+Google Arts CDNs, the Walters, the Getty, Europeana, SMK, the Smithsonian, the V&A, the National
+Gallery in London, Culturalia and DigitaltMuseum. The nine left there cannot be had: four images
+have gone (two at the Met, two at the Getty) and `www.artic.edu`'s five refuse a scripted request.
 
-`www.artic.edu` (5 works) returns 403 to a scripted request and is not worth pursuing.
+So this run is Wikimedia, and only Wikimedia.
 
 ## Why this cannot run in a cloud session
 
@@ -62,29 +61,22 @@ describes being blocked from a cloud address, not the policy.
 Do not edit the User-Agent to look like a browser. That is the one thing the policy says will get
 you blocked rather than throttled.
 
-## Before you start: the 58 MB problem
+## Where the readings go
 
-**Do not run the complete read until the output is sharded.** Every reading is written into one
-file, `projects/060-poured-ground/archive/readings.json`, and the studio downloads that whole file
-before it can show any archive work:
+One file per artist, `projects/060-poured-ground/archive/readings/<artist-id>.json`, with
+`readings/index.json` naming the artists that have any. `read_works.py` writes that shape directly
+and resumes from it, so there is nothing to split afterwards and nothing to do before you start.
 
-```js
-fetch('archive/readings.json').then(...)   // sketch.js, loadArchiveReadings
+It was a single `archive/readings.json` until 11 November 2026, which the studio had to fetch whole
+before it could show any archive work: 4.15 MB for 1,244 readings, and some 58 MB had the archive
+been read out. That blocked this read, and was fixed first. A visit now fetches the index (about
+4 kB) and one artist's shard, so reading the archive out adds files rather than growing one.
+
+If you are working from a checkout older than that, migrate it before you start:
+
+```sh
+node tools/shard-archive-readings.mjs       # verifies every record through the round trip
 ```
-
-At 3,337 bytes per record, 1,244 readings are already 4.15 MB. A complete read would be
-**about 58 MB**, fetched in full on every visit, and committed as one blob in git history.
-
-Two options, in order of preference:
-
-1. **Shard per artist**, as the archive's own work files already are
-   (`archive/<artist-id>.json`), and load a work's reading with its artist. This is the right
-   shape and matches what is there; it is a change to `read_works.py`, `loadArchiveReadings` and
-   `readingFor`.
-2. **Read in batches** with `--limit`, and stop while the file is still small.
-
-Reading a few thousand works and shipping a 15 MB blob would be worse than not reading them. Ask
-me to do the sharding first — it is a contained change, and then the full read is safe to ship.
 
 ## Setting up
 
@@ -104,10 +96,11 @@ pip install -r requirements.txt          # numpy, Pillow, jsonschema
 Check the reader runs at all, on hosts that are not rate-limited:
 
 ```sh
-python3 read_works.py --archive --hosts tate --resume --limit 5
+python3 read_works.py --archive --hosts museums --resume --limit 5
 ```
 
-You should see a line like `1246 eligible works on ['tate'] | 1244 already read | 0 to read`.
+You should see `1639 eligible works on [...] | 1635 already read | 4 to read`, and those four will
+fail: their images have gone. That is the expected state before the Wikimedia run.
 
 ## The run
 
@@ -170,8 +163,11 @@ git push -u origin archive-readings-<date>
 Then tell me and I will check the new records against the reader's schema, confirm the studio
 still loads, and open the pull request.
 
-## What I can do without your Mac
+## What was done without your Mac
 
-The 393 works on the eleven unconfigured museum hosts. Every one of those hosts was reachable from
-the cloud container when tested on 11 November 2026, and adding them to `HOSTS` would take the
-corpus from 1,244 to about 1,637 readings — a 32% increase — in a single session. Ask and I will.
+Everything the museum hosts hold. On 11 November 2026 the `HOSTS` table named six hosts and all
+six were exhausted, while 393 works sat on eleven hosts it did not list — excluded by a hostname
+list, not by any policy. Ten were added and read, taking the corpus from 1,244 to 1,635. Every
+reading was then re-read so that all of them carry the grain bins the hand follows.
+
+What remains is Wikimedia's 16,112, and that is the run this note is for.
