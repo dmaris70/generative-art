@@ -227,10 +227,13 @@ painting reader from the image held by …*.
 
 **Which works have a reading.** Only works whose image we may use: the 8 public-domain originals
 (`readings.js`, with each full `readings/<id>.handoff.json` kept for audit) and the Colorist
-Archive's public-domain works whose image is served by a museum (1,244 works read on 2026-11-10
-from Google Arts & Culture 409, Tate 321, the Met 298, Cleveland 145 and the National Gallery of
-Art 71; Wikimedia, which hosts most of the archive, rate-limits requests and is not read yet —
-`tools/painting-reader/RUNNING-THE-ARCHIVE-READ.md` says how that read is run).
+Archive's public-domain works whose image is served by a museum: 1,635 works, every one the
+museum hosts hold — Google Arts & Culture 560, Tate 321, the Met 298, Cleveland 145, the Walters
+80, the National Gallery of Art 71, SMK 52, the Getty 50, Europeana 35, the Smithsonian 6, the
+National Gallery in London 5, the V&A 5, Culturalia 4 and DigitaltMuseum 3. Four more are listed
+but their images have gone (two at the Met, two at the Getty), and the Art Institute of Chicago's
+five refuse a scripted request. Wikimedia holds the remaining 16,112 and rate-limits a cloud
+address — `tools/painting-reader/RUNNING-THE-ARCHIVE-READ.md` says how that read is run.
 
 A reading is filed with its artist, as the archive's works are: `archive/readings/<artist-id>.json`,
 with `archive/readings/index.json` naming the 193 artists that have one. The studio fetches the
