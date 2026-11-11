@@ -416,6 +416,26 @@ a tint**: paint is moved, and thicker paint is darker because the colour model s
 The ring is self-limiting: as the rim thickens past 0.012 its own `phi` saturates, the gradient
 across the edge falls and the flow stops.
 
+**v4 is unfinished.** The ring forms, it is a transport and not a tint, paint is conserved to
+within 0.02% of v3 on the same seed, and the interiors are clean. A fine stipple remains in the rim
+band itself, and v4 should not be used for a print until it is gone.
+
+Ruled out so far, each by a render rather than by argument:
+
+| tried | result |
+|---|---|
+| the potential read per cell | staircases; the flow reversed as paint piled |
+| the outflow limited per cell | paint created from nothing, volume off by ~3% |
+| the potential read over a wider kernel by sampling every second cell | a coarser checkerboard: strided sampling splits the grid into two lattices |
+| the potential captured and held still for 24 steps | no change to the stipple |
+| flow gated on the film as captured, so the edge cannot march onto dry paper | no change to the stipple |
+| the renderer's coverage threshold raised from 0.004 to 0.020 | masses shrink and the band moves with the edge: the dither is not sub-threshold coverage |
+
+What that leaves: the transport really is producing a high-frequency thickness pattern inside the
+band, and it survives smoothing the potential, limiting the flux and freezing the field. The next
+attempt should read the height field out and look at the numbers across the band rather than
+iterate on the shader, which is what every attempt above did.
+
 ## Paint body
 
 The paint has a physical body (setting *paint body*, on by default):
