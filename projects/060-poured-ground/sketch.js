@@ -587,6 +587,9 @@
       // The impurity index gives each pigment its own non-selective scattering p (Moghareh Abed
       // and Berns), so K = sum(c p K/S) and S = sum(c p): the mean is weighted by c*p, and the
       // pigment that scatters more carries the mixture. uMix 0 keeps the plain mean.
+      // p governs the mixture only. How much of the ground a film hides keeps its own term:
+      // tried together, a pigment with a low p stopped hiding as well as it mixed, and the
+      // Gauguin's near-black, the lowest p of any pigment here at 0.20, came out warm grey.
       vec4 cw = mix(w, w * uP, uMix);
       float cs = cw.x+cw.y+cw.z+cw.w;
       vec3 ks = cs > 1e-6 ? (uKS[0]*cw.x + uKS[1]*cw.y + uKS[2]*cw.z + uKS[3]*cw.w)/cs : uKS[0];
@@ -595,7 +598,7 @@
       float hide, cover;
       if (uBodyOn > 0.5) {
         // paint body: each pigment hides the ground by its own power, so a glaze lets it glow through
-        float O = dot(w, mix(uOpq, uP, uMix)) / max(ws, 1e-6);   // what hides the ground is what scatters
+        float O = dot(w, uOpq) / max(ws, 1e-6);
         hide = 1. - exp(-total*40.*O);
         cover = A * mix(0.9 - 0.5*max(0., 1. - O), 1., hide);
       } else {
