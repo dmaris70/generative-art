@@ -251,6 +251,23 @@ Setting *handling* (`p_handling`), two values:
 - **sweeping** (`p_handling=0`). The earlier hand: every mass poured first, then every gesture at
   full reach. Reproduces prints made before November 2026.
 
+**It applies to every work in the catalogue.** There are two composers. A work with a reading or a
+brief is composed by `composeBrief` — 1,377 works: colorlisa's 133 and the 1,244 archive works the
+reader has measured. The remaining 19,123 archive works have neither, and compose from their five
+colours alone in `compose`, which until November 2026 ignored *handling* altogether: the control
+was in the panel but inert on 93% of the catalogue. `compose` now takes the same hand. Layered, its
+gestures are grouped into up to three layers; a layer's pours all land, the sheet is given eight
+steps, and the hand works that layer before the next is poured onto paint that has already moved.
+Every stroke travels 0.62 of its reach — measured over 50 seeds at 12 pours, 31.9% less travel.
+
+The sweeping hand is unchanged to the step. Each gesture's geometry is built from the same random
+draws in the same order as before, and only the scheduling differs, so `p_handling=0` reproduces
+every palette-only print made before this change byte for byte; 120 recorded scores across four
+seeds, five gestures, three pour counts and two formats are checked against their stored hashes.
+
+*intervals* remains inert on the palette path, correctly: a reserve is a gap the reader measured
+between two related fields, and a work with no reading has none.
+
 ## Intervals: keeping a gap open
 
 Setting *intervals* (`p_reserve`), off by default.
