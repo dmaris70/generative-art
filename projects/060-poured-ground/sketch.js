@@ -741,18 +741,33 @@
   // the proportions of the original; it composes from its palette (no layout brief), and an image
   // is referenced only when it is public domain by our rule.
   const ARCHIVE_BASE = 1000;
-  const archive = { index: null, files: {}, pending: {}, loading: null, readings: null, readingsLoading: null };
-  // the painting reader's readings of archive works (tools/painting-reader/read_works.py --archive)
-  function loadArchiveReadings() {
-    if (archive.readings) return Promise.resolve(archive.readings);
-    if (!archive.readingsLoading) archive.readingsLoading = fetch('archive/readings.json').then(function (r) { return r.ok ? r.json() : {}; })
-      .catch(function () { return {}; }).then(function (d) { archive.readings = d || {}; return archive.readings; });
-    return archive.readingsLoading;
+  const archive = { index: null, files: {}, pending: {}, loading: null, readings: {}, readingsPending: {}, readingIndex: null, readingIndexLoading: null };
+  // The painting reader's readings of archive works (tools/painting-reader/read_works.py --archive).
+  // A reading is loaded with the artist it belongs to, as the works are: archive/readings/<id>.json.
+  // They were one file until November 2026, which the studio fetched whole before it could show any
+  // archive work; at 3.3 kB a record a complete read would have been some 58 MB on every visit.
+  // archive/readings/index.json names the artists that have any, so an artist with none costs
+  // nothing rather than a 404.
+  function loadReadingIndex() {
+    if (archive.readingIndex) return Promise.resolve(archive.readingIndex);
+    if (!archive.readingIndexLoading) archive.readingIndexLoading = fetch('archive/readings/index.json')
+      .then(function (r) { return r.ok ? r.json() : []; }).catch(function () { return []; })
+      .then(function (a) { archive.readingIndex = {}; (a || []).forEach(function (k) { archive.readingIndex[k] = 1; }); return archive.readingIndex; });
+    return archive.readingIndexLoading;
+  }
+  function loadArchiveReadings(artistId) {
+    if (!artistId) return Promise.resolve({});
+    if (archive.readings[artistId]) return Promise.resolve(archive.readings[artistId]);
+    if (!archive.readingsPending[artistId]) archive.readingsPending[artistId] = loadReadingIndex().then(function (ix) {
+      if (!ix[artistId]) return {};                       // this artist has not been read
+      return fetch('archive/readings/' + artistId + '.json').then(function (r) { return r.ok ? r.json() : {}; }).catch(function () { return {}; });
+    }).then(function (d) { archive.readings[artistId] = d || {}; return archive.readings[artistId]; });
+    return archive.readingsPending[artistId];
   }
   // the reading of a work, if the painting reader has read its image (null otherwise)
   function readingFor(pal) {
     if (!pal) return null;
-    if (pal.archive) return archive.readings ? archive.readings[String(pal.id)] || null : null;
+    if (pal.archive) { const m = archive.readings[pal.artistId]; return m ? m[String(pal.id)] || null : null; }
     return (window.READINGS || {})[String(pal.id)] || null;
   }
   function loadArchiveIndex() {
@@ -843,7 +858,7 @@
     // falls back to its brief (colorlisa) or its palette (archive), and says so.
     let reading = null, readingMissing = false;
     if (G.param('mode') === 2) {
-      if (pal0.archive && !archive.readings) { loadArchiveReadings().then(function () { simKey = ''; G.reset(); }); say('Loading the readings…'); return; }
+      if (pal0.archive && !archive.readings[pal0.artistId]) { loadArchiveReadings(pal0.artistId).then(function () { simKey = ''; G.reset(); }); say('Loading the readings…'); return; }
       reading = readingFor(pal0);
       readingMissing = !reading;
       if (reading) pal0 = Object.assign({}, pal0, { colors: reading.colors.slice(), reading: reading });

@@ -227,10 +227,17 @@ painting reader from the image held by …*.
 
 **Which works have a reading.** Only works whose image we may use: the 8 public-domain originals
 (`readings.js`, with each full `readings/<id>.handoff.json` kept for audit) and the Colorist
-Archive's public-domain works whose image is served by a museum (`archive/readings.json`: 1,244
-works read on 2026-11-10 from Google Arts & Culture 409, Tate 321, the Met 298, Cleveland 145 and
-the National Gallery of Art 71; Wikimedia, which hosts most of the archive, rate-limits requests
-and is not read yet). A work without a reading says
+Archive's public-domain works whose image is served by a museum (1,244 works read on 2026-11-10
+from Google Arts & Culture 409, Tate 321, the Met 298, Cleveland 145 and the National Gallery of
+Art 71; Wikimedia, which hosts most of the archive, rate-limits requests and is not read yet —
+`tools/painting-reader/RUNNING-THE-ARCHIVE-READ.md` says how that read is run).
+
+A reading is filed with its artist, as the archive's works are: `archive/readings/<artist-id>.json`,
+with `archive/readings/index.json` naming the 193 artists that have one. The studio fetches the
+index (3.8 kB) and the one artist's shard (14 kB at the median, 244 kB at the worst). Until
+November 2026 the readings were a single `archive/readings.json` which it fetched whole before it
+could show any archive work: 4.15 MB for 1,244 readings, and some 58 MB had the archive been read
+out. A work without a reading says
 so in the caption and falls back to its brief (colorlisa) or its palette (archive). Readings are
 bound to their image by SHA-256; the check script verifies the held originals against theirs.
 
