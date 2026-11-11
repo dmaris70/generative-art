@@ -38,7 +38,10 @@ python3 -I tools/painting-reader/read_works.py --archive --hosts met,tate,cma,ng
   archive's own work files are, with `readings/index.json` naming the artists that have any. The
   studio loads a work's reading with its artist; it was one file until November 2026, which it had
   to fetch whole before it could show any archive work. Wikimedia (most of the archive) rate-limits
-  requests and is not read by default (`--hosts wikimedia` reads it slowly).
+  requests and is not read by default (`--hosts wikimedia` reads it slowly). Commons refuses a
+  cloud address outright, so that read has to be run from a personal machine:
+  [RUNNING-THE-ARCHIVE-READ.md](RUNNING-THE-ARCHIVE-READ.md) has the policy limits, the commands
+  and the timings.
 - Each record compacts one handoff: five colours from the reader's six clusters (the two closest
   in CIELAB are merged, ΔE < 12, otherwise the smallest is folded into its nearest; `map6` records
   the mapping), the fields, configurations, shared fields, edges and cells.
