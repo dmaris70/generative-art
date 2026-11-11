@@ -453,6 +453,10 @@
   uniform float uPxPerMM;
   uniform vec3 uGround, uPaper;
   uniform vec3 uKS[4];        // Kubelka–Munk K/S per pigment (linear RGB)
+  uniform vec4 uP;            // impurity index: each pigment's own non-selective scattering
+  uniform float uMix;         // 0 single-constant, 1 with the impurity index
+  uniform float uFilm;        // 0 blend the masstone over the ground, 1 the two-layer solution
+  uniform float uFilmX;       // sheet units of paint to optical thickness
   uniform float uRelief, uGloss, uTooth, uLinearOut, uTrace;
   // the animated version's ending: absorption into the paper (uEnd 0→1). The movement itself is
   // the simulation; nothing here displaces the paint.
@@ -579,8 +583,19 @@
       // Kubelka–Munk: mix absorption/scatter weighted by thickness; stains weigh in where thin
       vec4 w = max(Hc, vec4(0)) + 0.015*a4;          // hue of the paint as laid, even once soaked in
       float ws = w.x+w.y+w.z+w.w;
-      vec3 ks = ws > 1e-6 ? (uKS[0]*w.x + uKS[1]*w.y + uKS[2]*w.z + uKS[3]*w.w)/ws : uKS[0];
-      vec3 paint = ks2r(ks);
+      // Single-constant Kubelka-Munk assumes one scattering power for every pigment, so a mixture
+      // is the concentration-weighted mean of K/S. That holds when a white substrate does the
+      // scattering; these pigments are masstones, applied pure, and the assumption fails for them.
+      // The impurity index gives each pigment its own non-selective scattering p (Moghareh Abed
+      // and Berns), so K = sum(c p K/S) and S = sum(c p): the mean is weighted by c*p, and the
+      // pigment that scatters more carries the mixture. uMix 0 keeps the plain mean.
+      // p governs the mixture only. How much of the ground a film hides keeps its own term:
+      // tried together, a pigment with a low p stopped hiding as well as it mixed, and the
+      // Gauguin's near-black, the lowest p of any pigment here at 0.20, came out warm grey.
+      vec4 cw = mix(w, w * uP, uMix);
+      float cs = cw.x+cw.y+cw.z+cw.w;
+      vec3 ks = cs > 1e-6 ? (uKS[0]*cw.x + uKS[1]*cw.y + uKS[2]*cw.z + uKS[3]*cw.w)/cs : uKS[0];
+      vec3 paint = ks2r(ks);                         // the masstone: an infinitely thick film
       // a thin film lets the ground through
       float hide, cover;
       if (uBodyOn > 0.5) {
@@ -595,12 +610,13 @@
       vec3 ground = uGround * (1. + tooth(mm));
       // the source rises through the paper's pores beneath the paint (open pores first), the
       // paint thinning to a veil so both are seen; in the ending the paper drinks it too
+      float show = 0.;                                   // how far the original has risen here
       if (uReveal > 0.) {
         vec4 dy = texture(uDye, uvS);
         float rise = smoothstep(0.75 * poreT, 0.75 * poreT + 0.25, uReveal);
         float rt = 0.05 + 0.75 * poreT;
         float gone = smoothstep(rt, rt + 0.12, soak) + (1. - endGate);
-        float show = clamp(dy.a * rise * (1. - gone), 0., 1.);
+        show = clamp(dy.a * rise * (1. - gone), 0., 1.);
         vec3 lin = srgb2lin(dy.rgb);   // exact inverse of srgb(): a 2.2 power crushed the shadows
         ground = mix(ground, lin * (1. + tooth(mm)), show);
         // the paint becomes a thin veil and takes on the source's colour where they meet, so the
@@ -609,7 +625,30 @@
         paint = mix(paint, lin, 0.45 * show);
       }
       paint = mix(paint, ground, 0.35 * soakMix);       // soaked into the paper: lighter, sunk
-      vec3 base = mix(ground, paint, cover);
+      // A film of finite thickness over the paper. Light crosses the paint, meets the ground,
+      // scatters back and crosses again, which is what decides how much of the sheet shows. The
+      // closed form of the two-flux equations is
+      //     a = 1 + K/S,  b = sqrt(a*a - 1)
+      //     R = (1 - Rg(a - b coth(bSX))) / (a - Rg + b coth(bSX))
+      // with Rg the ground beneath (in the moving version, the original once it has risen) and X
+      // the film's own thickness. It needs S on its own, which single-constant K/S cannot give;
+      // the impurity index supplies it, so this became possible only with p. At X = 0 it returns
+      // the ground exactly, as X grows it returns the masstone, and with no scattering it is
+      // Beer-Lambert. Where it is on, it replaces the blend between masstone and ground, and the
+      // hiding power and the thin-film nudge that stood in for it.
+      vec3 base;
+      if (uFilm > 0.5) {
+        float Sm = cs > 1e-6 ? dot(cw, uP) / cs : 1.;            // the mixture's scattering
+        vec3 aa = 1. + ks, bb = sqrt(max(ks*ks + 2.*ks, vec3(1e-9)));
+        // as the original rises the film thins to a veil, which here means its own thickness
+        // falls: without this the film keeps its full depth and hides the painting underneath
+        float X = ws * uFilmX * (1. - 0.8 * show);
+        vec3 ct = 1. / tanh(clamp(bb * Sm * X, vec3(1e-3), vec3(16.)));
+        vec3 R = (1. - ground * (aa - bb*ct)) / max(aa - ground + bb*ct, vec3(1e-5));
+        base = clamp(R, 0., 1.);
+      } else {
+        base = mix(ground, paint, cover);
+      }
       // light: flat paint renders as its palette colour exactly; relief adds key light and gloss
       vec3 L = normalize(vec3(-0.45, 0.55, 0.70)), Hh = normalize(L + vec3(0,0,1));
       float shade = 1. + 0.9*(dot(N,L) - L.z);
@@ -1196,6 +1235,17 @@
       linRGB(hex).forEach(function (r) { r = Math.min(0.995, Math.max(0.003, r)); ks.push((1 - r) * (1 - r) / (2 * r)); });
     });
     gl.uniform3fv(u.uKS, new Float32Array(ks));
+    // the impurity index of each pigment, from its own reflectance: a pale pigment scatters, a
+    // dark saturated one mostly absorbs. Measured K and S would be better; these are not measured.
+    const imp = S.colours.pigments.map(function (hex) {
+      const Y = PG.luminance(hex);
+      return Math.min(1, Math.max(0.1, 0.1 + 0.9 * Math.sqrt(Y)));
+    });
+    while (imp.length < 4) imp.push(1);
+    gl.uniform4f(u.uP, imp[0], imp[1], imp[2], imp[3]);
+    gl.uniform1f(u.uMix, G.param('mixing'));
+    gl.uniform1f(u.uFilm, G.param('film'));
+    gl.uniform1f(u.uFilmX, 70);
     gl.uniform1f(u.uRelief, G.param('relief'));
     gl.uniform1f(u.uGloss, G.param('gloss'));
     gl.uniform1f(u.uTooth, G.param('tooth'));
@@ -1727,6 +1777,8 @@
       palette: { value: -1, options: PAL_OPTIONS, label: 'palette', group: 'colour' },
       ground: { value: 0, options: { 'lightest colour': 0, 'darkest colour': 1, 'paper white': 2 }, label: 'ground', group: 'colour' },
       style: { value: 4, options: PG.STYLES, label: 'gesture', group: 'composition' },
+      film: { value: 0, options: { 'the masstone blended over the ground (prints before Nov 2026)': 0, 'a film of its own thickness over the paper': 1 }, label: 'film over the paper', group: 'surface' },
+      mixing: { value: 0, options: { 'single constant (prints before Nov 2026)': 0, 'impurity index: each pigment scatters on its own': 1 }, label: 'pigment mixing', group: 'surface' },
       reserve: { value: 0, options: { 'the hand crosses every interval': 0, 'the hand keeps out of the intervals the reading found': 1 }, label: 'intervals', group: 'composition' },
       handling: { value: 1, options: { 'layered · the hand works between the pours, strokes travel less': 1, 'sweeping · one pour, then every gesture at full reach (prints before Nov 2026)': 0 }, label: 'handling', group: 'composition' },
       pours: { value: 12, min: 2, max: 24, step: 1, label: 'pours', group: 'composition' },
