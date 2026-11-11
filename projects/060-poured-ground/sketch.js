@@ -453,6 +453,8 @@
   uniform float uPxPerMM;
   uniform vec3 uGround, uPaper;
   uniform vec3 uKS[4];        // Kubelka–Munk K/S per pigment (linear RGB)
+  uniform vec4 uP;            // impurity index: each pigment's own non-selective scattering
+  uniform float uMix;         // 0 single-constant, 1 with the impurity index
   uniform float uRelief, uGloss, uTooth, uLinearOut, uTrace;
   // the animated version's ending: absorption into the paper (uEnd 0→1). The movement itself is
   // the simulation; nothing here displaces the paint.
@@ -579,13 +581,21 @@
       // Kubelka–Munk: mix absorption/scatter weighted by thickness; stains weigh in where thin
       vec4 w = max(Hc, vec4(0)) + 0.015*a4;          // hue of the paint as laid, even once soaked in
       float ws = w.x+w.y+w.z+w.w;
-      vec3 ks = ws > 1e-6 ? (uKS[0]*w.x + uKS[1]*w.y + uKS[2]*w.z + uKS[3]*w.w)/ws : uKS[0];
+      // Single-constant Kubelka-Munk assumes one scattering power for every pigment, so a mixture
+      // is the concentration-weighted mean of K/S. That holds when a white substrate does the
+      // scattering; these pigments are masstones, applied pure, and the assumption fails for them.
+      // The impurity index gives each pigment its own non-selective scattering p (Moghareh Abed
+      // and Berns), so K = sum(c p K/S) and S = sum(c p): the mean is weighted by c*p, and the
+      // pigment that scatters more carries the mixture. uMix 0 keeps the plain mean.
+      vec4 cw = mix(w, w * uP, uMix);
+      float cs = cw.x+cw.y+cw.z+cw.w;
+      vec3 ks = cs > 1e-6 ? (uKS[0]*cw.x + uKS[1]*cw.y + uKS[2]*cw.z + uKS[3]*cw.w)/cs : uKS[0];
       vec3 paint = ks2r(ks);
       // a thin film lets the ground through
       float hide, cover;
       if (uBodyOn > 0.5) {
         // paint body: each pigment hides the ground by its own power, so a glaze lets it glow through
-        float O = dot(w, uOpq) / max(ws, 1e-6);
+        float O = dot(w, mix(uOpq, uP, uMix)) / max(ws, 1e-6);   // what hides the ground is what scatters
         hide = 1. - exp(-total*40.*O);
         cover = A * mix(0.9 - 0.5*max(0., 1. - O), 1., hide);
       } else {
@@ -1196,6 +1206,15 @@
       linRGB(hex).forEach(function (r) { r = Math.min(0.995, Math.max(0.003, r)); ks.push((1 - r) * (1 - r) / (2 * r)); });
     });
     gl.uniform3fv(u.uKS, new Float32Array(ks));
+    // the impurity index of each pigment, from its own reflectance: a pale pigment scatters, a
+    // dark saturated one mostly absorbs. Measured K and S would be better; these are not measured.
+    const imp = S.colours.pigments.map(function (hex) {
+      const Y = PG.luminance(hex);
+      return Math.min(1, Math.max(0.1, 0.1 + 0.9 * Math.sqrt(Y)));
+    });
+    while (imp.length < 4) imp.push(1);
+    gl.uniform4f(u.uP, imp[0], imp[1], imp[2], imp[3]);
+    gl.uniform1f(u.uMix, G.param('mixing'));
     gl.uniform1f(u.uRelief, G.param('relief'));
     gl.uniform1f(u.uGloss, G.param('gloss'));
     gl.uniform1f(u.uTooth, G.param('tooth'));
@@ -1727,6 +1746,7 @@
       palette: { value: -1, options: PAL_OPTIONS, label: 'palette', group: 'colour' },
       ground: { value: 0, options: { 'lightest colour': 0, 'darkest colour': 1, 'paper white': 2 }, label: 'ground', group: 'colour' },
       style: { value: 4, options: PG.STYLES, label: 'gesture', group: 'composition' },
+      mixing: { value: 0, options: { 'single constant (prints before Nov 2026)': 0, 'impurity index: each pigment scatters on its own': 1 }, label: 'pigment mixing', group: 'surface' },
       handling: { value: 1, options: { 'layered · the hand works between the pours, strokes travel less': 1, 'sweeping · one pour, then every gesture at full reach (prints before Nov 2026)': 0 }, label: 'handling', group: 'composition' },
       pours: { value: 12, min: 2, max: 24, step: 1, label: 'pours', group: 'composition' },
       energy: { value: 1, min: 0.4, max: 2, step: 0.05, label: 'hand speed', group: 'composition' },
