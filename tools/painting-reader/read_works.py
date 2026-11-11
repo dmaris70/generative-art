@@ -36,8 +36,24 @@ HOSTS = {
     'nga': ('api.nga.gov', 'National Gallery of Art'),
     'google': ('lh3.googleusercontent.com', 'Google Arts & Culture'),
     'google2': ('lh5.ggpht.com', 'Google Arts & Culture'),
+    'google3': ('lh3.ggpht.com', 'Google Arts & Culture'),
+    'google4': ('lh4.ggpht.com', 'Google Arts & Culture'),
+    'google6': ('lh6.ggpht.com', 'Google Arts & Culture'),
+    'walters': ('art.thewalters.org', 'The Walters Art Museum'),
+    'getty': ('media.getty.edu', 'The J. Paul Getty Museum'),
+    'europeana': ('api.europeana.eu', 'Europeana'),
+    'smk': ('iip-thumb.smk.dk', 'SMK, Statens Museum for Kunst'),
+    'smk2': ('api.smk.dk', 'SMK, Statens Museum for Kunst'),
+    'si': ('ids.si.edu', 'Smithsonian Institution'),
+    'vam': ('framemark.vam.ac.uk', 'Victoria and Albert Museum'),
+    'ng': ('www.nationalgallery.org.uk', 'The National Gallery, London'),
+    'culturalia': ('resource.culturalia.ro', 'Culturalia'),
+    'dimu': ('ems.dimu.org', 'DigitaltMuseum'),
+    # www.artic.edu serves 5 eligible works but refuses a scripted request (403), so it is not here
     'wikimedia': ('upload.wikimedia.org', 'Wikimedia Commons'),
 }
+# every museum host: the default, and what `--hosts museums` means
+MUSEUMS = 'met,tate,cma,nga,google,google2,google3,google4,google6,walters,getty,europeana,smk,smk2,si,vam,ng,culturalia,dimu'
 DELTA_E_MERGE = 12.0   # two clusters closer than this in CIELAB are one colour for our purposes
 
 
@@ -300,7 +316,7 @@ def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument('--colorlisa', action='store_true')
     ap.add_argument('--archive', action='store_true')
-    ap.add_argument('--hosts', default='met,tate,cma,nga,google,google2')
+    ap.add_argument('--hosts', default=MUSEUMS, help="comma-separated host keys, or 'museums' for every museum host (everything but Wikimedia)")
     ap.add_argument('--out', default=str(PROJECT / 'archive/readings'), help='directory of per-artist reading shards')
     ap.add_argument('--resume', action='store_true')
     ap.add_argument('--workers', type=int, default=3)
@@ -309,7 +325,7 @@ def main():
     a = ap.parse_args()
     if a.colorlisa: run_colorlisa()
     PACE['seconds'] = a.pace
-    if a.archive: run_archive([h for h in a.hosts.split(',') if h], a.out, a.resume, a.workers, a.limit)
+    if a.archive: run_archive([h for h in (MUSEUMS if a.hosts == 'museums' else a.hosts).split(',') if h], a.out, a.resume, a.workers, a.limit)
     if not (a.colorlisa or a.archive): ap.print_help()
 
 
