@@ -399,6 +399,29 @@ The paint has a physical body (setting *paint body*, on by default):
 - **Earlier prints.** *flat* (`p_body=0`) reproduces every earlier print, pixel for pixel. This was
   verified on three works.
 
+## The film over the paper
+
+Setting *film over the paper* (`p_film`), blended by default.
+
+A film of paint over the sheet is a layer of finite thickness over a background: light crosses the
+paint, meets the ground, scatters back and crosses again, and that decides how much of the sheet
+shows. The two-flux equations give it in closed form:
+
+    a = 1 + K/S,  b = √(a² − 1)
+    R = (1 − Rg·(a − b·coth(b·S·X))) / (a − Rg + b·coth(b·S·X))
+
+with `Rg` the ground beneath and `X` the film's own thickness. At X = 0 it returns the ground
+exactly, as X grows it returns the masstone, and with no scattering it reduces to Beer-Lambert.
+
+It needs **S on its own**, which single-constant Kubelka-Munk cannot give, since that model knows
+only the ratio K/S. The impurity index supplies it, so this became possible only once each pigment
+had its own scattering.
+
+Where it is on it replaces three terms that stood in for it: the blend between the masstone and the
+ground, the per-pigment hiding power, and the small nudge that kept thin paint's hue. In the moving
+version the ground already carries the original once it has risen, so the paint then sits over the
+painting physically instead of being alpha-blended with it.
+
 ## Pigment mixing: the impurity index
 
 Setting *pigment mixing* (`p_mixing`), single constant by default.
