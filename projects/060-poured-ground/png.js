@@ -21,9 +21,19 @@
     const t = new TextEncoder().encode(type);
     return [u32(data.length), t, data, u32(crc32([t, data]))];
   }
+  // tEXt is Latin-1. The punctuation we write prose with is not, and turning an em dash into '?'
+  // makes the provenance read as though something went wrong, so the usual typographic characters
+  // are transliterated rather than lost. Anything else above U+00FF still becomes '?'.
+  const TRANSLIT = { 0x2013: '-', 0x2014: '-', 0x2018: "'", 0x2019: "'", 0x201c: '"', 0x201d: '"',
+                     0x2026: '...', 0x2192: '->', 0x2194: '<->', 0x00a0: ' ', 0x2212: '-', 0x2032: "'" };
   function latin1(s) {
-    const out = new Uint8Array(s.length);
-    for (let i = 0; i < s.length; i++) { const c = s.charCodeAt(i); out[i] = c < 256 ? c : 63; }
+    let t = '';
+    for (let i = 0; i < s.length; i++) {
+      const c = s.charCodeAt(i);
+      t += c < 256 ? s[i] : (TRANSLIT[c] !== undefined ? TRANSLIT[c] : '?');
+    }
+    const out = new Uint8Array(t.length);
+    for (let i = 0; i < t.length; i++) { const c = t.charCodeAt(i); out[i] = c < 256 ? c : 63; }
     return out;
   }
 
