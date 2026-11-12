@@ -303,12 +303,19 @@
   // pushes off the sheet returns as traces.
   const READINGS = [['detail', 1.2], ['turn', 0.6], ['fragment', 1], ['drift', 1], ['distil', 0.7], ['echo', 1], ['exchange', 0.6]];
 
+  // Provenance. Every zone and gesture carries `why`: the measurement that produced it, so the
+  // studio can say what it is doing and why without guessing. It rides as a property on the entry's
+  // array, which means every place an entry is copied or split has to carry it across.
+  function tag(a, w) { a.why = w; return a; }
+  function recopy(f) { const c = f.slice(); if (f.why) c.why = f.why; return c; }
+  function derive(f, extra) { return Object.assign({}, f.why || {}, extra); }
+
   function interpret(rng, brief, interp) {
     const R = function (a, b) { return a + (b - a) * rng(); };
     const g0 = brief.g;
     let g = g0;
-    let z = brief.z.map(function (f) { return f.slice(); });
-    let m = brief.m.map(function (f) { return f.slice(); });
+    let z = brief.z.map(recopy);
+    let m = brief.m.map(recopy);
     const said = [];
     if (interp <= 0) return { g: g, z: z, m: m, readings: said };
 
@@ -390,15 +397,15 @@
           const vert = rng() < 0.5;
           for (let i = 0; i < n; i++) {
             const a = i / n, b = (i + 0.85) / n, o = R(-shift, shift);
-            out.push(vert ? ['R', f[1], f[2] + (f[4] - f[2]) * a, f[3] + o, f[2] + (f[4] - f[2]) * b, f[5] + o, f[6] + R(-6, 6) * interp]
-                          : ['R', f[1], f[2] + o, f[3] + (f[5] - f[3]) * a, f[4] + o, f[3] + (f[5] - f[3]) * b, f[6] + R(-6, 6) * interp]);
+            out.push(tag(vert ? ['R', f[1], f[2] + (f[4] - f[2]) * a, f[3] + o, f[2] + (f[4] - f[2]) * b, f[5] + o, f[6] + R(-6, 6) * interp]
+                          : ['R', f[1], f[2] + o, f[3] + (f[5] - f[3]) * a, f[4] + o, f[3] + (f[5] - f[3]) * b, f[6] + R(-6, 6) * interp], derive(f, { via: 'fragment', part: i + 1, of: n })));
           }
         } else if (f[0] === 'E') {
-          for (let i = 0; i < n; i++) out.push(['E', f[1], f[2] + R(-1, 1) * f[4] * 0.8, f[3] + R(-1, 1) * f[5] * 0.8, f[4] * R(0.35, 0.7), f[5] * R(0.35, 0.7), f[6] + R(-40, 40)]);
+          for (let i = 0; i < n; i++) out.push(tag(['E', f[1], f[2] + R(-1, 1) * f[4] * 0.8, f[3] + R(-1, 1) * f[5] * 0.8, f[4] * R(0.35, 0.7), f[5] * R(0.35, 0.7), f[6] + R(-40, 40)], derive(f, { via: 'fragment', part: i + 1, of: n })));
         } else {
           for (let i = 0; i < n; i++) {
             const a = i / n, b = (i + 0.7) / n, o = R(-shift, shift);
-            out.push(['L', f[1], f[2] + (f[4] - f[2]) * a + o, f[3] + (f[5] - f[3]) * a, f[2] + (f[4] - f[2]) * b + o, f[3] + (f[5] - f[3]) * b, f[6]]);
+            out.push(tag(['L', f[1], f[2] + (f[4] - f[2]) * a + o, f[3] + (f[5] - f[3]) * a, f[2] + (f[4] - f[2]) * b + o, f[3] + (f[5] - f[3]) * b, f[6]], derive(f, { via: 'fragment', part: i + 1, of: n })));
           }
         }
       });
@@ -433,7 +440,8 @@
     if (has('echo') && m.length) {
       const src = m.slice(), n = 2 + Math.floor(rng() * (1 + 3 * interp));
       for (let i = 0; i < n; i++) {
-        const q = src[Math.floor(rng() * src.length)].slice(), k = R(0.6, 1.4), th = R(-60, 60);
+        const qi = Math.floor(rng() * src.length), q = recopy(src[qi]), k = R(0.6, 1.4), th = R(-60, 60);
+        q.why = derive(src[qi], { via: 'echo' });
         const dx = R(-0.3, 0.3), dy = R(-0.3, 0.3);
         const T0 = rot(0.5, 0.5, th);
         mapAll(function (x, y) { const p = T0(0.5 + (x - 0.5) * k, 0.5 + (y - 0.5) * k); return [p[0] + dx, p[1] + dy]; }, k, th, [], [q]);
@@ -455,7 +463,7 @@
     const solids = z.filter(function (f) { return f[0] !== 'D'; });
     for (let i = 0; i < extra && solids.length; i++) {
       const c = centre(solids[Math.floor(rng() * solids.length)]), a = R(0, Math.PI * 2), L = R(0.2, 0.6);
-      m.push(['P', c[0] - Math.cos(a) * L / 2, c[1] - Math.sin(a) * L / 2, c[0] + Math.cos(a) * L / 2, c[1] + Math.sin(a) * L / 2, R(0.03, 0.07)]);
+      m.push(tag(['P', c[0] - Math.cos(a) * L / 2, c[1] - Math.sin(a) * L / 2, c[0] + Math.cos(a) * L / 2, c[1] + Math.sin(a) * L / 2, R(0.03, 0.07)], { via: 'exchange', what: 'a pull across the exchanged ground' }));
     }
     if (interp >= 0.3) said.push('the hand pushed further');
 
@@ -468,7 +476,7 @@
     };
     for (let c = 0; c < 5; c++) {
       if (c === g) continue;
-      if (!z.some(function (f) { return f[1] === c && visible(f); })) z.push(['D', c, 0.1, 0.1, 0.9, 0.9, 3, 0.03]);
+      if (!z.some(function (f) { return f[1] === c && visible(f); })) z.push(tag(['D', c, 0.1, 0.1, 0.9, 0.9, 3, 0.03], { via: 'exchange', what: 'dabs keeping a colour the exchange would have lost' }));
     }
     return { g: g, z: z, m: m, readings: said };
   }
@@ -532,15 +540,18 @@
           // M: the silhouette, placed by its box centre; sx, sy half-extents (uv); the mask object
           // keeps its own frame so interpretation can move, scale and turn it
           const sx = (f.x1 - f.x0) / 2, sy = (f.y1 - f.y0) / 2;
-          z.push(['M', c, +((f.x0 + f.x1) / 2).toFixed(3), +((f.y0 + f.y1) / 2).toFixed(3), +sx.toFixed(3), +sy.toFixed(3), 0,
-                  { cols: rd.grid[0], rows: rd.grid[1], bits: f.mask, a: f.area, sx: sx, sy: sy, c0: [(f.x0 + f.x1) / 2, (f.y0 + f.y1) / 2] }]);
+          z.push(tag(['M', c, +((f.x0 + f.x1) / 2).toFixed(3), +((f.y0 + f.y1) / 2).toFixed(3), +sx.toFixed(3), +sy.toFixed(3), 0,
+                  { cols: rd.grid[0], rows: rd.grid[1], bits: f.mask, a: f.area, sx: sx, sy: sy, c0: [(f.x0 + f.x1) / 2, (f.y0 + f.y1) / 2] }],
+                  { field: f.id, kind: f.kind, occ: f.occ, area: f.area, axis: f.axis, vr: f.vr, as: 'silhouette' }));
         } else if (f.occ >= 0.55) {
           const s = clamp(Math.sqrt(f.occ), 0.55, 1), hw = (f.x1 - f.x0) / 2 * s, hh = (f.y1 - f.y0) / 2 * s;
-          z.push(['R', c, +(f.cx - hw).toFixed(3), +(f.cy - hh).toFixed(3), +(f.cx + hw).toFixed(3), +(f.cy + hh).toFixed(3), 0]);
+          z.push(tag(['R', c, +(f.cx - hw).toFixed(3), +(f.cy - hh).toFixed(3), +(f.cx + hw).toFixed(3), +(f.cy + hh).toFixed(3), 0],
+                  { field: f.id, kind: f.kind, occ: f.occ, area: f.area, axis: f.axis, vr: f.vr, as: 'block' }));
         } else {
           const areaSU = f.area * A[0] * A[1], q = clamp(Math.sqrt(f.vr || 1), 1, 3);
           const ry = Math.sqrt(areaSU / (Math.PI * q)), rx = ry * q;
-          z.push(['E', c, f.cx, f.cy, +rx.toFixed(3), +ry.toFixed(3), f.axis === null || f.axis === undefined ? 0 : tilt(f.axis)]);
+          z.push(tag(['E', c, f.cx, f.cy, +rx.toFixed(3), +ry.toFixed(3), f.axis === null || f.axis === undefined ? 0 : tilt(f.axis)],
+                  { field: f.id, kind: f.kind, occ: f.occ, area: f.area, axis: f.axis, vr: f.vr, as: 'island' }));
         }
       });
     const m = [];
@@ -558,17 +569,21 @@
       const k = 0.6 + 0.8 * (wTop > 0 ? q.w / wTop : 1);          // 1.4 for the principal, 0.6 for the slightest
       if (kind === 'value_opposition') {
         const d = f[0].kind === 'dark' ? f[0] : f[1], l = d === f[0] ? f[1] : f[0];
-        m.push(['P', d.cx, d.cy, l.cx, l.cy, +((0.03 + 0.06 * Math.sqrt(Math.min(d.area, l.area))) * k).toFixed(3)]);
+        m.push(tag(['P', d.cx, d.cy, l.cx, l.cy, +((0.03 + 0.06 * Math.sqrt(Math.min(d.area, l.area))) * k).toFixed(3)],
+                { config: q.c[0], kind: kind, pair: [d.id, l.id], weight: +q.w.toFixed(3), rank: +(q.w / wTop).toFixed(3) }));
       } else if (kind === 'cross_axes') {
-        f.forEach(function (x) { if (x.axis !== null && x.axis !== undefined) m.push(['C', x.x0, x.y0, x.x1, x.y1, tilt(x.axis), Math.max(2, Math.round((2 + 6 * Math.sqrt(x.area)) * k)), +(0.03 * k).toFixed(3)]); });
+        f.forEach(function (x) { if (x.axis !== null && x.axis !== undefined) m.push(tag(['C', x.x0, x.y0, x.x1, x.y1, tilt(x.axis), Math.max(2, Math.round((2 + 6 * Math.sqrt(x.area)) * k)), +(0.03 * k).toFixed(3)],
+          { config: q.c[0], kind: kind, pair: q.f.map(function (y) { return y.id; }), along: x.id, axis: x.axis, weight: +q.w.toFixed(3), rank: +(q.w / wTop).toFixed(3) })); });
       } else if (kind === 'detail_interval') {
         const sp = f[0].kind === 'sparse' ? f[0] : f[1], det = sp === f[0] ? f[1] : f[0];
         const dx = (det.cx - sp.cx) * A[0], dy = (det.cy - sp.cy) * A[1];
         const ang = Math.round(Math.atan2(-dy, dx) * 180 / Math.PI);    // away from the calm field, ccw (90 = up)
         const len = clamp(0.5 * Math.hypot(dx, dy) * k, 0.08, 0.3);
-        m.push(['B', det.cx, det.cy, ang - 50, ang + 50, +len.toFixed(3), clamp(Math.round((3 + det.edge * 20) * k), 3, 8), +(0.03 * k).toFixed(3)]);
+        m.push(tag(['B', det.cx, det.cy, ang - 50, ang + 50, +len.toFixed(3), clamp(Math.round((3 + det.edge * 20) * k), 3, 8), +(0.03 * k).toFixed(3)],
+                { config: q.c[0], kind: kind, pair: q.f.map(function (y) { return y.id; }), at: det.id, weight: +q.w.toFixed(3), rank: +(q.w / wTop).toFixed(3) }));
       } else if (kind === 'color_recurrence') {
-        m.push(['P', f[0].cx, f[0].cy, f[1].cx, f[1].cy, +(0.03 * k).toFixed(3)]);
+        m.push(tag(['P', f[0].cx, f[0].cy, f[1].cx, f[1].cy, +(0.03 * k).toFixed(3)],
+                { config: q.c[0], kind: kind, pair: [f[0].id, f[1].id], weight: +q.w.toFixed(3), rank: +(q.w / wTop).toFixed(3) }));
       }
     });
     // The interval. Where a configuration names two fields whose boxes do not meet, the strip
@@ -593,7 +608,7 @@
 
     if (rd.shared && rd.shared.length && byId[rd.shared[0]]) {
       const s = byId[rd.shared[0]], rad = clamp(0.5 * Math.sqrt(s.area * A[0] * A[1] / Math.PI), 0.06, 0.3);
-      m.push(['S', s.cx, s.cy, +rad.toFixed(3), 1.5, 0.04]);
+      m.push(tag(['S', s.cx, s.cy, +rad.toFixed(3), 1.5, 0.04], { field: s.id, kind: 'subject_field', what: 'a swirl in the field the reader called the subject' }));
     }
     // The grain of the whole sheet. The reader bins edge tangents into 8 directions over 180
     // degrees; a flat image would put 1/8 in each. The strongest direction carrying at least 1.5
@@ -607,16 +622,18 @@
         .filter(function (b) { return b[0] >= EB_MIN; })
         .sort(function (a, b) { return b[0] - a[0]; })
         .slice(0, EB_MAX)
-        .forEach(function (b, i) { m.push(['C', 0.05, 0.05, 0.95, 0.95, tilt(b[1]), i === 0 ? clamp(Math.round(b[0] * 10), 2, 4) : 2, i === 0 ? 0.025 : 0.015]); });
+        .forEach(function (b, i) { m.push(tag(['C', 0.05, 0.05, 0.95, 0.95, tilt(b[1]), i === 0 ? clamp(Math.round(b[0] * 10), 2, 4) : 2, i === 0 ? 0.025 : 0.015],
+          { grain: true, deg: b[1], share: +b[0].toFixed(3), place: i === 0 ? 'strongest' : 'second' })); });
     } else if (rd.edges && rd.edges[1] >= 0.22) {   // a reading made before the grain was kept
-      m.push(['C', 0.05, 0.05, 0.95, 0.95, tilt(rd.edges[0]), 3, 0.025]);
+      m.push(tag(['C', 0.05, 0.05, 0.95, 0.95, tilt(rd.edges[0]), 3, 0.025], { grain: true, deg: rd.edges[0], share: rd.edges[1], place: 'only' }));
     }
     if (rd.cells && rd.cells.length === 9) {
       const order = rd.cells.map(function (d, i) { return [d, i]; }).sort(function (a, b) { return b[0] - a[0]; });
       order.slice(0, 2).forEach(function (ci, k) {
         if (ci[0] < (k === 0 ? 0.1 : 0.15)) return;
         const row = Math.floor(ci[1] / 3), col = ci[1] % 3;
-        m.push(['W', +(col / 3).toFixed(3), +(row / 3).toFixed(3), +((col + 1) / 3).toFixed(3), +((row + 1) / 3).toFixed(3), k === 0 ? 3 : 2, 0.025]);
+        m.push(tag(['W', +(col / 3).toFixed(3), +(row / 3).toFixed(3), +((col + 1) / 3).toFixed(3), +((row + 1) / 3).toFixed(3), k === 0 ? 3 : 2, 0.025],
+                { cell: [col, row], share: +ci[0].toFixed(3), place: k === 0 ? 'busiest' : 'next', what: 'a scribble where the detail is' }));
       });
     }
     // every measured colour reaches the sheet: one the reader found no connected island for is
@@ -625,11 +642,12 @@
     for (let c = 0; c < cols.length; c++) {
       if (usedC.has(c)) continue;
       const ct = (rd.centroids && rd.centroids[c]) || [0.5, 0.5], sh = rd.shares[c] || 0.05, half = clamp(0.1 + 0.3 * Math.sqrt(sh), 0.1, 0.25);
-      z.push(['D', c, +clamp(ct[0] - half, 0.03, 0.97).toFixed(3), +clamp(ct[1] - half, 0.03, 0.97).toFixed(3), +clamp(ct[0] + half, 0.03, 0.97).toFixed(3), +clamp(ct[1] + half, 0.03, 0.97).toFixed(3), clamp(3 + Math.round(sh * 20), 3, 8), +(0.02 + 0.04 * Math.sqrt(sh)).toFixed(3)]);
+      z.push(tag(['D', c, +clamp(ct[0] - half, 0.03, 0.97).toFixed(3), +clamp(ct[1] - half, 0.03, 0.97).toFixed(3), +clamp(ct[0] + half, 0.03, 0.97).toFixed(3), +clamp(ct[1] + half, 0.03, 0.97).toFixed(3), clamp(3 + Math.round(sh * 20), 3, 8), +(0.02 + 0.04 * Math.sqrt(sh)).toFixed(3)],
+              { cluster: c, colour: cols[c], share: +sh.toFixed(3), as: "dabs", what: "a colour too scattered to lay as a mass" }));
     }
     if (!m.length && z.length) {   // no configuration found: one pull across the largest mass
       const f = F.filter(function (x) { return x.kind !== 'sparse'; }).sort(function (a, b) { return b.area - a.area; })[0];
-      m.push(['P', f.x0, f.cy, f.x1, f.cy, 0.04]);
+      m.push(tag(['P', f.x0, f.cy, f.x1, f.cy, 0.04], { field: f.id, what: 'a pull across the widest field, so no sheet is left unworked' }));
     }
     // the note: where the reader found the masses (positions, not subjects)
     const where = function (f) {
@@ -693,11 +711,11 @@
       if (f[0] === 'R') {
         const x0 = J(f[2], jit), y0 = J(f[3], jit), x1 = J(f[4], jit), y1 = J(f[5], jit);
         const ctr = scr((x0 + x1) / 2, (y0 + y1) / 2);
-        return { type: 'zone', shape: 0, cx: ctr[0], cy: ctr[1], hx: Math.abs(x1 - x0) / 2 * A[0], hy: Math.abs(y1 - y0) / 2 * A[1], ang: f[6] * Math.PI / 180 + R(-aj, aj), chan: ch, th: FIELD_TH };
+        return { type: 'zone', shape: 0, cx: ctr[0], cy: ctr[1], hx: Math.abs(x1 - x0) / 2 * A[0], hy: Math.abs(y1 - y0) / 2 * A[1], ang: f[6] * Math.PI / 180 + R(-aj, aj), chan: ch, th: FIELD_TH, why: f.why };
       }
       if (f[0] === 'E') {
         const k = 1 + R(-sj, sj), ctr = scr(J(f[2], jit), J(f[3], jit));
-        return { type: 'zone', shape: 1, cx: ctr[0], cy: ctr[1], hx: f[4] * k, hy: f[5] * k, ang: f[6] * Math.PI / 180 + R(-aj, aj), chan: ch, th: FIELD_TH };
+        return { type: 'zone', shape: 1, cx: ctr[0], cy: ctr[1], hx: f[4] * k, hy: f[5] * k, ang: f[6] * Math.PI / 180 + R(-aj, aj), chan: ch, th: FIELD_TH, why: f.why };
       }
       if (f[0] === 'M') {
         // the silhouette: its box centre is placed (with the usual jitter), its extent scaled, its
@@ -705,13 +723,13 @@
         const k = 1 + R(-sj, sj), ctr = scr(J(f[2], jit), J(f[3], jit)), m = f[7];
         const c0 = scr(m.c0[0], m.c0[1]);
         return { type: 'zone', shape: 2, cx: ctr[0], cy: ctr[1], hx: f[4] * k * A[0], hy: f[5] * k * A[1], ang: f[6] * Math.PI / 180 + R(-aj, aj), chan: ch, th: FIELD_TH,
-                 mask: m, m0: c0, scale: (f[4] / Math.max(1e-9, m.sx)) * k };
+                 mask: m, m0: c0, scale: (f[4] / Math.max(1e-9, m.sx)) * k, why: f.why };
       }
       // L: a band between two points
       const a = sh(scr(J(f[2], jit), J(f[3], jit))), b = sh(scr(J(f[4], jit), J(f[5], jit)));
       const dx = b[0] - a[0], dy = b[1] - a[1], len = Math.hypot(dx, dy);
       const ctr = un([(a[0] + b[0]) / 2, (a[1] + b[1]) / 2]);
-      return { type: 'zone', shape: 0, cx: ctr[0], cy: ctr[1], hx: len / 2, hy: f[6] / 2 * (1 + R(-sj, sj)), ang: Math.atan2(dy, dx), chan: ch, th: FIELD_TH };
+      return { type: 'zone', shape: 0, cx: ctr[0], cy: ctr[1], hx: len / 2, hy: f[6] / 2 * (1 + R(-sj, sj)), ang: Math.atan2(dy, dx), chan: ch, th: FIELD_TH, why: f.why };
     };
     const drops = [], zones = [];
     for (const f of brief.z) {
@@ -719,7 +737,7 @@
         const n = Math.max(1, Math.round(f[6] * R(0.8, 1.25)));
         for (let i = 0; i < n; i++) {
           const u = scr(R(f[2], f[4]), R(f[3], f[5]));
-          drops.push({ type: 'pour', x: Math.max(0.02, Math.min(0.98, u[0])), y: Math.max(0.02, Math.min(0.98, u[1])), r: f[7] * R(0.7, 1.4), pig: chan[f[1]], k: 0.4 });
+          drops.push({ type: 'pour', x: Math.max(0.02, Math.min(0.98, u[0])), y: Math.max(0.02, Math.min(0.98, u[1])), r: f[7] * R(0.7, 1.4), pig: chan[f[1]], k: 0.4, why: f.why });
         }
       } else {
         zones.push(fieldOf(f));
@@ -727,12 +745,12 @@
     }
 
     const speed = function () { return R(0.35, 0.8) * energy; };
-    const drag = function (pts, r, start) {
+    const drag = function (pts, r, start, why) {
       pts = pts.map(clampUV);
       let len = 0;
       for (let i = 1; i < pts.length; i++) len += Math.hypot((pts[i][0] - pts[i - 1][0]) * A[0], (pts[i][1] - pts[i - 1][1]) * A[1]);
       const dur = Math.max(10, Math.round(len / speed() * FPS));
-      events.push({ type: 'drag', t0: start, t1: start + dur, pts: pts, r: r, amt: 0.9 });
+      events.push({ type: 'drag', t0: start, t1: start + dur, pts: pts, r: r, amt: 0.9, why: why });
       return start + dur;
     };
     const line = function (a, b, bend, n) { // a, b in short units → uv polyline with a bend
@@ -744,22 +762,23 @@
       }
       return out;
     };
-    const strokes = []; // [pts, r] in order
+    const strokes = []; // [pts, r, why] in order
     brief.m.forEach(function (m) {
+      const why = m.why;
       const k = m[0];
       if (k === 'P') {
         let a = sh(scr(J(m[1], .03), J(m[2], .03))), b = sh(scr(J(m[3], .03), J(m[4], .03)));
         const mid = [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2];     // shortened about its middle: same
         a = [mid[0] + (a[0] - mid[0]) * REACH, mid[1] + (a[1] - mid[1]) * REACH];   // place, same
         b = [mid[0] + (b[0] - mid[0]) * REACH, mid[1] + (b[1] - mid[1]) * REACH];   // direction
-        strokes.push([line(a, b, R(-0.15, 0.15)), m[5] * R(0.8, 1.25)]);
+        strokes.push([line(a, b, R(-0.15, 0.15)), m[5] * R(0.8, 1.25), why]);
       } else if (k === 'B') {
         const c = sh(scr(J(m[1], .02), J(m[2], .02)));
         const n = Math.max(2, m[6] + Math.round(R(-1, 1)));
         for (let i = 0; i < n; i++) {
           const ang = (m[3] + (m[4] - m[3]) * (i + 0.5) / n + R(-12, 12)) * Math.PI / 180;
           const len = m[5] * R(0.7, 1.15) * REACH;
-          strokes.push([line(c, [c[0] + Math.cos(ang) * len, c[1] + Math.sin(ang) * len], R(-0.2, 0.2)), m[7] * R(0.8, 1.25)]);
+          strokes.push([line(c, [c[0] + Math.cos(ang) * len, c[1] + Math.sin(ang) * len], R(-0.2, 0.2)), m[7] * R(0.8, 1.25), why]);
         }
       } else if (k === 'C') {
         const ang = (m[5] + R(-10, 10)) * Math.PI / 180, d = [Math.cos(ang), Math.sin(ang)], nrm = [-d[1], d[0]];
@@ -779,7 +798,7 @@
           const sx = (hi[0] - lo[0]) * 0.12, sy = (hi[1] - lo[1]) * 0.12;
           const bl = [lo[0] + R(-sx, sx), lo[1] + R(-sy, sy)], bh = [hi[0] + R(-sx, sx), hi[1] + R(-sy, sy)];
           const box = function (p) { return [Math.max(bl[0], Math.min(bh[0], p[0])), Math.max(bl[1], Math.min(bh[1], p[1]))]; };
-          strokes.push([line(box([mid[0] - d[0] * half, mid[1] - d[1] * half]), box([mid[0] + d[0] * half, mid[1] + d[1] * half]), R(-0.1, 0.1)), m[7] * R(0.8, 1.25)]);
+          strokes.push([line(box([mid[0] - d[0] * half, mid[1] - d[1] * half]), box([mid[0] + d[0] * half, mid[1] + d[1] * half]), R(-0.1, 0.1)), m[7] * R(0.8, 1.25), why]);
         }
       } else if (k === 'S') {
         const c = sh(scr(J(m[1], .02), J(m[2], .02))), rad = m[3] * R(0.85, 1.15), turns = m[4] * R(0.8, 1.2);
@@ -788,7 +807,7 @@
           const u = i / (n - 1), a = a0 + dir * turns * Math.PI * 2 * u, rr = rad * (1 - 0.35 * u);
           pts.push(un([c[0] + Math.cos(a) * rr, c[1] + Math.sin(a) * rr]));
         }
-        strokes.push([pts, m[5] * R(0.8, 1.25)]);
+        strokes.push([pts, m[5] * R(0.8, 1.25), why]);
       } else if (k === 'W') {
         const a = sh(scr(m[1], m[2])), b = sh(scr(m[3], m[4]));
         const lo = [Math.min(a[0], b[0]), Math.min(a[1], b[1])], hi = [Math.max(a[0], b[0]), Math.max(a[1], b[1])];
@@ -810,7 +829,7 @@
             p = q;
             pts.push(un(p));
           }
-          strokes.push([pts, m[6] * R(0.8, 1.25)]);
+          strokes.push([pts, m[6] * R(0.8, 1.25), why]);
         }
       }
     });
@@ -830,10 +849,10 @@
       for (const st of kept) {
         let run = [];
         for (const q of st[0]) {
-          if (inGap(q, st[1])) { if (run.length >= 4) cut.push([run, st[1]]); run = []; }
+          if (inGap(q, st[1])) { if (run.length >= 4) cut.push([run, st[1], st[2]]); run = []; }
           else run.push(q);
         }
-        if (run.length >= 4) cut.push([run, st[1]]);
+        if (run.length >= 4) cut.push([run, st[1], st[2]]);
       }
       kept = cut;
       // A dab inside an interval is moved to the nearer facing edge rather than removed. Removing
@@ -876,7 +895,7 @@
       if (i === L - 1) for (const d of drops) { d.t = t++; events.push(d); }
       t += 8;
       for (const s of kept.slice(i * sPer, (i + 1) * sPer)) {
-        const end = drag(s[0], s[1], t);
+        const end = drag(s[0], s[1], t, s[2]);
         t = Math.max(t + 4, Math.round(t + (end - t) * R(0.4, 0.8)));
       }
     }
