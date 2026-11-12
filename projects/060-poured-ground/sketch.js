@@ -1725,7 +1725,12 @@
       (viewLink(S.palette) ? '<a class="view" target="_blank" rel="noopener" href="' + viewLink(S.palette).url + '">view the painting ↗</a> <span class="src">' + viewLink(S.palette).site + '</span> · <a class="view" target="_blank" rel="noopener" href="' + viewLink(S.palette).search + '">image search ↗</a><br>' : '') +
       'palette: ' + p.artist + ', <em>' + p.painting + '</em> <span class="src">(' + paletteCredit(p) + ')</span><br>' +
       '<span class="sw">ground ' + swatch(c.ground) + ' paint ' + c.pigments.map(function (h, i) { return '<span class="pig' + (i === pigment ? ' on' : '') + '">' + (i + 1) + swatch(h) + '</span>'; }).join('') + '</span><br>' +
-      '<span class="src">print ' + sh.name + ' · ' + sh.px[0] + '×' + sh.px[1] + ' px @ ' + G.param('dpi') + ' dpi · ' + G.param('bits') + '-bit · sim ' + S.w + '×' + S.h + '</span>';
+      '<span class="src">print ' + sh.name + ' · ' + sh.px[0] + '×' + sh.px[1] + ' px @ ' + G.param('dpi') + ' dpi · ' + G.param('bits') + '-bit · sim ' + S.w + '×' + S.h +
+      // 'as the original' can only follow a proportion that is recorded. A quarter of the works
+      // have none, and the sheet then keeps the format's own shape — which is portrait, whatever
+      // the painting is. Say so rather than let the setting imply a fidelity it did not deliver.
+      (G.param('proportions') === 1 && !workAspect(p) ? ' · the proportions of this work are not recorded, so the sheet keeps the format\'s own shape'
+        : sh.imgAspect ? ' · ' + sh.imgAspect.toFixed(2) + ' : 1, as the original (' + (p.aspectSource || 'Wikidata') + ')' : '') + '</span>';
   }
 
   // ---------------------------------------------------------------- pointer
