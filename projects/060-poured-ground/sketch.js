@@ -901,6 +901,7 @@
     if (origView) setTimeout(placeOriginal, 0);
     handTouched = false;
     updateCaption();
+    buildAccount();
     dirty = true;
   }
 
@@ -1329,6 +1330,7 @@
       }
       if (stepped) dirty = true;
       if (dirty) { drawScreen(); dirty = false; }
+      revealAccount(false);
       progress.style.width = (100 * Math.min(1, S.t / S.score.steps)) + '%';
       progress.parentNode.classList.toggle('done', S.t >= S.score.steps);
     }
@@ -1696,6 +1698,68 @@
   window.saveCanvas = function () { exportPreview(); }; // the harness's "Save PNG" button
 
   // ---------------------------------------------------------------- caption
+  // ---------------------------------------------------------------- the account
+  // What the reader found, what it told the hand, and each move as it is made. Generated from the
+  // record by narrate.js: every line carries a value out of the reading, the brief or the score.
+  const acct = { el: document.getElementById('account'), list: document.getElementById('acctList'),
+                 steps: null, nodes: [], reg: 'plain', shown: -1, on: true };
+  function buildAccount() {
+    if (!acct.el || !window.PouredGround || !PouredGround.narrate || !S || !S.score) return;
+    // S.brief.read is a summary (counts); the measured record itself rides on the palette
+    const rec = S.brief && S.brief.k === 2 && S.palette ? S.palette.reading : null;
+    acct.steps = S.brief ? PouredGround.narrate(rec && rec.shares ? rec : null, S.brief, S.score) : null;
+    acct.list.innerHTML = ''; acct.nodes = []; acct.shown = -1;
+    if (!acct.steps) {                       // a work with no reading and no brief has nothing to account for
+      acct.list.innerHTML = '<div class="ph">no account</div><div class="st on">This work has no reading and no written layout, so it is composed from its five colours alone. There is nothing measured to report.</div>';
+      acct.el.hidden = !acct.on; return;
+    }
+    const PH = { read: 'what it measured', say: 'what it tells the hand', interpret: 'how far it departs', pour: 'what it does' };
+    let phase = '';
+    acct.steps.forEach(function (st, i) {
+      if (st.phase !== phase) { phase = st.phase; const h = document.createElement('div'); h.className = 'ph'; h.textContent = PH[phase] || phase; acct.list.appendChild(h); }
+      const d = document.createElement('div');
+      d.className = 'st';
+      d.innerHTML = (st.phase === 'pour' ? '<span class="at">' + st.at + '</span>' : '') + '<span class="tx"></span>';
+      d.querySelector('.tx').textContent = st[acct.reg];
+      acct.list.appendChild(d); acct.nodes.push(d);
+    });
+    acct.list.classList.toggle('tech', acct.reg === 'tech');
+    acct.el.hidden = !acct.on;
+    revealAccount(true);
+  }
+  function revealAccount(force) {
+    if (!acct.steps || acct.el.hidden) return;
+    const t = S ? S.t : 0;
+    let last = -1;
+    for (let i = 0; i < acct.steps.length; i++) if (acct.steps[i].at <= t) last = i;
+    if (!force && last === acct.shown) return;
+    acct.shown = last;
+    for (let i = 0; i < acct.nodes.length; i++) {
+      const on = i <= last, now = i === last && acct.steps[i].phase === 'pour';
+      acct.nodes[i].classList.toggle('on', on && !now);
+      acct.nodes[i].classList.toggle('now', now);
+    }
+    if (last >= 0 && acct.steps[last].phase === 'pour') {
+      const n = acct.nodes[last];
+      if (n) n.scrollIntoView({ block: 'center', behavior: force ? 'auto' : 'smooth' });
+    }
+  }
+  function setRegister(r) {
+    acct.reg = r;
+    const pb = document.getElementById('acctPlain'), tb = document.getElementById('acctTech');
+    if (pb) pb.setAttribute('aria-pressed', String(r === 'plain'));
+    if (tb) tb.setAttribute('aria-pressed', String(r === 'tech'));
+    acct.list.classList.toggle('tech', r === 'tech');
+    if (acct.steps) acct.steps.forEach(function (st, i) { const tx = acct.nodes[i] && acct.nodes[i].querySelector('.tx'); if (tx) tx.textContent = st[r]; });
+  }
+  function setAccount(on) { acct.on = !!on; if (acct.el) acct.el.hidden = !acct.on; if (acct.on) revealAccount(true); }
+  {
+    const pb = document.getElementById('acctPlain'), tb = document.getElementById('acctTech'), hb = document.getElementById('acctHide');
+    if (pb) pb.addEventListener('click', function () { setRegister('plain'); });
+    if (tb) tb.addEventListener('click', function () { setRegister('tech'); });
+    if (hb) hb.addEventListener('click', function () { setAccount(false); });
+  }
+
   const cap = document.getElementById('caption');
   function swatch(hex) { return '<i style="background:' + hex + '" title="' + hex + '"></i>'; }
   function viewLink(p) {
@@ -1767,6 +1831,7 @@
     else if (k === 'o') setOriginalView(!origView);
     else if (k === ' ' && motion.on) { e.preventDefault(); setPlaying(!motion.playing); }
     else if (k === 'backspace' && motion.on) { e.preventDefault(); restartMotion(); }
+    else if (k === 'a') { setAccount(acct.el && acct.el.hidden); }
     else if (k.length === 1 && '1234'.indexOf(k) >= 0) { pigment = +k - 1; updateCaption(); }
   });
   function generate() {
@@ -1815,6 +1880,8 @@
       original: { value: 1, options: { 'rises before the absorption': 1, off: 0 }, label: 'original in motion', group: 'motion' },
       wind: { value: 1, min: 0.3, max: 2.5, step: 0.05, label: 'wind', group: 'motion' },
       memory: { value: 1, min: 0, max: 3, step: 0.05, label: 'memory of the painting', group: 'motion' },
+      account: { value: 1, options: { 'shown as it pours (A)': 1, hidden: 0 }, label: 'the account', group: 'label' },
+      register: { value: 0, options: { 'plain': 0, 'technical': 1 }, label: 'account register', group: 'label' },
       label: { value: 1, options: { 'work and artist': 1, off: 0 }, label: 'label', group: 'label' },
       labelPos: { value: 1, options: { 'on the image': 0, 'in the border': 1 }, label: 'label position', group: 'label' },
       labelSize: { value: 1, min: 0.5, max: 2.5, step: 0.05, label: 'label size', group: 'label' },
@@ -1832,6 +1899,8 @@
     },
     onReset: function () {
       const key = G.seed + '|' + SIM_KEYS.map(function (k) { return G.param(k); }).join('|');
+      setAccount(G.param('account') === 1);
+      setRegister(G.param('register') === 1 ? 'tech' : 'plain');
       if (key !== simKey) { simKey = key; if (motion.on) restartMotion(); else build(); }
       else { updateCaption(); dirty = true; }
     },
