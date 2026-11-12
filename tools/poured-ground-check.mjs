@@ -477,7 +477,15 @@ for (let f = 0; f < PG.FORMAT_KEYS.length; f++) for (const ar of [0.5, 0.75, 1, 
         ok(sc.events.filter((e) => e.type === 'drag').every((e) => e.pts.every((q) => !b.r.some((g) => inside(q, g, 0)))), 'no stroke enters an interval ' + id);
         ok(sc.events.filter((e) => e.type === 'pour').every((e) => !b.r.some((g) => inside([e.x, e.y], g, 0))), 'no dab lands in an interval ' + id);
         const off = PG.composeBrief(mulberry32(id * 7 + 3), b, { energy: 1, aspect: A, interp: 0, reserve: 0 });
-        ok(JSON.stringify(off) !== JSON.stringify(sc), 'the reserve changes the score ' + id);
+        // The reserve changes the score exactly when the hand would have entered the strip. A
+        // reading can name an interval that no stroke and no dab happens to cross at this seed —
+        // 17,676 readings turn that from a theoretical case into a real one — and there the
+        // reserve has nothing to remove, so the score must come back identical.
+        const crossed = off.events.some((e) => e.type === 'drag'
+          ? e.pts.some((q) => b.r.some((g) => inside(q, g, e.r * 0.5)))
+          : b.r.some((g) => inside([e.x, e.y], g, e.r * 0.5)));
+        ok(crossed === (JSON.stringify(off) !== JSON.stringify(sc)),
+           'the reserve changes the score when, and only when, the hand crossed an interval ' + id);
       }
       // the hand follows the reader's own order: a configuration's weight is the summed area of
       // the fields it names, and the heaviest one is made first
