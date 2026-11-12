@@ -1625,7 +1625,18 @@
         (motion.on ? ' An instant of the animated version: ' + motionInfo().phase + ', ' + motionInfo().seconds.toFixed(2) + ' s into a ' + loopSeconds().toFixed(2) + ' s cycle (living ' + G.param('gusts') + ' gusts of 048 Plotted Field\'s wind).' : '') +
         (handTouched ? ' Hand-touched: contains marks made by pointer, not reproducible from the URL.' : ' Reproducible from the URL below.'),
       Comment: location.href,
+      // The account, so a print carries its own reasons wherever it travels. The plain register:
+      // the technical one is the URL below plus the code, but why the hand did what it did is not
+      // recoverable from either.
+      Account: accountText(),
     };
+  }
+  // the account as numbered lines, or nothing when there is no measurement to account for
+  function accountText() {
+    if (!acct.steps || !acct.steps.length) return 'No reading and no written layout: composed from the work\'s five colours alone.';
+    return acct.steps.map(function (st) {
+      return (st.phase === 'pour' ? 'step ' + st.at + ': ' : '') + st.plain;
+    }).join('\n');
   }
 
   async function exportImage(dpi, bits, label) {
@@ -1837,7 +1848,10 @@
   function generate() {
     G.shuffle(function (key) {
       // a new composition; the print setup (format, border, dpi, bits) and quality settings stay
-      if (['engine', 'body', 'format', 'landscape', 'border', 'dpi', 'bits', 'simres', 'iterations', 'speed'].indexOf(key) >= 0) return G.param(key);
+      // the print setup, the quality settings and how the account is shown are the viewer's, not
+      // the generation's: a new work must not flip the register or hide the panel
+      if (['engine', 'body', 'format', 'landscape', 'border', 'dpi', 'bits', 'simres', 'iterations', 'speed',
+           'account', 'register'].indexOf(key) >= 0) return G.param(key);
       if (key === 'palette') return -1;
       if (key === 'collection') return G.param('collection');
       if (key === 'mode') return G.param('mode');
