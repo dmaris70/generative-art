@@ -121,8 +121,11 @@
       if (last && last.k === k && e.type !== 'zone') { last.n++; last.to = e.t1 !== undefined ? e.t1 : e.t; return; }
       groups.push({ k: k, e: e, n: 1, from: e.t !== undefined ? e.t : e.t0, to: e.t !== undefined ? e.t : e.t1 });
     });
+    const told = {};
     groups.forEach(function (gr) {
       const e = gr.e, w = e.why || {}, n = gr.n;
+      const again = w.config ? told[w.config + (w.along || '')] : false;
+      if (w.config) told[w.config + (w.along || '')] = true;
       const many = n > 1 ? ' \u00d7' + n : '';
       let tech, plain;
       if (e.type === 'zone') {
@@ -142,10 +145,11 @@
         } else if (w.config) {
           const cw = CONFIGWORD[w.kind] || [w.kind, ''];
           const names = (w.pair || []).map(function (id) { const f = byField[id]; return (f ? (SHORT[f[1]] || 'a field') : 'a field') + ' (' + id + ')'; });
-          tech = sp + ': ' + w.config + ' ' + w.kind + ' ' + (w.pair || []).join('\u2194') + (w.along ? ' along ' + w.along + ' @' + DEG(w.axis) : '') + ', rank ' + w.rank + many;
-          plain = 'It makes the ' + cw[0] + ' between ' + names.join(' and ') + ' in ' + strokes(n) +
+          tech = sp + ': ' + w.config + ' ' + w.kind + ' ' + (w.pair || []).join('\u2194') + (w.along ? ' along ' + w.along + ' @' + DEG(w.axis) : '') + ', rank ' + w.rank + many + (again ? ' (cont.)' : '');
+          plain = (again ? 'It returns to the ' : 'It makes the ') + cw[0] + ' between ' + names.join(' and ') + ' in ' + strokes(n) +
             (w.along ? ', combed along ' + w.along + '\u2019s own direction of ' + DEG(w.axis) : ', dragging paint from one to the other') +
-            (w.rank >= 0.95 ? '. This is the heaviest relation in the picture, so it is made first and hardest.'
+            (again ? ', the layered hand having left it to work another layer first.'
+              : w.rank >= 0.95 ? '. This is the heaviest relation in the picture, so it is made first and hardest.'
               : w.rank < 0.4 ? '. This is among the slightest, so it is made late and lightly.' : '.');
         } else if (w.cell) {
           tech = sp + ': scribble in cell ' + w.cell.join(',') + ', share ' + w.share + ', ' + w.place + many;
