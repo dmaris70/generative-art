@@ -43,7 +43,7 @@
     const add = function (phase, at, tech, plain, data) { out.push({ phase: phase, at: at, tech: tech, plain: plain, data: data || null }); };
 
     // ---- what was read
-    if (read) {
+    if (read && read.shares && read.px) {
       add('read', 0,
         'image ' + read.px[0] + '×' + read.px[1] + ' px, ' + read.source + ', sha256 ' + read.sha256.slice(0, 12) + '…, read ' + String(read.read_on).slice(0, 10) + ' by ' + read.reader,
         'The reader measured a photograph of the painting, ' + read.px[0] + ' by ' + read.px[1] + ' pixels, held by ' + read.source + '. It identifies nothing and traces nothing: it reports where the colour and the weight lie.',
@@ -52,7 +52,7 @@
         'clusters → 5, shares ' + read.shares.map(PCT).join(' / ') + ', map6 [' + read.map6.join(',') + ']',
         'It sorted the picture into six colours and reduced them to five, the two nearest being merged. They hold ' + read.shares.map(PCT).join(', ') + ' of the surface.',
         { shares: read.shares });
-      (read.fields || []).forEach(function (f) {
+      (Array.isArray(read.fields) ? read.fields : []).forEach(function (f) {
         const id = f[0], kind = f[1], occ = f[2], x0 = f[3], y0 = f[4], x1 = f[5], y1 = f[6], cx = f[7], cy = f[8], axis = f[9], vr = f[10];
         add('read', 0,
           id + ' ' + kind + ', occ ' + occ + ', box ' + [x0, y0, x1, y1].join(' ') + ', centroid ' + cx + ',' + cy + ', axis ' + (axis === null ? '\u2014' : DEG(axis)) + ', ' + (vr ? vr.toFixed(2) + ':1' : '\u2014'),
@@ -61,7 +61,7 @@
             (vr > 1.8 ? ' and ' + vr.toFixed(1) + ' times longer than it is wide' : '') + '.',
           { field: id, kind: kind });
       });
-      if ((read.configs || []).length) {
+      if (Array.isArray(read.configs) && read.configs.length) {
         const names = read.configs.map(function (c) { return (CONFIGWORD[c[1]] || [c[1]])[0] + ' (' + c[2].join('\u2013') + ')'; });
         add('read', 0, read.configs.map(function (c) { return c[0] + ' ' + c[1] + ' ' + c[2].join('\u2194'); }).join('; '),
           'It then names the relations between those fields: ' + names.join(', ') + '. Each one becomes a gesture, and nothing else does.',
@@ -118,7 +118,7 @@
     evs.forEach(function (e) {
       const k = e.type + '|' + JSON.stringify(e.why || {});
       const last = groups[groups.length - 1];
-      if (last && last.k === k && e.type === 'drag') { last.n++; last.to = e.t1; return; }
+      if (last && last.k === k && e.type !== 'zone') { last.n++; last.to = e.t1 !== undefined ? e.t1 : e.t; return; }
       groups.push({ k: k, e: e, n: 1, from: e.t !== undefined ? e.t : e.t0, to: e.t !== undefined ? e.t : e.t1 });
     });
     groups.forEach(function (gr) {
@@ -131,8 +131,8 @@
         tech = 'step ' + gr.from + ': lay ' + (w.field || 'a mass') + ' (' + (w.kind || '?') + ', occ ' + w.occ + ', ' + (w.as || '?') + ') at ' + e.cx.toFixed(3) + ',' + e.cy.toFixed(3) + ', channel ' + e.chan;
         plain = 'It pours ' + (SHORT[w.kind] || 'a mass') + (w.field ? ' (' + w.field + ')' : '') + ' ' + place + ', ' + (SHAPEWORD[w.as] || 'as measured') + '.';
       } else if (e.type === 'pour') {
-        tech = 'step ' + gr.from + ': dab, pigment ' + e.pig + ', r ' + e.r.toFixed(3) + ', at ' + e.x.toFixed(3) + ',' + e.y.toFixed(3) + (w.what ? ' \u2014 ' + w.what : '');
-        plain = 'A dab of ' + (w.colour || 'a measured colour') + ' ' + where(e.x, 1 - e.y) + (w.what ? ' \u2014 ' + w.what : '') + '.';
+        tech = 'steps ' + gr.from + (n > 1 ? '\u2013' + gr.to : '') + ': ' + n + ' dab' + (n > 1 ? 's' : '') + ', pigment ' + e.pig + ', r ' + e.r.toFixed(3) + (w.what ? ' \u2014 ' + w.what : '');
+        plain = (n > 1 ? n + ' dabs' : 'A dab') + ' of ' + (w.colour || 'a measured colour') + ', ' + where(e.x, 1 - e.y) + (w.what ? ' \u2014 ' + w.what : '') + '.';
       } else {
         const sp = 'steps ' + gr.from + '\u2013' + gr.to;
         if (w.grain) {
