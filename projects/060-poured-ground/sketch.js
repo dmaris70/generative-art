@@ -1325,12 +1325,15 @@
       } else {
         const spf = G.param('speed');
         for (let i = 0; i < spf; i++) {
+          // ?at=N pours to step N and holds there, so a generation can be walked action by action
+          if (pauseAt >= 0 && S.t >= pauseAt && !handQueue.length && S.live <= 0) break;
           if (S.t < S.score.steps || S.live > 0 || handQueue.length) { step(); stepped = true; if (S.live > 0) S.live--; }
         }
       }
       if (stepped) dirty = true;
       if (dirty) { drawScreen(); dirty = false; }
       revealAccount(false);
+      if (pauseAt >= 0 && S.t >= pauseAt) updateWalk();
       progress.style.width = (100 * Math.min(1, S.t / S.score.steps)) + '%';
       progress.parentNode.classList.toggle('done', S.t >= S.score.steps);
     }
@@ -1709,6 +1712,31 @@
   window.saveCanvas = function () { exportPreview(); }; // the harness's "Save PNG" button
 
   // ---------------------------------------------------------------- caption
+  // ---- walking a generation, one action at a time ------------------------------------------
+  // ?at=N holds the pour at step N. The account's own steps are the stations: each is a link, so
+  // a single action of a single generation has an address someone else can open.
+  let pauseAt = -1;
+  {
+    const q = new URLSearchParams(location.search).get('at');
+    if (q !== null && isFinite(+q)) pauseAt = Math.max(0, Math.floor(+q));
+  }
+  function stationsOf() {
+    return acct.steps ? acct.steps.filter(function (x) { return x.phase === 'pour'; }).map(function (x) { return x.at; }) : [];
+  }
+  function urlAt(n) {
+    const u = new URL(location.href);
+    if (n === null) u.searchParams.delete('at'); else u.searchParams.set('at', String(n));
+    return u.toString();
+  }
+  function walkTo(n) {                     // forward is a re-pour of a few steps; back is a rebuild
+    const back = n !== null && S && n < S.t;
+    pauseAt = n === null ? -1 : n;
+    history.replaceState(null, '', urlAt(n));
+    if (back) { simKey = ''; build(); }
+    dirty = true;
+    updateWalk();
+  }
+
   // ---------------------------------------------------------------- the account
   // What the reader found, what it told the hand, and each move as it is made. Generated from the
   // record by narrate.js: every line carries a value out of the reading, the brief or the score.
@@ -1737,6 +1765,7 @@
     acct.list.classList.toggle('tech', acct.reg === 'tech');
     acct.el.hidden = !acct.on;
     revealAccount(true);
+    updateWalk();
   }
   function revealAccount(force) {
     if (!acct.steps || acct.el.hidden) return;
@@ -1763,7 +1792,33 @@
     acct.list.classList.toggle('tech', r === 'tech');
     if (acct.steps) acct.steps.forEach(function (st, i) { const tx = acct.nodes[i] && acct.nodes[i].querySelector('.tx'); if (tx) tx.textContent = st[r]; });
   }
-  function setAccount(on) { acct.on = !!on; if (acct.el) acct.el.hidden = !acct.on; if (acct.on) revealAccount(true); }
+  function setAccount(on) { acct.on = !!on; if (acct.el) acct.el.hidden = !acct.on; if (acct.on) { revealAccount(true); updateWalk(); } }
+  // the walk: where the pour is held, and the two links out of it
+  function updateWalk() {
+    const el = document.getElementById('acctWalk');
+    if (!el) return;
+    const st = stationsOf();
+    if (!st.length || !S) { el.hidden = true; return; }
+    el.hidden = false;
+    const t = S.t;
+    let i = -1;
+    for (let k = 0; k < st.length; k++) if (st[k] <= t) i = k;
+    const prev = i > 0 ? st[i - 1] : (i === 0 ? 0 : null);
+    const next = i + 1 < st.length ? st[i + 1] : null;
+    const held = pauseAt >= 0;
+    // rebuilt only when something changes: the frame loop calls this while the pour is held, and
+    // replacing the links every frame detaches them from under the pointer
+    const sig = [t, i, prev, next, held].join('|');
+    if (el.dataset.sig === sig) return;
+    el.dataset.sig = sig;
+    el.innerHTML =
+      '<a id="walkPrev" href="' + (prev === null ? '#' : urlAt(prev)) + '"' + (prev === null ? ' class="off"' : '') + '>\u2190 previous</a>' +
+      '<span class="pos">' + (held ? 'held at step ' + t : 'step ' + t) + ' \u00b7 ' + (i + 1) + ' of ' + st.length + '</span>' +
+      '<a id="walkNext" href="' + (next === null ? urlAt(null) : urlAt(next)) + '">' + (next === null ? 'to the end \u2192' : 'next \u2192') + '</a>';
+    const pv = document.getElementById('walkPrev'), nx = document.getElementById('walkNext');
+    if (pv) pv.addEventListener('click', function (e) { if (prev === null) { e.preventDefault(); return; } e.preventDefault(); walkTo(prev); });
+    if (nx) nx.addEventListener('click', function (e) { e.preventDefault(); walkTo(next === null ? null : next); });
+  }
   {
     const pb = document.getElementById('acctPlain'), tb = document.getElementById('acctTech'), hb = document.getElementById('acctHide');
     if (pb) pb.addEventListener('click', function () { setRegister('plain'); });

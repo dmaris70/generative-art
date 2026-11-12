@@ -33,6 +33,12 @@
       font: inherit; font-size: 11px; padding: 2px 8px; cursor: pointer; }
     #account .head button[aria-pressed="true"] { background: #ffffff14; color: #efe6d6; border-color: #ffffff44; }
     #account .head .sp { flex: 1; }
+    #acctWalk { display: flex; gap: 10px; align-items: baseline; padding: 2px 18px 10px 24px; border-bottom: 1px solid #ffffff14; margin-bottom: 8px; }
+    #acctWalk[hidden] { display: none; }
+    #acctWalk a { color: #e8d9bf; text-decoration: none; border-bottom: 1px solid #e8d9bf55; font-size: 11px; }
+    #acctWalk a:hover { border-bottom-color: #e8d9bf; }
+    #acctWalk a.off { opacity: .3; pointer-events: none; border-bottom-color: transparent; }
+    #acctWalk .pos { flex: 1; text-align: center; color: #8d8676; font-size: 10px; font-variant-numeric: tabular-nums; }
     #acctList { overflow-y: auto; padding: 0 18px 18px 24px; scrollbar-width: thin; }
     #acctList .ph { color: #8d8676; text-transform: uppercase; letter-spacing: .12em; font-size: 10px; margin: 14px 0 6px; }
     #acctList .st { padding: 3px 0 3px 12px; border-left: 2px solid transparent; opacity: .45; transition: opacity .35s, border-color .35s, color .35s; }
@@ -70,6 +76,7 @@
       <button id="acctHide" title="hide (A)">×</button>
       <span class="sp"></span>
     </div>
+    <div id="acctWalk" hidden></div>
     <div id="acctList"></div>
   </div>
   <div id="status" hidden></div>
