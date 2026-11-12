@@ -40,7 +40,16 @@
     #acctList .st.now { opacity: 1; border-left-color: #e8d9bf; color: #efe6d6; }
     #acctList .st .at { color: #8d8676; font-size: 10px; margin-right: 6px; font-variant-numeric: tabular-nums; }
     #acctList.tech .st { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 11px; }
-    @media (max-width: 1100px) { #account { display: none; } }
+    /* narrow: the account becomes a sheet along the bottom rather than vanishing */
+    @media (max-width: 1100px) {
+      /* narrow, the settings panel goes full width, so the sheet sits above it and the x
+         dismisses it; the settings' own "the account" entry brings it back */
+      #account { top: auto; right: 0; left: 0; bottom: 0; width: auto; height: 42vh; z-index: 1002;
+        background: linear-gradient(to top, #0b0b0ef8 80%, #0b0b0ec0); }
+      #account .head { padding: 10px 16px 6px; }
+      #acctList { padding: 0 16px 16px; }
+      #caption { display: none; }
+    }
   </style>
   <script src="https://cdn.jsdelivr.net/npm/lil-gui@0.19/dist/lil-gui.umd.min.js"></script>
   <script src="../../assets/genart.js"></script>
