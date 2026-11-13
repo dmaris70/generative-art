@@ -33,7 +33,7 @@ v1 is the method above, kept unchanged so that earlier prints and links can be r
 | Pressure | 30 Jacobi iterations (16-bit float). Information travels about 30 cells, so a finer grid is less incompressible and the same seed spreads differently at 512 and 2048 | Multigrid V-cycles (two per step, weighted-Jacobi smoothing, 32-bit float). The solve converges at every grid size, so the flow is the same in sheet units |
 | Walls | Velocity zeroed after advection, then re-introduced by the projection | Held at zero after the projection too, so no paint is drawn in from beyond the edge |
 | Paint transport | mofu's rule: `removed` where the paint is, `added` from the backtraced source. Not conservative: circular motion adds liquid | Same `removed` (outflow). The arrivals are that outflow gathered from the backtraced source, and each step they are rescaled per pigment so they total exactly what left. Paint is neither made nor lost; resting paint is untouched |
-| Levelling | Each moving cell blends toward its neighbours, one cell per step, so it is 16× weaker in sheet units at 2048 than at 512 | An exchange between neighbour pairs, so it conserves paint, scaled by (grid / 1024)² with stable sub-steps. It matches v1's strength at the default 1024 and is the same in sheet units at every size |
+| Levelling | Each moving cell blends toward its neighbours, one cell per step, so it is 16× weaker in sheet units at 2048 than at 512 | An exchange between neighbour pairs, so it conserves paint, scaled by (grid / 1024)² with stable sub-steps. It matches v1's strength at 1024 and is the same in sheet units at every size |
 
 Everything mofu-specific is unchanged: the movement threshold (0.02–0.22), the 0.3 transfer
 factor, the pour profile, the trace history and the rendering. The elastic memory of the
@@ -148,7 +148,7 @@ layout. The output is an abstracted interpretation, not a reproduction.
 
 ### From starting point to interpretation
 
-The brief is only the **starting point**. The `interpretation` setting (0–1, default 0.65) sets
+The brief is only the **starting point**. The `interpretation` setting (0–1, default 0.35) sets
 how far each generation travels from it. As it rises, the seed applies one to three
 **readings** to the layout:
 
@@ -508,7 +508,7 @@ Two settings in *surface*, both answering an outside critique of the prints:
   sharpness runs 14 to 90 and its strength 0.3 to 1.15 across a film thickness of 0.006 to 0.05.
   Before, one sharpness served both, so a filament and a pool wore the same slick highlight and the
   surface read as liquid plastic rather than as paint of varying body.
-- **`trace`, the memory of the pour** (0 to 1, default 0.5). The render combines the present film
+- **`trace`, the memory of the pour** (0 to 1, default 0.25). The render combines the present film
   with the record of everywhere paint has been. At 0 only the present film shows; at 1 the record
   holds the silhouettes as laid behind the moved paint, which is where the measured structure and
   the liquid meet on one surface. 0.5 is what every print before this setting was made with, so it
