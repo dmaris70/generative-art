@@ -398,6 +398,19 @@ liquid does not actually do, and the canvas walls keep everything on the sheet.
       with the interpretation at any moment, still or animated. It is a view only: prints and
       recordings never include it.
     - For a work in copyright the toggle is unavailable and says so, and no image is requested.
+    - **Files we hold ourselves.** Some museums serve their open-access images without an
+      `Access-Control-Allow-Origin` header. The browser will still show such a file, but it will
+      not let the paint read its pixels, so the source could be viewed and never rise through the
+      pour. The Cleveland Museum of Art is one, covering 145 archive works. For the 144 of those
+      its API confirms CC0 we keep our own copy under `originals/cma/`, served from this origin;
+      the one it marks copyrighted keeps the remote file and the view-only fallback. Each held
+      file is the museum's own, scaled so its long side is at most 1024px and re-encoded (JPEG
+      q82) — 47 MB of source becomes 14 MB, and 119 of the 144 were already within that bound, so
+      most of the saving is encoding rather than scale. `originals/cma/held.json` records, per
+      work, the source URL, the sha256 of the museum file as the reader measured it, and the
+      sha256 and size of the file we hold; the check script verifies every one of them, so the
+      chain from museum file to held derivative stays auditable. The credit and the link still
+      name the museum. Works whose source does send the header are untouched and load remotely.
     - **Original in motion** (*rises before the absorption* or *off*) controls whether the
       source rises in the animated version.
   - **View the painting, for every work:** the studio card and the piece's caption link to a

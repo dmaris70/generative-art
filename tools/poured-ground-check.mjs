@@ -311,6 +311,53 @@ BRIEFS.forEach((b, i) => {
   }
 }
 
+// 9b. Files we hold ourselves because their museum sends no Access-Control-Allow-Origin, which
+//     stops the browser letting the paint read the pixels. Each is a derivative of a file the
+//     reader measured, so the chain has to stay checkable: manifest -> held bytes -> source hash.
+{
+  const fs = require('fs'), path = require('path'), crypto = require('crypto');
+  const dir = path.join(path.dirname(new URL(import.meta.url).pathname), '../projects/060-poured-ground');
+  const held = path.join(dir, 'originals', 'cma', 'held.json');
+  if (fs.existsSync(held)) {
+    const H = JSON.parse(fs.readFileSync(held, 'utf8'));
+    ok(Array.isArray(H.works) && H.works.length === H.count, 'held manifest counts its own works (' + H.count + ')');
+    const seen = new Set();
+    let bytes = 0;
+    for (const w of H.works) {
+      const who = 'held ' + w.accession;
+      ok(/^[0-9]{4}\.[0-9A-Za-z.]+$/.test(w.accession), 'held file carries a museum accession ' + who);
+      ok(!seen.has(w.accession), 'held file is listed once ' + who); seen.add(w.accession);
+      ok(/^https:\/\//.test(w.source_url), 'held file names where it came from ' + who);
+      const f = path.join(dir, 'originals', 'cma', w.file);
+      ok(fs.existsSync(f), 'held file present ' + who);
+      const buf = fs.readFileSync(f);
+      ok(crypto.createHash('sha256').update(buf).digest('hex') === w.sha256, 'held file matches its manifest hash ' + who);
+      ok(buf.length === w.bytes, 'held file matches its manifest size ' + who);
+      ok(w.px[0] <= 1024 && w.px[1] <= 1024, 'held file is within the stated 1024px bound ' + who);
+      ok(/^[0-9a-f]{64}$/.test(w.source_sha256 || ''), 'held file records the hash of the museum file it derives from ' + who);
+      bytes += w.bytes;
+    }
+    ok(bytes === H.bytes_held, 'held manifest totals its own bytes (' + (bytes / 1048576).toFixed(1) + ' MB)');
+    // every shard pointer resolves to a file the manifest vouches for, and only for works we may hold
+    const arc = path.join(dir, 'archive');
+    let pointers = 0;
+    for (const f of fs.readdirSync(arc)) {
+      if (!f.endsWith('.json') || f === 'index.json') continue;
+      const d = JSON.parse(fs.readFileSync(path.join(arc, f), 'utf8'));
+      if (!Array.isArray(d)) continue;
+      for (const w of d) {
+        if (!w || !w.l) continue;
+        pointers++;
+        ok(w.pd === true, 'a held copy is only kept for a public-domain work ' + f + ' ' + w.t);
+        ok(/^originals\/cma\/[0-9]{4}\.[0-9A-Za-z.]+\.jpg$/.test(w.l), 'held pointer is a path inside this project ' + w.l);
+        ok(fs.existsSync(path.join(dir, w.l)), 'held pointer resolves ' + w.l);
+        ok(seen.has(path.basename(w.l).replace(/\.jpg$/, '')), 'held pointer is vouched for by the manifest ' + w.l);
+      }
+    }
+    ok(pointers === H.count, 'every held file is pointed at by exactly one work (' + pointers + ')');
+  }
+}
+
 // 10. View links: every work has a link to view the painting itself (https) and an image search.
 {
   const path = require('path');

@@ -1,0 +1,2605 @@
+{
+ "what": "Public-domain files held in this repository because their museum server sends no Access-Control-Allow-Origin, which stops the browser letting the paint read their pixels.",
+ "museum": "The Cleveland Museum of Art",
+ "rights": "Every file below was confirmed share_license_status CC0 through the museum API at fetch time.",
+ "derivation": "Fetched from source_url, scaled so the long side is at most 1024px (Lanczos; left alone when already smaller), re-encoded JPEG quality 82, progressive, optimized.",
+ "source_sha256": "The sha256 of the museum file as measured by the painting reader, where a reading for that work exists. The held file is a derivative and hashes differently.",
+ "fetched": "2026-11-13",
+ "count": 144,
+ "bytes_source": 49237485,
+ "bytes_held": 14877145,
+ "works": [
+  {
+   "accession": "1915.684",
+   "title": "The Monastery of San Pedro (Our Lady of the Snows)",
+   "source_url": "https://openaccess-cdn.clevelandart.org/1915.684/1915.684_web.jpg",
+   "source_px": [
+    1263,
+    812
+   ],
+   "source_bytes": 707971,
+   "source_sha256": "e57878259c8f2ed6d78ad06aa90797ace27c64be688145dd5ca67dcbff9e4c8f",
+   "file": "1915.684.jpg",
+   "px": [
+    1024,
+    658
+   ],
+   "bytes": 85458,
+   "sha256": "dcdff6374f141f1d20eb143acefc582d54e569d1c8c26094a1ed7eceb43fd10e"
+  },
+  {
+   "accession": "1916.1031",
+   "title": "The Pancakes",
+   "source_url": "https://openaccess-cdn.clevelandart.org/1916.1031/1916.1031_web.jpg",
+   "source_px": [
+    755,
+    893
+   ],
+   "source_bytes": 100172,
+   "source_sha256": "169b0ab98f06ceb0e8d936b2c7d691be9c3879c62086103c3c9fa4142d053325",
+   "file": "1916.1031.jpg",
+   "px": [
+    755,
+    893
+   ],
+   "bytes": 91590,
+   "sha256": "19c48451b1cce2e2344d3aaf4210ca12f04fafdcbf5a4e210347a8adc5009e16"
+  },
+  {
+   "accession": "1916.1036",
+   "title": "Queen Mab's Cave",
+   "source_url": "https://openaccess-cdn.clevelandart.org/1916.1036/1916.1036_web.jpg",
+   "source_px": [
+    1087,
+    893
+   ],
+   "source_bytes": 218321,
+   "source_sha256": "b84e005332288229d808172a7610b501d9977c0b4668e333faea5ff780157223",
+   "file": "1916.1036.jpg",
+   "px": [
+    1024,
+    841
+   ],
+   "bytes": 160778,
+   "sha256": "c4ddd5465f82a025dfc19344a1e3652504af38f05bd72e44f1e604609e1cfd09"
+  },
+  {
+   "accession": "1916.1037",
+   "title": "The Triumph of the Church",
+   "source_url": "https://openaccess-cdn.clevelandart.org/1916.1037/1916.1037_web.jpg",
+   "source_px": [
+    1263,
+    874
+   ],
+   "source_bytes": 931019,
+   "source_sha256": "c4915cbaaf938986e28c08c34da38fc9736195b1df4317b1dbbb0de609efdc01",
+   "file": "1916.1037.jpg",
+   "px": [
+    1024,
+    709
+   ],
+   "bytes": 142875,
+   "sha256": "941449f88ee7dabdabce151231b1d98b7b1148f2d195de4c991915d9d539f88e"
+  },
+  {
+   "accession": "1916.1038",
+   "title": "Tannhäuser",
+   "source_url": "https://openaccess-cdn.clevelandart.org/1916.1038/1916.1038_web.jpg",
+   "source_px": [
+    750,
+    621
+   ],
+   "source_bytes": 62460,
+   "source_sha256": "aa7fe9d426cb110a258dfcdba5ad129eb27726093a802c481f50d98f5a189978",
+   "file": "1916.1038.jpg",
+   "px": [
+    750,
+    621
+   ],
+   "bytes": 62056,
+   "sha256": "015413e3631c67b2446934094179142eeb09c884b854df6b2a87a405e9f81b85"
+  },
+  {
+   "accession": "1916.1039",
+   "title": "Portrait of Charles I",
+   "source_url": "https://openaccess-cdn.clevelandart.org/1916.1039/1916.1039_web.jpg",
+   "source_px": [
+    730,
+    893
+   ],
+   "source_bytes": 476948,
+   "source_sha256": "805e7c6ceb78fbf57237df9161c5ca739174fb9347c97ba8af96f3e4548bc420",
+   "file": "1916.1039.jpg",
+   "px": [
+    730,
+    893
+   ],
+   "bytes": 88438,
+   "sha256": "defb03d0419dc2aa0e00382b9a2e9e9974690cbdccd9e885953e5dfe8e0dbaa4"
+  },
+  {
+   "accession": "1916.1044",
+   "title": "Gardener's House at Antibes",
+   "source_url": "https://openaccess-cdn.clevelandart.org/1916.1044/1916.1044_web.jpg",
+   "source_px": [
+    900,
+    640
+   ],
+   "source_bytes": 404254,
+   "source_sha256": "95142eba48d54f01352eb4ef6f04260cb3df3bcb1d9c86000c1284a7817674ca",
+   "file": "1916.1044.jpg",
+   "px": [
+    900,
+    640
+   ],
+   "bytes": 146515,
+   "sha256": "b7337b0727e3a79f0aa01600261433e4fc75dd02cf313eca0d07f277b0fc94f9"
+  },
+  {
+   "accession": "1916.784",
+   "title": "Martyrdom of Saint Andrew",
+   "source_url": "https://openaccess-cdn.clevelandart.org/1916.784/1916.784_web.jpg",
+   "source_px": [
+    745,
+    893
+   ],
+   "source_bytes": 526864,
+   "source_sha256": "62aa5e654f462346193315f00108a08a8bfdb7616cfebd1ae85c225f4b38e43f",
+   "file": "1916.784.jpg",
+   "px": [
+    745,
+    893
+   ],
+   "bytes": 114546,
+   "sha256": "4aba311e4c92334440c154199c22ccaea14dd726c8cd640d880833eb85cf1bc5"
+  },
+  {
+   "accession": "1916.802",
+   "title": "Virgin and Child with Angels",
+   "source_url": "https://openaccess-cdn.clevelandart.org/1916.802/1916.802_web.jpg",
+   "source_px": [
+    526,
+    900
+   ],
+   "source_bytes": 239260,
+   "source_sha256": "5562f724b48dcf5a6022510e4c57a1a296fcb8af41accae3c8806741d2bf3f86",
+   "file": "1916.802.jpg",
+   "px": [
+    526,
+    900
+   ],
+   "bytes": 97153,
+   "sha256": "171cfba8e81d529476a0499900bc54700c992f267a03ca33204a2c7da6797639"
+  },
+  {
+   "accession": "1917.1335",
+   "title": "View of Schroon Mountain, Essex County",
+   "source_url": "https://openaccess-cdn.clevelandart.org/1917.1335/1917.1335_web.jpg",
+   "source_px": [
+    1263,
+    775
+   ],
+   "source_bytes": 720133,
+   "source_sha256": "63745821f5b97d6597ffe2c26f4382192cd4eb6e527a321e493aecb039234082",
+   "file": "1917.1335.jpg",
+   "px": [
+    1024,
+    628
+   ],
+   "bytes": 87957,
+   "sha256": "42c2a4f9117ef574ce2b70042475ef637058f8421b7a2dabcb2dc7be8f3c4e5e"
+  },
+  {
+   "accession": "1917.63",
+   "title": "Beach Scene",
+   "source_url": "https://openaccess-cdn.clevelandart.org/1917.63/1917.63_web.jpg",
+   "source_px": [
+    1263,
+    759
+   ],
+   "source_bytes": 204255,
+   "source_sha256": "b7e7af7f0f1c587fc34aec47cf74108c026ada554289f34de127f81ff43f8567",
+   "file": "1917.63.jpg",
+   "px": [
+    1024,
+    615
+   ],
+   "bytes": 109143,
+   "sha256": "99f6fb2ac29fd3c99bf58dece3357c4ef603f1a200221871e121a8f6dfe7ece3"
+  },
+  {
+   "accession": "1920.254",
+   "title": "Portrait of My Daughter Alice",
+   "source_url": "https://openaccess-cdn.clevelandart.org/1920.254/1920.254_web.jpg",
+   "source_px": [
+    592,
+    893
+   ],
+   "source_bytes": 76961,
+   "source_sha256": "f5d129893665c9583fda46dc86296c3e132f39fcbb70163e56db0d1882bc7bcc",
+   "file": "1920.254.jpg",
+   "px": [
+    592,
+    893
+   ],
+   "bytes": 69353,
+   "sha256": "590b745b1103106ef9da4dd54ce65b85cd1fa3eb3c8000e542a150fe906fa329"
+  },
+  {
+   "accession": "1921.1239",
+   "title": "Portrait of Dora Wheeler",
+   "source_url": "https://openaccess-cdn.clevelandart.org/1921.1239/1921.1239_web.jpg",
+   "source_px": [
+    939,
+    893
+   ],
+   "source_bytes": 179089,
+   "source_sha256": "e516121c316dcc420843fbae9710f772903088c5a1977b65bdd3a432bc0f7d54",
+   "file": "1921.1239.jpg",
+   "px": [
+    939,
+    893
+   ],
+   "bytes": 161785,
+   "sha256": "f99a34b2b110ccf8506ee3e522ee4c7d0e842c54bb022ed69f4a9b5d09920c9d"
+  },
+  {
+   "accession": "1921.428",
+   "title": "Elizabeth Beltzhoover Mason",
+   "source_url": "https://openaccess-cdn.clevelandart.org/1921.428/1921.428_web.jpg",
+   "source_px": [
+    743,
+    900
+   ],
+   "source_bytes": 207648,
+   "source_sha256": "15c6eff468839d463d40cad6d08bf961714f793e54b3d8a71002d2a11bda30f9",
+   "file": "1921.428.jpg",
+   "px": [
+    743,
+    900
+   ],
+   "bytes": 86646,
+   "sha256": "ba59242edfa095b7a480fde27afe2421036d01df71cc659d7ca80ae87839e86e"
+  },
+  {
+   "accession": "1926.1653",
+   "title": "On the Beach, No. 3",
+   "source_url": "https://openaccess-cdn.clevelandart.org/1926.1653/1926.1653_web.jpg",
+   "source_px": [
+    900,
+    683
+   ],
+   "source_bytes": 497368,
+   "source_sha256": "f0c8c47277f6336c0f9d0e72baa224f25b1d76edeacb74dcebacbb3eba581a35",
+   "file": "1926.1653.jpg",
+   "px": [
+    900,
+    683
+   ],
+   "bytes": 177585,
+   "sha256": "26d9a13ab2ff5018eeaa6dd18b68bcf27c981766f49e97c94230b2ba998f31d6"
+  },
+  {
+   "accession": "1926.247",
+   "title": "The Holy Family with Mary Magdalen",
+   "source_url": "https://openaccess-cdn.clevelandart.org/1926.247/1926.247_web.jpg",
+   "source_px": [
+    679,
+    893
+   ],
+   "source_bytes": 495819,
+   "source_sha256": "1dcd914bed6ed17d5ca9da78841af52675e589722c18699dd628ff17b9d9a18e",
+   "file": "1926.247.jpg",
+   "px": [
+    679,
+    893
+   ],
+   "bytes": 111569,
+   "sha256": "028faa9c4df20412a3264c617da42218aa63b1957577239321dbbd1a65ec3a74"
+  },
+  {
+   "accession": "1927.171",
+   "title": "The Building of the Dam",
+   "source_url": "https://openaccess-cdn.clevelandart.org/1927.171/1927.171_web.jpg",
+   "source_px": [
+    900,
+    668
+   ],
+   "source_bytes": 305148,
+   "source_sha256": "9a3dabf85e7257d58ae7586e8e8384bee515eb877d55f0f1ae3ee136ba209dbf",
+   "file": "1927.171.jpg",
+   "px": [
+    900,
+    668
+   ],
+   "bytes": 154063,
+   "sha256": "a593a977250fb962ca21d39ba47fb4e416ed3725f1891ad14c3d3ae69d1adf78"
+  },
+  {
+   "accession": "1927.394",
+   "title": "Dr. James Stuart; Mary Campbell Stuart",
+   "source_url": "https://openaccess-cdn.clevelandart.org/1927.394/1927.394_web.jpg",
+   "source_px": [
+    900,
+    562
+   ],
+   "source_bytes": 189207,
+   "source_sha256": "138410df2c98a8c8a4b48fa16293f327fecbe038aff48fe8a0418c53cbd28c33",
+   "file": "1927.394.jpg",
+   "px": [
+    900,
+    562
+   ],
+   "bytes": 58001,
+   "sha256": "e8f7aec16f68c03b6b1daf2c729f5477e4ed43daca7770b97c7877ded0cfd27d"
+  },
+  {
+   "accession": "1927.394.1",
+   "title": "Dr. James Stuart",
+   "source_url": "https://openaccess-cdn.clevelandart.org/1927.394.1/1927.394.1_web.jpg",
+   "source_px": [
+    703,
+    893
+   ],
+   "source_bytes": 381051,
+   "source_sha256": "89b44d047265a100f67194fa9201bdfbc18b9e4c755af6442328cc36b3600f50",
+   "file": "1927.394.1.jpg",
+   "px": [
+    703,
+    893
+   ],
+   "bytes": 58970,
+   "sha256": "752add263f3c40b4bdaa2f9386f47206cc57b7963e13a849b059c13ba642386e"
+  },
+  {
+   "accession": "1927.394.2",
+   "title": "Mary Campbell Stuart",
+   "source_url": "https://openaccess-cdn.clevelandart.org/1927.394.2/1927.394.2_web.jpg",
+   "source_px": [
+    710,
+    893
+   ],
+   "source_bytes": 420163,
+   "source_sha256": "e0994c152c4112f97171bab5ccc31f738b3399f1ac063cd5521911a338f47cd4",
+   "file": "1927.394.2.jpg",
+   "px": [
+    710,
+    893
+   ],
+   "bytes": 73996,
+   "sha256": "6bf60b0783c89671c701423846f5d591086b7d3e24f3e97bce03ea448a42a491"
+  },
+  {
+   "accession": "1927.397",
+   "title": "The Cossack",
+   "source_url": "https://openaccess-cdn.clevelandart.org/1927.397/1927.397_web.jpg",
+   "source_px": [
+    710,
+    893
+   ],
+   "source_bytes": 415257,
+   "source_sha256": "35a015e7bcec5968b1dbe14b645f09271a021fe9c3ef44c93d2b1a47a8494732",
+   "file": "1927.397.jpg",
+   "px": [
+    710,
+    893
+   ],
+   "bytes": 66074,
+   "sha256": "821d92240da9cc185c1b8f67f6d9340421afb56e188af63c6c2ecf38dd2b3c77"
+  },
+  {
+   "accession": "1928.16",
+   "title": "Portrait of Agostino Barbarigo",
+   "source_url": "https://openaccess-cdn.clevelandart.org/1928.16/1928.16_web.jpg",
+   "source_px": [
+    900,
+    882
+   ],
+   "source_bytes": 327683,
+   "source_sha256": "a29da034c54d1fdfade40f736e91153810e652cac33877df3b8ac6e7a2712380",
+   "file": "1928.16.jpg",
+   "px": [
+    900,
+    882
+   ],
+   "bytes": 105477,
+   "sha256": "ab68135a623587d991c4c7d5023345e4c6d7ec07463a885b63b04669b9dc6247"
+  },
+  {
+   "accession": "1935.217",
+   "title": "Storm Clouds",
+   "source_url": "https://openaccess-cdn.clevelandart.org/1935.217/1935.217_web.jpg",
+   "source_px": [
+    1263,
+    762
+   ],
+   "source_bytes": 700061,
+   "source_sha256": "6b60e8a5fe2229c3373c75400c2397c7f81687aaa8543eb84af1c6d67e24dd3b",
+   "file": "1935.217.jpg",
+   "px": [
+    1024,
+    618
+   ],
+   "bytes": 92270,
+   "sha256": "d7fb6106be4ca4d9cb2f84ceeb4d249f230b805925e48601c15eaa2c97d67b98"
+  },
+  {
+   "accession": "1935.233",
+   "title": "Vase of Flowers",
+   "source_url": "https://openaccess-cdn.clevelandart.org/1935.233/1935.233_web.jpg",
+   "source_px": [
+    657,
+    893
+   ],
+   "source_bytes": 560470,
+   "source_sha256": "2a5683f8c1eb79c7f9f260455fa93482ed138ba1cd8b5000b5636fd4c05497d9",
+   "file": "1935.233.jpg",
+   "px": [
+    657,
+    893
+   ],
+   "bytes": 147175,
+   "sha256": "a9bc04002d98c8d46b29f9a3549b9b4557d5b9e5ae361eca31d8e8b97c127fa0"
+  },
+  {
+   "accession": "1936.19",
+   "title": "The Pigeon Tower at Bellevue",
+   "source_url": "https://openaccess-cdn.clevelandart.org/1936.19/1936.19_web.jpg",
+   "source_px": [
+    900,
+    723
+   ],
+   "source_bytes": 253455,
+   "source_sha256": "7068049d30d2563263dfdd52a4a08b796e4feb9dc4eee2cab423f13da6d31743",
+   "file": "1936.19.jpg",
+   "px": [
+    900,
+    723
+   ],
+   "bytes": 99017,
+   "sha256": "72bd55cd9818a565640248dec084ccd3e1bd585d595c53ed3be126592dfef65d"
+  },
+  {
+   "accession": "1937.577",
+   "title": "The Sacrifice of Isaac",
+   "source_url": "https://openaccess-cdn.clevelandart.org/1937.577/1937.577_web.jpg",
+   "source_px": [
+    697,
+    900
+   ],
+   "source_bytes": 296747,
+   "source_sha256": "0761a2b91cf2989818ae6328893d19fdc38c5b45801eba264b9e4a12b256a49d",
+   "file": "1937.577.jpg",
+   "px": [
+    697,
+    900
+   ],
+   "bytes": 97469,
+   "sha256": "6b4c108ff441f4893a082e429dd1f4ec7b258da604bd115cd362a8aba1261ab3"
+  },
+  {
+   "accession": "1938.333",
+   "title": "The Old Road to the Sea",
+   "source_url": "https://openaccess-cdn.clevelandart.org/1938.333/1938.333_web.jpg",
+   "source_px": [
+    900,
+    719
+   ],
+   "source_bytes": 218857,
+   "source_sha256": "990e2ce6eb666788aede26e8cbb2654d1cf2922c1c069dc9ea4273450f7a4938",
+   "file": "1938.333.jpg",
+   "px": [
+    900,
+    719
+   ],
+   "bytes": 85937,
+   "sha256": "bf46c315819bdc38e270de866cc61194e46259a21a9cd9571a884e6c698f43ee"
+  },
+  {
+   "accession": "1938.38",
+   "title": "Carmel Hills",
+   "source_url": "https://openaccess-cdn.clevelandart.org/1938.38/1938.38_web.jpg",
+   "source_px": [
+    750,
+    657
+   ],
+   "source_bytes": 73734,
+   "source_sha256": "09a80df223ab2b7e4f5b6b59301112a16745f02174f224b640238c07ba8a7923",
+   "file": "1938.38.jpg",
+   "px": [
+    750,
+    657
+   ],
+   "bytes": 73857,
+   "sha256": "900b2fd5719846bdd00bab27385e7f3211ff3b3e3629cc9bce7c86aca935f25a"
+  },
+  {
+   "accession": "1938.45",
+   "title": "Boy in a Blue Coat",
+   "source_url": "https://openaccess-cdn.clevelandart.org/1938.45/1938.45_web.jpg",
+   "source_px": [
+    673,
+    893
+   ],
+   "source_bytes": 388174,
+   "source_sha256": "0ae4f13cd3691e690ae06c6d7b2f0584a8f80475f32b324b5cfdd2795e39cdff",
+   "file": "1938.45.jpg",
+   "px": [
+    673,
+    893
+   ],
+   "bytes": 65194,
+   "sha256": "58d1f53939afb3315ce50bd3b0ee7e752df5466036afaa7d1417fe2fcd82ef5e"
+  },
+  {
+   "accession": "1939.165",
+   "title": "The Dock of Deauville",
+   "source_url": "https://openaccess-cdn.clevelandart.org/1939.165/1939.165_web.jpg",
+   "source_px": [
+    728,
+    900
+   ],
+   "source_bytes": 220642,
+   "source_sha256": "5c9e98d001e9805b681f2b569e64e38d4008feb09bbced89ff3bca94875f124c",
+   "file": "1939.165.jpg",
+   "px": [
+    728,
+    900
+   ],
+   "bytes": 113377,
+   "sha256": "b89874a4d969149c84dcc323b01b69a089573cefe3ac7ddf4233f0da4b43987d"
+  },
+  {
+   "accession": "1939.269",
+   "title": "Bathers Playing with a Crab",
+   "source_url": "https://openaccess-cdn.clevelandart.org/1939.269/1939.269_web.jpg",
+   "source_px": [
+    900,
+    748
+   ],
+   "source_bytes": 247641,
+   "source_sha256": "fbb243222307b946b395ddd4b662325b15a39f471cf3f28e2520b60cb94ff8a0",
+   "file": "1939.269.jpg",
+   "px": [
+    900,
+    748
+   ],
+   "bytes": 100583,
+   "sha256": "129575d2a8dba4c5de018a6d4c0a66a25437f6054aa20fd70fd583bd3a05cea7"
+  },
+  {
+   "accession": "1941.14",
+   "title": "Roses in a Vase",
+   "source_url": "https://openaccess-cdn.clevelandart.org/1941.14/1941.14_web.jpg",
+   "source_px": [
+    900,
+    654
+   ],
+   "source_bytes": 251269,
+   "source_sha256": "3c38844f80cb7e24b6c7ac4a97326ed5aa1f2c6b1fb0033a1d39da91ca54bae5",
+   "file": "1941.14.jpg",
+   "px": [
+    900,
+    654
+   ],
+   "bytes": 99179,
+   "sha256": "596b4c99555b9e57e648d0d619d068f77f3a331041b133ab4a0ac48a413cc148"
+  },
+  {
+   "accession": "1942.122",
+   "title": "Deserted Wharf (the Old Mill at Cos Cob)",
+   "source_url": "https://openaccess-cdn.clevelandart.org/1942.122/1942.122_web.jpg",
+   "source_px": [
+    750,
+    893
+   ],
+   "source_bytes": 662772,
+   "source_sha256": "d5900be5c9973782e59b66a531e98d13d3018cb0c01d896f31f1369bf72de59c",
+   "file": "1942.122.jpg",
+   "px": [
+    750,
+    893
+   ],
+   "bytes": 213837,
+   "sha256": "2c66c09c475d5bc2a7e1e3c0c08c673d6deb5858db8be73d7687dabca1ff37f9"
+  },
+  {
+   "accession": "1942.49",
+   "title": "A Boy in a Red-Lined Cloak",
+   "source_url": "https://openaccess-cdn.clevelandart.org/1942.49/1942.49_web.jpg",
+   "source_px": [
+    687,
+    893
+   ],
+   "source_bytes": 405570,
+   "source_sha256": "c81ee001a95e93365dc82a60b0232b467b172c25b98697bf31bc70abade1d58a",
+   "file": "1942.49.jpg",
+   "px": [
+    687,
+    893
+   ],
+   "bytes": 71396,
+   "sha256": "50977ed3f1712664b0b18338d85f6e3475114ede3b3d200378d5a708469cf29b"
+  },
+  {
+   "accession": "1942.647",
+   "title": "The Burning of the Houses of Lords and Commons, 16 October",
+   "source_url": "https://openaccess-cdn.clevelandart.org/1942.647/1942.647_web.jpg",
+   "source_px": [
+    900,
+    668
+   ],
+   "source_bytes": 231821,
+   "source_sha256": "b6c4edc0e515208c1e353863544647da76478212bcc1eaf1831acb5280728f00",
+   "file": "1942.647.jpg",
+   "px": [
+    900,
+    668
+   ],
+   "bytes": 89650,
+   "sha256": "4632d2b7153457577a47ec7e1cc1a9f4a2a22182c3d9cbc9e3a89076b9a18e23"
+  },
+  {
+   "accession": "1943.392",
+   "title": "The Call",
+   "source_url": "https://openaccess-cdn.clevelandart.org/1943.392/1943.392_web.jpg",
+   "source_px": [
+    606,
+    900
+   ],
+   "source_bytes": 233251,
+   "source_sha256": "3848b74e46adbd5a43b819cb1a6cb63ed2fbae7b20f8d021a9c763131b37fda5",
+   "file": "1943.392.jpg",
+   "px": [
+    606,
+    900
+   ],
+   "bytes": 89771,
+   "sha256": "7a791d2748b4c43fe8122874105012ec2729789d1eae41dbd5b50e69bb145feb"
+  },
+  {
+   "accession": "1944.524",
+   "title": "The Brierwood Pipe",
+   "source_url": "https://openaccess-cdn.clevelandart.org/1944.524/1944.524_web.jpg",
+   "source_px": [
+    791,
+    893
+   ],
+   "source_bytes": 117296,
+   "source_sha256": "7658c32e2770f40d5d895850006757f38947adf43f7150ba11e1331043531392",
+   "file": "1944.524.jpg",
+   "px": [
+    791,
+    893
+   ],
+   "bytes": 105800,
+   "sha256": "ecea01406952508fcb9f7d4a3c73a72c9915fa90ae88a9309034c7abff06c32e"
+  },
+  {
+   "accession": "1944.82",
+   "title": "Portrait of Mary Wise",
+   "source_url": "https://openaccess-cdn.clevelandart.org/1944.82/1944.82_web.jpg",
+   "source_px": [
+    739,
+    893
+   ],
+   "source_bytes": 448547,
+   "source_sha256": "17f36d33586bc2cd1f52e11314cc677df02452041f316f335e2059e500e71c0b",
+   "file": "1944.82.jpg",
+   "px": [
+    739,
+    893
+   ],
+   "bytes": 79904,
+   "sha256": "bb98e112a188c1160810013ef199e4209937d36fb6841477aacc8c3db9cca997"
+  },
+  {
+   "accession": "1944.90",
+   "title": "Portrait of a Woman",
+   "source_url": "https://openaccess-cdn.clevelandart.org/1944.90/1944.90_web.jpg",
+   "source_px": [
+    738,
+    900
+   ],
+   "source_bytes": 135321,
+   "source_sha256": "9c74d0d53702faa4abefb99380fd3dedb69384b60ecc5d4d3b80d3ad1b17adef",
+   "file": "1944.90.jpg",
+   "px": [
+    738,
+    900
+   ],
+   "bytes": 62903,
+   "sha256": "467e2dd2188504f5d98c63e6e894c31bebae2608fa1532ed8cd66946df0e6b95"
+  },
+  {
+   "accession": "1946.277",
+   "title": "Study for the Martyrdom of Saint Sebastian",
+   "source_url": "https://openaccess-cdn.clevelandart.org/1946.277/1946.277_web.jpg",
+   "source_px": [
+    518,
+    893
+   ],
+   "source_bytes": 391529,
+   "source_sha256": "95f80bd6d74a9fa7f0fed9ade238067e06104ad6a8429fd142f1e5a733b3b4fc",
+   "file": "1946.277.jpg",
+   "px": [
+    518,
+    893
+   ],
+   "bytes": 85545,
+   "sha256": "179ebde0d00403a31f27843f9550d6bab5b121413e5f34f59c49ff69fafff644"
+  },
+  {
+   "accession": "1946.83",
+   "title": "Frieze of Dancers",
+   "source_url": "https://openaccess-cdn.clevelandart.org/1946.83/1946.83_web.jpg",
+   "source_px": [
+    900,
+    314
+   ],
+   "source_bytes": 86739,
+   "source_sha256": "5066d947dbd8cfe83d93ea4b4be178830dafe0714ae3eaf392be2b65fd76a99b",
+   "file": "1946.83.jpg",
+   "px": [
+    900,
+    314
+   ],
+   "bytes": 41618,
+   "sha256": "f9c845c551e37d5da66c6692cd241be702d536ae039f497e9591a1090218a154"
+  },
+  {
+   "accession": "1947.196",
+   "title": "Low Tide at Pourville, Near Dieppe",
+   "source_url": "https://openaccess-cdn.clevelandart.org/1947.196/1947.196_web.jpg",
+   "source_px": [
+    900,
+    664
+   ],
+   "source_bytes": 251039,
+   "source_sha256": "4ee2e17432df04005ee923328dff0b3b54dd8acb52e8d4a630490a348ff29029",
+   "file": "1947.196.jpg",
+   "px": [
+    900,
+    664
+   ],
+   "bytes": 89545,
+   "sha256": "9beccf297660a88d7e4609bde374b151ee54656d8e828b67c91cb510e316a3e8"
+  },
+  {
+   "accession": "1947.207",
+   "title": "Portrait of Isabella Brant",
+   "source_url": "https://openaccess-cdn.clevelandart.org/1947.207/1947.207_web.jpg",
+   "source_px": [
+    756,
+    893
+   ],
+   "source_bytes": 414924,
+   "source_sha256": "a337bde6bb82d417b170768e4985a5f2449050e1330db0b1285cf231ae6f556d",
+   "file": "1947.207.jpg",
+   "px": [
+    756,
+    893
+   ],
+   "bytes": 72018,
+   "sha256": "1091be51cf914f29cba3c401453234e1ec9803f5eaf127eb7043c1f5e3477403"
+  },
+  {
+   "accession": "1947.209",
+   "title": "The Large Plane Trees (Road Menders at Saint-Rémy)",
+   "source_url": "https://openaccess-cdn.clevelandart.org/1947.209/1947.209_web.jpg",
+   "source_px": [
+    900,
+    718
+   ],
+   "source_bytes": 332102,
+   "source_sha256": "3a9337e095805241fb86be7c6eb9235d69a062d541719f5a74143995e0214042",
+   "file": "1947.209.jpg",
+   "px": [
+    900,
+    718
+   ],
+   "bytes": 170270,
+   "sha256": "92a55b10795e1e9704f1cb93a62f36e8839d0a8275a5721618238226fbeac6b5"
+  },
+  {
+   "accession": "1948.137",
+   "title": "Portrait of a Woman, Probably Aeltje Dircksdr. Pater",
+   "source_url": "https://openaccess-cdn.clevelandart.org/1948.137/1948.137_web.jpg",
+   "source_px": [
+    690,
+    893
+   ],
+   "source_bytes": 117793,
+   "source_sha256": "b79449b09440d5cfab05b3e8c8300fac995585d60058d93d8cc321480f515f19",
+   "file": "1948.137.jpg",
+   "px": [
+    690,
+    893
+   ],
+   "bytes": 105499,
+   "sha256": "4a561069f566324b3b75438e698bf18ae870bd68cdfb99e5a8470d9dd31238be"
+  },
+  {
+   "accession": "1949.189",
+   "title": "Woman Meditating",
+   "source_url": "https://openaccess-cdn.clevelandart.org/1949.189/1949.189_web.jpg",
+   "source_px": [
+    646,
+    893
+   ],
+   "source_bytes": 76045,
+   "source_sha256": "1f8e565cba6134175508c01200e184b36cb0d06f833e61442b0187a9b2b31d35",
+   "file": "1949.189.jpg",
+   "px": [
+    646,
+    893
+   ],
+   "bytes": 68777,
+   "sha256": "f540aa8cf93ff6a6b42e4987117d561979a8e4b77da22c81399eb4c5663ba4d4"
+  },
+  {
+   "accession": "1949.541",
+   "title": "Mount Vesuvius at Midnight",
+   "source_url": "https://openaccess-cdn.clevelandart.org/1949.541/1949.541_web.jpg",
+   "source_px": [
+    1263,
+    889
+   ],
+   "source_bytes": 856691,
+   "source_sha256": "aa0f7fa36cc5671965b657d302c3e02798c7a156529db151839f032bdbd97f50",
+   "file": "1949.541.jpg",
+   "px": [
+    1024,
+    721
+   ],
+   "bytes": 115668,
+   "sha256": "99d198abbba104e2c6a14a98bb7c9a5a444d5e6d1636b2a3e106ff79982adf14"
+  },
+  {
+   "accession": "1950.251",
+   "title": "The Annunciation",
+   "source_url": "https://openaccess-cdn.clevelandart.org/1950.251/1950.251_web.jpg",
+   "source_px": [
+    810,
+    900
+   ],
+   "source_bytes": 245642,
+   "source_sha256": "eb458183f444bc7d807ebb5b6b7174dd4777615f1929e2eaa12de116a477d4b8",
+   "file": "1950.251.jpg",
+   "px": [
+    810,
+    900
+   ],
+   "bytes": 109020,
+   "sha256": "c171ea1edb898a553661a74d50a34b59d992ab1282ca40c55afc0b9159337513"
+  },
+  {
+   "accession": "1950.252",
+   "title": "A Bearded Man Wearing a Hat",
+   "source_url": "https://openaccess-cdn.clevelandart.org/1950.252/1950.252_web.jpg",
+   "source_px": [
+    735,
+    900
+   ],
+   "source_bytes": 108869,
+   "source_sha256": "39d9e34297d3b1a2bbd1ee8c600fa981908acf117a196132adf9e08b587bc06e",
+   "file": "1950.252.jpg",
+   "px": [
+    735,
+    900
+   ],
+   "bytes": 54450,
+   "sha256": "b461b703a40a9468707bb5f9720339cdd0ceb0268e8df5f1502d4735cfd7a3ea"
+  },
+  {
+   "accession": "1950.582",
+   "title": "The Garden of the Rousseau Family",
+   "source_url": "https://openaccess-cdn.clevelandart.org/1950.582/1950.582_web.jpg",
+   "source_px": [
+    725,
+    900
+   ],
+   "source_bytes": 450396,
+   "source_sha256": "eb94004302f3b30a886e8cccba7c6c8ca415f771ab89f6a1e0e5f55c078678d0",
+   "file": "1950.582.jpg",
+   "px": [
+    725,
+    900
+   ],
+   "bytes": 153902,
+   "sha256": "8de90fab8e360ed08e3ce9e3091de998b5cad3df499e50a9f49f1556c62ad62b"
+  },
+  {
+   "accession": "1950.90",
+   "title": "Café Wepler",
+   "source_url": "https://openaccess-cdn.clevelandart.org/1950.90/1950.90_web.jpg",
+   "source_px": [
+    1263,
+    762
+   ],
+   "source_bytes": 271747,
+   "source_sha256": "3d4f63cada85967522b3efbfdd348ef8f95b3306a6699a0c304e64b53a6f7145",
+   "file": "1950.90.jpg",
+   "px": [
+    1024,
+    618
+   ],
+   "bytes": 151624,
+   "sha256": "3f9056899415297c74f52ce530ed37e967705a8f7519d2e56b318ae2c0aff127"
+  },
+  {
+   "accession": "1951.324",
+   "title": "Young Woman Arranging Her Earring",
+   "source_url": "https://openaccess-cdn.clevelandart.org/1951.324/1951.324_web.jpg",
+   "source_px": [
+    748,
+    900
+   ],
+   "source_bytes": 263562,
+   "source_sha256": "92038263b9322973bb10ea79cd1b2516c25d0bd345c4abeb4536a81994442c5d",
+   "file": "1951.324.jpg",
+   "px": [
+    748,
+    900
+   ],
+   "bytes": 104029,
+   "sha256": "f26d97a069ef30bd115c315df72f992b8e80906a74f970cb426a34e465dec602"
+  },
+  {
+   "accession": "1951.330",
+   "title": "The Pond at the Entrance of the Woods",
+   "source_url": "https://openaccess-cdn.clevelandart.org/1951.330/1951.330_web.jpg",
+   "source_px": [
+    1186,
+    893
+   ],
+   "source_bytes": 184222,
+   "source_sha256": "4131e3a597a0054d8b5bad5ece94799fb541804111cfe7c000e246944809bda9",
+   "file": "1951.330.jpg",
+   "px": [
+    1024,
+    771
+   ],
+   "bytes": 115961,
+   "sha256": "3a0eecbf1bfc4eb710cdbc350cde4f01d3bfb6f9937de5c9610ca5d7b4725c93"
+  },
+  {
+   "accession": "1951.356",
+   "title": "Edge of the Woods Near l'Hermitage, Pontoise",
+   "source_url": "https://openaccess-cdn.clevelandart.org/1951.356/1951.356_web.jpg",
+   "source_px": [
+    900,
+    690
+   ],
+   "source_bytes": 378308,
+   "source_sha256": "8523ded8b988852fcb25e5b723af374730b6133875582f20615cb0cbd3674db6",
+   "file": "1951.356.jpg",
+   "px": [
+    900,
+    690
+   ],
+   "bytes": 145160,
+   "sha256": "b9ebc51de66340f277092697bb12ddbbbb08bdb619f5b16ce51e05af84639c03"
+  },
+  {
+   "accession": "1951.357",
+   "title": "Still Life with Rayfish",
+   "source_url": "https://openaccess-cdn.clevelandart.org/1951.357/1951.357_web.jpg",
+   "source_px": [
+    716,
+    893
+   ],
+   "source_bytes": 543333,
+   "source_sha256": "67d34d3a5b5520cb3592b041875541df7236cc88001d59a45e439daaee09a977",
+   "file": "1951.357.jpg",
+   "px": [
+    716,
+    893
+   ],
+   "bytes": 123243,
+   "sha256": "23ad0ea581609516e80932a29152679339f1b49a5a1364814717b15e0f6352a6"
+  },
+  {
+   "accession": "1951.358",
+   "title": "Portrait of a Woman",
+   "source_url": "https://openaccess-cdn.clevelandart.org/1951.358/1951.358_web.jpg",
+   "source_px": [
+    663,
+    893
+   ],
+   "source_bytes": 433271,
+   "source_sha256": "312ee0f8f267fc8e123d0b5515207c4d352ee446ca10b8a6c42f4f819e2ca9e2",
+   "file": "1951.358.jpg",
+   "px": [
+    663,
+    893
+   ],
+   "bytes": 80756,
+   "sha256": "1d47681ca756ac2d3de76851b3e6de7bb3464e6485dac6f16b5193e87191c54f"
+  },
+  {
+   "accession": "1951.454",
+   "title": "Saint Peter Repentant",
+   "source_url": "https://openaccess-cdn.clevelandart.org/1951.454/1951.454_web.jpg",
+   "source_px": [
+    727,
+    893
+   ],
+   "source_bytes": 408063,
+   "source_sha256": "68de76204b367e385099d56144c012c68c17feaf11e32639521c8ff51ac248a8",
+   "file": "1951.454.jpg",
+   "px": [
+    727,
+    893
+   ],
+   "bytes": 64962,
+   "sha256": "fff99284d932aece136ea5aebb28cd125ca8b108f13795c1bb4263dd7d1b4497"
+  },
+  {
+   "accession": "1952.17",
+   "title": "George III",
+   "source_url": "https://openaccess-cdn.clevelandart.org/1952.17/1952.17_web.jpg",
+   "source_px": [
+    720,
+    900
+   ],
+   "source_bytes": 176756,
+   "source_sha256": "540dec2cd04bbd6e255a72b0650fc34b2677bae059d2e35337b14bee3b868e16",
+   "file": "1952.17.jpg",
+   "px": [
+    720,
+    900
+   ],
+   "bytes": 73273,
+   "sha256": "340cb977b00aa4e659d50c33289b630d8f960d4ee9ba1228c4946eb6ffc3d037"
+  },
+  {
+   "accession": "1952.222",
+   "title": "Christ on the Cross",
+   "source_url": "https://openaccess-cdn.clevelandart.org/1952.222/1952.222_web.jpg",
+   "source_px": [
+    517,
+    893
+   ],
+   "source_bytes": 281795,
+   "source_sha256": "d0e54f4631e04b94b997f67da8de9def18ff1b75e46351e1aa03fa8f7258408a",
+   "file": "1952.222.jpg",
+   "px": [
+    517,
+    893
+   ],
+   "bytes": 52386,
+   "sha256": "fc2b43a19c56b1949c8376948d24b5e86dd1d6232e923c27360ed8a275b6ea38"
+  },
+  {
+   "accession": "1953.155",
+   "title": "Spring Flowers",
+   "source_url": "https://openaccess-cdn.clevelandart.org/1953.155/1953.155_web.jpg",
+   "source_px": [
+    685,
+    900
+   ],
+   "source_bytes": 205356,
+   "source_sha256": "fb9731f06fc21ac92e932b66e5369c7651cce4e80da5fe65bda2fccd455e20d7",
+   "file": "1953.155.jpg",
+   "px": [
+    685,
+    900
+   ],
+   "bytes": 105507,
+   "sha256": "f45a23ff1bd1f75aeac5369e3565a70d3dcfd5147927869c3fc86b53b228a76f"
+  },
+  {
+   "accession": "1953.156",
+   "title": "The Return of the Holy Family to Nazareth",
+   "source_url": "https://openaccess-cdn.clevelandart.org/1953.156/1953.156_web.jpg",
+   "source_px": [
+    657,
+    893
+   ],
+   "source_bytes": 421721,
+   "source_sha256": "aa46cab68d5fcaa7348508d9a0bbfaecb2c4f45c776015185e29b5655d4ae739",
+   "file": "1953.156.jpg",
+   "px": [
+    657,
+    893
+   ],
+   "bytes": 82302,
+   "sha256": "1527fb1db1fa72235afd51ae4a92e20fecdcca996c51a6f5f6b91ea3206f5c09"
+  },
+  {
+   "accession": "1954.392",
+   "title": "A Genoese Lady with Her Child",
+   "source_url": "https://openaccess-cdn.clevelandart.org/1954.392/1954.392_web.jpg",
+   "source_px": [
+    595,
+    893
+   ],
+   "source_bytes": 368924,
+   "source_sha256": "7cfec7d7ea3c9046ea29754bcc22267b63b9ab72dff2532e3429e3858e51da4f",
+   "file": "1954.392.jpg",
+   "px": [
+    595,
+    893
+   ],
+   "bytes": 67316,
+   "sha256": "68161ee15777df957c67a0c7d7d03908e6f726adcd015ff2dc97b4bd06dab0e4"
+  },
+  {
+   "accession": "1957.422",
+   "title": "Marine",
+   "source_url": "https://openaccess-cdn.clevelandart.org/1957.422/1957.422_web.jpg",
+   "source_px": [
+    1195,
+    893
+   ],
+   "source_bytes": 696934,
+   "source_sha256": "160ad056cfc57725b9cbdd132f5fd47588f21dc95486362a622ff0b10666eb80",
+   "file": "1957.422.jpg",
+   "px": [
+    1024,
+    765
+   ],
+   "bytes": 97519,
+   "sha256": "ecddade8d71844094548e37d9534a36de61b02f25d281ae619c5192c6818f9ba"
+  },
+  {
+   "accession": "1957.423",
+   "title": "Gray Day on the Bay",
+   "source_url": "https://openaccess-cdn.clevelandart.org/1957.423/1957.423_web.jpg",
+   "source_px": [
+    1263,
+    860
+   ],
+   "source_bytes": 782648,
+   "source_sha256": "a37334644aed9ce68147a020bf2afc946aa84620a9d594e1330d8ab5e900db4b",
+   "file": "1957.423.jpg",
+   "px": [
+    1024,
+    697
+   ],
+   "bytes": 102599,
+   "sha256": "98609139e9abeadaad2282d7a7abf5291384e533752f9465fb14ecbf51ea9e0f"
+  },
+  {
+   "accession": "1958.20",
+   "title": "The Brook",
+   "source_url": "https://openaccess-cdn.clevelandart.org/1958.20/1958.20_web.jpg",
+   "source_px": [
+    900,
+    651
+   ],
+   "source_bytes": 308337,
+   "source_sha256": "ccfc44b5b35f80043650badc069ab3cda0e90c9b3817d79222bea664facca7c4",
+   "file": "1958.20.jpg",
+   "px": [
+    900,
+    651
+   ],
+   "bytes": 119369,
+   "sha256": "18a067f1a4161891c34ff7b1115c1f74b6ff64f9998db626bdc9d3d8d641ce90"
+  },
+  {
+   "accession": "1958.21",
+   "title": "Mount Sainte-Victoire",
+   "source_url": "https://openaccess-cdn.clevelandart.org/1958.21/1958.21_web.jpg",
+   "source_px": [
+    900,
+    714
+   ],
+   "source_bytes": 318974,
+   "source_sha256": "b8508d3dafd5c7e5abbf7acd8223654326918d5b6941f560d575d9c762d0fda0",
+   "file": "1958.21.jpg",
+   "px": [
+    900,
+    714
+   ],
+   "bytes": 124560,
+   "sha256": "c9e4ed319fdf57dad7348232c7a0da3665805ece8c52456dacafdb1f84d9cc8b"
+  },
+  {
+   "accession": "1958.25",
+   "title": "Paul Lafond and Alphonse Cherfils Examining a Painting",
+   "source_url": "https://openaccess-cdn.clevelandart.org/1958.25/1958.25_web.jpg",
+   "source_px": [
+    1148,
+    893
+   ],
+   "source_bytes": 680456,
+   "source_sha256": "8690a28258817cf888749ceab1f9c7dad8da8464e69e42940bebea52a48ce10e",
+   "file": "1958.25.jpg",
+   "px": [
+    1024,
+    797
+   ],
+   "bytes": 86915,
+   "sha256": "f4f67ace2342bb9043b621c9d1998da430cb3a693a1037071b298251d7259960"
+  },
+  {
+   "accession": "1958.28",
+   "title": "Stefanina Primicile Carafa, Marchioness of Cicerale and Duchess of Montejasi",
+   "source_url": "https://openaccess-cdn.clevelandart.org/1958.28/1958.28_web.jpg",
+   "source_px": [
+    717,
+    900
+   ],
+   "source_bytes": 197097,
+   "source_sha256": "51fc396c2fb9bc6a903cc9a33a16450b19ada090192f808bad26e61fa03aad33",
+   "file": "1958.28.jpg",
+   "px": [
+    717,
+    900
+   ],
+   "bytes": 79016,
+   "sha256": "b738440115463c847f1c8fd9c39463625a8086a70bb4246ba7f4eb2431a248a7"
+  },
+  {
+   "accession": "1958.31",
+   "title": "Adeline Ravoux",
+   "source_url": "https://openaccess-cdn.clevelandart.org/1958.31/1958.31_web.jpg",
+   "source_px": [
+    900,
+    897
+   ],
+   "source_bytes": 441051,
+   "source_sha256": "110aa4e5a76ae0ddcc6d949285ad375021f4006b8919fe516fe605602a328bcd",
+   "file": "1958.31.jpg",
+   "px": [
+    900,
+    897
+   ],
+   "bytes": 186633,
+   "sha256": "72508a46c153e9057b73cce1f220bd744e4b7ac5bd0ca6d1435f23937bb630f3"
+  },
+  {
+   "accession": "1958.32",
+   "title": "Two Poplars in the Alpilles Near Saint-Rémy",
+   "source_url": "https://openaccess-cdn.clevelandart.org/1958.32/1958.32_web.jpg",
+   "source_px": [
+    673,
+    900
+   ],
+   "source_bytes": 328259,
+   "source_sha256": "a1349fe74d93a19c0ca1ae27839cdf002ca44aae8b96d625b869cea2db3170a4",
+   "file": "1958.32.jpg",
+   "px": [
+    673,
+    900
+   ],
+   "bytes": 172441,
+   "sha256": "da8e6f3a05845241097acf934d986d2911d35a549f3ba8bc77f6db8e77390a5e"
+  },
+  {
+   "accession": "1958.34",
+   "title": "Berthe Morisot with a Muff",
+   "source_url": "https://openaccess-cdn.clevelandart.org/1958.34/1958.34_web.jpg",
+   "source_px": [
+    726,
+    900
+   ],
+   "source_bytes": 241808,
+   "source_sha256": "a7b656149585a4186136ae8373861080f43369a190c3456c50f0e5239c535387",
+   "file": "1958.34.jpg",
+   "px": [
+    726,
+    900
+   ],
+   "bytes": 97064,
+   "sha256": "16ee19bc47d27f40c517020f5d2cd150c7c464f50ef243c50459b62c2207787e"
+  },
+  {
+   "accession": "1958.38",
+   "title": "Chrysanthemum",
+   "source_url": "https://openaccess-cdn.clevelandart.org/1958.38/1958.38_web.jpg",
+   "source_px": [
+    833,
+    893
+   ],
+   "source_bytes": 644435,
+   "source_sha256": "c983e70669ea68aaeb2320125d1fed6e74393c64e04e66d52938bf54ed02a498",
+   "file": "1958.38.jpg",
+   "px": [
+    833,
+    893
+   ],
+   "bytes": 139608,
+   "sha256": "18ea66ac01640155ddb47c615edb1d757f481619af925db54fb8472d4aca6c67"
+  },
+  {
+   "accession": "1958.39",
+   "title": "The Red Kerchief",
+   "source_url": "https://openaccess-cdn.clevelandart.org/1958.39/1958.39_web.jpg",
+   "source_px": [
+    723,
+    900
+   ],
+   "source_bytes": 232571,
+   "source_sha256": "ac1a6162b5249c1ba985965ada21246bf6370d6dfc0954a551656d0e0529c7e4",
+   "file": "1958.39.jpg",
+   "px": [
+    723,
+    900
+   ],
+   "bytes": 98960,
+   "sha256": "77676b0a2cd700f2bdd5dae2b43991c77c6f5f3c728d1b2c3e41f7079a450940"
+  },
+  {
+   "accession": "1958.47",
+   "title": "The Apple Seller",
+   "source_url": "https://openaccess-cdn.clevelandart.org/1958.47/1958.47_web.jpg",
+   "source_px": [
+    740,
+    900
+   ],
+   "source_bytes": 309457,
+   "source_sha256": "24f45aa41d94d8398fbab87dfc27d21b29c7dd3a1b2390ff62fc10afbb100ea8",
+   "file": "1958.47.jpg",
+   "px": [
+    740,
+    900
+   ],
+   "bytes": 119184,
+   "sha256": "7f6b6c3fcdb65912a0a5eebf9bde82cbca283da4b958d241261dd27327f0d4e9"
+  },
+  {
+   "accession": "1958.51",
+   "title": "Study for \"Bathers at Asnières",
+   "source_url": "https://openaccess-cdn.clevelandart.org/1958.51/1958.51_web.jpg",
+   "source_px": [
+    1263,
+    796
+   ],
+   "source_bytes": 886537,
+   "source_sha256": "981c645737956bd3ba7e5290f816ac9f416da5823662b9a8b9ba12de61ce15d2",
+   "file": "1958.51.jpg",
+   "px": [
+    1024,
+    645
+   ],
+   "bytes": 134794,
+   "sha256": "e1857ca141a3f7d49f5277e0c23f5481aa6a51a72322726ca2f33767dd8d5919"
+  },
+  {
+   "accession": "1958.56",
+   "title": "The Circus",
+   "source_url": "https://openaccess-cdn.clevelandart.org/1958.56/1958.56_web.jpg",
+   "source_px": [
+    1102,
+    893
+   ],
+   "source_bytes": 224208,
+   "source_sha256": "ed1bc213d35635b7d391dcece259fdf9cce80cd92d154950665898d9177ac68b",
+   "file": "1958.56.jpg",
+   "px": [
+    1024,
+    830
+   ],
+   "bytes": 162028,
+   "sha256": "9035e8adab7ca6429fa49dc721cfebbdc3a4bbc83ae45471d1363ae7bdaf1f8f"
+  },
+  {
+   "accession": "1958.57",
+   "title": "At the Café",
+   "source_url": "https://openaccess-cdn.clevelandart.org/1958.57/1958.57_web.jpg",
+   "source_px": [
+    850,
+    893
+   ],
+   "source_bytes": 142419,
+   "source_sha256": "b8a24c8f4061d4afb32dfbf008981ac5e8abcc140fb9a0f097001738b6312c71",
+   "file": "1958.57.jpg",
+   "px": [
+    850,
+    893
+   ],
+   "bytes": 128555,
+   "sha256": "65c501d9494a7cf7353ae42a20d5df71ee344f6fb8f2a2b1e31d989dcb0db470"
+  },
+  {
+   "accession": "1959.189",
+   "title": "The Immaculate Conception",
+   "source_url": "https://openaccess-cdn.clevelandart.org/1959.189/1959.189_web.jpg",
+   "source_px": [
+    512,
+    893
+   ],
+   "source_bytes": 318288,
+   "source_sha256": "2540a746b8207fdc757122d76ad62d3d21bf3e40d93acc49b2ca5c634d04e73a",
+   "file": "1959.189.jpg",
+   "px": [
+    512,
+    893
+   ],
+   "bytes": 62828,
+   "sha256": "8a2f1154cace93c1d82bb8d71b0c3630461de912309276a4a1fee7e9d4d424be"
+  },
+  {
+   "accession": "1959.190",
+   "title": "Diana and Her Nymphs Departing for the Hunt",
+   "source_url": "https://openaccess-cdn.clevelandart.org/1959.190/1959.190_web.jpg",
+   "source_px": [
+    751,
+    900
+   ],
+   "source_bytes": 259100,
+   "source_sha256": "ffd8d51f4cec68c41895bc26ff181bf57da6e3381c1525937c498919bb7c3444",
+   "file": "1959.190.jpg",
+   "px": [
+    751,
+    900
+   ],
+   "bytes": 111410,
+   "sha256": "a91d624b2d5f544fb6bf72556105ed4ff9bf5192bc456127052a7f8eb2e402fb"
+  },
+  {
+   "accession": "1960.117",
+   "title": "Christ and the Virgin in the House at Nazareth",
+   "source_url": "https://openaccess-cdn.clevelandart.org/1960.117/1960.117_web.jpg",
+   "source_px": [
+    900,
+    668
+   ],
+   "source_bytes": 168059,
+   "source_sha256": "e49dba195d89b2f9200304c85a2c5f25a7881892450f0b05ed7fc7e441f93835",
+   "file": "1960.117.jpg",
+   "px": [
+    900,
+    668
+   ],
+   "bytes": 72033,
+   "sha256": "a98b1aa9fd24683d1c4629970029c09fc786eb08cd6b75bde053deab6496b449"
+  },
+  {
+   "accession": "1961.39",
+   "title": "View of Florence",
+   "source_url": "https://openaccess-cdn.clevelandart.org/1961.39/1961.39_web.jpg",
+   "source_px": [
+    900,
+    554
+   ],
+   "source_bytes": 150760,
+   "source_sha256": "c707e35586329af4c4514134b9b1cc56ef99c4154dc1b3d7465e6f95454787fd",
+   "file": "1961.39.jpg",
+   "px": [
+    900,
+    554
+   ],
+   "bytes": 57868,
+   "sha256": "d6fc1aa25e09df09d556f5217c76ac2e2fb3cabdb5783d814f76b4c2c7885037"
+  },
+  {
+   "accession": "1962.2",
+   "title": "Mme L... (Laure Borreau)",
+   "source_url": "https://openaccess-cdn.clevelandart.org/1962.2/1962.2_web.jpg",
+   "source_px": [
+    684,
+    893
+   ],
+   "source_bytes": 349398,
+   "source_sha256": "cee8eb66321c2f8210feb2cf38e39787d1d6d09b6c714f538f46d41d6e1e3105",
+   "file": "1962.2.jpg",
+   "px": [
+    684,
+    893
+   ],
+   "bytes": 56129,
+   "sha256": "7a02e8291e0257c4d71797764c06f0e133fe111be4ec1d1ee5d1d08da293c424"
+  },
+  {
+   "accession": "1962.256",
+   "title": "Landscape with a Church by a Torrent",
+   "source_url": "https://openaccess-cdn.clevelandart.org/1962.256/1962.256_web.jpg",
+   "source_px": [
+    691,
+    893
+   ],
+   "source_bytes": 104299,
+   "source_sha256": "744d1a758815db6546149401c1847f8cfa8e8715dccaa6100e897b056be29623",
+   "file": "1962.256.jpg",
+   "px": [
+    691,
+    893
+   ],
+   "bytes": 94076,
+   "sha256": "bbf6be251f93eaec023e9822f519beedc26e5c1cf4ee6f11e53a29b0fe19257e"
+  },
+  {
+   "accession": "1962.3",
+   "title": "Mlle. Alexandrine-Julie de la Boutraye",
+   "source_url": "https://openaccess-cdn.clevelandart.org/1962.3/1962.3_web.jpg",
+   "source_px": [
+    710,
+    893
+   ],
+   "source_bytes": 328501,
+   "source_sha256": "66f12852640014b6d26c76c499db2c82953fa5e08c9471f304f4c480b43e3197",
+   "file": "1962.3.jpg",
+   "px": [
+    710,
+    893
+   ],
+   "bytes": 61659,
+   "sha256": "d0c42fbc76a9393e6c8cff61d58c7779d20523ec756859874fced8e26c797b23"
+  },
+  {
+   "accession": "1963.573",
+   "title": "The Banks of the Marne at Charenton",
+   "source_url": "https://openaccess-cdn.clevelandart.org/1963.573/1963.573_web.jpg",
+   "source_px": [
+    900,
+    724
+   ],
+   "source_bytes": 397716,
+   "source_sha256": "8e137f8d9c8b7a856e27a8834d73296bf5d710c9e28ae82ee9271951cfbb7995",
+   "file": "1963.573.jpg",
+   "px": [
+    900,
+    724
+   ],
+   "bytes": 152698,
+   "sha256": "7a1d439f88aa2f9b0021407fa7de9a48b1be3b3f3e40fa35875f2f01a33a14fa"
+  },
+  {
+   "accession": "1963.575",
+   "title": "Wooded and Hilly Landscape",
+   "source_url": "https://openaccess-cdn.clevelandart.org/1963.575/1963.575_web.jpg",
+   "source_px": [
+    1025,
+    893
+   ],
+   "source_bytes": 645400,
+   "source_sha256": "6c4af4ac8c0f8b25ee17e032a3d7681e05afc277a04f62f18fa896d0a11aac7a",
+   "file": "1963.575.jpg",
+   "px": [
+    1024,
+    892
+   ],
+   "bytes": 116290,
+   "sha256": "a3c635cb900c9763af683e3cc73391608b97b4f79d7484f62f0044eee328ec68"
+  },
+  {
+   "accession": "1964.153",
+   "title": "Esther, Ahasuerus, and Haman",
+   "source_url": "https://openaccess-cdn.clevelandart.org/1964.153/1964.153_web.jpg",
+   "source_px": [
+    1184,
+    893
+   ],
+   "source_bytes": 184997,
+   "source_sha256": "4c0f65c4a6cd9af3c0ee23add82a7bcdcd4b5dca66cfb8f1677da1cb272af432",
+   "file": "1964.153.jpg",
+   "px": [
+    1024,
+    772
+   ],
+   "bytes": 119760,
+   "sha256": "f5c594aa976ccb873c30f934ff948afabfc7cba0c165fa7c4fb258b24b6262ab"
+  },
+  {
+   "accession": "1964.282",
+   "title": "Valley of the Sédelle at Pont Charraud: White Frost",
+   "source_url": "https://openaccess-cdn.clevelandart.org/1964.282/1964.282_web.jpg",
+   "source_px": [
+    1263,
+    860
+   ],
+   "source_bytes": 302225,
+   "source_sha256": "51d11806d24ad85a32ca55b13b139da5542fc1014761f18162757a03e14b0f6b",
+   "file": "1964.282.jpg",
+   "px": [
+    1024,
+    697
+   ],
+   "bytes": 162695,
+   "sha256": "3694eb5dfb2a9aa736c68dcc247b270c059f7ccb3c46b896b5f9a3f7903c3493"
+  },
+  {
+   "accession": "1964.284",
+   "title": "Marguerite-Juliette Pierret",
+   "source_url": "https://openaccess-cdn.clevelandart.org/1964.284/1964.284_web.jpg",
+   "source_px": [
+    716,
+    893
+   ],
+   "source_bytes": 101951,
+   "source_sha256": "e0c6f16ef15adc7e12484587893ea2b9438ec5e3bfdb4175b3cb3121e181cefb",
+   "file": "1964.284.jpg",
+   "px": [
+    716,
+    893
+   ],
+   "bytes": 93205,
+   "sha256": "81c98cf5ea6db9ac6040506a7d98173458ad705b34f920f5a88077aeb57771ed"
+  },
+  {
+   "accession": "1965.15",
+   "title": "Portrait of the Jester Calabazas",
+   "source_url": "https://openaccess-cdn.clevelandart.org/1965.15/1965.15_web.jpg",
+   "source_px": [
+    553,
+    900
+   ],
+   "source_bytes": 108645,
+   "source_sha256": "9932dd60bd65397937e2fea1e153a420b1bb11fa7beeafaf936aa03d87138c0b",
+   "file": "1965.15.jpg",
+   "px": [
+    553,
+    900
+   ],
+   "bytes": 52849,
+   "sha256": "b64246d425a6768f9f18b5df1b791e4e757bf639842561c399c9c9a0e3fbd5b1"
+  },
+  {
+   "accession": "1965.233",
+   "title": "Twilight in the Wilderness",
+   "source_url": "https://openaccess-cdn.clevelandart.org/1965.233/1965.233_web.jpg",
+   "source_px": [
+    900,
+    562
+   ],
+   "source_bytes": 245118,
+   "source_sha256": "14db1b27f27609fd69f458bfc1c1e683286d01158fd0e67e1f9b7b92cb8af07a",
+   "file": "1965.233.jpg",
+   "px": [
+    900,
+    562
+   ],
+   "bytes": 71798,
+   "sha256": "e38663eb371573f755c3a3a403c925fd0b6acf90f55a3e8a8aae86ea15870c53"
+  },
+  {
+   "accession": "1965.469",
+   "title": "Laban Searching for His Stolen Household Gods",
+   "source_url": "https://openaccess-cdn.clevelandart.org/1965.469/1965.469_web.jpg",
+   "source_px": [
+    900,
+    598
+   ],
+   "source_bytes": 216832,
+   "source_sha256": "1059ff9895f36f7f5a77c67b21d6034cd41c122a3c383df868af10b32203a0b1",
+   "file": "1965.469.jpg",
+   "px": [
+    900,
+    598
+   ],
+   "bytes": 93628,
+   "sha256": "88a022cbf6e26fbbbae80f24c761492e13817e5deaf1265a2a109dde51e115f7"
+  },
+  {
+   "accession": "1966.13",
+   "title": "Antiochus and Stratonice",
+   "source_url": "https://openaccess-cdn.clevelandart.org/1966.13/1966.13_web.jpg",
+   "source_px": [
+    900,
+    674
+   ],
+   "source_bytes": 159818,
+   "source_sha256": "d26a78b2244d35c2ab413aaa7617bdb5741a3b037cbcfb115c3c41ffef7031a3",
+   "file": "1966.13.jpg",
+   "px": [
+    900,
+    674
+   ],
+   "bytes": 84240,
+   "sha256": "9faa90a71a0ed493430d554e728366750b0aa2b2130552fa75560a953cb66ebf"
+  },
+  {
+   "accession": "1966.14",
+   "title": "Portrait of Infante Don Luis de Borbon",
+   "source_url": "https://openaccess-cdn.clevelandart.org/1966.14/1966.14_web.jpg",
+   "source_px": [
+    579,
+    893
+   ],
+   "source_bytes": 333614,
+   "source_sha256": "6dfa2e56444d722b9ef2eb0594100aa2c0632ce472d6b06e6dc0dcf17e7b995b",
+   "file": "1966.14.jpg",
+   "px": [
+    579,
+    893
+   ],
+   "bytes": 56494,
+   "sha256": "4a6bf29de3db10a5a08c6ca6e5763f73318b52663e6a5fc9c11b55fc1f587fe5"
+  },
+  {
+   "accession": "1966.208",
+   "title": "The Coast at Trouville",
+   "source_url": "https://openaccess-cdn.clevelandart.org/1966.208/1966.208_web.jpg",
+   "source_px": [
+    1191,
+    893
+   ],
+   "source_bytes": 250078,
+   "source_sha256": "ae25c9de2925e72c1b5e8feba4d81e16c90c32095a8dada74f51475826a3afdf",
+   "file": "1966.208.jpg",
+   "px": [
+    1024,
+    768
+   ],
+   "bytes": 152217,
+   "sha256": "6eb9761424dc4ceddba0b6196928875e60c6240a2fab9ed9901b7d91aa272892"
+  },
+  {
+   "accession": "1966.49",
+   "title": "Wrestlers in a Circus",
+   "source_url": "https://openaccess-cdn.clevelandart.org/1966.49/1966.49_web.jpg",
+   "source_px": [
+    750,
+    640
+   ],
+   "source_bytes": 80573,
+   "source_sha256": "a99cbd57e52a50ab180d0c8fa883adf174daf48012ab80499c3cb66e6a7ae322",
+   "file": "1966.49.jpg",
+   "px": [
+    750,
+    640
+   ],
+   "bytes": 81049,
+   "sha256": "c71d7392abf92bdbea586fdd2bc544bed3f7cc95c275d51315b807de65417034"
+  },
+  {
+   "accession": "1967.16",
+   "title": "An Elderly Man in Prayer",
+   "source_url": "https://openaccess-cdn.clevelandart.org/1967.16/1967.16_web.jpg",
+   "source_px": [
+    738,
+    893
+   ],
+   "source_bytes": 390624,
+   "source_sha256": "20dbc7e670a1cebe1b3af2c563f92b3eba423f695760a983e05ffe6258dfceb6",
+   "file": "1967.16.jpg",
+   "px": [
+    738,
+    893
+   ],
+   "bytes": 61143,
+   "sha256": "958087c26d8900f639792788956eaae6cc27122673309f9598e550b2a9bb6e4f"
+  },
+  {
+   "accession": "1967.215",
+   "title": "Composition with Red, Yellow, and Blue",
+   "source_url": "https://openaccess-cdn.clevelandart.org/1967.215/1967.215_web.jpg",
+   "source_px": [
+    887,
+    900
+   ],
+   "source_bytes": 220908,
+   "source_sha256": "79f82c7e28afc064bd19199dd6883d90d3bb42af26cd61517b6cd28e27dbe58e",
+   "file": "1967.215.jpg",
+   "px": [
+    887,
+    900
+   ],
+   "bytes": 75863,
+   "sha256": "e1931114d634513379b264de6d5332a036f592b1a8fe08f450b9d84f2bfc4661"
+  },
+  {
+   "accession": "1969.132",
+   "title": "Adoration of the Magi",
+   "source_url": "https://openaccess-cdn.clevelandart.org/1969.132/1969.132_web.jpg",
+   "source_px": [
+    646,
+    893
+   ],
+   "source_bytes": 465977,
+   "source_sha256": "40ee1b955844d65940e3668da86720aa062109674bd8ba8aee5a959ea1744ba1",
+   "file": "1969.132.jpg",
+   "px": [
+    646,
+    893
+   ],
+   "bytes": 104609,
+   "sha256": "27847febf56dd5f7df96c261160526b3f941a913c7bd50bdeec497e6e5c87186"
+  },
+  {
+   "accession": "1969.23",
+   "title": "Saint Ambrose",
+   "source_url": "https://openaccess-cdn.clevelandart.org/1969.23/1969.23_web.jpg",
+   "source_px": [
+    527,
+    893
+   ],
+   "source_bytes": 65775,
+   "source_sha256": "d46588aa3cb626eedb34e68abb1b80f283d34a4ec61c5f498f72fd28f0e8e449",
+   "file": "1969.23.jpg",
+   "px": [
+    527,
+    893
+   ],
+   "bytes": 58669,
+   "sha256": "c406eafb2df8a97812c8e9905d31690624a3590476c02f9a8f00b631585bf799"
+  },
+  {
+   "accession": "1969.52",
+   "title": "Storm in the Mountains",
+   "source_url": "https://openaccess-cdn.clevelandart.org/1969.52/1969.52_web.jpg",
+   "source_px": [
+    742,
+    893
+   ],
+   "source_bytes": 509849,
+   "source_sha256": "059039da2b44993015a63878148b2064e562595880b768b4ff707c4086135ee3",
+   "file": "1969.52.jpg",
+   "px": [
+    742,
+    893
+   ],
+   "bytes": 100240,
+   "sha256": "8c998a720047eb5e073d42aa7fc786fd55175894207d6420c7fa2f062143fc84"
+  },
+  {
+   "accession": "1969.54",
+   "title": "Madame Lerolle",
+   "source_url": "https://openaccess-cdn.clevelandart.org/1969.54/1969.54_web.jpg",
+   "source_px": [
+    660,
+    893
+   ],
+   "source_bytes": 438978,
+   "source_sha256": "406cafb52f9f9fbd0d4f4c08ba5b8cd06d6cc4894005c1fafc35d0a4de6330a6",
+   "file": "1969.54.jpg",
+   "px": [
+    660,
+    893
+   ],
+   "bytes": 94907,
+   "sha256": "402e26a1ceae3cfcb55bc836ecbb5c3adfa3fbe4a8b744b48ec0b8d68ab22c8e"
+  },
+  {
+   "accession": "1970.159",
+   "title": "Figure in Turkish Costume",
+   "source_url": "https://openaccess-cdn.clevelandart.org/1970.159/1970.159_web.jpg",
+   "source_px": [
+    664,
+    893
+   ],
+   "source_bytes": 74625,
+   "source_sha256": "426e956e2b4c3e45cf4933d53f2e21070fbd68348ea13f4bd0ce7dbb5462994f",
+   "file": "1970.159.jpg",
+   "px": [
+    664,
+    893
+   ],
+   "bytes": 67547,
+   "sha256": "fe37598efd59d35122b495a0d98baa643727fe0914fa66b351e1245db3526881"
+  },
+  {
+   "accession": "1971.2",
+   "title": "Portrait of George Pitt, First Baron Rivers",
+   "source_url": "https://openaccess-cdn.clevelandart.org/1971.2/1971.2_web.jpg",
+   "source_px": [
+    591,
+    900
+   ],
+   "source_bytes": 223405,
+   "source_sha256": "6e9bbd7ceeb9b9601cfcce29f87272bf1324efbe97bc4d2ba709a36720a622c6",
+   "file": "1971.2.jpg",
+   "px": [
+    591,
+    900
+   ],
+   "bytes": 69820,
+   "sha256": "2dba50e983939da5049b48785af319c5fcceba2a9a62066844ec370a83b5e5b8"
+  },
+  {
+   "accession": "1971.220",
+   "title": "Field with Young Trees in the Foreground",
+   "source_url": "https://openaccess-cdn.clevelandart.org/1971.220/1971.220_web.jpg",
+   "source_px": [
+    750,
+    609
+   ],
+   "source_bytes": 62180,
+   "source_sha256": "8a5e7dea0016fa23d9521cf7ec3277bc718e97d28952a0f173af8b43060db898",
+   "file": "1971.220.jpg",
+   "px": [
+    750,
+    609
+   ],
+   "bytes": 61827,
+   "sha256": "fbb3d77e52ee0da432df0c50be61881a1dc3dacc47411d5c117aa648fb3ac14b"
+  },
+  {
+   "accession": "1972.121",
+   "title": "Portrait of a Woman",
+   "source_url": "https://openaccess-cdn.clevelandart.org/1972.121/1972.121_web.jpg",
+   "source_px": [
+    701,
+    900
+   ],
+   "source_bytes": 183807,
+   "source_sha256": "e53dc4dde1f61839ba1ae5522ce6cc17348ee4df25dd75ff307ce6f5dd15d81f",
+   "file": "1972.121.jpg",
+   "px": [
+    701,
+    900
+   ],
+   "bytes": 77328,
+   "sha256": "9546814c7d15dd155c49e5a4e62859853e6a5b864538df020b2890641f4f86e4"
+  },
+  {
+   "accession": "1975.263",
+   "title": "The Large Tree",
+   "source_url": "https://openaccess-cdn.clevelandart.org/1975.263/1975.263_web.jpg",
+   "source_px": [
+    900,
+    713
+   ],
+   "source_bytes": 326097,
+   "source_sha256": "38dbaae1842a813dcf12a4873740e34143ea1355a42f9ce14ed3fe974d1993e0",
+   "file": "1975.263.jpg",
+   "px": [
+    900,
+    713
+   ],
+   "bytes": 127814,
+   "sha256": "a1692104a0dbced43c5f64c98618737e0ee295818a147b956bcbe125103b309d"
+  },
+  {
+   "accession": "1976.2",
+   "title": "The Crucifixion of Saint Andrew",
+   "source_url": "https://openaccess-cdn.clevelandart.org/1976.2/1976.2_web.jpg",
+   "source_px": [
+    678,
+    900
+   ],
+   "source_bytes": 212346,
+   "source_sha256": "7e9481e7e2710076b8460aeb0811ceba127f737eff63f4335dfcb2bd16d16199",
+   "file": "1976.2.jpg",
+   "px": [
+    678,
+    900
+   ],
+   "bytes": 87926,
+   "sha256": "fbaea4d1ad5d978e2c2a355d094533bb80169b164fde7b3b0085d276d8afa07a"
+  },
+  {
+   "accession": "1978.63",
+   "title": "In the Waves (dans Les Vagues)",
+   "source_url": "https://openaccess-cdn.clevelandart.org/1978.63/1978.63_web.jpg",
+   "source_px": [
+    700,
+    900
+   ],
+   "source_bytes": 267252,
+   "source_sha256": "7657cab5166c48ad5ad1bbeae52f7f0f627533949fa0d543b4fd249fb58aa0c9",
+   "file": "1978.63.jpg",
+   "px": [
+    700,
+    900
+   ],
+   "bytes": 100436,
+   "sha256": "9e92f8217a8b2725329dc15dca827cee9934df04a92e9c2d8c97d145646048d0"
+  },
+  {
+   "accession": "1979.137",
+   "title": "Roses in a Vase",
+   "source_url": "https://openaccess-cdn.clevelandart.org/1979.137/1979.137_web.jpg",
+   "source_px": [
+    858,
+    893
+   ],
+   "source_bytes": 662337,
+   "source_sha256": "cea8b81288fa0045859b1a8a4c4ff5530a038602ddb69fcb281e1281b2bd32b5",
+   "file": "1979.137.jpg",
+   "px": [
+    858,
+    893
+   ],
+   "bytes": 155088,
+   "sha256": "dd02f5538c95e0e291c9e1f231337f82cd6289f6a4c0d81e7a5da0f4becdb629"
+  },
+  {
+   "accession": "1979.57",
+   "title": "Ruin by the Sea",
+   "source_url": "https://openaccess-cdn.clevelandart.org/1979.57/1979.57_web.jpg",
+   "source_px": [
+    656,
+    893
+   ],
+   "source_bytes": 372926,
+   "source_sha256": "b9c816aafab67c99e9356af68e341bfd3e043ea0d62f27e6337999b7b4fd9769",
+   "file": "1979.57.jpg",
+   "px": [
+    656,
+    893
+   ],
+   "bytes": 60665,
+   "sha256": "1f014959565a4b806642188ac9351aacaf53093093e88529d0b5ffb79c618551"
+  },
+  {
+   "accession": "1980.266",
+   "title": "Self-Portrait",
+   "source_url": "https://openaccess-cdn.clevelandart.org/1980.266/1980.266_web.jpg",
+   "source_px": [
+    738,
+    893
+   ],
+   "source_bytes": 87740,
+   "source_sha256": "0488b574d40f9c2055ae64c9c56f8fd9e984f73cae5d905f131dd11e1953a458",
+   "file": "1980.266.jpg",
+   "px": [
+    738,
+    893
+   ],
+   "bytes": 79890,
+   "sha256": "3bc558fc8b96330e668e63c916f0c4e6f28e7e349c1bd31f550f1add9f06cf16"
+  },
+  {
+   "accession": "1981.18",
+   "title": "The Holy Family on the Steps",
+   "source_url": "https://openaccess-cdn.clevelandart.org/1981.18/1981.18_web.jpg",
+   "source_px": [
+    1263,
+    867
+   ],
+   "source_bytes": 693690,
+   "source_sha256": "75a2c31787736732fcd066c1799b74e139434b89ce331a72a395fef5c3d625ff",
+   "file": "1981.18.jpg",
+   "px": [
+    1024,
+    703
+   ],
+   "bytes": 84911,
+   "sha256": "5cbb21137c195a4e0f2335df4523d0aaab04927b2cb3e9029f934d4331a68142"
+  },
+  {
+   "accession": "1982.145",
+   "title": "Easter Monday-Hélène Daurmont",
+   "source_url": "https://openaccess-cdn.clevelandart.org/1982.145/1982.145_web.jpg",
+   "source_px": [
+    725,
+    893
+   ],
+   "source_bytes": 561596,
+   "source_sha256": "5f522eca3d9d5587bf88a9b8a6e7480df7960e1ed4803eb909492cb1fc255938",
+   "file": "1982.145.jpg",
+   "px": [
+    725,
+    893
+   ],
+   "bytes": 143598,
+   "sha256": "19875e73c03d4d60e61a4521e6c7aca443c4f539f557dedaf1d3a0f17f77565d"
+  },
+  {
+   "accession": "1982.162",
+   "title": "St. Malo",
+   "source_url": "https://openaccess-cdn.clevelandart.org/1982.162/1982.162_web.jpg",
+   "source_px": [
+    1173,
+    893
+   ],
+   "source_bytes": 857671,
+   "source_sha256": "28f3289ed968670159af2451bcbc912032aea39e1f117202286feda755f92c00",
+   "file": "1982.162.jpg",
+   "px": [
+    1024,
+    780
+   ],
+   "bytes": 136500,
+   "sha256": "b193a34fd75e7314ad1660cbcbd974c9265af32b7b7c7748720d8575ae3b999a"
+  },
+  {
+   "accession": "1982.256",
+   "title": "Marie-Yolande de Fitz-James",
+   "source_url": "https://openaccess-cdn.clevelandart.org/1982.256/1982.256_web.jpg",
+   "source_px": [
+    748,
+    893
+   ],
+   "source_bytes": 457447,
+   "source_sha256": "e14192f7300d45de352271608f4184c9f2c861a940e8a9fb15440994bec548d5",
+   "file": "1982.256.jpg",
+   "px": [
+    748,
+    893
+   ],
+   "bytes": 78463,
+   "sha256": "88be7308262482133600e3eeab4cf5f2b2264d0a9a9e3c25decbff9a9037c8d8"
+  },
+  {
+   "accession": "1983.69",
+   "title": "Study for \"the Bear Hunt\" (for the Alcázar, Madrid)",
+   "source_url": "https://openaccess-cdn.clevelandart.org/1983.69/1983.69_web.jpg",
+   "source_px": [
+    1263,
+    605
+   ],
+   "source_bytes": 639101,
+   "source_sha256": "b3c88cda221d2425d5d2180b603a6a8d6fd3ae2786498f6e959a9e951a918b86",
+   "file": "1983.69.jpg",
+   "px": [
+    1024,
+    491
+   ],
+   "bytes": 97990,
+   "sha256": "b427c188ab36d79804cc35d23e44c58f5a07f761b5de4da481aefb4429f6285c"
+  },
+  {
+   "accession": "1984.41",
+   "title": "Mary Walker Waugh",
+   "source_url": "https://openaccess-cdn.clevelandart.org/1984.41/1984.41_web.jpg",
+   "source_px": [
+    694,
+    893
+   ],
+   "source_bytes": 430417,
+   "source_sha256": "985b0f189c160162f07797fe4ba39c566c67bacb66ef8231e758cdf450428190",
+   "file": "1984.41.jpg",
+   "px": [
+    694,
+    893
+   ],
+   "bytes": 85407,
+   "sha256": "a8d87d219ed866ec8b7d4dd8cd78d576201aa2296c33d720a09af29cc6edec53"
+  },
+  {
+   "accession": "1985.145",
+   "title": "Construction Site in Amsterdam",
+   "source_url": "https://openaccess-cdn.clevelandart.org/1985.145/1985.145_web.jpg",
+   "source_px": [
+    1197,
+    893
+   ],
+   "source_bytes": 875444,
+   "source_sha256": "1a87d29da9596ce6e7cf5fd93261b34fbbacf66463e31b5f7dc120722b3fb998",
+   "file": "1985.145.jpg",
+   "px": [
+    1024,
+    764
+   ],
+   "bytes": 155154,
+   "sha256": "017f556b3fdfa8921bab2316386b3a5ab1258204f67d7d9089668ac0f0ddd48d"
+  },
+  {
+   "accession": "1988.91",
+   "title": "Symbolic Head",
+   "source_url": "https://openaccess-cdn.clevelandart.org/1988.91/1988.91_web.jpg",
+   "source_px": [
+    634,
+    893
+   ],
+   "source_bytes": 390600,
+   "source_sha256": "a32b8398e0684d28e73b11581c5e3d925358466db51377ee91535d637b35e815",
+   "file": "1988.91.jpg",
+   "px": [
+    634,
+    893
+   ],
+   "bytes": 64913,
+   "sha256": "4a9358196654c7eb19dda76fbc497487724ad464bc7620a0c6585c1d4369e59f"
+  },
+  {
+   "accession": "1988.94",
+   "title": "Old Woman",
+   "source_url": "https://openaccess-cdn.clevelandart.org/1988.94/1988.94_web.jpg",
+   "source_px": [
+    741,
+    893
+   ],
+   "source_bytes": 140174,
+   "source_sha256": "a370c1a969a0022a913a5860c885697c82df97e2b43368017549b9c7ac6932d3",
+   "file": "1988.94.jpg",
+   "px": [
+    741,
+    893
+   ],
+   "bytes": 126555,
+   "sha256": "e50fdafdab3d7981e983d387c5d50bf70455b879265bdcd96ca99ebe2c61175d"
+  },
+  {
+   "accession": "1992.2",
+   "title": "Hermes Ordering Calypso to Release Odysseus",
+   "source_url": "https://openaccess-cdn.clevelandart.org/1992.2/1992.2_web.jpg",
+   "source_px": [
+    1095,
+    893
+   ],
+   "source_bytes": 171586,
+   "source_sha256": "3ffd23c83129d0fadcc21b9ab0e4e8aab46844efc88f7d2c890f59d6d5f00188",
+   "file": "1992.2.jpg",
+   "px": [
+    1024,
+    835
+   ],
+   "bytes": 129592,
+   "sha256": "6e6da704b404ad9ef3160be45fc29c244fae2098ddbe9a43cfee5472222c3558"
+  },
+  {
+   "accession": "1992.305",
+   "title": "Wilson Cary Nicholas",
+   "source_url": "https://openaccess-cdn.clevelandart.org/1992.305/1992.305_web.jpg",
+   "source_px": [
+    729,
+    893
+   ],
+   "source_bytes": 396963,
+   "source_sha256": "0b308508592322682de1ecc756d2898e61bec7af7e55ed241422dee5b37c47de",
+   "file": "1992.305.jpg",
+   "px": [
+    729,
+    893
+   ],
+   "bytes": 56265,
+   "sha256": "9a837cd1b9a5c89bcc8fb4cc32f68688a339bfbbc9ca53903ac84264f6994bbb"
+  },
+  {
+   "accession": "1992.315",
+   "title": "Women Working in a Field",
+   "source_url": "https://openaccess-cdn.clevelandart.org/1992.315/1992.315_web.jpg",
+   "source_px": [
+    1263,
+    668
+   ],
+   "source_bytes": 706984,
+   "source_sha256": "2390126482066330ad52a60d1b55b7ba89be1023bc8567c4f9c80eeea8c9b521",
+   "file": "1992.315.jpg",
+   "px": [
+    1024,
+    542
+   ],
+   "bytes": 102449,
+   "sha256": "0ad4d1658df4b371f98ddccc1cad8f7b42546c45dd5b05a87e2b2f3f6c4d82cd"
+  },
+  {
+   "accession": "1998.168",
+   "title": "Portrait of Lisa Colt Curtis",
+   "source_url": "https://openaccess-cdn.clevelandart.org/1998.168/1998.168_web.jpg",
+   "source_px": [
+    425,
+    900
+   ],
+   "source_bytes": 171343,
+   "source_sha256": "9436170a0c6d602c8cf5f9f6ec56321d9d1c7b5797f19c35064efd7915309385",
+   "file": "1998.168.jpg",
+   "px": [
+    425,
+    900
+   ],
+   "bytes": 44978,
+   "sha256": "6c42b2a1d2785f6e3539327798ae6205d6683283ca0257977aac9c17b2563fb6"
+  },
+  {
+   "accession": "2002.92",
+   "title": "Eva Meurier in a Green Dress",
+   "source_url": "https://openaccess-cdn.clevelandart.org/2002.92/2002.92_web.jpg",
+   "source_px": [
+    625,
+    900
+   ],
+   "source_bytes": 347196,
+   "source_sha256": "a1e88e29e9d81b6d3c6b92e1e1205db148e171cc6cbf0d9aa33113b3de424826",
+   "file": "2002.92.jpg",
+   "px": [
+    625,
+    900
+   ],
+   "bytes": 116241,
+   "sha256": "98514b94aea2d17786a40d5ebc50e411cad35cff7e62881d9595ed1c0b97575a"
+  },
+  {
+   "accession": "2010.22",
+   "title": "Albert Wolff in His Study",
+   "source_url": "https://openaccess-cdn.clevelandart.org/2010.22/2010.22_web.jpg",
+   "source_px": [
+    755,
+    893
+   ],
+   "source_bytes": 78987,
+   "source_sha256": "385a5b8fb5c37ce6100d25e8776bc8709a56a5c0001c1c97a8a4ae67cece81d6",
+   "file": "2010.22.jpg",
+   "px": [
+    755,
+    893
+   ],
+   "bytes": 72046,
+   "sha256": "8fb5f3e96bee8d5e0b9c88da8eecf67259cfef9a016d1dcd636c87170853df74"
+  },
+  {
+   "accession": "2011.73",
+   "title": "Canal in Autumn (Gisors)",
+   "source_url": "https://openaccess-cdn.clevelandart.org/2011.73/2011.73_web.jpg",
+   "source_px": [
+    1077,
+    893
+   ],
+   "source_bytes": 328832,
+   "source_sha256": "ef55e59852515c8b31cc4ce2259e49b778bffd366b0af5acdbe75ad94d45aae2",
+   "file": "2011.73.jpg",
+   "px": [
+    1024,
+    849
+   ],
+   "bytes": 226864,
+   "sha256": "65316abf5d339234f78cac036276ce7cb8286db5f44c9f914fc076281a91db1c"
+  },
+  {
+   "accession": "2013.258",
+   "title": "On the River",
+   "source_url": "https://openaccess-cdn.clevelandart.org/2013.258/2013.258_web.jpg",
+   "source_px": [
+    856,
+    900
+   ],
+   "source_bytes": 233017,
+   "source_sha256": "df6ee98365fc747327915a6045de4088907dc74f5d889589bfae1c09f8e33e48",
+   "file": "2013.258.jpg",
+   "px": [
+    856,
+    900
+   ],
+   "bytes": 119175,
+   "sha256": "b9c8508e461042bab7eee6b2c4150d28b259df85b91131b7d4e9c1145d2675d8"
+  },
+  {
+   "accession": "2013.261",
+   "title": "Cordelia Parting from Her Sisters",
+   "source_url": "https://openaccess-cdn.clevelandart.org/2013.261/2013.261_web.jpg",
+   "source_px": [
+    900,
+    654
+   ],
+   "source_bytes": 168491,
+   "source_sha256": "5269d296198e205963437e411136a50b487e155daccd3b7b447648dc530dc2bd",
+   "file": "2013.261.jpg",
+   "px": [
+    900,
+    654
+   ],
+   "bytes": 86804,
+   "sha256": "cfa72cc2aa4f68209d9dfc15c62a8591642af42b7edb5fb18a623750853590ae"
+  },
+  {
+   "accession": "2020.105",
+   "title": "Villas at Trouville",
+   "source_url": "https://openaccess-cdn.clevelandart.org/2020.105/2020.105_web.jpg",
+   "source_px": [
+    900,
+    729
+   ],
+   "source_bytes": 363046,
+   "source_sha256": "97fe21b02d9092b092edf44d3d4a537e8f877f753787d2329f5532f0819b79ac",
+   "file": "2020.105.jpg",
+   "px": [
+    900,
+    729
+   ],
+   "bytes": 127846,
+   "sha256": "6552d2592bb191328b38f6c00d16d320a47fdf23f1c5770dd4f57c07282a6110"
+  },
+  {
+   "accession": "2020.106",
+   "title": "The Pink Cloud",
+   "source_url": "https://openaccess-cdn.clevelandart.org/2020.106/2020.106_web.jpg",
+   "source_px": [
+    900,
+    800
+   ],
+   "source_bytes": 612578,
+   "source_sha256": "378ee8960c04afaa6182be36e211ba25242118a5981a59bd00578355bdca65ee",
+   "file": "2020.106.jpg",
+   "px": [
+    900,
+    800
+   ],
+   "bytes": 200654,
+   "sha256": "2c4c5a8ef49687c8876dbda20f24b1387ad4a1897a4820e97f1405bc127dd581"
+  },
+  {
+   "accession": "2020.107",
+   "title": "The Orange Christ",
+   "source_url": "https://openaccess-cdn.clevelandart.org/2020.107/2020.107_web.jpg",
+   "source_px": [
+    726,
+    900
+   ],
+   "source_bytes": 364338,
+   "source_sha256": "063ef4be2b0140e18b4bc694a4bfa1b1b1911509c147d47a1a0fed37e62e7a69",
+   "file": "2020.107.jpg",
+   "px": [
+    726,
+    900
+   ],
+   "bytes": 126420,
+   "sha256": "ccc16684e3b9181c39e6e6f12acda46c951a946048463dad698d7c094a056f36"
+  },
+  {
+   "accession": "2020.108",
+   "title": "Procession or Pardon at Perros-Guirec",
+   "source_url": "https://openaccess-cdn.clevelandart.org/2020.108/2020.108_web.jpg",
+   "source_px": [
+    740,
+    900
+   ],
+   "source_bytes": 380297,
+   "source_sha256": "65fdc5e55ae9f75969895d8cfb0bf6d9b10540b51ad9c0d06cee081cda8a0649",
+   "file": "2020.108.jpg",
+   "px": [
+    740,
+    900
+   ],
+   "bytes": 127671,
+   "sha256": "bcc45644aed4f297c833e2d33835d2e7accee0f26653fc2d99abb465ecc43676"
+  },
+  {
+   "accession": "2020.109",
+   "title": "Drying the Linen, or Moonrise at the Priory",
+   "source_url": "https://openaccess-cdn.clevelandart.org/2020.109/2020.109_web.jpg",
+   "source_px": [
+    790,
+    900
+   ],
+   "source_bytes": 385814,
+   "source_sha256": "a9378a964cb9e29d0c4514d5d68e713671ad5e508e8e76b11698b7f3b360477d",
+   "file": "2020.109.jpg",
+   "px": [
+    790,
+    900
+   ],
+   "bytes": 139062,
+   "sha256": "f82f10c9297fcd1387f0edf649c737cf5a7c8e4705e0dfbf2e58c1a0231483d5"
+  },
+  {
+   "accession": "2020.110",
+   "title": "Blessing of a Yacht on the Belon River",
+   "source_url": "https://openaccess-cdn.clevelandart.org/2020.110/2020.110_web.jpg",
+   "source_px": [
+    900,
+    842
+   ],
+   "source_bytes": 403883,
+   "source_sha256": "0f4ded04d0591a4a9b47dcb6cf9f42d4a35aac1462d074e7185e47efb4275ff1",
+   "file": "2020.110.jpg",
+   "px": [
+    900,
+    842
+   ],
+   "bytes": 143307,
+   "sha256": "815831feba2c62837dd1dcbbb810d03d6e40889a3c1f3e55fc8ac4db0c483456"
+  },
+  {
+   "accession": "2020.113",
+   "title": "Fishmarket",
+   "source_url": "https://openaccess-cdn.clevelandart.org/2020.113/2020.113_web.jpg",
+   "source_px": [
+    900,
+    721
+   ],
+   "source_bytes": 423188,
+   "source_sha256": "3316b9abdc2fb10d8946832187ac9c267f4c058ac8ca46e828cea5df8844f5ec",
+   "file": "2020.113.jpg",
+   "px": [
+    900,
+    721
+   ],
+   "bytes": 152795,
+   "sha256": "6cd3f39d03dc57c79ed7aa4970d75879873294b820e2fed2c2d2e99c3931a95d"
+  },
+  {
+   "accession": "2020.115",
+   "title": "Corn Fields",
+   "source_url": "https://openaccess-cdn.clevelandart.org/2020.115/2020.115_web.jpg",
+   "source_px": [
+    900,
+    511
+   ],
+   "source_bytes": 208873,
+   "source_sha256": "1cf5c22b763b2e0f21a8df53a11fcab95a5877f34f5b20357a96eac73b265a7b",
+   "file": "2020.115.jpg",
+   "px": [
+    900,
+    511
+   ],
+   "bytes": 59466,
+   "sha256": "49c8b186b36239325ee9fc405aad1aa6138614c4b4e6eb8e7655336e748b0515"
+  },
+  {
+   "accession": "2020.117",
+   "title": "Breton Landscape",
+   "source_url": "https://openaccess-cdn.clevelandart.org/2020.117/2020.117_web.jpg",
+   "source_px": [
+    743,
+    900
+   ],
+   "source_bytes": 320717,
+   "source_sha256": "3341ebb2341c0e50e1b024647cb8cdf78c6b30fa95a882ca728b1ee72bbf241f",
+   "file": "2020.117.jpg",
+   "px": [
+    743,
+    900
+   ],
+   "bytes": 104908,
+   "sha256": "fde4d59e53f202da65a492d9aeedcef4194fb370aa66f7e2c0b89cf11ce4f8b2"
+  },
+  {
+   "accession": "2020.118",
+   "title": "Luncheon (Annette and Her Grandmother)",
+   "source_url": "https://openaccess-cdn.clevelandart.org/2020.118/2020.118_web.jpg",
+   "source_px": [
+    900,
+    835
+   ],
+   "source_bytes": 427672,
+   "source_sha256": "3feb054fe8956064a97bac2fef78b94710e4d8400eec0abe6ce94f97385b4cdc",
+   "file": "2020.118.jpg",
+   "px": [
+    900,
+    835
+   ],
+   "bytes": 150366,
+   "sha256": "8b3be3a5ebc091fdf1ac63a783c519ec25ede479da6b76b5c3c3aa012f752b5b"
+  },
+  {
+   "accession": "2020.119",
+   "title": "Woman Ironing",
+   "source_url": "https://openaccess-cdn.clevelandart.org/2020.119/2020.119_web.jpg",
+   "source_px": [
+    900,
+    748
+   ],
+   "source_bytes": 311992,
+   "source_sha256": "cf598278e8e4327dda8bfbcca8c5d62608e6603e71f66554854c0a2ca0c00d34",
+   "file": "2020.119.jpg",
+   "px": [
+    900,
+    748
+   ],
+   "bytes": 108142,
+   "sha256": "f219795231ef4d1818a90e61ecdc2e96a55bdd799c9ac58e3900fd24982be4d3"
+  },
+  {
+   "accession": "2020.120",
+   "title": "Orchard",
+   "source_url": "https://openaccess-cdn.clevelandart.org/2020.120/2020.120_web.jpg",
+   "source_px": [
+    900,
+    676
+   ],
+   "source_bytes": 276723,
+   "source_sha256": "06019f44c44fd1a40df404e6e2ca7a8dac9c828cbb2f2d16ba26c3245d8263c2",
+   "file": "2020.120.jpg",
+   "px": [
+    900,
+    676
+   ],
+   "bytes": 86917,
+   "sha256": "60a7bd18f2acaddf013935ee7fdb35bd378390109dd87ae15849900d05a35804"
+  },
+  {
+   "accession": "2021.134",
+   "title": "Portrait of Renoir",
+   "source_url": "https://openaccess-cdn.clevelandart.org/2021.134/2021.134_web.jpg",
+   "source_px": [
+    723,
+    900
+   ],
+   "source_bytes": 263469,
+   "source_sha256": "aebc37e57982496cc8de3dc7b93d6733ddffb40e781bbac2999289bed489281f",
+   "file": "2021.134.jpg",
+   "px": [
+    723,
+    900
+   ],
+   "bytes": 84951,
+   "sha256": "152a4c97b2a9981dc863aa8f7dfbe3d7d8c25950d3943f4336adb96824dd47c3"
+  },
+  {
+   "accession": "2022.434",
+   "title": "Women Meeting in the Shade",
+   "source_url": "https://openaccess-cdn.clevelandart.org/2022.434/2022.434_web.jpg",
+   "source_px": [
+    900,
+    750
+   ],
+   "source_bytes": 338461,
+   "source_sha256": "1ac717974843b34a65457ef6acfe291601f863b1719a67ec42200bfd7c02edc3",
+   "file": "2022.434.jpg",
+   "px": [
+    900,
+    750
+   ],
+   "bytes": 120614,
+   "sha256": "49f2e893e4bc7fafaf574061cb5228b4bce2ec0e839150d252eb612afc9f54ac"
+  }
+ ]
+}

@@ -792,7 +792,8 @@
     const a = artistAt(n); if (!a) return null;
     const w = (archive.files[a.id] || [])[n - a.o]; if (!w) return null;
     return { id: ARCHIVE_BASE + n, archive: true, artist: a.name, painting: w.t, date: w.d, year: w.y, colors: w.c,
-             aspect: w.a, aspectSource: w.a ? ASPECT_SOURCES[w.as || 'wd'] || 'Wikidata' : null, link: w.u, img: w.pd ? w.i : null, pd: w.pd, source: w.src, artistId: a.id, artistDied: a.died };
+             aspect: w.a, aspectSource: w.a ? ASPECT_SOURCES[w.as || 'wd'] || 'Wikidata' : null, link: w.u, img: w.pd ? w.i : null, pd: w.pd, source: w.src, artistId: a.id, artistDied: a.died,
+             held: w.pd && w.l ? w.l : null };
   }
   function workFor(id, cb) {       // resolve any work id; cb(work) once its data is loaded
     if (id < ARCHIVE_BASE) { cb(PALS[id]); return; }
@@ -1402,8 +1403,13 @@
   function archiveSource(id) {
     const w = S && S.palette && S.palette.id === id ? S.palette : archiveWork(id - ARCHIVE_BASE);
     const ok = !!(w && w.pd && w.img && w.artistDied && w.artistDied <= 1955 && w.year && w.year <= 1930);
-    const src = sources[id] = { ready: false, kind: ok ? 'original' : 'none', canvas: null, aspect: 1, url: ok ? w.img : null,
-      meta: ok ? { work_year: w.year, source: w.source, source_url: w.link, license: 'Public domain (artist died ' + w.artistDied + ', work ' + w.year + ')', file: w.img } : null };
+    // A museum that sends no Access-Control-Allow-Origin lets the browser show its file but never
+    // lets the paint read it, so the source cannot rise through the pour. For those we hold our own
+    // copy of the public-domain file and serve it from this origin; the credit and the link still
+    // name the museum, and `held` records that the pixels came from here.
+    const file = ok ? (w.held || w.img) : null;
+    const src = sources[id] = { ready: false, kind: ok ? 'original' : 'none', canvas: null, aspect: 1, url: file, held: !!(ok && w.held),
+      meta: ok ? { work_year: w.year, source: w.source, source_url: w.link, license: 'Public domain (artist died ' + w.artistDied + ', work ' + w.year + ')', file: file } : null };
     if (ok) {
       const img = new Image();
       img.crossOrigin = 'anonymous';                 // needed to carry it into the paint (WebGL)
@@ -1413,7 +1419,7 @@
         src.canvas = c; src.aspect = img.naturalWidth / img.naturalHeight; src.ready = true;
       };
       img.onerror = function () { src.kind = 'view-only'; };  // the source's server refuses: it can still be viewed
-      img.src = w.img;
+      img.src = file;
     }
     return src;
   }
