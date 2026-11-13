@@ -1715,7 +1715,7 @@
   // ---- walking a generation, one action at a time ------------------------------------------
   // ?at=N holds the pour at step N. The account's own steps are the stations: each is a link, so
   // a single action of a single generation has an address someone else can open.
-  let pauseAt = -1;
+  let pauseAt = -1, walkSeed = null;
   {
     const q = new URLSearchParams(location.search).get('at');
     if (q !== null && isFinite(+q)) pauseAt = Math.max(0, Math.floor(+q));
@@ -1967,6 +1967,15 @@
       bits: { value: 16, options: { '16-bit': 16, '8-bit': 8 }, label: 'bit depth', group: 'print' },
     },
     onReset: function () {
+      // A hold belongs to the generation you are looking at, not to the studio. Randomize or
+      // generate, and every new work would otherwise stop at the same step, which reads as the
+      // same piece of work over and over. A parameter change keeps the hold, so one action can be
+      // compared under different settings.
+      if (walkSeed !== null && walkSeed !== G.seed && pauseAt >= 0) {
+        pauseAt = -1;
+        history.replaceState(null, '', urlAt(null));
+      }
+      walkSeed = G.seed;
       const key = G.seed + '|' + SIM_KEYS.map(function (k) { return G.param(k); }).join('|');
       setAccount(G.param('account') === 1);
       setRegister(G.param('register') === 1 ? 'tech' : 'plain');
